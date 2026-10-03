@@ -175,6 +175,11 @@ isolated capture, prepared upgrade builds, artwork provenance and verification.
 
 Merchant Invitations adds two distinct hat-and-purse NPCs near the market after Meadow Invitations. Each needs 9 conviction and gives 12 donations. Fair Bargain and Trusted Patron each add 1.5 merchant-only conviction per phrase; Generous Purses adds 6 donations per merchant. The helper uses the higher threshold with its own unchanged stats. The original village route is unchanged. See [first-map scope](docs/FIRST_MAP.md).
 
+Merchants have no permanent payout label. Each recruitment briefly shows its
+numeric donation above the listener, then rises and fades away. This includes
+helper recruits and opponent victories; larger rewards stay as digits.
+[Rendered reward examples](docs/verification/recruitment-rewards.png).
+
 ## Completing Bramblewick
 
 Buy **Town Debate** after East Lane Invitations. Each new round brings the next

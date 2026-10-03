@@ -591,3 +591,36 @@ the updated village, ritual and compact settings PNGs. Exit Game and Back to
 game remain fully visible at 1280 x 800 and the 1024 x 640 compact output.
 The capture still converts all 15 listeners at 10.517 seconds, leaving 0.483
 seconds. No export, publishing or tool installation occurred.
+
+## 2026-10-03 - Brief numeric recruitment rewards
+
+Removed the permanent merchant payout caption. Successful recruitment now
+spawns one outlined number per listener, including recruits earned by the
+helper. Opponent victories use the same popup with their stage reward. Digits
+size the label naturally; no coin icons or currency text are repeated. The
+number rises for 0.9 seconds, fades during the second half and frees itself.
+Round resets clear listener popups. The contextual gathering title sits higher
+to leave room above listeners for their rewards.
+
+Checks used the installed Godot 4.2.2 Mono console executable, with headless
+fixed 60 fps for runtime scripts and a rendering display for
+`tests/capture_starter.gd`. All runtime suites exited 0 with no diagnostic
+warnings/errors: smoke 92, progression 113, pacing 59, helper 34, merchants 25,
+encounters 210 and ritual readability 67 checks, all with 0 failures. Added
+coverage checks simultaneous ordinary payouts, upgraded/helper merchant
+payouts, duplicate protection, four-digit sizing, rise/fade/removal, reset
+cleanup and each opponent's payout. Test saves remain isolated.
+
+Headless editor import still exits 1 with the existing `_EDITOR_GET` error and
+cursor/Blender-path warnings. Capture exits 0 with no diagnostics. The practical
+original-core capture still completes 15 conversions at 10.517 seconds with
+0.483 seconds left; gameplay balance is unchanged.
+
+Inspected actual 1280 x 800 PNGs: [merchant payout](verification/merchant-reward.png),
+[ordinary and four-digit rewards](verification/recruitment-rewards.png),
+[after the flash](verification/recruitment-rewards-settled.png), and
+[Priest reward with idle merchants](verification/village-complete.png).
+The numbers 3, 18, 120 and 1250 are readable; listener popups disappear, while
+recruited-state checks remain. The 1250 payout is a capture-only fixture and
+does not change production rewards. Human play feel and alternate resolutions
+were not verified. No publishing or tool installation occurred.

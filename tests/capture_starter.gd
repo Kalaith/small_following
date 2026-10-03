@@ -87,6 +87,19 @@ func _capture() -> void:
 	scene.advance_round(0.5)
 	scene._update_hud()
 	await save_frame("village-merchants.png")
+	var merchants = scene.groups.back()
+	merchants.tick_persuasion(1.0, 1.0, 9.0)
+	scene._update_hud()
+	await save_frame("merchant-reward.png")
+	# Four digits exercise future reward readability without changing the catalog.
+	merchants.donation = 1250
+	merchants.recruit_listener(1)
+	merchants.donation = scene.progression.merchant_donation()
+	scene.groups[2].tick_persuasion(1.0, 1.0, 6.0)
+	scene._update_hud()
+	await save_frame("recruitment-rewards.png")
+	await create_timer(1.0).timeout
+	await save_frame("recruitment-rewards-settled.png")
 	scene.advance_round(100.0)
 	await capture_encounters(scene)
 	await capture_readability(scene)

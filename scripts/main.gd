@@ -296,6 +296,10 @@ func _reset_encounter() -> void:
 func _on_encounter_convinced(stage: int) -> void:
 	if round_active and progression.complete_encounter(stage):
 		round_recruits += 1
+		var popup = preload("res://scripts/donation_popup.gd").new()
+		popup.amount = progression.ENCOUNTER_REWARDS[stage]
+		popup.position = Vector2(52, -80)
+		encounter.add_child(popup)
 
 
 func _on_recruited(donation: int) -> void:

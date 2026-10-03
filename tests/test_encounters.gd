@@ -91,6 +91,8 @@ func _campaign() -> void:
 			scene.advance_round(STEP)
 			steps += 1
 		check(scene.encounter.defeated and state.encounter_stage == stage + 1 and scene.seconds_left > 0, "convincing opponent advances exactly one saved stage %d" % stage)
+		var reward = scene.encounter.get_child(0)
+		check(reward is Label and reward.text == str(state.ENCOUNTER_REWARDS[stage]), "opponent displays its numeric victory payout %d" % stage)
 		print("CAMPAIGN: %s convinced in %.3fs / %.3fs left" % [Encounter.PROFILES[stage].title, steps * STEP, scene.seconds_left])
 		before = state.coins
 		check(not state.complete_encounter(stage) and state.coins == before, "duplicate victory cannot pay twice %d" % stage)

@@ -24,10 +24,25 @@ var listeners: Array[Node2D] = []
 
 
 class Listener extends Node2D:
+	const DonationPopup = preload("res://scripts/donation_popup.gd")
 	var following: bool = false
 	var coat: Color = Color("#9c695a")
 	var phase: float = 0.0
 	var merchant: bool = false
+	var reward_label: Label
+
+	func show_reward(amount: int) -> void:
+		clear_reward()
+		reward_label = DonationPopup.new()
+		reward_label.amount = amount
+		reward_label.position.y = -64
+		add_child(reward_label)
+
+	func clear_reward() -> void:
+		if is_instance_valid(reward_label):
+			reward_label.hide()
+			reward_label.queue_free()
+			reward_label = null
 
 	func _process(delta: float) -> void:
 		phase += delta * 1.8
@@ -99,6 +114,7 @@ func recruit_listener(index: int) -> bool:
 	if index < 0 or index >= listeners.size() or listeners[index].following:
 		return false
 	listeners[index].following = true
+	listeners[index].show_reward(donation)
 	listeners[index].queue_redraw()
 	recruits += 1
 	if recruits == listener_count:
@@ -116,6 +132,7 @@ func reset_round() -> void:
 	is_listening = false
 	for listener in listeners:
 		listener.following = false
+		listener.clear_reward()
 	queue_redraw()
 
 
@@ -127,15 +144,13 @@ func set_listening(value: bool) -> void:
 
 func _draw() -> void:
 	if not is_listening:
-		if npc_type == "merchant":
-			draw_string(ThemeDB.fallback_font, Vector2(-62, -65), "Merchants / +%d gold" % donation, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#594422"))
 		return
 	draw_arc(Vector2.ZERO, 69, 0, TAU, 56, Color(1, 0.93, 0.62, 0.7), 2, true)
 	var font := ThemeDB.fallback_font
 	var caption: String = "%s  %d/%d" % [group_name, recruits, listener_count]
 	var width: float = font.get_string_size(caption, HORIZONTAL_ALIGNMENT_LEFT, -1, 16).x
-	draw_style_box(_caption_style(), Rect2(-width * 0.5 - 10, -90, width + 20, 30))
-	draw_string(font, Vector2(-width * 0.5, -69), caption, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("#fff1d0"))
+	draw_style_box(_caption_style(), Rect2(-width * 0.5 - 10, -142, width + 20, 30))
+	draw_string(font, Vector2(-width * 0.5, -121), caption, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("#fff1d0"))
 	draw_line(Vector2(-38, 58), Vector2(38, 58), Color("#55654e"), 5)
 	draw_line(Vector2(-38, 58), Vector2(-38 + 76 * progress / conviction_required, 58), Color("#f3d98c"), 5)
 	for i in range(3):

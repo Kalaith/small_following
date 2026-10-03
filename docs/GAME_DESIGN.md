@@ -19,6 +19,7 @@ This project is a bounded first-map prototype of movement, short earning rounds,
 - Progression eventually reaches larger, more populated towns. Later minions and magic reduce travel demands while preserving direct control.
 - Robes visibly trail and flap as the cultist moves.
 - During village play, the playable space dominates and the HUD remains minimal and contextual.
+- Recruitment briefly shows the numeric coin payout near the recruited character; merchants have no permanent payout label (requested 2026-10-03). Use digits rather than repeated coin symbols for larger rewards.
 - The tone is cute. The title is **Small Following**.
 
 - Add merchants, three persuadable enemy types, a town-center priest boss, related ritual upgrades and a persistent first-map finish (requested 2026-10-03). Later maps are future work.
@@ -89,7 +90,7 @@ The first helper recruits individual listeners. Later minions may collect donati
 
 ## Readability and feedback
 
-Keep village HUD information to time, donations and the explicitly named recruitment count. Put speech progress beside the active gathering. Use robe movement and small local audience reactions for feedback rather than a field of floating numbers.
+Keep village HUD information to time, donations and the explicitly named recruitment count. Put speech progress beside the active gathering. Use robe movement and small local audience reactions, with a brief numeric payout only when recruitment succeeds. The current payout rises and fades over 0.9 seconds; this duration is provisional visual tuning. Helper recruits share the listener feedback, and opponent victories show their donation reward beside the opponent's head.
 
 During upgrade selection, the ritual itself is the main composition: concentric rings, connected node circles, intersecting lines and restrained rune-like marks in violet light. Rank pips and current/maximum labels distinguish a partly upgraded node from a finished one. Details must show the selected rank, current-to-next effect, cost, prerequisite and purchase state at a readable scale. The node glyphs need room to breathe; pan/zoom is for future scale, not a substitute for a readable initial layout.
 
