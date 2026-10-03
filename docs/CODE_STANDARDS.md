@@ -89,7 +89,7 @@ Validate definitions before making them available: nonempty unique IDs,
 supported positive finite effects, valid coordinates, rank bounds, one price
 and effect per rank, and existing acyclic prerequisites. `cost` and `effect`
 must agree with the first rank. Supported effects are `speech_speed_add`,
-`conviction_add`, `run_speed_add`, `meadow_unlock` and `east_unlock`; implement and test a new effect before
+`conviction_add`, `run_speed_add`, `meadow_unlock`, `east_unlock` and `helper_unlock`; implement and test a new effect before
 adding it to production data.
 
 Keep fixture content under `tests/fixtures/`. Tests of 144 nodes must not

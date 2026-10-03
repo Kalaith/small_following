@@ -9,7 +9,8 @@
 - [ ] Check movement feel, robe readability, gathering selection and HUD legibility in a human playtest.
 - [ ] Decide quit/restart behavior beyond the current fresh-round policy; verify schema-1 migration and schema-2 save recovery in the eventual export.
 - [ ] Add and test the first town unlock and a second, more populated town; extend local saves only for implemented progression.
-- [ ] Prototype one minion task; decide magic scope and whether previous towns or offline time earn income.
+- [ ] Human-playtest the two gathering unlocks, later speaking/running tiers and helper value. Compare leaving the garden to the helper with overtaking its targets; tune prices and effort from actual play.
+- [ ] Decide further minion tasks, magic scope and whether previous towns or offline time earn income.
 - [ ] Choose production art treatment, source licensed assets/audio and replace procedural placeholders.
 - [ ] Add audio controls and appropriate accessibility settings as those systems arrive.
 - [ ] Choose an export target and verify a fresh-save session, purchases and save recovery in an exported build.

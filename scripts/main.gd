@@ -3,6 +3,7 @@ extends Node2D
 const Gathering = preload("res://scripts/gathering.gd")
 const Progression = preload("res://scripts/progression.gd")
 const RitualScreen = preload("res://scripts/ritual_screen.gd")
+const Helper = preload("res://scripts/helper.gd")
 const ROUND_SECONDS: float = 11.0
 const START_POSITION := Vector2(780, 680)
 const BASE_RUN_SPEED: float = 180.0
@@ -13,6 +14,7 @@ var catalog_ready: bool = false
 var progression = Progression.new()
 var groups: Array[Node2D] = []
 var added_gatherings: Dictionary = {}
+var helper: Node2D = null
 var seconds_left: float = ROUND_SECONDS
 var round_active: bool = true
 var round_recruits: int = 0
@@ -99,9 +101,14 @@ func advance_round(delta: float) -> void:
 	if is_instance_valid(nearest_group):
 		nearest_group.set_listening(true)
 		nearest_group.tick_persuasion(usable_delta, progression.speech_interval(), progression.conviction_per_phrase())
+	if is_instance_valid(helper):
+		helper.set_active(true)
+		helper.advance(usable_delta, groups)
 	seconds_left = maxf(0.0, seconds_left - usable_delta)
 	if seconds_left <= 0.0:
 		round_active = false
+		if is_instance_valid(helper):
+			helper.set_active(false)
 		for group in groups:
 			group.set_listening(false)
 		progression.save_progress()
@@ -133,6 +140,11 @@ func apply_upgrades() -> void:
 		if progression.has_unlock(entry.key) and not added_gatherings.has(entry.key):
 			_add_gathering(entry.title, entry.at)
 			added_gatherings[entry.key] = true
+	if progression.has_unlock("helper_unlock") and not is_instance_valid(helper):
+		helper = Helper.new()
+		$Actors.add_child(helper)
+		helper.configure_navigation($Actors)
+		helper.reset_round(START_POSITION)
 
 
 func set_ritual_visible(value: bool) -> void:
@@ -155,6 +167,8 @@ func start_next_round() -> void:
 		group.reset_round()
 	# Every round uses the same entrance; walking in menus does not grant a head start.
 	player.position = START_POSITION
+	if is_instance_valid(helper):
+		helper.reset_round(START_POSITION)
 	player.get_node("Camera2D").reset_smoothing()
 	set_ritual_visible(false)
 	_update_hud()

@@ -147,3 +147,52 @@ Commands are the README checks; logs were inspected for diagnostics.
 
 Human steering, expanded economy and graph discovery remain unverified.
 Helper implementation follows in its own slice; no second town or offline work.
+
+
+## 2026-10-03 - one helper and final expanded catalog
+
+Final catalog: sixteen real nodes, nineteen purchases, 348 donations total.
+All original ranks and IDs remain intact. The following commands were run
+against the final behavioral changes with the README's installed Godot 4.2.2
+Mono executable; all test saves were isolated from normal player progression.
+
+| Command flags after the executable | Result |
+| --- | --- |
+| `--headless --path . --import` | Exit 1; existing `_EDITOR_GET` / EditorSettings error, custom-cursor and Blender-path warnings; no script errors |
+| `--headless --path . --script res://tests/test_progression.gd` | Exit 0; 113 checks, zero failures |
+| `--headless --fixed-fps 60 --path . --script res://tests/smoke_test.gd` | Exit 0; 92 checks, zero failures |
+| `--headless --fixed-fps 60 --path . --script res://tests/test_pacing.gd` | Exit 0; 59 checks, zero failures |
+| `--headless --fixed-fps 60 --path . --script res://tests/test_helper.gd` | Exit 0; 34 checks, zero failures |
+| `--fixed-fps 60 --path . --script res://tests/capture_starter.gd -- --capture-dir=<project>/docs/verification` | Exit 0; actual Compatibility/OpenGL NVIDIA output |
+
+All four behavioral suite logs were inspected: **298 checks, zero failures**,
+with no runtime warnings/errors. Meaningful helper coverage includes failed
+purchase storage, prerequisites, stale/max protection, one spawned actor,
+independent movement/speech stats, timed arrival, partial individual effort,
+player/target races, single reward authority, out-of-order listener conversion,
+conviction overflow, clamped expiry, intermission movement, round reset,
+all 25 reachable listener stand cells and a detour checked against the actual
+market collider. Smoke reload recreates both new groups and the helper from
+schema-2 ranks; schema-1 migration and backup tests still pass.
+
+Pacing retains the original three-recruit opening and 15-listener clear at
+10.517 seconds (0.483 remaining). Expanded player upgrades yield 23/25 on the
+garden-first route. The meadow-first route improves from 21 to 24 with three
+helper conversions; garden-first work overlaps the helper's targets and adds
+none. An initial test incorrectly assumed every route would gain helper
+conversions; it was corrected to verify that documented competition, without
+changing recruitment rules or awarding a hidden helper bonus. Neither expanded
+route is claimed to clear all 25. Detailed timing is in [PACING](PACING.md).
+
+Inspected actual 1280 x 800 PNGs: starter ritual, expanded village, expanded
+ritual, `ritual-expansion-locked.png`, `ritual-helper.png`, and
+`helper-speaking.png`. The fitted graph shows sixteen separate glyphs with
+short captions and rank pips; full selected details and the two-prerequisite
+locked state remain legible. New listeners stand in open areas. The teal helper,
+lilac sash, target ring and local phrase feedback are visible. The unchanged
+15-listener capture also reports the same 10.517-second clear.
+
+Automated UI input covers pan/zoom/selection, purchase buttons, next-round
+transitions and the 144-node fixture. Human steering, expanded progression
+prices, graph discovery and helper usefulness still need playtesting. No
+export, installation, remote setup, publishing or player-save changes occurred.

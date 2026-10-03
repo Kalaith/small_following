@@ -55,8 +55,11 @@ following the cultist.
 
 The visible node circles and prerequisite connections form the occult seal.
 Use rings, intersecting lines and restrained rune-like marks to support that
-network. Preserve the purple/violet/lilac direction and the nine-node catalog.
-The six inner nodes have one rank; the three outer nodes have two.
+network. Preserve the purple/violet/lilac direction and the original nine-node
+core. The expanded catalog adds seven single-rank nodes across five rings.
+The original tier-III nodes retain two ranks. At fitted overview zoom, short
+node captions and rank pips keep glyphs clear; selected details always show
+full names, ranks, effects and prices. Zooming in reveals full graph labels.
 
 Current colors in `scripts/ritual_screen.gd` provide a starting palette:
 

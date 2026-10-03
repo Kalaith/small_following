@@ -128,3 +128,26 @@ The full player route walks 1135.2 px. More listeners do not imply an automatic
 25-person clear; routes and additional speaking capacity remain relevant.
 The original core still clears its 15 listeners at 10.517 s with 0.483 s left.
 These are deterministic simulations, not human playtest results.
+
+
+### Helper timing and route choice
+
+Helping Hand adds one fixed-speed recruiter for 30 donations, bringing the
+catalog total to 348. It walks at 150 px/s and uses three one-second phrases
+per listener. Travel and separate target effort matter; player upgrades do
+not alter helper stats. It earns only during the same clamped 11-second round.
+
+| Full player upgrades, practical route | Helper conversions | Total / 25 | Donations |
+| --- | --- | --- | --- |
+| Garden / meadow / well / market / east, with helper | 0 | 23 | 69 |
+| Meadow / well / market / east / garden, without helper | 0 | 21 | 63 |
+| Meadow / well / market / east / garden, with helper | 3 | 24 | 72 |
+
+The meadow-first route leaves the garden to the helper while the player works
+elsewhere. The helper finishes listeners at 4.267, 7.667 and 10.900 seconds;
+the player completes 21. The garden-first route repeatedly overtakes helper
+targets and wastes its partial effort, yielding no extra conversions. This
+is a deliberate route-choice limitation, not guaranteed passive income.
+Neither measured full-catalog route clears 25; full-clear time and margin
+remain undefined for those runs. The original core 15-person target retains
+its existing verified margin. Human enjoyment and price acceptance are open.

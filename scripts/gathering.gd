@@ -65,13 +65,32 @@ func tick_persuasion(delta: float, phrase_interval: float, conviction: float) ->
 		progress += maxf(0.0, conviction)
 		while progress + 0.000001 >= CONVICTION_REQUIRED and recruits < LISTENER_COUNT:
 			progress = maxf(0.0, progress - CONVICTION_REQUIRED)
-			listeners[recruits].following = true
-			recruits += 1
-			recruited.emit(DONATION)
+			recruit_listener(first_unconverted())
 	if recruits == LISTENER_COUNT:
 		progress = 0.0
 		phrase_elapsed = 0.0
 	queue_redraw()
+
+
+func first_unconverted() -> int:
+	for index in range(listeners.size()):
+		if not listeners[index].following:
+			return index
+	return -1
+
+
+func recruit_listener(index: int) -> bool:
+	if index < 0 or index >= listeners.size() or listeners[index].following:
+		return false
+	listeners[index].following = true
+	listeners[index].queue_redraw()
+	recruits += 1
+	if recruits == LISTENER_COUNT:
+		progress = 0.0
+		phrase_elapsed = 0.0
+	recruited.emit(DONATION)
+	queue_redraw()
+	return true
 
 
 func reset_round() -> void:

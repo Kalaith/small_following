@@ -32,7 +32,7 @@ func _run() -> void:
 	scene.set_process(false)
 	scene.seconds_left = scene.ROUND_SECONDS
 	var player = scene.player
-	check(scene.groups.size() == 3 and scene.progression.catalog.size() == 15, "three gatherings and fifteen real upgrades")
+	check(scene.groups.size() == 3 and scene.progression.catalog.size() == 16, "three gatherings and sixteen real upgrades")
 	check(player.get_node("Camera2D").enabled, "following camera enabled")
 	for action in ["move_left", "move_right", "move_up", "move_down", "next_round", "buy_upgrade", "toggle_ritual"]:
 		check(InputMap.has_action(action) and not InputMap.action_get_events(action).is_empty(), "mapped action: " + action)
@@ -146,7 +146,7 @@ func _test_expanded_village() -> void:
 	restored.save_path_override = path
 	root.add_child(restored)
 	restored.set_process(false)
-	check(restored.groups.size() == 5 and restored.groups[3].recruits == 0 and restored.progression.rank("talk_5") == 1, "relaunch recreates expanded village from saved ranks")
+	check(restored.groups.size() == 5 and restored.groups[3].recruits == 0 and restored.progression.rank("talk_5") == 1 and is_instance_valid(restored.helper), "relaunch recreates expanded village and helper from saved ranks")
 	restored.queue_free()
 	await process_frame
 	for suffix in ["", ".tmp", ".bak", ".corrupt"]:
@@ -217,7 +217,7 @@ func _test_graph(scene) -> void:
 	screen.focus_node("fixture_12_11")
 	check(screen.hit_test(screen.world_to_screen(screen.node_positions["fixture_12_11"])) == "fixture_12_11", "outermost ring remains navigable after pan/zoom")
 	screen.configure(scene.progression.catalog, scene.progression)
-	check(screen.node_positions.size() == 15, "fixture never becomes gameplay content")
+	check(screen.node_positions.size() == 16, "fixture never becomes gameplay content")
 	screen.select_node("talk_1")
 	check(screen.purchase_button.disabled, "purchased node button shows maximum state")
 	screen.select_node("talk_3")

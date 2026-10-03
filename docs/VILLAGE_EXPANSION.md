@@ -77,3 +77,13 @@ Run editor import, smoke, progression, pacing and displayed viewport captures
 for each behavioral slice; inspect logs and pixels. Keep isolated test saves.
 Commit each validated slice locally. Record actual evidence in VERIFICATION
 and PACING. Human acceptance and larger-town milestones remain outstanding.
+
+
+## Implemented result
+
+Both slices are implemented. The sixteen-node catalog retains all original
+IDs and ranks; new groups and the helper reconstruct from ordinary saved
+purchases. [PACING](PACING.md) records the measured routes, including helper
+contested-target limits. [VERIFICATION](VERIFICATION.md) records automated
+checks and actual rendered inspection. Human balance/navigation acceptance,
+second towns, magic and offline income remain outside the delivered slice.

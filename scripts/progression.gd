@@ -4,8 +4,8 @@ extends RefCounted
 
 const SAVE_VERSION: int = 2
 const MAX_COUNTER: int = 1000000000
-const EFFECT_KEYS: Array[String] = ["speech_speed_add", "conviction_add", "run_speed_add", "meadow_unlock", "east_unlock"]
-const UNLOCK_KEYS: Array[String] = ["meadow_unlock", "east_unlock"]
+const EFFECT_KEYS: Array[String] = ["speech_speed_add", "conviction_add", "run_speed_add", "meadow_unlock", "east_unlock", "helper_unlock"]
+const UNLOCK_KEYS: Array[String] = ["meadow_unlock", "east_unlock", "helper_unlock"]
 
 var coins: int = 0
 var total_recruits: int = 0
@@ -197,6 +197,7 @@ func effect_preview(id: String) -> Dictionary:
 		"conviction": conviction_per_phrase(),
 		"run_multiplier": run_multiplier(),
 		"gatherings": gathering_count(),
+		"helpers": int(has_unlock("helper_unlock")),
 	}
 	var result: Dictionary = {"current": current, "next": {}}
 	var upgrade: Dictionary = find_upgrade(id)
@@ -208,6 +209,7 @@ func effect_preview(id: String) -> Dictionary:
 	result.next.conviction += float(effect.get("conviction_add", 0.0))
 	result.next.run_multiplier += float(effect.get("run_speed_add", 0.0))
 	result.next.gatherings += int(effect.get("meadow_unlock", 0)) + int(effect.get("east_unlock", 0))
+	result.next.helpers += int(effect.get("helper_unlock", 0))
 	return result
 
 

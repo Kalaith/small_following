@@ -99,6 +99,7 @@ func simulate_route(label: String, order: Array[int], quotas: Array[int], durati
 		"running_speed": scene.player.movement_speed,
 		"upgrade_spend": purchase_cost,
 		"recruits": scene.round_recruits,
+		"helper_recruits": scene.helper.completed_recruits if is_instance_valid(scene.helper) else 0,
 		"donations": scene.progression.coins - starting_coins,
 		"groups": audience_counts,
 		"walking_seconds": snappedf(walking_time, 0.001),
@@ -199,5 +200,12 @@ func _run() -> void:
 	check(expanded.recruits > expanded_partial.recruits, "new final speaking and running tier improves actual expanded route yield")
 	var expanded_slow: Dictionary = await simulate_route("expanded hesitant route", [2, 3, 0, 1, 4], [5, 5, 5, 5, 5], -1.0, expanded_ranks, slow_options)
 	check(expanded_slow.recruits < expanded.recruits, "expanded population still rewards route execution")
+	var assisted_ranks: Array[String] = expanded_ranks.duplicate()
+	assisted_ranks.append("helper_1")
+	var assisted: Dictionary = await simulate_route("expanded helper garden-first route", [2, 3, 0, 1, 4], [5, 5, 5, 5, 5], -1.0, assisted_ranks, PRACTICAL)
+	check(assisted.helper_recruits == 0 and assisted.recruits == expanded.recruits, "overlapping garden-first route can waste helper effort; ownership gives no automatic recruitment bonus")
+	var meadow_first: Dictionary = await simulate_route("expanded meadow-first without helper", [3, 0, 1, 4, 2], [5, 5, 5, 5, 5], -1.0, expanded_ranks, PRACTICAL)
+	var assisted_meadow: Dictionary = await simulate_route("expanded meadow-first with helper", [3, 0, 1, 4, 2], [5, 5, 5, 5, 5], -1.0, assisted_ranks, PRACTICAL)
+	check(assisted_meadow.helper_recruits > 0 and assisted_meadow.recruits > meadow_first.recruits, "leaving garden work to the helper improves a measured alternate route")
 	print("PACING RESULT: %d checks, %d failures" % [checks, failures])
 	quit(0 if failures == 0 else 1)

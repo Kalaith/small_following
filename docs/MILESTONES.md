@@ -40,7 +40,9 @@ Exit: a fresh-save session reaches the unlock, both towns remain navigable, town
 
 ## 4. Bounded automation
 
-Prototype one helper job first, such as collecting donations. Add a second behavior or one spell only after the first creates a useful choice. Decide whether earlier towns earn idle income before building offline accrual.
+A first helper now travels to individual listeners and recruits them during active rounds. Two purchasable gatherings extend the existing village; they do not implement the second-town milestone. Add a second behavior or one spell only after the first creates a useful choice. Decide whether earlier towns earn idle income before building offline accrual.
+
+Status: bounded helper implementation supplied; human usefulness and application-focus policy remain open.
 
 Exit: the helper performs its documented task, rewards are counted once and the player can still steer and affect the round. A paused or inactive game follows an explicit earnings policy. Offline income, if adopted, has defined limits and clock-change behavior.
 

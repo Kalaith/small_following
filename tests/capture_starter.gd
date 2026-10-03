@@ -115,6 +115,8 @@ func capture_full_clear(scene) -> void:
 
 
 func capture_expansion(scene) -> void:
+	scene.ritual_screen.select_node("run_5")
+	await save_frame("ritual-expansion-locked.png")
 	scene.progression.coins = 500
 	for item in scene.progression.catalog.slice(9):
 		scene.purchase_upgrade(item.id)
@@ -126,4 +128,10 @@ func capture_expansion(scene) -> void:
 	scene.player.get_node("Camera2D").reset_smoothing()
 	scene._update_hud()
 	await save_frame("village-expanded.png")
+	for index in range(180):
+		scene.advance_round(1.0 / 60.0)
+	scene._update_hud()
+	await save_frame("helper-speaking.png")
 	scene.advance_round(100.0)
+	scene.ritual_screen.select_node("helper_1")
+	await save_frame("ritual-helper.png")

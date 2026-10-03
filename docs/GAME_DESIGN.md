@@ -35,7 +35,7 @@ These are current implementation defaults, not previously confirmed balance deci
 | Base persuasion | One conviction per phrase; three conviction recruits a listener | Persuasion changes work done per phrase. |
 | Base movement | 180 world pixels per second | Running upgrades change travel time while preserving ordinary direct movement. |
 | Donations | Three per recruitment event | A typical opening round can afford an initial six-donation upgrade. |
-| Ranked progression | Original six inner nodes with one rank, three tier-III nodes with two; six new single-rank nodes | Preserve the original clear and extend progression through populated groups. |
+| Ranked progression | Original six inner nodes with one rank, three tier-III nodes with two; seven new single-rank nodes | Preserve the original clear and extend progression through populated groups. |
 | Audience lifecycle | Reset all groups each round | The same villagers may be recruited again; the total counts events, not unique followers. |
 | Round boundary | Earning stops and the ritual screen opens; the player starts the next round | Allows unhurried decisions. Movement input stays available. |
 
@@ -61,7 +61,7 @@ The original progression retains **nine real nodes**: three tiers in each of thr
 | Persuasion | +0.5 conviction per phrase | Each phrase contributes more recruitment progress; movement and phrase frequency are unchanged. |
 | Running speed | +15% of base movement speed | Reaching and changing audiences takes less time; speaking itself is unchanged. |
 
-Effects within a branch add to its base value. Full ranks give 1.9 phrases/second, 3 conviction/phrase and 288 pixels/second running speed. All first-rank effects retain their original values, so existing purchases keep their benefits. Conviction above the threshold carries toward the next listener, so stronger phrases retain their full cumulative value.
+Effects within a branch add to its base value. Full ranks in the original core give 1.9 phrases/second, 3 conviction/phrase and 288 pixels/second running speed. All first-rank effects retain their original values, so existing purchases keep their benefits. Conviction above the threshold carries toward the next listener, so stronger phrases retain their full cumulative value.
 
 The original nine purchases cost 81 donations; the three new ranks cost 54 more, for 135 total. A late round that fully converts two groups earns 30 donations, enough for an 18-donation rank. The new talking rank shortens every phrase interval; the new persuasion rank reaches one complete listener per phrase; the new running rank reduces the time spent crossing the village. Exact prices, increments and rank limits remain provisional tuning, while the goal of a close full-village conversion is confirmed. See [route measurements](PACING.md) for the full-clear budget and incomplete-build comparisons.
 
@@ -73,9 +73,9 @@ Adding a definition is appropriate only when its effect is implemented and teste
 
 ### Expanded village (implemented)
 
-Six new single-rank nodes extend the catalog to fifteen nodes and eighteen purchases. Meadow Invitations and East Lane Invitations each add five listeners; each opens another talking and running tier. The new tiers preserve distinct frequency and movement effects. Total catalog cost is 318 donations; all player upgrades give 3 phrases/s, 3 conviction/phrase and 396 px/s. Existing ranks and saves retain their benefits. Exact prerequisites, costs and provisional choices are in [VILLAGE_EXPANSION](VILLAGE_EXPANSION.md).
+Seven new single-rank nodes extend the catalog to sixteen nodes and nineteen purchases. Meadow Invitations and East Lane Invitations each add five listeners; each opens another talking and running tier. The new tiers preserve distinct frequency and movement effects. Total catalog cost is 348 donations; all player upgrades give 3 phrases/s, 3 conviction/phrase and 396 px/s. Existing ranks and saves retain their benefits. Exact prerequisites, costs and provisional choices are in [VILLAGE_EXPANSION](VILLAGE_EXPANSION.md).
 
-New groups appear on purchase, reset each round and are recreated from saved upgrades after relaunch. The original 15-listener route remains the earlier progression benchmark. Expanded-route evidence is recorded separately in [PACING](PACING.md). The helper requested in this extension is the next implementation slice.
+New groups appear on purchase, reset each round and are recreated from saved upgrades after relaunch. The original 15-listener route remains the earlier progression benchmark. Expanded-route evidence is recorded separately in [PACING](PACING.md). Helping Hand unlocks a teal-robed recruiter after Meadow Invitations. It chooses the nearest reachable unconverted listener, walks around prop footprints at 150 px/s and speaks once per second, with three phrases required per listener. It repeats during active time, rests during intermission and resets each round. The helper has its own fixed stats. If the player finishes its target first, the helper drops that target's effort and finds another; recruitment pays once through the same gathering authority.
 
 ## Progression and save scope
 
@@ -83,7 +83,7 @@ Versioned local progression keeps donations, purchased upgrade ranks, the recrui
 
 Town unlocks, unique persistent followers, mid-round continuation, cloud saves, prestige and offline accrual are not implemented. Choose an audience lifecycle and an economy before treating the event total as a persistent population.
 
-Later minions may collect donations, attract villagers or preach to assigned audiences. Magic may extend reach or provide temporary gathering effects. Helpers should leave useful movement choices for the player. Earlier towns providing idle income remains an optional hypothesis. Stamina, if introduced, must not disable ordinary walking.
+The first helper recruits individual listeners. Later minions may collect donations, attract villagers or preach to assigned audiences. Magic may extend reach or provide temporary gathering effects. Helpers should leave useful movement choices for the player. Earlier towns providing idle income remains an optional hypothesis. Stamina, if introduced, must not disable ordinary walking.
 
 ## Readability and feedback
 

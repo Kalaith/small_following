@@ -9,10 +9,11 @@ The project targets Godot 4.2.2, GDScript and Compatibility rendering. It has no
 | `scenes/main.tscn` | Playable scene, ground, sorted actors and player instance |
 | `scripts/main.gd` | Round timing, nearest audience, reward events, progression integration and compact village HUD |
 | `scripts/player.gd`, `scenes/player.tscn` | Direct CharacterBody2D movement, feet collision, camera, drawn cultist and trailing cloth |
+| `scripts/helper.gd` | One autonomous recruiter, grid travel, individual targets and independent phrase effort |
 | `scripts/gathering.gd` | Five listeners, phrase timing, conviction, local feedback and recruitment signal |
 | `scripts/progression.gd` | Catalog validation, authoritative purchase checks, stat calculations and versioned local progression |
 | `scripts/ritual_screen.gd` | Procedural ritual geometry, pan/zoom, selection, readable details and action signals |
-| `data/upgrades.json` | Nine real upgrade definitions with stable IDs, per-rank effects/prices, rank limits, prerequisites and graph coordinates |
+| `data/upgrades.json` | Sixteen real upgrade definitions with stable IDs, per-rank effects/prices, rank limits, prerequisites and graph coordinates |
 | `scripts/village.gd` | Deterministic ground/props and collision footprints |
 | `tests/` | Isolated economy/save checks, scene integration, route simulation and rendered captures |
 | `assets/` | Project icon; reserve future subfolders for licensed production assets |
@@ -24,11 +25,11 @@ Movement never checks round activity or ritual visibility. Round logic chooses o
 
 ## Round and speech model
 
-The provisional round lasts 11 seconds. Each new round returns the cultist to `(780, 680)` and resets each audience. Three groups of five listeners provide a maximum village capacity of 15, but the opening timer permits roughly three baseline conversions on representative direct routes. There is no three-recruit cap. See [timing assumptions and route evidence](PACING.md).
+The provisional round lasts 11 seconds. Each new round returns the cultist to `(780, 680)` and resets each audience. Three initial groups of five listeners provide capacity for 15, growing to 25 through two invitation purchases, but the opening timer permits roughly three baseline conversions on representative direct routes. There is no three-recruit cap. See [timing assumptions and route evidence](PACING.md).
 
 Each audience owns its phrase timer and conviction progress. Base speech produces one phrase per second, adding one conviction; three conviction recruits a listener and awards three donations. Partial phrase time and conviction stay with the gathering while the player leaves range. Conviction above the recruitment threshold carries to the next listener. Round reset clears both values.
 
-Talking upgrades add to a base phrase-frequency multiplier: interval = `1 / (1 + sum(purchased speech_speed_add))`. The three first ranks each add 0.2; `talk_3` rank 2 adds 0.3. Each persuasion rank adds 0.5 conviction per phrase. Each running rank adds 0.15 to the base 180-pixel/second speed multiplier. Full ranks therefore give 1.9 phrases/second, 3 conviction/phrase and 288 pixels/second. These are distinct axes; do not collapse them into one generic persuasion-rate stat.
+Talking upgrades add to a base phrase-frequency multiplier: interval = `1 / (1 + sum(purchased speech_speed_add))`. The three original first ranks each add 0.2; `talk_3` rank 2 adds 0.3. Each persuasion rank adds 0.5 conviction per phrase. Each original running rank adds 0.15 to the base 180-pixel/second speed multiplier. Full ranks in the original core therefore give 1.9 phrases/second, 3 conviction/phrase and 288 pixels/second. The two new talking tiers add 0.5 and 0.6 base phrases/s; each new running tier adds 0.3 of base speed. Full player stats are 3 phrases/s, 3 conviction/phrase and 396 px/s. These are distinct axes; do not collapse them into one generic persuasion-rate stat.
 
 Full-village success follows only from ordinary travel, phrase intervals and conviction. There is no full-upgrade completion shortcut, extra time or conversion cap. The pacing test records the actual completion time of all 15 listeners on practical routes and compares partial/nonoptimal builds with the same 11-second boundary.
 
@@ -38,19 +39,44 @@ The cumulative `total_recruits` value counts **recruitment events**, including r
 
 ## Upgrade data and graph expansion
 
-Catalog schema 1 contains an `upgrades` array. Each definition supplies `id`, `title`, `description`, `branch`, `ring`, `angle_degrees`, `cost`, `requires` and an `effect` dictionary. Ranked definitions add `max_rank` and `rank_costs`; optional `rank_effects` supplies a different effect dictionary for each rank. Supported effect keys are `speech_speed_add`, `conviction_add` , `run_speed_add`, `meadow_unlock` and `east_unlock`. Unlock effects must have value 1, one rank and one occurrence per catalog. IDs are save references and must remain stable.
+Catalog schema 1 contains an `upgrades` array. Each definition supplies `id`, `title`, `description`, `branch`, `ring`, `angle_degrees`, `cost`, `requires` and an `effect` dictionary. Ranked definitions add `max_rank` and `rank_costs`; optional `rank_effects` supplies a different effect dictionary for each rank. Supported effect keys are `speech_speed_add`, `conviction_add`, `run_speed_add`, `meadow_unlock`, `east_unlock` and `helper_unlock`. Unlock effects must have value 1, one rank and one occurrence per catalog. IDs are save references and must remain stable.
 
 An omitted `max_rank` defaults to 1; valid limits are integers from 1 to 100. `rank_costs` must match the rank count, contain positive bounded integers and begin with the original `cost`. When present, `rank_effects` must match the rank count, contain supported positive effects and begin with the original `effect`; otherwise every rank repeats `effect`. Keeping first-rank values stable preserves the benefit of old purchases. The current catalog uses a distinct second effect only for `talk_3`. Catalog loading also rejects duplicate IDs, invalid coordinates/costs/effects, missing/self/duplicate prerequisites and prerequisite cycles.
 
 If catalog loading fails, the scene shows its notice and disables rounds/save writes without loading or replacing existing progression. Repair the definitions before resuming.
 
-The original catalog core retains three branches with three nodes each. The six inner nodes have one rank; `talk_3`, `persuade_3` and `run_3` have two. First-rank costs remain 6, 9 and 12 donations by ring; each second rank costs 18. This core is twelve purchases costing 135 donations. Six new single-rank nodes add two gathering unlocks and two stat tiers for talking/running, making eighteen purchases costing 318 donations. `main.apply_upgrades` creates each unlocked gathering exactly once; save reload reconstructs them from the same ranks. A prerequisite requires at least rank 1, not all ranks, of its referenced node.
+The original catalog core retains three branches with three nodes each. The six inner nodes have one rank; `talk_3`, `persuade_3` and `run_3` have two. First-rank costs remain 6, 9 and 12 donations by ring; each second rank costs 18. This core is twelve purchases costing 135 donations. Six new single-rank nodes add two gathering unlocks and two stat tiers for talking/running, making eighteen purchases costing 318 donations before the single-rank, 30-donation helper. The full catalog has sixteen nodes, nineteen purchases and costs 348 donations. `main.apply_upgrades` creates each unlocked gathering exactly once; save reload reconstructs them from the same ranks. A prerequisite requires at least rank 1, not all ranks, of its referenced node.
 
 `try_purchase(id, expected_rank = -1)` validates the requested node and next rank. UI requests include the selected current rank; a stale request after a previous purchase is rejected. One input buys one rank, a maximum-rank request spends nothing, and a failed candidate save grants nothing. The optional expected rank supports programmatic purchases without weakening the maximum-rank, prerequisite or affordability checks. Stats sum effects only through each saved purchased rank.
 
 The ritual computes node positions from ring radius and angle, draws the node network as the seal, and keeps selection details in stationary UI. Rank pips and labels distinguish partial and maximum ranks; details show the next price and current-to-next stat effect. Pan and zoom affect drawing and hit testing through the same coordinate conversion. The mouse wheel anchors zoom at the cursor; dragging changes pan. Recenter restores a fitted view. Do not couple node count to fixed UI slots.
 
 A separate 144-node test fixture stresses placement, navigation and transformed selection without entering the production catalog or save. Large-scale test success does not prove that hundreds of authored upgrades will be readable or balanced. New content still needs sensible angular spacing, meaningful effects and human navigation review. Keyboard/gamepad graph traversal, filtering and search are future work.
+
+## Helper ownership and shared conversions
+
+`helper.gd` owns one nonblocking Node2D actor under the Y-sorted Actors node.
+Its AStarGrid2D uses 24-pixel cells and the actual static prop circle/rectangle
+footprints, conservatively inflated by a half-cell diagonal plus a 7px body
+radius. It chooses the shortest reachable path to a cell beside an unconverted
+listener. Village props are static; navigation is built once on creation.
+Future moving props would require rebuilding it. Every current listener is
+reachable in the implemented static layout.
+
+Main creates the actor only after a saved `helper_unlock` purchase (or reload),
+passes only clamped active-round time, stops it at expiry and resets it at the
+next entrance. The helper advances travel and phrases in at most 1/60-second
+substeps, preserving travel time before speech even on long render frames.
+It owns a group/index target, phrase timer and target-specific conviction;
+these are transient and separate from the player's group-level overflow.
+
+`gathering.recruit_listener(index)` is the single conversion/reward authority.
+It checks the listener's state before marking and paying. Player speech chooses
+the first remaining listener, skipping any helper conversions; partial group
+conviction still carries forward. If the player finishes a helper target, that
+helper effort resets before retargeting. Main routes both kinds of recruitment
+through the same donations/event-total callback. Helper unlocks persist as
+ordinary schema-2 ranks; no target or per-round audience data is saved.
 
 ## Local progression and recovery
 
@@ -77,7 +103,7 @@ Restarting restores currency, purchases, the event total and saved round number,
 
 ## Boundaries for future work
 
-There is no dialogue system, helper AI, magic, second town, audio, export preset or release build. Window resizing scales the canvas; accessible UI scaling and input rebinding remain future work. Application focus does not implement a pause/earnings policy.
+There is no dialogue system, magic, second town, audio, export preset or release build. Window resizing scales the canvas; accessible UI scaling and input rebinding remain future work. Application focus does not implement a pause/earnings policy.
 
 Split reusable props, villagers, HUD and town definitions into scenes/resources as content grows. Town definitions should own stable IDs, positions, capacities and unlock rules; mutable town progress belongs in the save. Extend schema only for implemented features. Keep reward ownership centralized so future player speech, minions and spells cannot pay the same event twice.
 

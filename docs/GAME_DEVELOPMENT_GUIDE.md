@@ -74,6 +74,7 @@ are supported project patterns; changing them to sprites is an art decision.
 | --- | --- |
 | `player.gd` | Input, physics movement, bounds and visual cloth motion |
 | `main.gd` | Round time, audience selection, reward routing and transitions |
+| `helper.gd` | Single-listener targeting, prop-aware travel and helper phrase timing |
 | `gathering.gd` | Phrase time, conviction overflow and individual recruitment events |
 | `progression.gd` | Validated catalog, purchase authority, stats and durable progression |
 | `ritual_screen.gd` | Graph view, selection, pan/zoom, details and action requests |
@@ -124,6 +125,7 @@ $godotExe = 'C:\Program Files\Godot\Godot_v4.2.2-stable_mono_win64_console.exe'
 & $godotExe --headless --path . --script res://tests/smoke_test.gd
 & $godotExe --headless --path . --script res://tests/test_progression.gd
 & $godotExe --headless --fixed-fps 60 --path . --script res://tests/test_pacing.gd
+& $godotExe --headless --fixed-fps 60 --path . --script res://tests/test_helper.gd
 ```
 
 The installed editor has a recorded `_EDITOR_GET` import failure. Preserve

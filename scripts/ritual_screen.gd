@@ -115,7 +115,7 @@ func update_state(round_recruits: int = 0) -> void:
 	var rank_limit: int = _max_rank(selected_id)
 	var cost: int = _next_cost(selected_id)
 	var branch: String = str(item.get("branch", ""))
-	var branch_name: String = {"talk": "THE VOICE", "persuade": "THE CONVICTION", "run": "THE PILGRIM", "gather": "THE VILLAGE"}.get(branch, "THE CIRCLE")
+	var branch_name: String = {"talk": "THE VOICE", "persuade": "THE CONVICTION", "run": "THE PILGRIM", "gather": "THE VILLAGE", "helper": "THE COMPANION"}.get(branch, "THE CIRCLE")
 	_branch_label.text = "%s  /  RING %s" % [branch_name, _roman(int(item.get("ring", 1)))]
 	_node_title.text = str(item.get("title", "Choose an inscription"))
 	_rank_label.text = "RANK %d / %d  %s" % [_displayed_rank, rank_limit, "- COMPLETE" if state == "purchased" else ""]
@@ -247,12 +247,14 @@ func _effect_text(id: String, branch: String, complete: bool) -> String:
 	var preview: Dictionary = _progression.call("effect_preview", id)
 	var current: Dictionary = preview.get("current", {})
 	var next: Dictionary = preview.get("next", {})
-	var stat_key: String = {"talk": "speech_frequency", "persuade": "conviction", "run": "run_multiplier", "gather": "gatherings"}.get(branch, "")
-	var heading: String = {"talk": "TALKING FREQUENCY", "persuade": "CONVICTION PER PHRASE", "run": "RUNNING SPEED", "gather": "VILLAGE GATHERINGS"}.get(branch, "")
-	var units: String = {"talk": "phrases/s", "persuade": "conviction", "run": "x base", "gather": "groups of five"}.get(branch, "")
+	var stat_key: String = {"talk": "speech_frequency", "persuade": "conviction", "run": "run_multiplier", "gather": "gatherings", "helper": "helpers"}.get(branch, "")
+	var heading: String = {"talk": "TALKING FREQUENCY", "persuade": "CONVICTION PER PHRASE", "run": "RUNNING SPEED", "gather": "VILLAGE GATHERINGS", "helper": "HELPERS"}.get(branch, "")
+	var units: String = {"talk": "phrases/s", "persuade": "conviction", "run": "x base", "gather": "groups of five", "helper": "helpers"}.get(branch, "")
 	if stat_key.is_empty() or not current.has(stat_key):
 		return ""
 	var current_value: float = float(current[stat_key])
+	if branch == "helper":
+		return "ONE LISTENER AT A TIME\n1 helper / 150 px per second" if complete else "HELPERS\n0 → 1 / one listener at a time"
 	if branch == "gather":
 		if complete or not next.has(stat_key):
 			return "%s\n%d groups / %d listeners" % [heading, int(current_value), int(current_value) * 5]
@@ -611,6 +613,9 @@ func _draw_glyph(canvas: Control, at: Vector2, branch: String, color: Color) -> 
 		"persuade":
 			canvas.draw_polyline(PackedVector2Array([at + Vector2(0, -12) * scale, at + Vector2(9, 0) * scale, at + Vector2(0, 12) * scale, at + Vector2(-9, 0) * scale, at + Vector2(0, -12) * scale]), color, 1.6, true)
 			canvas.draw_line(at + Vector2(0, -6) * scale, at + Vector2(0, 6) * scale, color, 1.2, true)
+		"helper":
+			canvas.draw_circle(at + Vector2(0, -7) * scale, 4.0 * scale, color)
+			canvas.draw_polyline(PackedVector2Array([at + Vector2(-8, 10) * scale, at + Vector2(0, -1) * scale, at + Vector2(8, 10) * scale]), color, 1.6, true)
 		"gather":
 			for x in [-9, 0, 9]:
 				canvas.draw_circle(at + Vector2(x, -5) * scale, 3.0 * scale, color)

@@ -15,6 +15,7 @@
     {"id":"run_4","title":"Fleet Footsteps IV","description":"Add 30% of base running speed to reach more listeners.","branch":"run","ring":4,"angle_degrees":-160,"cost":27,"max_rank":1,"rank_costs":[27],"requires":["meadow_1","run_3"],"effect":{"run_speed_add":0.3}},
     {"id":"east_1","title":"East Lane Invitations","description":"Invite five east-lane visitors. Opens the final talking and running tier.","branch":"gather","ring":4,"angle_degrees":30,"cost":33,"max_rank":1,"rank_costs":[33],"requires":["meadow_1","talk_4"],"effect":{"east_unlock":1}},
     {"id":"talk_5","title":"Quickened Words V","description":"Add 60% of base phrase frequency. Conviction per phrase stays independent.","branch":"talk","ring":5,"angle_degrees":-45,"cost":36,"max_rank":1,"rank_costs":[36],"requires":["east_1","talk_4"],"effect":{"speech_speed_add":0.6}},
-    {"id":"run_5","title":"Fleet Footsteps V","description":"Add 30% of base running speed. Keep choosing your own route.","branch":"run","ring":5,"angle_degrees":165,"cost":36,"max_rank":1,"rank_costs":[36],"requires":["east_1","run_4"],"effect":{"run_speed_add":0.3}}
+    {"id":"run_5","title":"Fleet Footsteps V","description":"Add 30% of base running speed. Keep choosing your own route.","branch":"run","ring":5,"angle_degrees":165,"cost":36,"max_rank":1,"rank_costs":[36],"requires":["east_1","run_4"],"effect":{"run_speed_add":0.3}},
+    {"id":"helper_1","title":"Helping Hand","description":"A helper walks to one listener at a time. Three one-second phrases recruit them; player stat upgrades affect only you.","branch":"helper","ring":4,"angle_degrees":110,"cost":30,"max_rank":1,"rank_costs":[30],"requires":["meadow_1"],"effect":{"helper_unlock":1}}
   ]
 }

@@ -57,7 +57,7 @@ func legacy_purchases(state: RefCounted) -> Dictionary:
 func _run() -> void:
 	clean_fixture()
 	var state = fresh()
-	check(state.catalog.size() == 15, "fifteen implemented definitions load")
+	check(state.catalog.size() == 16, "sixteen implemented definitions load")
 	check(state.max_rank("talk_1") == 1 and state.max_rank("talk_3") == 2 and state.rank("talk_3") == 0, "ranks extend outer seals without adding nodes")
 	check(state.max_rank("none") == 0 and state.next_cost("none") == 0, "unknown nodes have no purchasable rank")
 	check(state.load_progress() and state.coins == 0 and state.round_number == 1, "missing save has fresh defaults")
@@ -109,10 +109,14 @@ func _run() -> void:
 		check(full.try_purchase(id, 0) and full.coins == before_coins - price, "expansion purchase charges exact price: " + id)
 		check(not full.try_purchase(id, 0) and not full.try_purchase(id, 1) and full.coins == before_coins - price, "stale and maximum expansion purchases cannot charge: " + id)
 	check(full.coins == 0 and full.gathering_count() == 5 and is_equal_approx(full.speech_interval(), 1.0 / 3.0) and is_equal_approx(full.run_multiplier(), 2.2) and full.conviction_per_phrase() == 3.0, "six expansion nodes cost 183 and apply distinct effects")
+	check(full.effect_preview("helper_1").current.helpers == 0 and full.effect_preview("helper_1").next.helpers == 1, "helper preview explains one unlocked actor")
+	full.coins = 30
+	check(full.try_purchase("helper_1", 0) and full.coins == 0 and full.has_unlock("helper_unlock"), "one helper costs thirty donations")
 	full.save_enabled = true
 	check(full.save_progress(), "expanded ranks save using schema 2")
 	var expanded_reload = fresh()
 	check(expanded_reload.load_progress() and expanded_reload.purchased == full.purchased and expanded_reload.gathering_count() == 5, "expanded rank round trip restores invitations")
+	check(expanded_reload.has_unlock("helper_unlock"), "helper unlock survives schema-2 round trip")
 	var stale = fresh()
 	stale.save_enabled = false
 	stale.coins = 100
@@ -204,9 +208,14 @@ func _run() -> void:
 	write_fixture(CATALOG_FIXTURE, JSON.stringify(modified))
 	check(not state.load_catalog(CATALOG_FIXTURE), "same gathering cannot be unlocked by duplicate effects")
 	modified = definitions.duplicate(true)
+	modified.upgrades[15].max_rank = 2
+	modified.upgrades[15].rank_costs = [30, 30]
+	write_fixture(CATALOG_FIXTURE, JSON.stringify(modified))
+	check(not state.load_catalog(CATALOG_FIXTURE), "helper unlock cannot advertise unimplemented extra helpers through ranks")
+	modified = definitions.duplicate(true)
 	modified.upgrades[0].requires = ["talk_3"]
 	write_fixture(CATALOG_FIXTURE, JSON.stringify(modified))
-	check(not state.load_catalog(CATALOG_FIXTURE) and state.catalog.size() == 15, "cyclic catalog rejected without replacing current definitions")
+	check(not state.load_catalog(CATALOG_FIXTURE) and state.catalog.size() == 16, "cyclic catalog rejected without replacing current definitions")
 	modified = definitions.duplicate(true)
 	modified.upgrades[1].id = "talk_1"
 	write_fixture(CATALOG_FIXTURE, JSON.stringify(modified))
