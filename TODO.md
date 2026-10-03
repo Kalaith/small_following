@@ -14,6 +14,6 @@
 - [ ] Decide further minion tasks, magic scope and whether previous towns or offline time earn income.
 - [ ] Choose production art treatment, source licensed assets/audio and replace procedural placeholders.
 - [ ] Add audio controls and appropriate accessibility settings as those systems arrive.
-- [ ] Choose an export target and verify a fresh-save session, purchases and save recovery in an exported build.
+- [ ] Complete a fresh-save playthrough in the browser and Windows exports; verify browser purchases, restart and storage recovery on each host.
 
 Use [milestones](docs/MILESTONES.md) for sequence and exit criteria. Keep this list outstanding-only; record delivered behavior and checks in the README and verification record.

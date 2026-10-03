@@ -23,6 +23,7 @@ source for confirmed direction and provisional rules.
 | [First-map finale](FIRST_MAP.md) | Merchant and town opponent scope |
 | [MILESTONES](MILESTONES.md) | Bounded stages and their exit checks |
 | [VERIFICATION](VERIFICATION.md) | Dated results, evidence and known limitations |
+| [PUBLISHING](PUBLISHING.md) | Web/Windows exports, preview/production flags and itch.io |
 | [Documentation agent checklist](AGENTS.md) | Maintaining this documentation set |
 
 Keep each fact in its owning document and link to detailed evidence. TODO
@@ -171,10 +172,11 @@ art. Inspect actual local pixels before claiming fidelity. Follow the existing
 [reference transfer record](reference/README.md); retrying unsupported raw
 downloads or bypassing helper metadata is outside this workflow.
 
-An export platform has not been selected. Once requested, choose its settings
-and verify launch, input, rendering, saves, migration and recovery on that
-target. Record export evidence separately from editor runs. Local edits do not
-authorize installing export templates, publishing, remote changes or hosting.
+Web and Windows x86-64 exports are configured in `export_presets.cfg`.
+Use [PUBLISHING](PUBLISHING.md) for the standard 4.2.2 export editor and
+WebHatchery/itch.io scripts. Record export evidence separately from editor
+runs. Ordinary local edits do not authorize additional installations,
+publishing, remote changes or hosting.
 
 ## 7. Adaptation from the Rust references
 

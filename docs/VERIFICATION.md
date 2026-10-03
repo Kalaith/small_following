@@ -432,3 +432,26 @@ and [art provenance](../tools/promo/art-prompts.json). Source illustrations were
 copied without replacing existing project art. Fonts were rasterized locally,
 not redistributed. The inspected `D:\VideoGeneration` workspace was unchanged.
 No service startup, package installation, publishing or game export occurred.
+
+## Publishing scripts and exports, 2026-10-03
+
+- Added preview/default, production (`-p`), FTP and build-only modes;
+  separate Butler channels for HTML5 and Windows, remote preview and status.
+- Official standard Godot 4.2.2 and selected matching Web/Windows templates
+  installed with explicit user approval; SHA-512 checks match official sums.
+- Web and Windows release exports exit 0. Inspected both logs: no errors;
+  existing custom-cursor and unused Blender importer warnings remain.
+- Standard-editor standalone headless import exits 1 with those warnings,
+  without an error diagnostic. Export commands import and export successfully;
+  a clean standalone import is not claimed.
+- PowerShell publisher fixtures: 22 checks pass. Dry-run creates no deployment;
+  tampered/incomplete artifacts and contradictory flags fail. Fake Butler
+  verifies channel selection, preview dispatch and failure propagation.
+- Standard editor: progression 113/113, smoke 92/92, pacing 59/59. Inspected logs.
+- Actual Windows executable: the external progression suite runs against the
+  embedded pack and passes 113/113, exit 0, empty stderr. Saves use fixture paths.
+- Actual Web export served on localhost with isolation headers renders the
+  village in Chrome. Console has mix-rate fallback and Emscripten main-thread
+  blocking warnings; no missing-script/resource error was observed.
+- Human feel, a complete exported playthrough and browser storage recovery
+  remain outstanding. No gameplay or screen code changed in this slice.

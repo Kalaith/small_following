@@ -1,0 +1,6 @@
+{
+  "slug": "small_following",
+  "godot_version": "4.2.2",
+  "itch_target": "kalaith/small-following",
+  "itch_channels": { "html5": "html5", "windows": "windows" }
+}

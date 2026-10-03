@@ -49,7 +49,7 @@ The original six inner nodes each have one rank and the original tier-III nodes 
 
 All audiences reset each round. The cumulative recruited total counts **recruitment events**, including the same villagers on later rounds; it is not a population of unique permanent followers. Restarting preserves progression but begins a fresh timer and audience state. No offline rewards or partial-round continuation are implemented.
 
-The complete first-map catalog has 32 nodes and 35 ranks costing 1014 donations. The real catalog is `data/upgrades.json`. A separate **144-node validation fixture** exercises graph capacity and navigation; it is not additional purchasable game content. A second town, magic, audio, production assets and an exported release remain future work.
+The complete first-map catalog has 32 nodes and 35 ranks costing 1014 donations. The real catalog is `data/upgrades.json`. A separate **144-node validation fixture** exercises graph capacity and navigation; it is not additional purchasable game content. A second town, magic, audio and production assets remain future work. Browser and Windows exports use the [publishing workflow](docs/PUBLISHING.md).
 
 ## Village expansion
 
@@ -122,7 +122,18 @@ The tests cover movement/cloth/collision, speech timing, round transitions, dist
 
 Exact latest check counts, rendered inspection results and commands are recorded in [VERIFICATION.md](docs/VERIFICATION.md). The installed Mono build previously returned an `_EDITOR_GET` / `EditorSettings` error during headless editor import and exit 1 during automatic shutdown without a runtime diagnostic. Keep those environment results separate from successful script/runtime tests; do not describe import as clean unless a new run establishes that.
 
-No Git remote was created and no push, publishing, installation or export-platform change was performed.
+## Publishing
+
+`.\publish.ps1` exports Web and Windows and deploys to WebHatchery preview.
+Use `-Production` (`-p`) for local production, `-FTP` for live WebHatchery,
+or `-BuildOnly` to prepare artifacts. `-DryRun` makes no changes.
+Then `.\publish-itch.ps1` uploads both builds to
+[Small Following on itch.io](https://kalaith.itch.io/small-following).
+Its `-Preview` compares changes without uploading; `-Status` checks channels.
+
+See [publishing setup, flags and hosting requirements](docs/PUBLISHING.md).
+The approved standard Godot 4.2.2 editor exports the game; `Run.ps1` retains
+the original Mono editor. Runtime saves stay separate from packaged files.
 
 ## Local promo video
 
