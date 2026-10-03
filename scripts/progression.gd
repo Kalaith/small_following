@@ -216,6 +216,17 @@ func map_complete() -> bool:
 	return encounter_stage == 4
 
 
+func is_circle_complete() -> bool:
+	# The demo gate follows the current catalog, independently of the Priest objective.
+	# No saved flag: new catalog ranks must be earned, and failed writes grant nothing.
+	if catalog.is_empty():
+		return false
+	for entry in catalog:
+		if rank(entry.id) != max_rank(entry.id):
+			return false
+	return true
+
+
 func merchant_donation() -> int:
 	return BASE_MERCHANT_DONATION + int(_sum_effect("merchant_donation_add"))
 

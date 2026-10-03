@@ -15,6 +15,7 @@ This project is a bounded first-map prototype of movement, short earning rounds,
 - The initial upgrades improve talking speed, persuasion effectiveness and running speed through distinct mechanics.
 - Preserve the original ranked progression. With full ranks on the original nine nodes, a competent practical route should fully convert all three groups inside the round with little time to spare; merely reaching the groups does not meet this target.
 - The upgrade structure must accommodate over 100 future upgrades/layers through data and navigable rings or branches.
+- Spread the existing inscriptions more fully around the circle. When every current upgrade rank is bought, the inner circle lights up and can show **This is the end of the demo**; dismissal allows continued play. The centre will later lead to a new area's separate circle (requested 2026-10-03).
 - Add purchasable NPC groups, further speaking and moving tiers gated by group unlocks, and one helper that travels to individual NPCs to recruit them (requested 2026-10-03).
 - Progression eventually reaches larger, more populated towns. Later minions and magic reduce travel demands while preserving direct control.
 - Robes visibly trail and flap as the cultist moves.
@@ -72,6 +73,11 @@ One purchase action buys one rank. Nodes show current/maximum ranks, and selecte
 
 The graph is authored in `data/upgrades.json`, with stable IDs, ring/branch placement, rank limits, rank costs, prerequisites and supported stat effects. Its nodes and connections form the ritual geometry. Dragging pans the graph; the mouse wheel zooms; selection opens readable details outside the moving graph. A separate large validation fixture exercises more than 100 nodes without presenting unfinished upgrades as purchasable content.
 
+Eight evenly spaced semantic sectors spread the current content around the
+seal. Tiers move outward in gentle fans, retaining readable main paths and
+contextual cross-branch requirements. This presentation changes no catalog
+definition, price, prerequisite or effect.
+
 Adding a definition is appropriate only when its effect is implemented and tested. A large graph is a content capacity, not a promise that hundreds of upgrades are already designed or fun.
 
 ### Expanded village (implemented)
@@ -85,6 +91,16 @@ New groups appear on purchase, reset each round and are recreated from saved upg
 Versioned local progression keeps donations, purchased upgrade ranks, the recruitment-event total, round number and the number of town opponents convinced. Existing schema-1 single-purchase saves migrate each purchased node to rank 1 without changing those counters; new ranks must still be earned. A restart begins a fresh timed round with the retained values; it does not resume a partial conversation or award offline income. The cumulative total deliberately includes repeat recruitment of the same prototype villagers.
 
 Town unlocks, unique persistent followers, mid-round continuation, cloud saves, prestige and offline accrual are not implemented. Choose an audience lifecycle and an economy before treating the event total as a persistent population.
+
+The ritual centre's readiness is derived from all validated current catalog
+ranks being at their maximum, with an empty catalog never complete. No extra
+save flag is stored. The final successful purchase lights it immediately;
+existing fully ranked saves recover the same state on reload. This is separate
+from the saved priest victory. Clicking the centre or its visible navigation
+button shows **This is the end of the demo**. Keep playing or Esc dismisses it;
+Tab can return to the village and Enter can begin another round. Repeated
+activation does not change progression or award anything. No next area is
+loaded. See [the full-circle scope](RITUAL_COMPLETION.md).
 
 The first helper recruits individual listeners. Later minions may collect donations, attract villagers or preach to assigned audiences. Magic may extend reach or provide temporary gathering effects. Helpers should leave useful movement choices for the player. Earlier towns providing idle income remains an optional hypothesis. Stamina, if introduced, must not disable ordinary walking.
 
@@ -105,7 +121,7 @@ During upgrade selection, the ritual itself is the main composition: concentric 
 - Are donations tied only to recruitment, periodic, or both?
 - Which costs, effect sizes and branch combinations create worthwhile route choices?
 - How many rings remain understandable before the graph needs search, filtering or branch navigation?
-- What unlocks a town, how are previous towns revisited, and what automation stays interesting?
+- How should the completed centre lead into the next area's separate circle, how are previous towns revisited, and what automation stays interesting?
 
 Resolve these through short playable tests before expanding content. See [milestones](MILESTONES.md) and the [outstanding task list](../TODO.md).
 
@@ -135,4 +151,4 @@ relaunch retains the existing fresh-round policy. Browser users close the tab.
 
 ## First-map finale
 
-See [FIRST_MAP](FIRST_MAP.md) for the scoped design and provisional encounter rules. Implemented: two optional merchants, four merchant inscriptions, three opponents and a priest boss who walk to the center, twelve further inscriptions, and saved first-map completion. The full catalog has 32 nodes and 35 ranks. Town Debate opens the ordered encounters after East Lane Invitations. One opponent is attempted per round; victory persists, while partial conviction resets. The Priest ends the first map's objective; later maps await new direction. Costs, names, resistances and numerical balance are provisional.
+See [FIRST_MAP](FIRST_MAP.md) for the scoped design and provisional encounter rules. Implemented: two optional merchants, four merchant inscriptions, three opponents and a priest boss who walk to the center, twelve further inscriptions, and saved first-map completion. The full catalog has 32 nodes and 35 ranks. Town Debate opens the ordered encounters after East Lane Invitations. One opponent is attempted per round; victory persists, while partial conviction resets. The Priest ends the first map's objective. The completed ritual centre is reserved for a separate circle in the next area; that content remains future work. Costs, names, resistances and numerical balance are provisional.

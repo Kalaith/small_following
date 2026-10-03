@@ -1,5 +1,74 @@
 # Verification record - ranked progression, 2026-10-02
 
+## 2026-10-03 - Completed circle and demo message
+
+The all-ranks centre is derived by `Progression.is_circle_complete()` from
+the nonempty current catalog. It lights on the last successful purchase and
+on a completed-save reload. Clicking it opens the exact text **This is the
+end of the demo**. Keep playing/Esc dismiss; Tab returns to the village and
+Enter starts another round. A fixed button reaches the centre when it is
+panned away. No catalog, balance, schema or saved completion flag changed;
+Priest victory remains independent. Future areas remain unimplemented.
+
+Checks ran against the applied D: checkout with the installed
+**4.2.2.stable.mono.official.15073afe3** executable. Process-local APPDATA
+profiles and isolated fixtures preserve normal progression/settings saves.
+All runtime suites used `--headless --audio-driver Dummy --fixed-fps 60`.
+
+| Check | Result |
+| --- | --- |
+| All 26 GDScript files | `--check-only`, every exit 0, no parse diagnostics |
+| New demo-completion suite | 46 checks, zero failures, exit 0 |
+| Smoke / progression | 92 / 113 checks, zero failures, exit 0 |
+| Pacing / helper / merchants | 59 / 34 / 25 checks, zero failures, exit 0 |
+| Encounters / ritual readability | 210 / 84 checks, zero failures, exit 0 |
+| Audio / settings | 27 / 27 checks, zero failures, exit 0 |
+| Exit Game | Actual viewport button click flushed isolated saves and exited 0 |
+| Hidden rendering capture | 40 actual PNGs, exit 0, final logs have no warning/error diagnostics |
+| Headless editor import | Existing exit 1 `_EDITOR_GET` error, cursor/Blender-path warnings |
+
+The ten counted suites total **717 passing checks**, plus the separate exit
+check. Runtime suite logs contain no warning/error diagnostics.
+[Recorded output](verification/ritual-completion-checks.txt) includes every
+suite, import and parse run. Import is not claimed clean.
+
+New coverage distinguishes owning every node from buying every rank, rejects
+an empty catalog, and includes a newly added fixture entry without changing
+completion code. It checks final-rank affordability and failed-save rollback,
+reload with currency/recruitment/round/encounter preservation, transformed
+centre clicks at three zooms, hover feedback, repeated activation and unchanged
+save bytes. WASD remains active with the message open. Esc/settings priority,
+Tab return, configuration changes and continuing rounds dismiss it correctly.
+The separate 144-node fixture and existing migration/recovery guards pass.
+
+Actual 1280 x 800 PNGs were inspected from hidden Compatibility/OpenGL 3.3
+rendering on the NVIDIA GeForce RTX 4080 SUPER, with Dummy audio and fixed
+60 fps. [One missing second rank](verification/ritual-demo-incomplete.png)
+keeps the centre quiet; the [last rank lights it](verification/ritual-demo-ready.png).
+The [message](verification/ritual-demo-message.png) fits with a clear Keep
+playing action. [Dismissal](verification/ritual-demo-dismissed.png) restores
+the same completed-circle pixels. Focused East Lane and fixture branch
+captures retain readable details, node controls and prerequisite paths.
+The original-core route still completes 15 conversions at 10.517 seconds,
+leaving 0.483 seconds; opening and nonoptimal comparisons are unchanged.
+Human play feel and alternate-size acceptance remain outstanding.
+
+An initial capture reported native Ogg playback resources still in use at
+shutdown. A verbose reproduction identified Dummy-driver music playback.
+The visual fixture now disables audio output before scene startup and frees
+the scene before quitting. The final applied capture exits cleanly, and the
+four demo PNGs and East Lane remain byte-identical. Production audio is
+unchanged and retains its separate passing suite.
+
+The new source reference could not be materialized: the supported Windows
+helper failed at `os.setxattr`, leaving no final file. A supported batch upload
+of the final ready/message PNGs also stopped with
+`library upload failed: Library prepare_uploads is not available`; no Library
+attachment IDs were returned. Local PNGs are retained here. No transfer helper
+was bypassed. See [reference provenance](reference/README.md).
+No tools were installed, normal saves altered, exports rebuilt or publication
+performed.
+
 ## 2026-10-03 - Fuller ritual layout
 
 Spread the existing branches through eight evenly spaced sectors with a

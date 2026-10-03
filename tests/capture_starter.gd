@@ -25,6 +25,9 @@ func _capture() -> void:
 	DirAccess.make_dir_recursive_absolute(destination)
 	var scene = load("res://scenes/main.tscn").instantiate()
 	scene.persistence_enabled = false
+	# These are visual fixtures; audio has its own suite. Avoid Godot 4.2 Dummy
+	# playback retaining native Ogg voices after an otherwise successful capture.
+	scene.game_audio.output_enabled = false
 	root.add_child(scene)
 	scene.set_process(false)
 	scene.player.position = Vector2(645, 562)
@@ -102,6 +105,7 @@ func _capture() -> void:
 	await save_frame("recruitment-rewards-settled.png")
 	scene.advance_round(100.0)
 	await capture_encounters(scene)
+	await capture_demo_completion(scene)
 	await capture_readability(scene)
 	var fake = load("res://scripts/progression.gd").new()
 	fake.save_enabled = false
@@ -119,6 +123,10 @@ func _capture() -> void:
 	scene.ritual_screen._subtitle_label.text = "TEST DATA ONLY / NOT PLAYABLE UPGRADE CONTENT"
 	await save_frame("ritual-fixture-focus.png")
 	print("RENDER CAPTURE: " + destination)
+	# Complete scene teardown and deferred cleanup before shutting down servers.
+	scene.queue_free()
+	await process_frame
+	await process_frame
 	quit(1 if failed else 0)
 
 
@@ -214,6 +222,54 @@ func capture_readability(scene) -> void:
 	fixture.coins = 33
 	screen.select_node("east_1")
 	await save_frame("ritual-readability-east.png")
+	screen.configure(scene.progression.catalog, scene.progression)
+
+
+func capture_demo_completion(scene) -> void:
+	# In-memory fixtures exercise both the final second rank and the actual centre input.
+	var screen = scene.ritual_screen
+	var fixture = load("res://scripts/progression.gd").new()
+	fixture.save_enabled = false
+	if not fixture.load_catalog():
+		failed = true
+		push_error("Demo capture catalog failed: " + fixture.last_error)
+		return
+	var final_id: String = ""
+	for item in fixture.catalog:
+		fixture.purchased[item.id] = fixture.max_rank(item.id)
+		if fixture.max_rank(item.id) > 1:
+			final_id = item.id
+	if final_id.is_empty():
+		final_id = fixture.catalog.back().id
+	fixture.purchased[final_id] -= 1
+	fixture.coins = fixture.next_cost(final_id)
+	screen.configure(fixture.catalog, fixture)
+	screen.overview_button.pressed.emit()
+	screen.select_node(final_id)
+	await save_frame("ritual-demo-incomplete.png")
+	if screen.is_circle_complete() or not fixture.try_purchase(final_id):
+		failed = true
+		push_error("Demo capture final rank transition failed")
+		return
+	screen.update_state()
+	screen.overview_button.pressed.emit()
+	await save_frame("ritual-demo-ready.png")
+	var click := InputEventMouseButton.new()
+	click.position = screen.world_to_screen(Vector2.ZERO) - screen.graph.global_position
+	click.button_index = MOUSE_BUTTON_LEFT
+	click.pressed = true
+	screen.graph._gui_input(click)
+	click.pressed = false
+	screen.graph._gui_input(click)
+	if not screen.demo_message_visible():
+		failed = true
+		push_error("Demo capture centre click did not open the message")
+	await save_frame("ritual-demo-message.png")
+	screen.demo_continue_button.pressed.emit()
+	if screen.demo_message_visible():
+		failed = true
+		push_error("Demo capture message did not dismiss")
+	await save_frame("ritual-demo-dismissed.png")
 	screen.configure(scene.progression.catalog, scene.progression)
 
 

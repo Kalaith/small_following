@@ -131,6 +131,11 @@ $godotExe = 'C:\Program Files\Godot\Godot_v4.2.2-stable_mono_win64_console.exe'
 & $godotExe --headless --fixed-fps 60 --path . --script res://tests/test_helper.gd
 & $godotExe --headless --fixed-fps 60 --path . --script res://tests/test_merchants.gd
 & $godotExe --headless --fixed-fps 60 --path . --script res://tests/test_encounters.gd
+& $godotExe --headless --fixed-fps 60 --path . --script res://tests/test_ritual_readability.gd
+& $godotExe --headless --fixed-fps 60 --path . --script res://tests/test_demo_completion.gd
+& $godotExe --headless --fixed-fps 60 --path . --script res://tests/test_audio.gd
+& $godotExe --headless --fixed-fps 60 --path . --script res://tests/test_settings.gd
+& $godotExe --headless --fixed-fps 60 --path . --script res://tests/test_exit.gd
 ```
 
 The installed editor has a recorded `_EDITOR_GET` import failure. Preserve
@@ -152,6 +157,10 @@ unless the user needs an interactive one.
 Required behavioral coverage includes round -> ritual -> next round, movement
 between rounds, invalid/stale/max-rank purchases, save round trips, schema-1
 migration, recovery and transformed graph selection using the separate fixture.
+For the completion centre, check a missing second rank, the final purchase and
+failed-save rollback, completed-save reload, transformed centre clicks,
+repeated activation, dismissal and continued movement/rounds. Completion must
+remain derived from the current catalog and separate from Priest victory.
 Pacing tests must drive movement and conversation timing, count completed
 conversions, and record full-clear time and remaining time. Compare opening,
 full-rank and incomplete/nonoptimal routes. Human reaction and steering remain

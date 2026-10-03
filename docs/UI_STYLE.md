@@ -16,6 +16,8 @@ input/feedback in the design proposal. The current baseline is:
 | Active round | Choose a gathering; move into speaking range | Village routes, cultist and listeners | Time, donations, recruitment count and local phrase progress | Upgrade details appear between rounds |
 | Ritual overview | Find a branch or major unlock, then inspect it | Ordered purple sectors and main progression paths | Branch identity, purchase-state cues and visible navigation | Focus/zoom reveals more labels; selection opens full details |
 | Ritual selection | Compare the next rank and buy if useful, or start another round | Selected node, prerequisite ancestry and stationary details | Wallet, rank, current-to-next effect, cost and missing requirements | Unrelated cross-branch paths appear only when relevant |
+| Completed ritual | Inspect the lit centre or keep playing | Filled violet/lilac centre with a visible Open control | Completion means every current catalog rank is bought | Exact demo message appears on activation |
+| Demo message | Dismiss and continue | Exact text: This is the end of the demo | Keep playing button and Esc/Tab/Enter hints | The next area's separate circle remains future work |
 | Village between rounds | Walk and inspect, return to ritual or start next round | Visible village with earning stopped | Round-complete state and Tab/Enter guidance | Ritual details return with the ritual |
 | Settings | Adjust sound/fullscreen, then return | Centered violet utility panel | Percentages, switches, save status and continuing-timer reminder | Game/upgrade details remain behind the dimmed backdrop |
 
@@ -113,6 +115,14 @@ outside the moving graph, including current-to-next stats and maximum-rank
 messaging. A rectangular details area is useful support; the upgrade network
 itself remains a circle of connected nodes.
 
+The centre stays quiet while any catalog rank is missing. With every rank
+purchased, a bright filled seal, lilac rim and glow identify its clickable
+state. This is distinct from the Priest's saved Bramblewick-complete message.
+Keep the fixed **Inner circle lit / Open** control reachable below the graph
+when the centre has been panned out of view. Its incomplete state is disabled
+and explicitly says **Inner circle / Earn every rank**. Do not add catalog
+nodes or change purchase balance to make the circle appear fuller.
+
 ## 5. Input and discoverability
 
 Preserve WASD/arrows/left-stick movement even when ritual controls have focus.
@@ -137,6 +147,15 @@ node after panning; **Recenter** fits the graph while retaining the selection.
 no selection, the right panel invites a choice and purchasing is disabled.
 These controls provide a visible route to nodes whose graph captions are
 reduced at distance.
+
+Clicking the completed centre or its fixed button shows **This is the end of
+the demo** with a **Keep playing** action. Esc dismisses this message before
+opening settings; Tab returns to the village and Enter starts another round.
+The settings button still works and closes the notice. Hiding or reconfiguring
+the ritual clears the transient message. Reopening the centre is harmless and
+does not grant a reward, save a flag or load another area. Movement remains
+independent of the message. The future separate-circle transition is documented
+in [the completion brief](RITUAL_COMPLETION.md).
 
 Main progress lines are solid. Contextual cross-branch requirements use dashed
 lines and arrowheads so they remain distinguishable from decoration and main
@@ -191,6 +210,10 @@ to the existing evidence:
 | Selected and hovered prerequisite paths | `verification/ritual-readability-east.png`, `verification/ritual-readability-hover.png` |
 | Mixed purchase states | `verification/ritual-readability-states.png` |
 | Large-fixture branch navigation | `verification/ritual-fixture-branch.png` |
+| Full circle with ranks missing | `verification/ritual-demo-incomplete.png` |
+| Every rank purchased and centre lit | `verification/ritual-demo-ready.png` |
+| Exact demo-completion message | `verification/ritual-demo-message.png` |
+| Completed circle after dismissal | `verification/ritual-demo-dismissed.png` |
 
 Also exercise locked/unaffordable states, save-error notices, Tab return,
 movement with the ritual open, pan/zoom and selection. The capture sequence
@@ -207,6 +230,7 @@ content, not a promise of more than 100 implemented upgrades.
 - [ ] Motion, sorting and collision look consistent; robe movement settles at rest.
 - [ ] Direct movement and round/village/ritual transitions remain usable.
 - [ ] Pan, zoom, recenter and transformed selection work on both graph sizes.
+- [ ] Centre readiness, transformed activation, fixed-button access and dismissal remain clear without implying Priest victory or a playable second area.
 - [ ] Relevant failure states remain understandable and actionable.
 - [ ] Reviewed sizes, input methods, actual evidence and limits are recorded.
 

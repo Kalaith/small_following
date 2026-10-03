@@ -53,12 +53,14 @@ The original catalog core retains three branches with three nodes each. The six 
 
 `try_purchase(id, expected_rank = -1)` validates the requested node and next rank. UI requests include the selected current rank; a stale request after a previous purchase is rejected. One input buys one rank, a maximum-rank request spends nothing, and a failed candidate save grants nothing. The optional expected rank supports programmatic purchases without weakening the maximum-rank, prerequisite or affordability checks. Stats sum effects only through each saved purchased rank.
 
-`ritual_layout.gd` maps known branches to stable presentation sectors: Words
-above, Running left, Creed right, Village lower right and Followers lower
-left. Merchants and Trials fill the upper diagonals; Faith occupies the lower center. Ring metadata controls outward distance. Siblings in one branch/ring
-receive separate lanes within the sector; unfamiliar fixture branches use
-their initial catalog angle without rotating each successive tier. The view
-does not mutate catalog coordinates, effects, prices or prerequisites.
+`ritual_layout.gd` maps the eight known branches to evenly spaced presentation
+sectors: Words above, Running left, Creed right, Village lower right and
+Followers lower left. Merchants and Trials fill the upper diagonals; Faith
+occupies the lower centre. Ring metadata controls outward distance. Successive
+tiers sweep gently from one side of their own sector to the other; siblings
+in one branch/ring receive separate lanes. Unknown fixture branches retain
+their initial sector and narrow their fan to respect neighbouring sectors.
+The view does not mutate catalog coordinates, effects, prices or prerequisites.
 
 `ritual_screen.gd` draws this node network above quiet decorative rings and
 keeps selection details in stationary UI. The edge model distinguishes
@@ -91,6 +93,31 @@ or save. Large-scale test success does not prove that hundreds of authored
 upgrades will be readable or balanced. New content still needs sensible
 spacing, meaningful effects and human navigation review. Keyboard/gamepad
 graph traversal, filtering and search are future work.
+
+## Ritual completion centre
+
+`Progression.is_circle_complete()` derives completion from a nonempty current
+catalog with every saved rank equal to its validated maximum. It is independent
+of `map_complete()`, which records Priest victory. Do not replace this predicate
+with a hardcoded node count, an owned-node count or encounter progress. No new
+save field is needed: ordinary purchase/reload state is its source of truth.
+The staged purchase writer still determines whether a last rank is granted.
+
+`ritual_screen.gd` changes the quiet centre to a filled, glowing violet/lilac
+seal when ready and enables the fixed **Inner circle lit / Open** button. The
+button remains accessible if the drawn centre is outside the panned view.
+Centre picking shares the graph's world/screen transform. Activation opens a
+single reusable overlay with the exact title **This is the end of the demo**
+and a **Keep playing** button. Repeated activation creates no duplicate UI,
+rewards, saves or new area. Message visibility is transient.
+
+`main.gd` gives dismissal priority over the usual Esc settings shortcut. Tab
+returns to the village and Enter begins the next round through their existing
+paths. Hiding/reconfiguring the ritual or opening settings dismisses the notice;
+reopening the ritual does not resurrect it. Direct movement and the scene tree
+remain active. A future area may use this centre to open its own separate
+circle, but no such area, transition or save contract is implemented now.
+See [the scoped design](RITUAL_COMPLETION.md).
 
 ## Helper ownership and shared conversions
 
@@ -142,11 +169,18 @@ Restarting restores currency, purchases, the event total and saved round number,
 
 ## Boundaries for future work
 
-There is no dialogue system, magic, second town, audio, export preset or release build. Window resizing scales the canvas; accessible UI scaling and input rebinding remain future work. Application focus does not implement a pause/earnings policy.
+There is no dialogue system, magic or second town. Audio and independently
+saved settings are implemented; Web/Windows export workflows are documented
+in [PUBLISHING](PUBLISHING.md). Window resizing scales the canvas; accessible
+UI scaling and input rebinding remain future work. Application focus does not
+implement a pause/earnings policy.
 
 Split reusable props, villagers, HUD and town definitions into scenes/resources as content grows. Town definitions should own stable IDs, positions, capacities and unlock rules; mutable town progress belongs in the save. Extend schema only for implemented features. Keep reward ownership centralized so future player speech, minions and spells cannot pay the same event twice.
 
-Unique followers, settings, town unlocks, mid-round state and timestamps are not current save fields. If offline income is adopted, define limits, clock-change handling and one-time application before implementation. No cloud or backend architecture is required.
+Unique followers, town unlocks, mid-round state and timestamps are not current
+progression save fields. Settings use their own [preference store](SETTINGS.md).
+If offline income is adopted, define limits, clock-change handling and one-time
+application before implementation. No cloud or backend architecture is required.
 
 ## Verification strategy
 
@@ -157,10 +191,12 @@ Route simulation drives the actual player motion/collision and round/conversatio
 Use `tests/test_ritual_readability.gd` for sector placement, contextual edges,
 hover/selection separation, label bounds and transformed navigation. Exercise
 branch and node controls on the 144-node fixture without saving its IDs into
-ordinary progression. Inspect rendered states separately from the graph-model
-checks. Export checks become relevant once a platform and templates are
-selected. Record exact engine, commands, results and known environment
-failures in [VERIFICATION.md](VERIFICATION.md).
+ordinary progression. `tests/test_demo_completion.gd` exercises catalog-driven
+completion, final-rank purchase, save reload, transformed centre picking and
+message dismissal separately from Priest victory. Inspect rendered states
+separately from the graph-model checks. Record exact engine, commands, results
+and known environment failures in [VERIFICATION.md](VERIFICATION.md). Export
+checks follow the existing [publishing workflow](PUBLISHING.md).
 
 ## First-map opponents and typed listeners
 

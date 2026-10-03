@@ -18,6 +18,7 @@ const FIRST_RING: float = 112.0
 const NODE_RADIUS: float = 26.0
 const MIN_ZOOM: float = 0.025
 const MAX_ZOOM: float = 2.4
+const CORE_RADIUS: float = 42.0
 const Layout = preload("res://scripts/ritual_layout.gd")
 
 class GraphCanvas extends Control:
@@ -42,6 +43,12 @@ var focus_button: Button
 var overview_button: Button
 var branch_picker: OptionButton
 var node_picker: OptionButton
+var completion_button: Button
+var demo_message_label: Label
+var demo_continue_button: Button
+var _demo_overlay: Control
+var _demo_panel: PanelContainer
+var _core_hovered: bool = false
 var _branch_bar: HBoxContainer
 var _branch_buttons: Dictionary = {}
 var _branch_order: Array[String] = []
@@ -88,6 +95,7 @@ func _ready() -> void:
 
 
 func configure(catalog: Array, progression: RefCounted) -> void:
+	dismiss_demo_message()
 	_hovered_id = ""
 	_catalog = catalog
 	_progression = progression
@@ -164,6 +172,12 @@ func update_state(round_recruits: int = 0) -> void:
 			_status_label.text = "Select a sigil to begin."
 			purchase_button.text = "Choose an inscription"
 	purchase_button.disabled = state != "affordable"
+	var complete: bool = is_circle_complete()
+	completion_button.disabled = not complete
+	completion_button.text = "Inner circle lit / Open" if complete else "Inner circle / Earn every rank"
+	completion_button.tooltip_text = "All ranks are yours. Open the lit centre." if complete else "Purchase every rank in this circle to light its centre."
+	if not complete:
+		dismiss_demo_message()
 	_status_label.add_theme_color_override("font_color", LILAC if state == "affordable" or state == "purchased" else MUTED)
 	_update_branch_navigation()
 	graph.queue_redraw()
@@ -267,6 +281,34 @@ func focus_branch(branch: String) -> void:
 func get_selected_rank() -> int:
 	# Carry the rank the player saw; duplicate stale requests must not buy another.
 	return _displayed_rank
+
+
+func is_circle_complete() -> bool:
+	return is_instance_valid(_progression) and _progression.has_method("is_circle_complete") and _progression.is_circle_complete()
+
+
+func completion_hit_test(screen_point: Vector2) -> bool:
+	if not is_circle_complete() or not graph.get_global_rect().has_point(screen_point):
+		return false
+	return screen_to_world(screen_point).length() <= maxf(CORE_RADIUS, 18.0 / zoom)
+
+
+func demo_message_visible() -> bool:
+	return is_instance_valid(_demo_overlay) and _demo_overlay.visible and visible
+
+
+func open_demo_message() -> bool:
+	if not visible or not is_circle_complete() or not is_instance_valid(_demo_overlay):
+		return false
+	# One reusable in-scene panel; opening it neither rewards nor persists anything.
+	_demo_overlay.show()
+	_dragging = false
+	return true
+
+
+func dismiss_demo_message() -> void:
+	if is_instance_valid(_demo_overlay):
+		_demo_overlay.hide()
 
 
 func nodes_position(id: String) -> Vector2:
@@ -387,6 +429,7 @@ func _build_controls() -> void:
 	graph.mouse_filter = Control.MOUSE_FILTER_STOP
 	graph.mouse_exited.connect(func() -> void:
 		_hovered_id = ""
+		_core_hovered = false
 		graph.queue_redraw()
 	)
 	add_child(graph)
@@ -443,6 +486,56 @@ func _build_controls() -> void:
 			focus_node(_browse_ids[index])
 	)
 	add_child(node_picker)
+	completion_button = _button("Inner circle / Earn every rank", false)
+	completion_button.add_theme_font_size_override("font_size", 12)
+	completion_button.pressed.connect(open_demo_message)
+	_build_demo_message()
+
+
+func _build_demo_message() -> void:
+	_demo_overlay = Control.new()
+	_demo_overlay.name = "DemoCompletion"
+	_demo_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_demo_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(_demo_overlay)
+	var shade := ColorRect.new()
+	shade.color = Color(0.025, 0.01, 0.045, 0.82)
+	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_demo_overlay.add_child(shade)
+	_demo_panel = PanelContainer.new()
+	_demo_overlay.add_child(_demo_panel)
+	var style := StyleBoxFlat.new()
+	style.bg_color = PANEL
+	style.border_color = VIOLET
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(16)
+	style.content_margin_left = 32
+	style.content_margin_right = 32
+	style.content_margin_top = 30
+	style.content_margin_bottom = 30
+	_demo_panel.add_theme_stylebox_override("panel", style)
+	var body := VBoxContainer.new()
+	body.add_theme_constant_override("separation", 20)
+	_demo_panel.add_child(body)
+	for entry in [["THE CIRCLE IS COMPLETE", 13, VIOLET], ["This is the end of the demo", 30, WHITE], ["Every inscription is yours. You can keep playing in this village.", 17, LILAC]]:
+		var label: Label = _label(entry[0], entry[1], entry[2])
+		remove_child(label)
+		body.add_child(label)
+		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		if entry[1] == 30:
+			demo_message_label = label
+	demo_continue_button = _button("Keep playing", true)
+	remove_child(demo_continue_button)
+	body.add_child(demo_continue_button)
+	demo_continue_button.custom_minimum_size.y = 46
+	demo_continue_button.pressed.connect(dismiss_demo_message)
+	var hint: Label = _label("Esc: dismiss / Tab: village / Enter: next round", 12, MUTED)
+	remove_child(hint)
+	body.add_child(hint)
+	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_demo_overlay.hide()
 
 
 func _rebuild_branch_navigation() -> void:
@@ -560,7 +653,11 @@ func _layout() -> void:
 	branch_picker.position = _branch_bar.position
 	branch_picker.size = Vector2(minf(430, _branch_bar.size.x), 30)
 	node_picker.position = Vector2(margin, size.y - 103)
-	node_picker.size = Vector2(minf(440, _detail_x - margin - 36), 30)
+	node_picker.size = Vector2(minf(440, _detail_x - margin - 275), 30)
+	completion_button.position = Vector2(_detail_x - 253, size.y - 103)
+	completion_button.size = Vector2(226, 30)
+	_demo_panel.position = (size - Vector2(minf(600, size.x - 80), 332)) * 0.5
+	_demo_panel.size = Vector2(minf(600, size.x - 80), 332)
 	_title_label.position = Vector2(margin, 43)
 	_subtitle_label.position = Vector2(margin + 2.0, 23)
 	_coins_label.position = Vector2(_detail_x, 49)
@@ -606,11 +703,16 @@ func _purchase_selected() -> void:
 func _on_visibility_changed() -> void:
 	_dragging = false
 	_hovered_id = ""
+	_core_hovered = false
+	if not visible:
+		dismiss_demo_message()
 	if visible and _built:
 		update_state(_round_recruits)
 
 
 func _graph_input(event: InputEvent) -> void:
+	if demo_message_visible():
+		return
 	if event is InputEventMouseButton:
 		var mouse: InputEventMouseButton = event
 		var screen_point: Vector2 = graph.global_position + mouse.position
@@ -624,7 +726,9 @@ func _graph_input(event: InputEvent) -> void:
 					_dragging = false
 			else:
 				var id: String = hit_test(screen_point)
-				if mouse.button_index == MOUSE_BUTTON_LEFT and not id.is_empty():
+				if mouse.button_index == MOUSE_BUTTON_LEFT and completion_hit_test(screen_point):
+					open_demo_message()
+				elif mouse.button_index == MOUSE_BUTTON_LEFT and not id.is_empty():
 					select_node(id)
 				else:
 					_dragging = true
@@ -640,7 +744,8 @@ func _graph_input(event: InputEvent) -> void:
 			else:
 				_dragging = false
 		_hovered_id = hit_test(graph.global_position + mouse.position)
-		graph.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND if not _hovered_id.is_empty() else Control.CURSOR_DRAG
+		_core_hovered = completion_hit_test(graph.global_position + mouse.position)
+		graph.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND if _core_hovered or not _hovered_id.is_empty() else Control.CURSOR_DRAG
 		graph.queue_redraw()
 
 
@@ -731,14 +836,19 @@ func _draw_runes(canvas: Control, radius: float) -> void:
 
 func _draw_core(canvas: Control) -> void:
 	var center: Vector2 = _point(Vector2.ZERO)
-	canvas.draw_circle(center, 42.0 * zoom, Color("17101f"))
-	_arc(canvas, center, 42.0, Color(VIOLET, 0.18), 1.0)
-	# A small fictional seal; lower contrast than every upgrade state.
+	var complete: bool = is_circle_complete()
+	var radius: float = maxf(CORE_RADIUS * zoom, 18.0) if complete else CORE_RADIUS * zoom
+	if complete:
+		for index in range(4, 0, -1):
+			canvas.draw_circle(center, radius + index * 3.0, Color(VIOLET, 0.045))
+	canvas.draw_circle(center, radius, Color("674196") if complete else Color("17101f"))
+	canvas.draw_arc(center, radius, 0.0, TAU, 64, Color(WHITE if _core_hovered else LILAC, 1.0) if complete else Color(VIOLET, 0.18), 2.0 if complete else 1.0, true)
+	# Quiet while incomplete; the same seal becomes a bright, clickable demo gate.
 	var star := PackedVector2Array()
 	for index in range(6):
 		var angle: float = PI * 0.5 + TAU * ((index * 2) % 5) / 5.0
-		star.append(_point(Vector2.from_angle(angle) * 27.0))
-	canvas.draw_polyline(star, Color(VIOLET, 0.25), 1.0, true)
+		star.append(center + Vector2.from_angle(angle) * radius * 0.64)
+	canvas.draw_polyline(star, WHITE if complete else Color(VIOLET, 0.25), 1.6 if complete else 1.0, true)
 
 
 func _draw_node(canvas: Control, item: Dictionary) -> void:

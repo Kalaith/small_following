@@ -9,10 +9,11 @@ the demo**. The player can dismiss it and keep playing. In the future this
 centre will lead to a new area's separate ritual circle; that area is outside
 this change.
 
-The layout slice uses the existing eight branch sectors with gentle outward
-fans. The completion interaction is approved and planned for the next slice;
-implementation and check results will be recorded in
-[VERIFICATION](VERIFICATION.md).
+Implemented: the existing eight branch sectors now use gentle outward fans,
+and a fully ranked catalog lights the clickable centre. The completion message
+is dismissible and repeatable. Recorded checks and actual captures belong in
+[VERIFICATION](VERIFICATION.md); human usability and alternate-size acceptance
+remain outstanding.
 
 The current production catalog remains 32 nodes and 35 ranks costing 1014
 donations. Preserve every ID, price, rank, prerequisite, effect and save field.
@@ -54,17 +55,31 @@ visibility is transient. Reopening it repeats the same harmless information;
 dismissing it preserves purchases, currency, opponents and round state.
 Direct movement remains available, including with the ritual open.
 
+`Progression.is_circle_complete()` owns the predicate. The ritual centre uses
+the same pan/zoom transform as graph picking. The fixed **Inner circle lit /
+Open** button provides access when the centre is outside the view; while
+incomplete it is disabled and says **Inner circle / Earn every rank**.
+
+**Keep playing** or Esc dismisses the message. Tab reveals the village; Enter
+begins another round. Opening settings or hiding/reconfiguring the ritual also
+closes the notice. Reopening the ritual keeps its completed appearance but
+does not automatically reopen the message.
+
 ## Acceptance and limits
 
-Check incomplete progress, one missing second rank, the final purchase,
-completed-save reload, repeated activation and dismissal. Also check empty or
-invalid catalogs, purchase failures and independence from priest victory.
-Exercise centre hit testing after pan/zoom alongside existing node selection;
-retain the separate large fixture and purchase/save regressions.
+`tests/test_demo_completion.gd` covers incomplete progress, missing second
+ranks, the final purchase, completed-save reload, repeated activation and
+dismissal. It also checks an empty catalog, a newly added catalog entry,
+purchase failures and independence from priest victory. Centre picking is
+exercised after pan/zoom alongside the existing readability suite and isolated
+purchase/save regressions. Catalog validation stays with the progression suite.
 
-Inspect actual incomplete, ready, message and dismissed viewport captures at
-the baseline 1280 x 800 size. Human navigation and alternate-size review remain
-separate from automated assertions. The supplied screenshot could not be
+Actual baseline 1280 x 800 captures show [incomplete ranks](verification/ritual-demo-incomplete.png),
+[the lit centre](verification/ritual-demo-ready.png),
+[the exact message](verification/ritual-demo-message.png) and
+[the circle after dismissal](verification/ritual-demo-dismissed.png).
+Human navigation and alternate-size review remain separate from automated
+assertions. The supplied screenshot could not be
 materialized through the supported Windows Library helper; local visual
 decisions use fresh application captures. See [reference status](reference/README.md).
 

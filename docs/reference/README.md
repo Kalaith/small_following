@@ -25,9 +25,35 @@ Canonical filenames and sizes have not been resolved on this executor; none are 
 
 ## Transfer blocker
 
+### Fuller-circle reference, 2026-10-03
+
+The newly supplied `libfile_f75084b9c8c88191a60b3ddb2b39514f` resolves to
+`image(20261003-101119).png`, file
+`file_000000004a7481fd8bda56630479b6fe`, version 0, 170,993 bytes.
+For this explicitly requested transfer, the current Library skill and fresh
+unchanged transfer helper were used, including one bounded supported retry
+to an explicitly Windows-local task destination. The retry reached required
+metadata handling and failed with:
+
+```
+AttributeError: module 'os' has no attribute 'setxattr'
+```
+
+The atomic transfer left no final PNG; local existence was checked and was
+false. No pixels of this reference were inspected locally, no metadata was
+bypassed, and no substitute was generated. The latest layout and completion
+work use fresh rendered application captures, recorded in
+[VERIFICATION](../VERIFICATION.md).
+
+### Earlier supplied references
+
 The original Windows Library materialization attempt, including one bounded supported retry, failed because the download helper attempted to use `os.setxattr`, which is unavailable on Windows (`AttributeError`). The image read fallback also reported: `Native image pixels were unavailable; returned extracted text only.`
 
-The current update does not retry that known unsupported path, patch the helper or bypass its required metadata with a raw download. No generated approximation or extracted-text reconstruction replaces any original. Procedural art in the running game is separate from these missing reference files.
+The earlier originals were not retried during the current update. The helper
+was not patched and its required metadata was not bypassed with a raw download.
+No generated approximation or extracted-text reconstruction replaces any
+original. Procedural art in the running game is separate from these missing
+reference files.
 
 ## Recovery
 

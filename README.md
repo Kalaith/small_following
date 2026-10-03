@@ -25,6 +25,8 @@ From the project folder, `.\Run.ps1` also launches the game; pass `-GodotExe '<i
 | Pan the ritual | Left-drag empty graph space, or middle-drag |
 | Zoom / restore view | Mouse wheel / Recenter button |
 | Buy selected upgrade | U / Inscribe button / gamepad X (left face button) |
+| Open the demo message after buying every rank | Click the lit ritual centre / Inner circle lit button |
+| Dismiss the demo message | Keep playing / Esc; Tab returns to village, Enter starts another round |
 | Return to village / reopen ritual | Tab between rounds, or the ritual's village button |
 | Start next round | Enter / next-round button / gamepad A (bottom face button) |
 | Mute / unmute all audio | M |
@@ -43,7 +45,7 @@ The branch selector shows owned nodes/total nodes and ready purchase counts for 
 - A directly movable purple cultist with normalized diagonal speed, world bounds and visibly trailing cloth.
 - Three initial nonblocking gatherings of five listeners each, plus two purchasable gatherings, with local speech feedback and recruitment/donation events.
 - **Provisional 11-second rounds**, tuned toward roughly three opening conversions through travel and conversation time. There is no three-recruit cap; [pacing evidence and assumptions](docs/PACING.md) explain the limit and upgraded comparisons.
-- A large purple occult upgrade circle: 32 nodes across six rings, retaining second ranks on the three original tier-III nodes. Words stays above, Running left, Creed right, Merchants upper left, Trials upper right, and Village, Followers and Faith below as tiers progress outward. Quiet decoration, contextual prerequisite paths and shape/fill state cues support the existing rank details.
+- A large purple occult upgrade circle: 32 nodes across six rings, retaining second ranks on the three original tier-III nodes. Eight evenly spaced branch sectors fill the circle through gentle outward fans: Words above, Running left, Creed right, Merchants upper left, Trials upper right, and Village, Followers and Faith below. Quiet decoration, contextual prerequisite paths and shape/fill state cues support the existing rank details.
 - Three distinct upgrade effects: initial talking ranks each add 20% of base phrase frequency, persuasion ranks add 0.5 conviction per phrase, and running ranks add 15% of base movement speed. The outer talking node's second rank adds 30% of base frequency. Initial node prices remain 6, 9 and 12 donations per branch; each outer node's second rank costs 18.
 - Full ranks on the original nine nodes produce 1.9 phrases/second, 3 conviction/phrase and 288 pixels/second movement. The balance target is all 15 listeners across the three groups with a small positive margin on a competent route inside the unchanged 11-second round; [route evidence](docs/PACING.md) records actual timings and limitations.
 - Versioned local progression retaining currency, purchased ranks, the recruitment-event total and round number. Existing single-purchase saves keep each old purchase as rank 1.
@@ -55,6 +57,15 @@ The original six inner nodes each have one rank and the original tier-III nodes 
 All audiences reset each round. The cumulative recruited total counts **recruitment events**, including the same villagers on later rounds; it is not a population of unique permanent followers. Restarting preserves progression but begins a fresh timer and audience state. No offline rewards or partial-round continuation are implemented.
 
 The complete first-map catalog has 32 nodes and 35 ranks costing 1014 donations. The real catalog is `data/upgrades.json`. A separate **144-node validation fixture** exercises graph capacity and navigation; it is not additional purchasable game content. A second town, magic and production art remain future work. Browser and Windows exports use the [publishing workflow](docs/PUBLISHING.md).
+
+Buying every rank in the current catalog lights the ritual's inner circle.
+Click it, or the **Inner circle lit / Open** control below the graph, to see
+**This is the end of the demo**. **Keep playing** or Esc dismisses the message;
+movement, the village and further rounds remain available. Readiness is derived
+from saved ranks, so a completed save lights the centre after reload. This is
+independent of convincing the Priest. A future update will use this centre to
+reach a new area's separate circle; no second area is implemented here.
+[Completion scope and controls](docs/RITUAL_COMPLETION.md).
 
 ## Audio
 
@@ -93,6 +104,7 @@ See [save fields and recovery rules](docs/ARCHITECTURE.md#local-progression-and-
 - [GDScript and scene standards](docs/CODE_STANDARDS.md)
 - [UI composition and review](docs/UI_STYLE.md)
 - [Approved ritual readability scope](docs/RITUAL_READABILITY.md)
+- [Full ritual circle and demo completion](docs/RITUAL_COMPLETION.md)
 - [Design proposal template](docs/GDD_TEMPLATE.md)
 - [Commit message style](docs/COMMIT_STYLE.md)
 - [Confirmed direction and provisional rules](docs/GAME_DESIGN.md)
@@ -116,6 +128,11 @@ Expansion evidence: [five gatherings](docs/verification/village-expanded.png), [
 
 Readability evidence: [before the pass](docs/verification/ritual-readability-before.png), [branch overview after the pass](docs/verification/ritual-readability-overview.png), [East Lane prerequisites](docs/verification/ritual-readability-east.png), [hover preview](docs/verification/ritual-readability-hover.png), [purchase states](docs/verification/ritual-readability-states.png) and [large-fixture branch focus](docs/verification/ritual-fixture-branch.png). Cross-branch requirements appear when relevant to hover/selection; the fixed detail panel continues to name missing requirements.
 
+Full-circle evidence: [incomplete ranks](docs/verification/ritual-demo-incomplete.png),
+[lit centre](docs/verification/ritual-demo-ready.png),
+[demo message](docs/verification/ritual-demo-message.png) and
+[continued play after dismissal](docs/verification/ritual-demo-dismissed.png).
+
 Additional evidence: [moving robe](docs/verification/starter-moving.png), [purchased node](docs/verification/ritual-purchased.png), [available second rank](docs/verification/ritual-rank-available.png), [maximum rank](docs/verification/ritual-rank-max.png), [full village conversion](docs/verification/village-full-clear.png), [next round](docs/verification/starter-next-round.png), and the test-only [144-node graph](docs/verification/ritual-144-fixture.png) and [focused distant node](docs/verification/ritual-fixture-focus.png). The large fixture demonstrates navigation; its nodes are not shipped upgrades.
 
 ## Supplied references: local transfer blocked
@@ -137,6 +154,7 @@ $godotExe = 'C:\Program Files\Godot\Godot_v4.2.2-stable_mono_win64_console.exe'
 & $godotExe --headless --path . --script res://tests/test_progression.gd
 & $godotExe --headless --path . --script res://tests/smoke_test.gd
 & $godotExe --headless --path . --script res://tests/test_ritual_readability.gd
+& $godotExe --headless --path . --script res://tests/test_demo_completion.gd
 & $godotExe --headless --fixed-fps 60 --path . --script res://tests/test_pacing.gd
 & $godotExe --headless --fixed-fps 60 --path . --script res://tests/test_helper.gd
 & $godotExe --headless --fixed-fps 60 --path . --script res://tests/test_merchants.gd
@@ -144,7 +162,7 @@ $godotExe = 'C:\Program Files\Godot\Godot_v4.2.2-stable_mono_win64_console.exe'
 & $godotExe --fixed-fps 60 --path . --script res://tests/capture_starter.gd -- "--capture-dir=$PWD\docs\verification"
 ```
 
-The tests cover movement/cloth/collision, speech timing, round transitions, distinct rank effects, purchase guards, old-save migration and local-save validation/recovery. The readability suite exercises branch sectors, prerequisite ancestry, hover versus selection, navigation and transformed graph picking; rendered inspection checks the actual layout. Route tests drive the real scene at a fixed simulated timestep and count complete individual conversions, including full-rank completion time and remaining margin. Captures require a rendering display; headless tests cannot verify pixels. Human movement feel, pacing and large-graph navigation still need playtesting.
+The tests cover movement/cloth/collision, speech timing, round transitions, distinct rank effects, purchase guards, old-save migration and local-save validation/recovery. The readability suite exercises branch sectors, prerequisite ancestry, hover versus selection, navigation and transformed graph picking; rendered inspection checks the actual layout. The completion suite covers catalog-derived readiness, final-rank purchase, saved-rank reload, centre activation and dismissal independently of priest victory. Route tests drive the real scene at a fixed simulated timestep and count complete individual conversions, including full-rank completion time and remaining margin. Captures require a rendering display; headless tests cannot verify pixels. Human movement feel, pacing and large-graph navigation still need playtesting.
 
 Exact latest check counts, rendered inspection results and commands are recorded in [VERIFICATION.md](docs/VERIFICATION.md). The installed Mono build previously returned an `_EDITOR_GET` / `EditorSettings` error during headless editor import and exit 1 during automatic shutdown without a runtime diagnostic. Keep those environment results separate from successful script/runtime tests; do not describe import as clean unless a new run establishes that.
 
@@ -197,7 +215,9 @@ route wins in 9.133 seconds with 1.867 seconds left; incomplete and late routes 
 These values remain provisional until human playtesting.
 
 Convincing the Priest saves **Bramblewick complete**. Village rounds, direct movement
-and remaining purchases stay available afterwards. Further maps await future direction.
+and remaining purchases stay available afterwards. Buying every catalog rank separately
+lights the demo-completion centre; neither condition grants the other. Further maps await
+future implementation through that centre and a separate area circle.
 Older saves start with no opponents defeated and retain all existing progression.
 
 [Priest encounter](docs/verification/opponent-priest.png) ·

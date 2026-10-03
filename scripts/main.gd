@@ -115,7 +115,10 @@ func _input(event: InputEvent) -> void:
 	if event.is_echo():
 		return
 	if event.is_action_pressed("toggle_settings"):
-		set_settings_visible(not settings_screen.visible)
+		if ritual_screen.demo_message_visible():
+			ritual_screen.dismiss_demo_message()
+		else:
+			set_settings_visible(not settings_screen.visible)
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("toggle_fullscreen"):
 		set_fullscreen(not is_fullscreen())
@@ -156,6 +159,8 @@ func set_fullscreen(enabled: bool) -> void:
 
 
 func set_settings_visible(value: bool) -> void:
+	if value:
+		ritual_screen.dismiss_demo_message()
 	settings_screen.visible = value
 	settings_button.visible = not value
 	if value:
