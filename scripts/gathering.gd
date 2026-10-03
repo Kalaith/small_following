@@ -1,0 +1,115 @@
+extends Node2D
+## Session-only gathering. Each round repopulates five placeholder listeners.
+signal recruited(donation: int)
+
+const LISTENER_COUNT: int = 5
+const CONVICTION_REQUIRED: float = 3.0
+const DONATION: int = 3
+
+var group_name: String = "Neighbours"
+var recruits: int = 0
+var progress: float = 0.0
+var phrase_elapsed: float = 0.0
+var last_phrase_interval: float = 1.0
+var is_listening: bool = false
+var listeners: Array[Node2D] = []
+
+
+class Listener extends Node2D:
+	var following: bool = false
+	var coat: Color = Color("#9c695a")
+	var phase: float = 0.0
+
+	func _process(delta: float) -> void:
+		phase += delta * 1.8
+		queue_redraw()
+
+	func _draw() -> void:
+		draw_set_transform(Vector2(0, 0), 0, Vector2(1, 0.4))
+		draw_circle(Vector2.ZERO, 12, Color(0.22, 0.27, 0.2, 0.17))
+		draw_set_transform(Vector2.ZERO)
+		var bob: float = sin(phase) * 0.65
+		var tint: Color = Color("#9780a7") if following else coat
+		draw_line(Vector2(-4, -9), Vector2(-5, 0), Color("#625648"), 4)
+		draw_line(Vector2(4, -9), Vector2(5, 0), Color("#625648"), 4)
+		draw_colored_polygon(PackedVector2Array([Vector2(-9, -23 + bob), Vector2(8, -23 + bob), Vector2(12, -6), Vector2(-11, -6)]), tint)
+		draw_circle(Vector2(0, -29 + bob), 9, Color("#eac49a"))
+		draw_arc(Vector2(0, -31 + bob), 9, PI, TAU, 12, Color("#75604a"), 4, true)
+		draw_circle(Vector2(-3, -29 + bob), 1.1, Color("#4e4944"))
+		draw_circle(Vector2(3, -29 + bob), 1.1, Color("#4e4944"))
+		if following:
+			draw_line(Vector2(-4, -45), Vector2(-1, -42), Color("#fbf1b6"), 2)
+			draw_line(Vector2(-1, -42), Vector2(5, -49), Color("#fbf1b6"), 2)
+
+
+func _ready() -> void:
+	y_sort_enabled = true
+	var offsets: Array[Vector2] = [Vector2(-43, -13), Vector2(0, -29), Vector2(41, -8), Vector2(-23, 26), Vector2(28, 30)]
+	var colors: Array[Color] = [Color("#be8066"), Color("#b89c58"), Color("#679391"), Color("#7c88aa"), Color("#caaf77")]
+	for i in range(LISTENER_COUNT):
+		var listener := Listener.new()
+		listener.position = offsets[i]
+		listener.coat = colors[i]
+		listener.phase = float(i)
+		add_child(listener)
+		listeners.append(listener)
+
+
+func tick_persuasion(delta: float, phrase_interval: float, conviction: float) -> void:
+	if recruits >= LISTENER_COUNT:
+		return
+	last_phrase_interval = maxf(phrase_interval, 0.05)
+	phrase_elapsed += maxf(delta, 0.0)
+	while phrase_elapsed + 0.000001 >= last_phrase_interval and recruits < LISTENER_COUNT:
+		phrase_elapsed = maxf(0.0, phrase_elapsed - last_phrase_interval)
+		progress += maxf(0.0, conviction)
+		while progress + 0.000001 >= CONVICTION_REQUIRED and recruits < LISTENER_COUNT:
+			progress = maxf(0.0, progress - CONVICTION_REQUIRED)
+			listeners[recruits].following = true
+			recruits += 1
+			recruited.emit(DONATION)
+	if recruits == LISTENER_COUNT:
+		progress = 0.0
+		phrase_elapsed = 0.0
+	queue_redraw()
+
+
+func reset_round() -> void:
+	recruits = 0
+	progress = 0.0
+	phrase_elapsed = 0.0
+	is_listening = false
+	for listener in listeners:
+		listener.following = false
+	queue_redraw()
+
+
+func set_listening(value: bool) -> void:
+	if value != is_listening:
+		is_listening = value
+		queue_redraw()
+
+
+func _draw() -> void:
+	if not is_listening:
+		return
+	draw_arc(Vector2.ZERO, 69, 0, TAU, 56, Color(1, 0.93, 0.62, 0.7), 2, true)
+	var font := ThemeDB.fallback_font
+	var caption: String = "%s  %d/%d" % [group_name, recruits, LISTENER_COUNT]
+	var width: float = font.get_string_size(caption, HORIZONTAL_ALIGNMENT_LEFT, -1, 16).x
+	draw_style_box(_caption_style(), Rect2(-width * 0.5 - 10, -90, width + 20, 30))
+	draw_string(font, Vector2(-width * 0.5, -69), caption, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("#fff1d0"))
+	draw_line(Vector2(-38, 58), Vector2(38, 58), Color("#55654e"), 5)
+	draw_line(Vector2(-38, 58), Vector2(-38 + 76 * progress / CONVICTION_REQUIRED, 58), Color("#f3d98c"), 5)
+	for i in range(3):
+		var filled: bool = progress >= float(i + 1)
+		draw_circle(Vector2(-14 + i * 14, 69), 3, Color("#f3d98c") if filled else Color("#6d7353"))
+	draw_line(Vector2(-22, 78), Vector2(22, 78), Color("#6d7353"), 2)
+	draw_line(Vector2(-22, 78), Vector2(-22 + 44 * phrase_elapsed / last_phrase_interval, 78), Color("#c4b1df"), 2)
+
+
+func _caption_style() -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.22, 0.28, 0.22, 0.9)
+	style.set_corner_radius_all(8)
+	return style

@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "upgrades": [
+    {"id":"talk_1","title":"Quickened Words I","description":"Add 20% of base phrase frequency. Each phrase keeps its current conviction.","branch":"talk","ring":1,"angle_degrees":-90,"cost":6,"max_rank":1,"rank_costs":[6],"requires":[],"effect":{"speech_speed_add":0.2}},
+    {"id":"persuade_1","title":"Compelling Creed I","description":"Add 0.5 conviction to each phrase. Speaking rhythm stays the same.","branch":"persuade","ring":1,"angle_degrees":30,"cost":6,"max_rank":1,"rank_costs":[6],"requires":[],"effect":{"conviction_add":0.5}},
+    {"id":"run_1","title":"Fleet Footsteps I","description":"Add 15% of base running speed. Speaking and conviction stay the same.","branch":"run","ring":1,"angle_degrees":150,"cost":6,"max_rank":1,"rank_costs":[6],"requires":[],"effect":{"run_speed_add":0.15}},
+    {"id":"talk_2","title":"Quickened Words II","description":"Add another 20% of base phrase frequency.","branch":"talk","ring":2,"angle_degrees":-70,"cost":9,"max_rank":1,"rank_costs":[9],"requires":["talk_1"],"effect":{"speech_speed_add":0.2}},
+    {"id":"persuade_2","title":"Compelling Creed II","description":"Add another 0.5 conviction to each phrase.","branch":"persuade","ring":2,"angle_degrees":50,"cost":9,"max_rank":1,"rank_costs":[9],"requires":["persuade_1"],"effect":{"conviction_add":0.5}},
+    {"id":"run_2","title":"Fleet Footsteps II","description":"Add another 15% of base running speed.","branch":"run","ring":2,"angle_degrees":170,"cost":9,"max_rank":1,"rank_costs":[9],"requires":["run_1"],"effect":{"run_speed_add":0.15}},
+    {"id":"talk_3","title":"Quickened Words III","description":"Rank 1 adds 20% of base phrase frequency; rank 2 adds 30%. Conviction per phrase stays the same.","branch":"talk","ring":3,"angle_degrees":-50,"cost":12,"max_rank":2,"rank_costs":[12,18],"requires":["talk_2"],"effect":{"speech_speed_add":0.2},"rank_effects":[{"speech_speed_add":0.2},{"speech_speed_add":0.3}]},
+    {"id":"persuade_3","title":"Compelling Creed III","description":"Each rank adds 0.5 conviction per phrase. Overflow still carries to the next listener.","branch":"persuade","ring":3,"angle_degrees":70,"cost":12,"max_rank":2,"rank_costs":[12,18],"requires":["persuade_2"],"effect":{"conviction_add":0.5}},
+    {"id":"run_3","title":"Fleet Footsteps III","description":"Each rank adds 15% of base running speed. Speaking frequency and conviction stay the same.","branch":"run","ring":3,"angle_degrees":190,"cost":12,"max_rank":2,"rank_costs":[12,18],"requires":["run_2"],"effect":{"run_speed_add":0.15}}
+  ]
+}
