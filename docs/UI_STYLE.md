@@ -56,13 +56,16 @@ following the cultist.
 
 ## 4. Ritual geometry and rank states
 
-The visible nodes and progression paths form the occult seal. Keep Words at
-the top, Running at the left, Creed at the right, and village invitations and
-followers in the lower sectors. Advance tiers outward within their branch;
-do not make the eye zigzag across the circle to follow a sequence. The
-32-node catalog spans six rings and retains two ranks on the original
-tier-III nodes. The [approved readability brief](RITUAL_READABILITY.md)
-describes the scope; layout must not change catalog rules.
+The visible nodes and progression paths form the occult seal. Eight evenly
+spaced branch sectors keep Words at the top, Running at the left, Creed at
+the right, Merchants and Trials on the upper diagonals, and Followers, Faith
+and Village below. Advance tiers outward in a gentle fan within each sector;
+do not make the eye zigzag across the circle to follow a sequence. Same-tier
+siblings use separate lanes. The 32-node catalog spans six rings and retains
+two ranks on the original tier-III nodes. Layout spreads existing content
+around the seal without changing catalog rules. See the
+[readability brief](RITUAL_READABILITY.md) and
+[full-circle scope](RITUAL_COMPLETION.md).
 
 Retain violet/lilac rings, runes and the central sigil at a lower contrast than
 purchase state and real progression paths. Decorative lines must not compete

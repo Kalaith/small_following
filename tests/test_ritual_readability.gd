@@ -49,25 +49,51 @@ func _run() -> void:
 func _test_sectors(screen, catalog: Array) -> void:
 	var directions: Dictionary = {
 		"talk": Vector2.UP, "run": Vector2.LEFT, "persuade": Vector2.RIGHT,
-		"gather": Vector2.from_angle(deg_to_rad(65.0)),
-		"helper": Vector2.from_angle(deg_to_rad(120.0)),
+		"gather": Vector2.from_angle(deg_to_rad(45.0)),
+		"helper": Vector2.from_angle(deg_to_rad(135.0)),
 		"merchant": Vector2.from_angle(deg_to_rad(-135.0)),
 		"trial": Vector2.from_angle(deg_to_rad(-45.0)),
-		"faith": Vector2.from_angle(deg_to_rad(95.0)),
+		"faith": Vector2.DOWN,
 	}
+	var angles: Array[float] = []
+	var minimum_spacing: float = INF
+	for id in screen.node_positions:
+		var point: Vector2 = screen.node_positions[id]
+		angles.append(fposmod(point.angle(), TAU))
+		for other in screen.node_positions:
+			if id != other:
+				minimum_spacing = minf(minimum_spacing, point.distance_to(screen.node_positions[other]))
+	angles.sort()
+	var widest_gap: float = 0.0
+	for index in range(angles.size()):
+		widest_gap = maxf(widest_gap, fposmod(angles[(index + 1) % angles.size()] - angles[index], TAU))
+	check(rad_to_deg(widest_gap) <= 31.0, "existing nodes fill the circle with no angular gap larger than one fan")
+	check(minimum_spacing > 70.0, "production nodes retain clear silhouette and hit-target separation")
 	for branch in directions:
 		var previous_radius: float = 0.0
+		var previous_angle: float = -INF
+		var first_angle: float = INF
+		var count: int = 0
 		var coherent: bool = true
 		var outward: bool = true
+		var continuous: bool = true
 		for item in catalog:
 			if item.branch != branch:
 				continue
 			var point: Vector2 = screen.node_positions[item.id]
 			coherent = coherent and point.normalized().dot(directions[branch]) > 0.94
 			outward = outward and point.length() > previous_radius
+			var angle: float = directions[branch].angle_to(point)
+			continuous = continuous and angle >= previous_angle - 0.001
+			first_angle = minf(first_angle, angle)
+			previous_angle = angle
 			previous_radius = point.length()
+			count += 1
 		check(coherent, "branch keeps a consistent sector: " + branch)
 		check(outward, "successive tiers progress outward: " + branch)
+		check(continuous, "branch follows a continuous sweep without zigzags: " + branch)
+		if count > 1:
+			check(rad_to_deg(previous_angle - first_angle) >= 29.0, "branch uses its angular space instead of a single spoke: " + branch)
 
 
 func _test_paths_and_hover(screen) -> void:

@@ -1,5 +1,30 @@
 # Verification record - ranked progression, 2026-10-02
 
+## 2026-10-03 - Fuller ritual layout
+
+Spread the existing branches through eight evenly spaced sectors with a
+gentle outward sweep. All 32 catalog nodes, 35 ranks, 1014-donation total,
+prerequisites, effects and ring radii remain unchanged. See the scoped
+[ritual brief](RITUAL_COMPLETION.md).
+
+Applied-file checks in the requested D: project pass with isolated test saves:
+smoke 92, progression 113, pacing 59 and readability 84 checks, all with zero
+failures and exit 0. Readability includes angular coverage, node spacing,
+hover paths, transformed selection and the separate 144-node fixture.
+The installed Godot 4.2.2 headless editor import retains exit 1 with its known
+`_EDITOR_GET` error and cursor/Blender-path warnings.
+
+Hidden rendering with Dummy audio and fixed 60 fps exits 0 without runtime
+diagnostics. Inspected the actual [full-circle overview](verification/ritual-layout-full-circle.png),
+focused East Lane and fixture captures. Branches spread across the circle;
+selection details, node browser and paths remain readable. The original-core
+capture still converts all 15 listeners at 10.517 seconds with 0.483 seconds
+remaining. These are scripted timing and pixel checks, not human acceptance.
+
+The new supplied screenshot remains unavailable through the supported Windows
+Library transfer; see [reference status](reference/README.md). No balance,
+runtime saves, exports, publishing or installed tools changed.
+
 ## Environment and scope
 
 Final project: `D:\WebHatchery\godot\small_following`.
