@@ -24,6 +24,8 @@ func _run() -> void:
 	neighbours.reset_round()
 	check(neighbours.listeners[0].reward_label == null, "round reset clears pending reward feedback")
 	scene.progression.coins = 1000
+	scene.progression.total_recruits = 1000
+	scene.progression.available_recruits = 1000
 	for id in ["persuade_1", "persuade_2", "persuade_3", "meadow_1", "merchant_1"]:
 		check(scene.purchase_upgrade(id, 0), "merchant prerequisite purchased: " + id)
 	var merchants = scene.groups.back()

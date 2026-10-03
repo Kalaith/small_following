@@ -41,6 +41,8 @@ func simulate_route(label: String, order: Array[int], quotas: Array[int], durati
 	if not purchase_ids.is_empty():
 		scene.round_active = false
 		scene.progression.coins = 1000
+		scene.progression.total_recruits = 1000
+		scene.progression.available_recruits = 1000
 		var purchases_ok: bool = true
 		for id in purchase_ids:
 			purchases_ok = scene.purchase_upgrade(id) and purchases_ok

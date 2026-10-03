@@ -69,6 +69,8 @@ var _font: Font
 var _title_label: Label
 var _subtitle_label: Label
 var _coins_label: Label
+var _recruits_label: Label
+var _lifetime_label: Label
 var _branch_label: Label
 var _node_title: Label
 var _rank_label: Label
@@ -136,8 +138,10 @@ func update_state(round_recruits: int = 0) -> void:
 			_subtitle_label.text = "TOWN DEBATE %d/4 / Next: %s / %s: next round" % [_progression.encounter_stage, opponents[_progression.encounter_stage], Keys.hint("next_round")]
 	var coins: int = int(_progression.get("coins")) if is_instance_valid(_progression) else 0
 	_coins_label.text = "%d  donations" % coins
+	_recruits_label.text = "%d  recruits available" % (int(_progression.get("available_recruits")) if is_instance_valid(_progression) else 0)
+	_lifetime_label.text = "%d lifetime recruits" % (int(_progression.get("total_recruits")) if is_instance_valid(_progression) else 0)
 	var save_error: String = str(_progression.get("last_error")) if is_instance_valid(_progression) else ""
-	_error_label.text = "SAVE NOTICE: " + save_error if not save_error.is_empty() else ""
+	_error_label.text = "NOTICE: " + save_error if not save_error.is_empty() else ""
 	_error_label.tooltip_text = save_error
 	var item: Dictionary = _by_id.get(selected_id, {})
 	_branch_label.visible = not item.is_empty()
@@ -146,6 +150,9 @@ func update_state(round_recruits: int = 0) -> void:
 	_displayed_rank = _rank(selected_id)
 	var rank_limit: int = _max_rank(selected_id)
 	var cost: int = _next_cost(selected_id)
+	var recruit_cost: int = _next_recruit_cost(selected_id)
+	var price: String = "%d donations" % cost
+	price += " + %d recruit%s" % [recruit_cost, "" if recruit_cost == 1 else "s"] if recruit_cost > 0 else " / gold only"
 	var branch: String = str(item.get("branch", ""))
 	var branch_name: String = {"talk": "THE VOICE", "persuade": "THE CONVICTION", "run": "THE PILGRIM", "gather": "THE VILLAGE", "helper": "THE COMPANION", "merchant": "THE MERCHANT", "trial": "THE TRIALS", "faith": "THE FAITH"}.get(branch, "THE CIRCLE")
 	_branch_label.text = "%s  /  TIER %s" % [branch_name, _roman(int(item.get("ring", 1)))]
@@ -153,6 +160,8 @@ func update_state(round_recruits: int = 0) -> void:
 	_rank_label.text = "RANK %d / %d  %s" % [_displayed_rank, rank_limit, "- COMPLETE" if state == "purchased" else ""]
 	_effect_label.text = _effect_text(selected_id, branch, state == "purchased")
 	_node_description.text = str(item.get("description", "Select a sigil in the circle to study its effect."))
+	if not str(item.get("support_description", "")).is_empty():
+		_node_description.text += "\n" + str(item.support_description)
 	var requirements: Array = item.get("requires", [])
 	match state:
 		"purchased":
@@ -165,13 +174,14 @@ func update_state(round_recruits: int = 0) -> void:
 					var required: Dictionary = _by_id.get(str(prerequisite), {})
 					required_names.append(str(required.get("title", prerequisite)) + " rank 1")
 			_status_label.text = "SEALED\nRequires " + ", ".join(required_names) + "."
-			purchase_button.text = "Rank %d  /  %d donations" % [_displayed_rank + 1, cost]
+			purchase_button.text = "Rank %d\n%s" % [_displayed_rank + 1, price]
 		"unaffordable":
-			_status_label.text = "AWAITING OFFERING\n%d more donations needed." % maxi(0, cost - coins)
-			purchase_button.text = "Inscribe rank %d  /  %d donations" % [_displayed_rank + 1, cost]
+			var purchase_state: Dictionary = _progression.call("purchase_state", selected_id)
+			_status_label.text = "AWAITING OFFERING\n" + str(purchase_state.message)
+			purchase_button.text = "Inscribe rank %d\n%s" % [_displayed_rank + 1, price]
 		"affordable":
-			_status_label.text = "READY FOR RANK %d\nA permanent gift for every round." % (_displayed_rank + 1)
-			purchase_button.text = "Inscribe rank %d  /  %d donations" % [_displayed_rank + 1, cost]
+			_status_label.text = "READY FOR RANK %d\n%s" % [_displayed_rank + 1, "Assign recruits; keep lifetime progress." if recruit_cost > 0 else "A permanent gift for every round."]
+			purchase_button.text = "Inscribe rank %d\n%s" % [_displayed_rank + 1, price]
 		_:
 			_status_label.text = "Select a sigil to begin."
 			purchase_button.text = "Choose an inscription"
@@ -398,6 +408,12 @@ func _next_cost(id: String) -> int:
 	return 0
 
 
+func _next_recruit_cost(id: String) -> int:
+	if is_instance_valid(_progression) and _progression.has_method("next_recruit_cost"):
+		return int(_progression.call("next_recruit_cost", id))
+	return 0
+
+
 func _effect_text(id: String, branch: String, complete: bool) -> String:
 	if not is_instance_valid(_progression) or not _progression.has_method("effect_preview"):
 		return ""
@@ -441,17 +457,19 @@ func _build_controls() -> void:
 	_title_label = _label("The circle grows.", 34, WHITE)
 	_subtitle_label = _label("ROUND COMPLETE", 12, MUTED)
 	_coins_label = _label("0  donations", 23, LILAC)
+	_recruits_label = _label("0  recruits available", 20, LILAC)
+	_lifetime_label = _label("0 lifetime recruits", 12, MUTED)
 	_branch_label = _label("THE VOICE  /  RING I", 12, VIOLET)
 	_node_title = _label("Choose an inscription", 26, WHITE)
 	_node_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_rank_label = _label("RANK 0 / 1", 13, VIOLET)
 	_effect_label = _label("", 18, WHITE)
-	_node_description = _label("", 15, LILAC)
+	_node_description = _label("", 14, LILAC)
 	_node_description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_status_label = _label("", 14, MUTED)
 	_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_hint_label = _label("", 12, MUTED)
-	_legend_label = _label("Diamond: locked   /   Hollow: needs donations   /   +: ready   /   Check: complete\nDrag to explore · Scroll to zoom · Hover or select to trace requirements", 11, MUTED)
+	_legend_label = _label("Diamond: locked   /   Hollow: needs resources   /   +: ready   /   Check: complete\nDrag to explore · Scroll to zoom · Hover or select to trace requirements", 11, MUTED)
 	_error_label = _label("", 11, LILAC)
 	_error_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_error_label.max_lines_visible = 3
@@ -598,7 +616,7 @@ func _update_branch_navigation() -> void:
 		for id in summary.ids:
 			_browse_ids.append(str(id))
 			var state: String = _state(id)
-			var state_text: String = {"locked": "locked", "affordable": "ready", "unaffordable": "needs donations", "purchased": "complete"}.get(state, state)
+			var state_text: String = {"locked": "locked", "affordable": "ready", "unaffordable": "needs resources", "purchased": "complete"}.get(state, state)
 			node_picker.add_item("%s · %d/%d · %s" % [_by_id[id].get("title", id), _rank(id), _max_rank(id), state_text])
 			node_picker.set_item_metadata(node_picker.item_count - 1, str(id))
 			if str(id) == selected_id:
@@ -666,22 +684,24 @@ func _layout() -> void:
 	_demo_panel.size = Vector2(minf(600, size.x - 80), 332)
 	_title_label.position = Vector2(margin, 43)
 	_subtitle_label.position = Vector2(margin + 2.0, 23)
-	_coins_label.position = Vector2(_detail_x, 49)
+	_coins_label.position = Vector2(_detail_x, 41)
+	_recruits_label.position = Vector2(_detail_x, 69)
+	_lifetime_label.position = Vector2(_detail_x, 101)
 	_branch_label.position = Vector2(_detail_x, 153)
 	_node_title.position = Vector2(_detail_x, 182)
-	_node_title.size = Vector2(detail_width, 72)
-	_rank_label.position = Vector2(_detail_x, 260)
+	_node_title.size = Vector2(detail_width, 55)
+	_rank_label.position = Vector2(_detail_x, 243)
 	_rank_label.size = Vector2(detail_width, 23)
-	_effect_label.position = Vector2(_detail_x, 295)
+	_effect_label.position = Vector2(_detail_x, 276)
 	_effect_label.size = Vector2(detail_width, 56)
-	_node_description.position = Vector2(_detail_x, 362)
-	_node_description.size = Vector2(detail_width, 64)
-	_status_label.position = Vector2(_detail_x, 440)
-	_status_label.size = Vector2(detail_width, 60)
-	purchase_button.position = Vector2(_detail_x, 510)
-	purchase_button.size = Vector2(detail_width, 49)
-	_error_label.position = Vector2(_detail_x, 566)
-	_error_label.size = Vector2(detail_width, 46)
+	_node_description.position = Vector2(_detail_x, 336)
+	_node_description.size = Vector2(detail_width, 103)
+	_status_label.position = Vector2(_detail_x, 449)
+	_status_label.size = Vector2(detail_width, 57)
+	purchase_button.position = Vector2(_detail_x, 514)
+	purchase_button.size = Vector2(detail_width, 56)
+	_error_label.position = Vector2(_detail_x, 577)
+	_error_label.size = Vector2(detail_width, 39)
 	next_button.position = Vector2(_detail_x, size.y - 183)
 	next_button.size = Vector2(detail_width, 50)
 	village_button.position = Vector2(_detail_x, size.y - 124)

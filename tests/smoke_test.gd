@@ -126,6 +126,8 @@ func _test_expanded_village() -> void:
 	scene.set_process(false)
 	scene.round_active = false
 	scene.progression.coins = 1000
+	scene.progression.total_recruits = 1000
+	scene.progression.available_recruits = 1000
 	check(not scene.purchase_upgrade("meadow_1") and scene.groups.size() == 3, "locked invitation cannot spawn listeners")
 	for item in scene.progression.catalog.slice(0, 16):
 		check(scene.purchase_upgrade(item.id), "expanded scene purchase: " + item.id)

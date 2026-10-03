@@ -18,7 +18,7 @@ Base recruitment needs 45 seconds of speech alone to clear the village. Four bas
 
 ## Selected nodes gain ranks
 
-The original progression core contains nine nodes. The six inner/middle nodes remain single-rank; each outer node has two ranks. Every previously available purchase retains its cost and effect. Only the second ranks below are new.
+The original progression core contains nine nodes. The six inner/middle nodes remain single-rank; each outer node has two ranks. Every previously available purchase retains its donation cost and effect. The second ranks below were added for the full-clear target; the later recruit-assignment costs are recorded separately below.
 
 | Existing outer node | Rank 1, unchanged | New rank 2 | Rank 2 cost | Fully upgraded branch |
 | --- | --- | --- | --- | --- |
@@ -99,7 +99,7 @@ These comparisons remove only the stated second rank while retaining all other p
 
 The last running rank buys positioning tolerance rather than a guaranteed extra recruit on every route. It remains useful, but the three branches are not claimed to have equal rewards in every situation. The first ranks are similarly distinct: on the nearest-group route persuasion gains two recruits, talking gains one, and running primarily reduces travel.
 
-The original nine purchases cost **81 donations**. The three new ranks cost **54**, for **135 total donations across twelve purchases**. Each late rank costs six recruitment events, and the previous full-upgrade practical route earns 30 donations in a round, enough for one new rank from an empty wallet. A three-recruit opening still earns nine and can afford a six-donation initial node. Prices remain adjustable; these checks establish reachability and useful effects, not an optimized purchase order or a final grind length.
+The original nine purchases cost **81 donations**. The three added ranks cost **54**, for **135 total donations across twelve purchases**. Each late rank's donation cost equals six ordinary recruitment rewards, and the previous full-upgrade practical route earns 30 donations in a round. Current talking and persuasion ranks also require the recruits listed below. A three-recruit opening still earns nine donations and three available recruits, enough for any first-tier core node. Prices remain adjustable; the historical route checks establish useful effects, not an optimized purchase order or a final grind length.
 
 ## Limits and next playtest
 
@@ -206,3 +206,44 @@ The player can keep earning after completion. Human steering, merchant versus
 villager route value, time to afford the whole circle and overall difficulty still
 need playtesting; the numbers above are implementation defaults, not user-approved
 balance or evidence of human play feel.
+
+## Recruit assignments - 2026-10-03
+
+The existing catalog has **32 nodes and 35 ranks**, costing **1014 donations
+plus 250 recruits** to buy every rank from a fresh save. Gold prices, effects,
+node count and conversation/movement timing are unchanged. The user's roughly
+279 lifetime recruits at demo end motivates the initial target near 250; it is
+one observed run, not a validated economy curve or a guarantee of 29 spare
+recruits on other routes. The exact distribution below is provisional tuning.
+
+| Branch | Eligible upgrade recruit costs, in rank order | Recruit total | Supporting role |
+| --- | --- | ---: | --- |
+| Words | Quickened Words I: 1; II: 3; III: 5 / 8; IV: 12; V: 16; VI: 20 | 65 | Followers warm up the next crowd and carry the speaking rhythm. |
+| Creed | Compelling Creed I: 2; II: 4; III: 6 / 9; IV: 15; V: 20 | 56 | Shared testimony gives the cultist's existing conviction effects a social explanation. |
+| Village | Meadow Invitations: 8; East Lane Invitations: 12 | 20 | Followers spread invitations to new gatherings. |
+| Followers | Helping Hand: 5 | 5 | Followers support the existing single helper's recruitment work. |
+| Merchants | Merchant Invitations: 8; Trusted Patron: 12 | 20 | Followers make introductions and vouch for the cultist. |
+| Trials | Town Debate: 8 | 8 | Followers gather the audience for the existing encounters. |
+| Faith | Sacred Questions: 16; Open Sermon: 25; Shared Faith: 35 | 76 | Larger groups support shared questions and public preaching. |
+| **Total** | **22 ranks with a recruit cost** | **250** | Early costs are modest; communal late inscriptions require larger assignments. |
+
+The other **13 ranks are gold-only**: all seven Fleet Footsteps ranks across
+I-VI; Fair Bargain; Generous Purses; Patient Answers; Common Ground; Gentle
+Certainty; and Steady Voice. Running costs are explicitly zero in production
+data and are validated as such. These costs add no new followers on screen,
+helper count, persuasion effect or automation rule.
+
+Each recruitment event, including helper work, merchants and opponent victory,
+adds one available recruit and one lifetime event. A rank purchase assigns
+only its available-recruit cost; lifetime history remains intact. Both resources
+must cover the rank before either is spent. Schema-1/2 saves initialize their
+available balance from lifetime recruitment without charging previous ranks,
+so this fresh-save total is not a retroactive bill.
+
+Human playtesting should check purchase order, early access to Words/Creed,
+competition between invitations and supporting ranks, and late Faith costs.
+Record lifetime earned, recruits remaining, donations remaining and rounds to
+finish. Existing route timing remains relevant to earning capacity, but funded
+test builds do not establish how long players will need to afford the circle.
+The demo centre still depends only on owning every rank, never either wallet
+balance. Current implementation evidence belongs in [VERIFICATION](VERIFICATION.md).

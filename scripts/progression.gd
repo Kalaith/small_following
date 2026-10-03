@@ -2,7 +2,7 @@ extends RefCounted
 ## Single owner for upgrade purchases and durable earnings. Definitions contain no code.
 ## Saves only progression: rounds always start fresh after relaunch; no offline accrual.
 
-const SAVE_VERSION: int = 2
+const SAVE_VERSION: int = 3
 const MAX_COUNTER: int = 1000000000
 const EFFECT_KEYS: Array[String] = ["encounter_conviction_add", "skeptic_conviction_add", "guard_conviction_add", "zealot_conviction_add", "priest_conviction_add", "merchant_conviction_add", "merchant_donation_add", "speech_speed_add", "conviction_add", "run_speed_add", "meadow_unlock", "east_unlock", "helper_unlock", "merchant_unlock", "encounter_unlock"]
 const UNLOCK_KEYS: Array[String] = ["meadow_unlock", "east_unlock", "helper_unlock", "merchant_unlock", "encounter_unlock"]
@@ -12,7 +12,9 @@ const ENCOUNTER_REWARDS: Array[int] = [30, 45, 60, 120]
 
 var encounter_stage: int = 0
 var coins: int = 0
+# Recruitment events are lifetime history; assigning supporters spends only availability.
 var total_recruits: int = 0
+var available_recruits: int = 0
 var round_number: int = 1
 var purchased: Dictionary = {}
 var catalog: Array[Dictionary] = []
@@ -53,6 +55,19 @@ func load_catalog(path: String = "res://data/upgrades.json") -> bool:
 				return _fail("Invalid upgrade rank price: " + entry.id)
 		if int(prices[0]) != int(entry.cost):
 			return _fail("First rank price must match cost: " + entry.id)
+		var recruit_prices: Variant = entry.get("rank_recruit_costs", [])
+		if not recruit_prices is Array:
+			return _fail("Recruit prices must be an array: " + entry.id)
+		if not entry.has("rank_recruit_costs"):
+			for index in range(int(rank_limit)):
+				recruit_prices.append(0)
+		if recruit_prices.size() != int(rank_limit):
+			return _fail("Upgrade needs one recruit price per rank: " + entry.id)
+		for price in recruit_prices:
+			if not _integer_between(price, 0, MAX_COUNTER):
+				return _fail("Invalid upgrade recruit price: " + entry.id)
+		if entry.has("support_description") and not entry.support_description is String:
+			return _fail("Support description must be text: " + entry.id)
 		if not entry.get("requires") is Array or not entry.get("effect") is Dictionary or entry.effect.is_empty():
 			return _fail("Invalid prerequisites/effects: " + entry.id)
 		for effect in entry.effect:
@@ -74,9 +89,17 @@ func load_catalog(path: String = "res://data/upgrades.json") -> bool:
 					return _fail("Unsupported rank effect: " + entry.id)
 		if effects[0] != entry.effect:
 			return _fail("First rank effect must match effect: " + entry.id)
+		var movement_upgrade: bool = entry.branch == "run"
+		for rank_effect in effects:
+			movement_upgrade = movement_upgrade or rank_effect.has("run_speed_add")
+		if movement_upgrade:
+			for price in recruit_prices:
+				if price != 0:
+					return _fail("Running upgrades must remain gold-only: " + entry.id)
 		var normalized: Dictionary = entry.duplicate(true)
 		normalized.max_rank = int(rank_limit)
 		normalized.rank_costs = prices.duplicate()
+		normalized.rank_recruit_costs = recruit_prices.duplicate()
 		normalized.rank_effects = effects.duplicate(true)
 		ids[entry.id] = normalized
 		candidate.append(normalized)
@@ -138,16 +161,45 @@ func next_cost(id: String) -> int:
 	return int(prices[rank(id)])
 
 
-func status(id: String) -> String:
+func next_recruit_cost(id: String) -> int:
+	var upgrade: Dictionary = find_upgrade(id)
+	if upgrade.is_empty() or rank(id) >= max_rank(id):
+		return 0
+	var prices: Array = upgrade.get("rank_recruit_costs", [])
+	return int(prices[rank(id)]) if not prices.is_empty() else 0
+
+
+func purchase_state(id: String) -> Dictionary:
+	var state: Dictionary = {
+		"status": "unknown", "message": "Unknown inscription.",
+		"missing_gold": 0, "missing_recruits": 0,
+	}
 	var upgrade: Dictionary = find_upgrade(id)
 	if upgrade.is_empty():
-		return "unknown"
+		return state
 	if rank(id) >= max_rank(id):
-		return "purchased"
+		state.status = "purchased"
+		state.message = "This inscription is already at maximum rank."
+		return state
 	for requirement in upgrade.requires:
 		if rank(requirement) < 1:
-			return "locked"
-	return "affordable" if coins >= next_cost(id) else "unaffordable"
+			state.status = "locked"
+			state.message = "Requires " + str(find_upgrade(requirement).get("title", requirement)) + "."
+			return state
+	state.missing_gold = maxi(0, next_cost(id) - coins)
+	state.missing_recruits = maxi(0, next_recruit_cost(id) - available_recruits)
+	var missing: Array[String] = []
+	if state.missing_gold > 0:
+		missing.append("%d more donations" % state.missing_gold)
+	if state.missing_recruits > 0:
+		missing.append("%d more recruit%s" % [state.missing_recruits, "" if state.missing_recruits == 1 else "s"])
+	state.status = "affordable" if missing.is_empty() else "unaffordable"
+	state.message = "Ready to inscribe rank %d." % (rank(id) + 1) if missing.is_empty() else "Need %s for rank %d." % [" and ".join(missing), rank(id) + 1]
+	return state
+
+
+func status(id: String) -> String:
+	return str(purchase_state(id).status)
 
 
 func try_purchase(id: String, expected_rank: int = -1) -> bool:
@@ -155,10 +207,12 @@ func try_purchase(id: String, expected_rank: int = -1) -> bool:
 	# The UI passes the displayed rank so repeated/stale activation cannot buy a second rank.
 	if expected_rank >= 0 and rank(id) != expected_rank:
 		return _fail("This rank changed. Review the next rank before buying again.")
-	if status(id) != "affordable":
-		return false
+	var state: Dictionary = purchase_state(id)
+	if state.status != "affordable":
+		return _fail(state.message)
 	var candidate: Dictionary = _snapshot()
 	candidate.coins -= next_cost(id)
+	candidate.available_recruits -= next_recruit_cost(id)
 	candidate.purchased[id] = rank(id) + 1
 	# Persist the candidate first: failed writes never charge or grant the upgrade.
 	if not _write_snapshot(candidate):
@@ -171,10 +225,16 @@ func add_donation(amount: int, recruits: int = 1) -> void:
 	if amount < 0 or recruits < 0:
 		last_error = "Negative rewards are not valid."
 		return
-	coins = mini(coins + amount, MAX_COUNTER)
-	total_recruits = mini(total_recruits + recruits, MAX_COUNTER)
+	_add_earnings(amount, recruits)
 	# Keep earned progress in memory if storage fails; expose last_error to the UI.
 	save_progress()
+
+
+func _add_earnings(amount: int, recruits: int) -> void:
+	# Clamp the increment before adding so even large valid rewards cannot overflow.
+	coins += mini(amount, MAX_COUNTER - coins)
+	total_recruits += mini(recruits, MAX_COUNTER - total_recruits)
+	available_recruits += mini(recruits, MAX_COUNTER - available_recruits)
 
 
 func speech_interval() -> float:
@@ -204,8 +264,7 @@ func encounter_conviction(kind: String) -> float:
 func complete_encounter(expected_stage: int) -> bool:
 	if expected_stage != encounter_stage or encounter_stage >= 4 or not has_unlock("encounter_unlock"):
 		return false
-	coins = mini(coins + ENCOUNTER_REWARDS[encounter_stage], MAX_COUNTER)
-	total_recruits = mini(total_recruits + 1, MAX_COUNTER)
+	_add_earnings(ENCOUNTER_REWARDS[encounter_stage], 1)
 	encounter_stage += 1
 	# Like earned donations, victory stays in memory on failed storage; expose the error.
 	save_progress()
@@ -305,18 +364,19 @@ func load_progress() -> bool:
 		last_error = "Save was damaged. Recovered its backup; damaged original will be preserved as .corrupt."
 		return true
 	# Start clean in memory, but preserve the bad file on the first successful save.
-	_apply_snapshot({"coins": 0, "total_recruits": 0, "round_number": 1, "purchased": {}})
+	_apply_snapshot({"coins": 0, "total_recruits": 0, "available_recruits": 0, "round_number": 1, "purchased": {}})
 	return _fail("Save was damaged. Fresh progression started; damaged original will be preserved as .corrupt.")
 
 
 func _snapshot() -> Dictionary:
-	return {"schema_version": SAVE_VERSION, "coins": coins, "total_recruits": total_recruits, "round_number": round_number, "purchased": purchased.duplicate(true), "encounter_stage": encounter_stage}
+	return {"schema_version": SAVE_VERSION, "coins": coins, "total_recruits": total_recruits, "available_recruits": available_recruits, "round_number": round_number, "purchased": purchased.duplicate(true), "encounter_stage": encounter_stage}
 
 
 func _apply_snapshot(state: Dictionary) -> void:
 	encounter_stage = int(state.get("encounter_stage", 0))
 	coins = int(state.coins)
 	total_recruits = int(state.total_recruits)
+	available_recruits = int(state.available_recruits)
 	round_number = int(state.round_number)
 	purchased = state.purchased.duplicate(true)
 
@@ -339,6 +399,8 @@ func _validated_snapshot(raw: Variant) -> Dictionary:
 	for key in ["coins", "total_recruits"]:
 		if not _integer_between(raw.get(key), 0, MAX_COUNTER):
 			return {}
+	if int(raw.schema_version) >= 3 and not _integer_between(raw.get("available_recruits"), 0, int(raw.total_recruits)):
+		return {}
 	if not _integer_between(raw.get("round_number"), 1, MAX_COUNTER) or not raw.get("purchased") is Dictionary:
 		return {}
 	if not _integer_between(raw.get("encounter_stage", 0), 0, 4):
@@ -346,6 +408,8 @@ func _validated_snapshot(raw: Variant) -> Dictionary:
 	if int(raw.get("encounter_stage", 0)) > 0 and not raw.purchased.has("debate_1"):
 		return {}
 	var normalized: Dictionary = raw.duplicate(true)
+	# Old saves never spent recruits. Preserve all prior ranks without charging them.
+	normalized.available_recruits = int(raw.available_recruits) if int(raw.schema_version) >= 3 else int(raw.total_recruits)
 	normalized.encounter_stage = int(raw.get("encounter_stage", 0))
 	normalized.schema_version = SAVE_VERSION
 	for id in raw.purchased:

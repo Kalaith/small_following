@@ -75,6 +75,8 @@ func _run() -> void:
 	check(restored.load_progress() and restored.coins == 3 and restored.total_recruits == 3 and restored.round_number == 4 and restored.purchased.has("talk_1"), "save round trip retains balances, upgrades and round")
 	state.save_enabled = false
 	state.coins = 100
+	state.total_recruits = 1000
+	state.available_recruits = 1000
 	check(not state.try_purchase("run_2") and state.coins == 100, "prerequisite enforced even with funds")
 	check(state.try_purchase("persuade_1") and state.conviction_per_phrase() == 1.5 and state.run_multiplier() == 1.0, "persuasion changes conviction only")
 	check(state.try_purchase("run_1") and is_equal_approx(state.run_multiplier(), 1.15) and state.conviction_per_phrase() == 1.5, "running changes movement multiplier only")
@@ -93,6 +95,8 @@ func _run() -> void:
 	var full = fresh()
 	full.save_enabled = false
 	full.coins = 135
+	full.total_recruits = 1000
+	full.available_recruits = 1000
 	for entry in full.catalog.slice(0, 9):
 		for desired_rank in range(full.max_rank(entry.id)):
 			check(full.try_purchase(entry.id, desired_rank), "purchase each shipped rank: " + entry.id + " rank " + str(desired_rank + 1))
@@ -113,13 +117,15 @@ func _run() -> void:
 	full.coins = 30
 	check(full.try_purchase("helper_1", 0) and full.coins == 0 and full.has_unlock("helper_unlock"), "one helper costs thirty donations")
 	full.save_enabled = true
-	check(full.save_progress(), "expanded ranks save using schema 2")
+	check(full.save_progress(), "expanded ranks save using current schema")
 	var expanded_reload = fresh()
 	check(expanded_reload.load_progress() and expanded_reload.purchased == full.purchased and expanded_reload.gathering_count() == 5, "expanded rank round trip restores invitations")
-	check(expanded_reload.has_unlock("helper_unlock"), "helper unlock survives schema-2 round trip")
+	check(expanded_reload.has_unlock("helper_unlock"), "helper unlock survives current-schema round trip")
 	var stale = fresh()
 	stale.save_enabled = false
 	stale.coins = 100
+	stale.total_recruits = 1000
+	stale.available_recruits = 1000
 	stale.purchased = {"talk_1": 1, "talk_2": 1}
 	check(stale.try_purchase("talk_3", 0) and not stale.try_purchase("talk_3", 0) and stale.coins == 88 and stale.rank("talk_3") == 1, "duplicate first-rank activation does not silently buy second rank")
 
@@ -142,11 +148,11 @@ func _run() -> void:
 	check(repeat_recovery.load_progress() and not repeat_recovery.save_progress() and FileAccess.get_file_as_string(FIXTURE) == "{broken again", "second corruption is preserved without overwriting first archive")
 
 	clean_fixture()
-	write_fixture(FIXTURE, '{"schema_version":3,"coins":700}')
+	write_fixture(FIXTURE, '{"schema_version":4,"coins":700}')
 	var future = fresh()
-	check(not future.load_progress() and not future.save_progress() and FileAccess.get_file_as_string(FIXTURE) == '{"schema_version":3,"coins":700}', "future schema blocks writes and stays byte-for-byte intact")
+	check(not future.load_progress() and not future.save_progress() and FileAccess.get_file_as_string(FIXTURE) == '{"schema_version":4,"coins":700}', "future schema blocks writes and stays byte-for-byte intact")
 
-	# Migration retains old progress/effects, then rotates original bytes on the first v2 write.
+	# Migration retains old progress/effects, then rotates original bytes on the first current-schema write.
 	clean_fixture()
 	var old_text: String = JSON.stringify(snapshot(1, {"talk_1": true, "talk_2": true, "talk_3": true}))
 	write_fixture(FIXTURE, old_text)
@@ -155,9 +161,9 @@ func _run() -> void:
 	check(FileAccess.get_file_as_string(FIXTURE) == old_text and not FileAccess.file_exists(FIXTURE + ".corrupt"), "loading migration leaves original save byte-for-byte intact")
 	check(is_equal_approx(migrated.speech_interval(), 0.625) and migrated.conviction_per_phrase() == 1.0 and migrated.run_multiplier() == 1.0, "migration preserves all existing effects without granting unpaid ranks")
 	check(migrated.try_purchase("talk_3", 1) and migrated.coins == 9 and migrated.rank("talk_3") == 2, "migrated outer seal can buy exactly its next rank")
-	check(FileAccess.get_file_as_string(FIXTURE + ".bak") == old_text and not FileAccess.file_exists(FIXTURE + ".corrupt"), "first v2 write preserves valid old save as exact backup")
+	check(FileAccess.get_file_as_string(FIXTURE + ".bak") == old_text and not FileAccess.file_exists(FIXTURE + ".corrupt"), "first current-schema write preserves valid old save as exact backup")
 	var saved: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(FIXTURE))
-	check(saved.schema_version == 2 and saved.purchased.talk_3 == 2 and not saved.purchased.talk_3 is bool, "new save encodes explicit schema2 numerical ranks")
+	check(saved.schema_version == 3 and saved.purchased.talk_3 == 2 and not saved.purchased.talk_3 is bool, "new save encodes schema3 with numerical ranks")
 	var ranked_reload = fresh()
 	check(ranked_reload.load_progress() and ranked_reload.rank("talk_3") == 2 and ranked_reload.coins == 9 and ranked_reload.total_recruits == 41 and ranked_reload.round_number == 12, "rank2 save round trip retains progression and counters")
 	clean_fixture()
@@ -170,7 +176,7 @@ func _run() -> void:
 	write_fixture(FIXTURE + ".bak", old_text)
 	var old_backup = fresh()
 	check(old_backup.load_progress() and old_backup.rank("run_3") == 1 and old_backup.coins == 27, "missing main recovers and migrates a v1 backup")
-	check(old_backup.save_progress() and FileAccess.get_file_as_string(FIXTURE + ".bak") == old_text, "recovered v1 backup remains intact through first v2 save")
+	check(old_backup.save_progress() and FileAccess.get_file_as_string(FIXTURE + ".bak") == old_text, "recovered v1 backup remains intact through first current-schema save")
 	clean_fixture()
 	write_fixture(FIXTURE, "damaged main before migration")
 	write_fixture(FIXTURE + ".bak", old_text)
@@ -210,6 +216,7 @@ func _run() -> void:
 	modified = definitions.duplicate(true)
 	modified.upgrades[15].max_rank = 2
 	modified.upgrades[15].rank_costs = [30, 30]
+	modified.upgrades[15].rank_recruit_costs = [5, 5]
 	write_fixture(CATALOG_FIXTURE, JSON.stringify(modified))
 	check(not state.load_catalog(CATALOG_FIXTURE), "helper unlock cannot advertise unimplemented extra helpers through ranks")
 	modified = definitions.duplicate(true)
@@ -256,6 +263,7 @@ func _run() -> void:
 	for entry in modified.upgrades:
 		entry.erase("max_rank")
 		entry.erase("rank_costs")
+		entry.erase("rank_recruit_costs")
 		entry.erase("rank_effects")
 	write_fixture(CATALOG_FIXTURE, JSON.stringify(modified))
 	check(state.load_catalog(CATALOG_FIXTURE) and state.max_rank("talk_3") == 1, "cost-only graph fixture stays compatible as single-rank catalog")

@@ -98,6 +98,8 @@ func _run() -> void:
 	check(sound.music.playing == sound.output_enabled and sound.music.stream == original_stream, "next round does not restart music")
 	# Exercise the real opponent signal connection, including opening objections.
 	scene.progression.coins = 10000
+	scene.progression.total_recruits = 1000
+	scene.progression.available_recruits = 1000
 	for definition in scene.progression.catalog:
 		scene.progression.try_purchase(str(definition.id), 0)
 	scene.progression.encounter_stage = 1

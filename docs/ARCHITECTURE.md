@@ -39,7 +39,7 @@ Full-village success follows only from ordinary travel, phrase intervals and con
 
 Round end clamps earned time to the remaining timer, stops audience work and opens the ritual. Tab hides/reopens the ritual while earning remains stopped. Enter or the next-round action resets audiences and position, advances the round number and resumes earning. World movement continues even while the overlay obscures the village.
 
-The cumulative `total_recruits` value counts **recruitment events**, including repeat conversions after audience resets. It does not represent unique permanent villagers. The same counter now persists across sessions; retain its explicit meaning until a real audience lifecycle is designed.
+The cumulative `total_recruits` value counts lifetime **recruitment events**, including repeat conversions after audience resets. `available_recruits` is a separate spendable assignment balance. Recruitment adds one to both counters once through the existing reward authority; purchases subtract only from `available_recruits`. Neither counter represents unique permanent villagers. Both persist across sessions.
 
 ## Upgrade data and graph expansion
 
@@ -47,11 +47,13 @@ Catalog schema 1 contains an `upgrades` array. Each definition supplies `id`, `t
 
 An omitted `max_rank` defaults to 1; valid limits are integers from 1 to 100. `rank_costs` must match the rank count, contain positive bounded integers and begin with the original `cost`. When present, `rank_effects` must match the rank count, contain supported positive effects and begin with the original `effect`; otherwise every rank repeats `effect`. Keeping first-rank values stable preserves the benefit of old purchases. The current catalog uses a distinct second effect only for `talk_3`. Catalog loading also rejects duplicate IDs, invalid coordinates/costs/effects, missing/self/duplicate prerequisites and prerequisite cycles.
 
+`rank_recruit_costs` supplies one nonnegative bounded integer per rank. Omitted arrays default to zero for older catalogs and the large fixture; production definitions explicitly state every rank's recruit cost. Running upgrades must have zero recruit costs, including any rank with a movement effect. Optional `support_description` explains the followers' role in eligible inscriptions without changing their effects. The current total is 250 recruits alongside the unchanged 1014 donations; [PACING](PACING.md#recruit-assignments---2026-10-03) owns the allocation.
+
 If catalog loading fails, the scene shows its notice and disables rounds/save writes without loading or replacing existing progression. Repair the definitions before resuming.
 
 The original catalog core retains three branches with three nodes each. The six inner nodes have one rank; `talk_3`, `persuade_3` and `run_3` have two. First-rank costs remain 6, 9 and 12 donations by ring; each second rank costs 18. This core is twelve purchases costing 135 donations. Six new single-rank nodes add two gathering unlocks and two stat tiers for talking/running, making eighteen purchases costing 318 donations before the single-rank, 30-donation helper. That earlier village expansion has sixteen nodes, nineteen purchases and costs 348 donations. The first-map finale adds sixteen nodes; the complete catalog has 32 nodes and 35 ranks. `main.apply_upgrades` creates each unlocked gathering exactly once; save reload reconstructs them from the same ranks. A prerequisite requires at least rank 1, not all ranks, of its referenced node.
 
-`try_purchase(id, expected_rank = -1)` validates the requested node and next rank. UI requests include the selected current rank; a stale request after a previous purchase is rejected. One input buys one rank, a maximum-rank request spends nothing, and a failed candidate save grants nothing. The optional expected rank supports programmatic purchases without weakening the maximum-rank, prerequisite or affordability checks. Stats sum effects only through each saved purchased rank.
+`try_purchase(id, expected_rank = -1)` validates the requested node and next rank, including both that rank's donation and recruit costs. UI requests include the selected current rank; a stale request after a previous purchase is rejected. Missing resources are reported before building a candidate, and neither resource is deducted unless the candidate save succeeds. One input buys one rank, a maximum-rank request spends nothing, and a failed candidate save grants nothing. The optional expected rank supports programmatic purchases without weakening the maximum-rank, prerequisite or affordability checks. Stats sum effects only through each saved purchased rank; lifetime recruits never decrease on purchase.
 
 `ritual_layout.gd` stores presentation-only positions for the current 32 stable
 IDs in `VILLAGE_POSITIONS`. The eight branches have unequal silhouettes:
@@ -119,7 +121,8 @@ graph traversal, filtering and search are future work.
 
 `Progression.is_circle_complete()` derives completion from a nonempty current
 catalog with every saved rank equal to its validated maximum. It is independent
-of `map_complete()`, which records Priest victory. Do not replace this predicate
+of both resource balances and of `map_complete()`, which records Priest victory.
+Do not replace this predicate
 with a hardcoded node count, an owned-node count or encounter progress. No new
 save field is needed: ordinary purchase/reload state is its source of truth.
 The staged purchase writer still determines whether a last rank is granted.
@@ -162,16 +165,16 @@ It checks the listener's state before marking and paying. Player speech chooses
 the first remaining listener, skipping any helper conversions; partial group
 conviction still carries forward. If the player finishes a helper target, that
 helper effort resets before retargeting. Main routes both kinds of recruitment
-through the same donations/event-total callback. Helper unlocks persist as
-ordinary schema-2 ranks; no target or per-round audience data is saved.
+through the same donations/available-recruits/lifetime-event callback. Helper unlocks persist as
+ordinary purchased ranks; no target or per-round audience data is saved.
 
 ## Local progression and recovery
 
-`user://progression.json` stores schema 2 with `coins`, `purchased` (an ID-to-integer-rank dictionary), `total_recruits`, `round_number` and optional `encounter_stage`. Purchased entries must be integers from 1 through that node's `max_rank`; unpurchased IDs are absent, not stored as rank 0. Counters are bounded integers; purchased IDs must exist in the catalog and include their prerequisites. Nothing in a save is executable. On ordinary Windows Godot installations, `user://` resolves beneath `%APPDATA%\Godot\app_userdata\Small Following`; use the engine's user-data location when running with custom settings.
+`user://progression.json` stores schema 3 with `coins`, `purchased` (an ID-to-integer-rank dictionary), `total_recruits`, `available_recruits`, `round_number` and optional `encounter_stage`. Purchased entries must be integers from 1 through that node's `max_rank`; unpurchased IDs are absent, not stored as rank 0. Counters are bounded integers; available recruits must be between zero and the lifetime total, inclusive. Purchased IDs must exist in the catalog and include their prerequisites. Nothing in a save is executable. On ordinary Windows Godot installations, `user://` resolves beneath `%APPDATA%\Godot\app_userdata\Small Following`; use the engine's user-data location when running with custom settings.
 
-The schema-1 migration accepts the earlier ID-to-true purchase dictionary and maps each true value to rank 1. Currency, recruitment-event total and round number are preserved exactly; new second ranks are not granted. Loading alone leaves the valid old file untouched. The first successful schema-2 write retains the original schema-1 file as `.bak` through the ordinary staged writer. Schema-1 backups can also be validated and migrated for recovery. Routine tests use isolated fixture saves and do not migrate the player's live save.
+Schema 1 accepts the earlier ID-to-true purchase dictionary and maps each true value to rank 1; schema 2 retains integer ranks. Both initialize available recruits from the saved lifetime recruitment total. Donations, purchased benefits, recruitment history, round and encounter progress are preserved, with no retroactive recruit charge and no unearned ranks. Loading alone leaves the valid old file untouched. The first successful schema-3 write retains the original file as `.bak` through the ordinary staged writer. Schema-1/2 backups can also be validated and migrated for recovery. Routine tests use isolated fixture saves and do not migrate the player's live save.
 
-Donations are saved as earned; round transitions save progression too. Purchases build and validate a candidate snapshot, save it, then apply it in memory. If saving fails, the purchase grants nothing and deducts nothing. Already-earned rewards stay in memory after a write failure, and a save notice appears in the UI; they may be lost if the application closes before a successful write.
+Donations and both recruit counters are saved as earned; round transitions save progression too. Purchases build and validate a candidate snapshot with both costs deducted, save it, then apply it in memory. If saving fails, the purchase grants nothing and deducts neither resource. Already-earned rewards stay in memory after a write failure, and a save notice appears in the UI; they may be lost if the application closes before a successful write.
 
 The writer flushes a `.tmp` file, reads it back for validation, rotates the prior valid canonical file to `.bak`, then renames the verified temporary file into place. This staged replacement supports recovery if the canonical file disappears between renames; it is not a guarantee against every filesystem or power failure.
 
@@ -184,9 +187,9 @@ Loading follows these rules:
 - Invalid canonical without a valid backup: start fresh in memory and preserve the damaged original as `.corrupt` before replacing it.
 - A newer schema, invalid backup without a canonical file, or an existing conflicting `.corrupt` recovery file is preserved; saving is blocked as appropriate and the UI explains the problem.
 
-Do not delete recovery files automatically to silence a notice. Schemas 1 and 2 are supported for loading; current writes use schema 2. Removing or renaming a purchased catalog ID, lowering a rank cap below saved progress or changing a purchased effect requires a deliberate compatibility/migration plan.
+Do not delete recovery files automatically to silence a notice. Schemas 1, 2 and 3 are supported for loading; current writes use schema 3. Removing or renaming a purchased catalog ID, lowering a rank cap below saved progress or changing a purchased effect requires a deliberate compatibility/migration plan.
 
-Restarting restores currency, purchases, the event total and saved round number, then begins a fresh timed round from the entrance. It does not resume remaining time, partial speech, player position or per-round recruits. There is no offline earning or quit penalty. This forgiving prototype policy is provisional and can be exploited by restarting for fresh audiences; decide the intended policy before a larger economy.
+Restarting restores donations, available recruits, purchases, lifetime events and saved round number, then begins a fresh timed round from the entrance. It does not resume remaining time, partial speech, player position or per-round recruits. There is no offline earning or quit penalty. This forgiving prototype policy is provisional and can be exploited by restarting for fresh audiences; decide the intended policy before a larger economy.
 
 ## Boundaries for future work
 
@@ -235,13 +238,13 @@ them. Main supplies only clamped active-round time, prioritizes an arrived oppon
 in speech range, and creates at most one opponent per round.
 
 `Progression.complete_encounter(expected_stage)` rejects duplicates, missing unlocks
-and out-of-order results. It increments the stage, recruitment-event total and
+and out-of-order results. It increments the stage, available recruits, lifetime recruitment-event total and
 fixed victory reward together, then saves. Earned victory follows the existing
 in-memory retention policy on failed storage; a notice warns it may be lost on
 exit. `map_complete()` means stage four, earned through normal Priest persuasion.
 It does not require every upgrade or complete other listeners automatically.
 
-The optional schema-2 `encounter_stage` is an integer 0–4 and defaults to zero in
+The optional `encounter_stage` is an integer 0-4 and defaults to zero in
 older schema-1/2 saves. Nonzero values require the saved `debate_1` unlock with its
 usual prerequisites. Stage four suppresses further opponents on reload and shows
 the completed-map UI. Stage zero through three starts the next attempt on a fresh

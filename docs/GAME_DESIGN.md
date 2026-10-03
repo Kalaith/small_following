@@ -13,6 +13,7 @@ This project is a bounded first-map prototype of movement, short earning rounds,
 - An ordinary opening round should allow roughly three conversions and be too short to clear the village. This is a pacing target, not a hard recruitment cap.
 - Round end opens a large occult ritual-circle upgrade screen, using purple, violet and lilac rather than the references' red.
 - The initial upgrades improve talking speed, persuasion effectiveness and running speed through distinct mechanics.
+- Selected existing upgrade ranks cost recruits as well as gold, with followers supporting audiences and shared preaching. Running upgrades remain gold-only. Preserve a separate lifetime-recruited statistic and existing purchased upgrades without retroactive charges (requested 2026-10-03).
 - Preserve the original ranked progression. With full ranks on the original nine nodes, a competent practical route should fully convert all three groups inside the round with little time to spare; merely reaching the groups does not meet this target.
 - The upgrade structure must accommodate over 100 future upgrades/layers through data and navigable rings or branches.
 - Spread the existing inscriptions more fully around the circle. When every current upgrade rank is bought, the inner circle lights up and can show **This is the end of the demo**; dismissal allows continued play. The centre will later lead to a new area's separate circle (requested 2026-10-03).
@@ -40,6 +41,7 @@ These are current implementation defaults, not previously confirmed balance deci
 | Base persuasion | One conviction per phrase; three conviction recruits a listener | Persuasion changes work done per phrase. |
 | Base movement | 180 world pixels per second | Running upgrades change travel time while preserving ordinary direct movement. |
 | Donations | Three per ordinary listener; 12 per merchant before upgrades | A typical opening round can afford an initial six-donation upgrade. |
+| Recruit assignments | 250 recruits across selected existing ranks; running costs zero recruits | Initial target based on the user's roughly 279 lifetime recruits by demo end; exact allocation and progression pace need playtesting. |
 | Ranked progression | Original six inner nodes with one rank, three tier-III nodes with two; 23 additional single-rank nodes | Preserve the original clear and extend progression through populated groups. |
 | Audience lifecycle | Reset all groups each round | The same villagers may be recruited again; the total counts events, not unique followers. |
 | Round boundary | Earning stops and the ritual screen opens; the player starts the next round | Allows unhurried decisions. Movement input stays available. |
@@ -50,8 +52,8 @@ The timer and travel/conversation costs limit the opening yield; no rule stops r
 
 1. Walk to a gathering and enter speaking range.
 2. Read the local audience and phrase/conviction feedback; stay to recruit or move to another gathering.
-3. Receive donations for each recruitment event until time expires.
-4. Browse the purple ritual circle, select a node, inspect its price and effect, and buy if affordable and unlocked.
+3. Receive donations and one available recruit for each recruitment event until time expires; increment lifetime recruitment history separately.
+4. Browse the purple ritual circle, select a node, inspect its rank-specific donation/recruit costs and effect, and buy if both resources are affordable and prerequisites are met.
 5. Press Enter or use the next-round button to begin again with purchased improvements.
 
 The ritual screen is a deliberate full-screen intermission. Tab returns to the visible village between rounds and reopens the circle; earning remains stopped. WASD, arrows and the movement stick continue to steer the cultist while the screen is open. A new round restores the starting position. Do not pause the movement controller to implement menus or future automation.
@@ -70,7 +72,9 @@ Effects within a branch add to its base value. Full ranks in the original core g
 
 The original nine purchases cost 81 donations; the three new ranks cost 54 more, for 135 total. A late round that fully converts two groups earns 30 donations, enough for an 18-donation rank. The new talking rank shortens every phrase interval; the new persuasion rank reaches one complete listener per phrase; the new running rank reduces the time spent crossing the village. Exact prices, increments and rank limits remain provisional tuning, while the goal of a close full-village conversion is confirmed. See [route measurements](PACING.md) for the full-clear budget and incomplete-build comparisons.
 
-One purchase action buys one rank. Nodes show current/maximum ranks, and selected details show current and next effects, price and prerequisites. Maximum-rank and stale purchase requests spend nothing. Locked, unaffordable, available, partially ranked and maximum-rank states must be readable through labels and shape treatment as well as color.
+One purchase action buys one rank. Nodes show current/maximum ranks, and selected details show current and next effects, both rank-specific costs and prerequisites. Purchases require both resources together; missing donations or recruits are explained without spending either. Maximum-rank and stale purchase requests spend nothing. Locked, unaffordable, available, partially ranked and maximum-rank states must be readable through labels and shape treatment as well as color.
+
+Recruits assigned to selected inscriptions support the cultist: they warm up the next audience, share testimony, organize invitations or help with communal preaching. This explanation adds no new actor or automatic conversion. Assignments are permanent purchase costs, spent from available recruits while the lifetime event count remains intact. All running ranks and selected personal-technique upgrades remain gold-only. The current 32-node, 35-rank catalog retains its effects and 1014-donation total and adds exactly 250 recruits; [PACING](PACING.md#recruit-assignments---2026-10-03) owns the provisional allocation. No new timing or stat bonus accompanies the cost change.
 
 The graph is authored in `data/upgrades.json`, with stable IDs, ring/branch placement, rank limits, rank costs, prerequisites and supported stat effects. Its nodes and connections form the ritual geometry. Dragging pans the graph; the mouse wheel zooms; selection opens readable details outside the moving graph. A separate large validation fixture exercises more than 100 nodes without presenting unfinished upgrades as purchasable content.
 
@@ -97,12 +101,13 @@ New groups appear on purchase, reset each round and are recreated from saved upg
 
 ## Progression and save scope
 
-Versioned local progression keeps donations, purchased upgrade ranks, the recruitment-event total, round number and the number of town opponents convinced. Existing schema-1 single-purchase saves migrate each purchased node to rank 1 without changing those counters; new ranks must still be earned. A restart begins a fresh timed round with the retained values; it does not resume a partial conversation or award offline income. The cumulative total deliberately includes repeat recruitment of the same prototype villagers.
+Schema-3 local progression keeps donations, available recruits, purchased upgrade ranks, lifetime recruitment events, round number and the number of town opponents convinced. Each ordinary, merchant, helper or opponent recruitment adds one to both recruit counters through its existing reward authority. Purchases subtract only available recruits. Valid schema-1/2 saves initialize available recruits from their preserved lifetime total, without charging old purchases; schema-1 purchases still become rank 1. A restart begins a fresh timed round with the retained values; it does not resume a partial conversation or award offline income. The cumulative total deliberately includes repeat recruitment of the same prototype villagers.
 
-Town unlocks, unique persistent followers, mid-round continuation, cloud saves, prestige and offline accrual are not implemented. Choose an audience lifecycle and an economy before treating the event total as a persistent population.
+Town unlocks, unique persistent followers, mid-round continuation, cloud saves, prestige and offline accrual are not implemented. Available recruits are an assignment resource; neither recruit counter represents a unique persistent population.
 
 The ritual centre's readiness is derived from all validated current catalog
-ranks being at their maximum, with an empty catalog never complete. No extra
+ranks being at their maximum, with an empty catalog never complete. Resource
+balances do not determine completion. No extra
 save flag is stored. The final successful purchase lights it immediately;
 existing fully ranked saves recover the same state on reload. This is separate
 from the saved priest victory. Clicking the centre or its visible navigation
@@ -115,7 +120,7 @@ The first helper recruits individual listeners. Later minions may collect donati
 
 ## Readability and feedback
 
-Keep village HUD information to time, donations and the explicitly named recruitment count. Put speech progress beside the active gathering. Use robe movement and small local audience reactions, with a brief numeric payout only when recruitment succeeds. The current payout rises and fades over 0.9 seconds; this duration is provisional visual tuning. Helper recruits share the listener feedback, and opponent victories show their donation reward beside the opponent's head.
+Keep village HUD information to time, donations and available recruits. Show lifetime recruitment history separately in the ritual, along with both available resources and a short explanation of follower assignments. Put speech progress beside the active gathering. Use robe movement and small local audience reactions, with a brief numeric payout only when recruitment succeeds. The current payout rises and fades over 0.9 seconds; this duration is provisional visual tuning. Helper recruits share the listener feedback, and opponent victories show their donation reward beside the opponent's head.
 
 During upgrade selection, the ritual itself is the main composition: concentric rings, connected node circles, intersecting lines and restrained rune-like marks in violet light. Rank pips and current/maximum labels distinguish a partly upgraded node from a finished one. Details must show the selected rank, current-to-next effect, cost, prerequisite and purchase state at a readable scale. The node glyphs need room to breathe; pan/zoom is for future scale, not a substitute for a readable initial layout.
 

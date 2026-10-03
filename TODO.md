@@ -1,13 +1,13 @@
 # Outstanding work
 
-- [ ] Human-playtest ordinary opening routes and the ranked-upgrade curve; confirm roughly three initial conversions and a close, complete 15-listener clear at full ranks inside 11 seconds. Check late-rank usefulness and whether their 18-donation prices feel attainable.
+- [ ] Human-playtest ordinary opening routes and the ranked-upgrade curve; confirm roughly three initial conversions and a close, complete 15-listener clear at full ranks inside 11 seconds. Check late-rank usefulness, whether their donation/recruit costs feel attainable, and whether the provisional 250-recruit total produces useful assignment choices without an excessive late grind.
 - [ ] Decide audience resets, donation cadence, the meaning of a permanent follower and whether new rounds restore the starting position.
 - [ ] Human-review the composed ritual seal against the inspected reference direction, including its distinct constellations, quiet motifs and completion glow. Test focused prerequisite paths, state cues, rank details, branch navigation, centre discovery, dismissal and village return. Review alternate window sizes and navigate the separate 144-node fixture before authoring a large upgrade catalog.
 - [ ] Add accessible graph navigation and gamepad rebinding; gamepad movement mappings do not yet provide gamepad upgrade-graph selection.
 - [ ] When a supported Windows Library workflow is available, archive the original village mockups and ritual references locally and verify provenance. The parent inspected the new seal references; further transfer retries are not needed for this redesign. See [reference status](docs/reference/README.md).
 - [ ] Resolve the installed editor's `_EDITOR_GET` import-check error and unexplained automatic-shutdown exit status; keep those limitations separate from runtime check results.
 - [ ] Check movement feel, robe readability, gathering selection and HUD legibility in a human playtest.
-- [ ] Decide quit/restart behavior beyond the current fresh-round policy; verify schema-1 migration and schema-2 save recovery in the eventual export.
+- [ ] Decide quit/restart behavior beyond the current fresh-round policy; verify schema-1/2 migration and schema-3 save recovery in the eventual export.
 - [ ] After first-map playtesting, design the next area and its separate ritual circle reached from the completed centre; define transition, return travel and save rules before implementing it.
 - [ ] Human-playtest the two gathering unlocks, later speaking/running tiers and helper value. Compare leaving the garden to the helper with overtaking its targets; tune prices and effort from actual play.
 - [ ] Human-playtest merchant value, opponent arrival/objections/decay, the Priest difficulty and total time to finish Bramblewick; tune provisional costs and inspect the eight-branch circle at alternate sizes.

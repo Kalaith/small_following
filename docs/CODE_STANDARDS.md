@@ -82,7 +82,7 @@ requests. Disabled controls only explain these rules.
 ## 5. Catalog and content validation
 
 Author upgrades in `data/upgrades.json`, whose catalog schema is currently 1.
-The save schema is independently versioned at 2. Preserve stable IDs and the
+The save schema is independently versioned at 3. Preserve stable IDs and the
 original nine-node core with one rank on inner nodes and two on tier-III nodes; the requested village expansion adds implemented nodes.
 
 Validate definitions before making them available: nonempty unique IDs,
@@ -92,36 +92,47 @@ must agree with the first rank. Supported effects are enumerated in `Progression
 merchant and opponent effects described in ARCHITECTURE; implement and test a new effect before
 adding it to production data.
 
+Validate `rank_recruit_costs` as nonnegative bounded integers, one per rank;
+omitted arrays default to zero for older fixture catalogs. Production data
+explicitly includes zero costs on gold-only ranks. Running/movement upgrades
+must remain zero-recruit purchases. Keep supporting follower explanations in
+`support_description`, separate from the implemented stat effects.
+
 Keep fixture content under `tests/fixtures/`. Tests of 144 nodes must not
 change production counts, unlock rules or player progression. Catalog errors
 must remain visible and prevent unsafe progression writes.
 
 ## 6. Save contract and errors
 
-Use `user://` and Godot file APIs for runtime persistence. Schema 2 stores
-`coins`, integer `purchased` ranks, `total_recruits`, `round_number` and optional
+Use `user://` and Godot file APIs for runtime persistence. Schema 3 stores
+`coins`, integer `purchased` ranks, `total_recruits`, `available_recruits`, `round_number` and optional
 `encounter_stage` (integer 0–4, default zero for older saves).
 Unpurchased entries are absent; stored ranks begin at 1. Validate types, finite
 numbers, bounds, IDs and prerequisites before applying a snapshot.
 
-`total_recruits` counts recruitment events across audience resets. It is not a
-unique follower population. Restarting begins a fresh timer/audience; position,
+`total_recruits` counts lifetime recruitment events across audience resets.
+`available_recruits` is a separate spendable balance bounded by zero and that
+total. Recruitment increments both once; purchases subtract only available
+recruits. Neither is a unique follower population. Restarting begins a fresh timer/audience; position,
 partial phrases and remaining time are not persisted.
 
 Preserve these transaction and compatibility rules:
 
-1. Build and validate a candidate purchase snapshot.
+1. Validate affordability in both resources and build a candidate purchase
+   snapshot with both rank-specific costs deducted and lifetime history intact.
 2. Write and flush a temporary file, read it back for validation, preserve the
    prior valid save as backup and promote the candidate.
 3. Apply the purchase to memory only after saving succeeds. Failure grants
    nothing and spends nothing.
-4. Load valid schema-1 boolean purchases as rank 1 with currency, event total
-   and round number unchanged. Keep migration tests isolated.
+4. Load valid schema-1 boolean purchases as rank 1 and schema-2 integer ranks
+   unchanged. Preserve donations, event total, round and encounter progress;
+   initialize available recruits to the old total without retroactive charges.
+   Keep migration tests isolated.
 5. Preserve unsupported future saves and damaged originals. Follow existing
    backup/`.corrupt` rules rather than deleting files to suppress a notice.
 
 Staged replacement supports recovery but does not guarantee survival of every
-filesystem failure. Earned donations have a different failure policy: they
+filesystem failure. Earned donations and recruits have a different failure policy: they
 remain in memory after a failed save and may be lost on exit. Surface the
 notice honestly. Keep detailed recovery behavior in
 [ARCHITECTURE](ARCHITECTURE.md#local-progression-and-recovery).
@@ -139,8 +150,8 @@ Test shared runtime methods instead of rewriting game formulas in a test.
 | Area | Required evidence when changed |
 | --- | --- |
 | Movement/rounds | Collision, diagonals, cloth, earning boundary, transitions and between-round control |
-| Purchases | Affordability, prerequisites, distinct effects, rank limits, stale requests and failed writes |
-| Saves | Round trip, schema-1 migration, malformed/future versions and backup recovery |
+| Purchases | Both-resource affordability and atomicity, lifetime preservation, cost totals/running exclusions, prerequisites, distinct effects, rank limits, stale requests and failed writes |
+| Saves | Both recruit counters round trip, schema-1/2 migration, malformed/future versions and backup recovery |
 | Pacing | Real motion and conversation, each completed conversion, full-clear margin and comparison routes |
 | Graph | Selection after pan/zoom/recenter, actual input path and the separate large fixture |
 | Visuals | Rendered PNG inspection and relevant interactive checks |

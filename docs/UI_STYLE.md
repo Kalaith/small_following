@@ -13,9 +13,9 @@ input/feedback in the design proposal. The current baseline is:
 
 | Phase | Decision and primary action | Dominant focus | Supporting information | Deferred information |
 | --- | --- | --- | --- | --- |
-| Active round | Choose a gathering; move into speaking range | Village routes, cultist and listeners | Time, donations, recruitment count and local phrase progress | Upgrade details appear between rounds |
+| Active round | Choose a gathering; move into speaking range | Village routes, cultist and listeners | Time, donations, available recruits and local phrase progress | Upgrade details and lifetime recruitment history appear between rounds |
 | Ritual overview | Find a branch or major unlock, then inspect it | Composed purple seal, distinct branch constellations and main paths | Branch identity, purchase-state cues and visible navigation | Focus/zoom reveals more labels; selection opens full details |
-| Ritual selection | Compare the next rank and buy if useful, or start another round | Selected node, prerequisite ancestry and stationary details | Wallet, rank, current-to-next effect, cost and missing requirements | Unrelated cross-branch paths appear only when relevant |
+| Ritual selection | Compare the next rank and buy if useful, or start another round | Selected node, prerequisite ancestry and stationary details | Donations, available recruits, lifetime total, rank-specific costs, effect and missing requirements | Unrelated cross-branch paths appear only when relevant |
 | Completed ritual | Inspect the lit centre or keep playing | Filled violet/lilac centre with a visible Open control | Completion means every current catalog rank is bought | Exact demo message appears on activation |
 | Demo message | Dismiss and continue | Exact text: This is the end of the demo | Keep playing button and Esc/Tab/Enter hints | The next area's separate circle remains future work |
 | Village between rounds | Walk and inspect, return to ritual or start next round | Visible village with earning stopped | Round-complete state and Tab/Enter guidance | Ritual details return with the ritual |
@@ -52,9 +52,12 @@ Recruitment feedback belongs near the listener or gathering. Current state
 must remain understandable after a temporary animation ends. Use text or
 shape along with color for important distinctions.
 
-Keep labels accurate: cumulative recruitment is a count of events, including
-repeat conversions. Do not describe it as the number of unique villagers
-following the cultist.
+Keep labels accurate: available recruits can be assigned to inscriptions;
+lifetime recruitment is a count of events, including repeat conversions, and
+does not decrease when recruits are spent. Neither is a count of unique
+villagers. Keep the village counter compact and distinguish both values in
+the ritual. Brief eligible-node text explains followers warming up audiences,
+sharing testimony or supporting invitations/preaching.
 
 ## 4. Ritual geometry and rank states
 
@@ -115,8 +118,8 @@ Judge readability in rendered frames at the actual display size.
 | Node state | Required visual cue and information |
 | --- | --- |
 | Locked | Dim diamond and central bar; missing prerequisite and current rank in details |
-| Unaffordable | Hollow circle distinct from locked; exact next cost and donation shortfall |
-| Affordable | Bright circle and plus mark; next rank, cost and effect |
+| Unaffordable | Hollow circle distinct from locked; exact next rank costs and missing gold, recruits or both |
+| Affordable | Bright circle and plus mark; next rank, donation/recruit costs and effect |
 | Partly ranked | Inner progress arc, with earned/open rank pips in detail views; current/maximum rank and next purchase |
 | Maximum rank | Filled circle and check mark with a clear completion label; purchase unavailable |
 | Selected | Extra focus ring and corner marks with matching stationary details |
@@ -126,10 +129,13 @@ affordable, unaffordable, locked and complete nodes. Rank pips and text must
 remain readable over decoration. Keep selected details
 outside the moving graph, including current-to-next stats and maximum-rank
 messaging. A rectangular details area is useful support; the upgrade network
-itself remains a circle of connected nodes.
+itself remains a circle of connected nodes. Label eligible recruit costs
+explicitly; running ranks remain gold-only. Resource labels and brief support
+text must fit the existing screen without altering the ritual artwork.
 
 The centre stays quiet while any catalog rank is missing. With every rank
-purchased, a bright filled seal, lilac rim and glow identify its clickable
+purchased, regardless of remaining resources, a bright filled seal, lilac rim
+and glow identify its clickable
 state. This is distinct from the Priest's saved Bramblewick-complete message.
 Keep the fixed **Inner circle lit / Open** control reachable below the graph
 when the centre has been panned out of view. Its incomplete state is disabled

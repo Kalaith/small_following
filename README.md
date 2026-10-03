@@ -54,22 +54,24 @@ The branch selector shows owned nodes/total nodes and ready purchase counts for 
 - A large purple occult upgrade circle with 32 nodes across six catalog tiers, retaining second ranks on the three original tier-III nodes. Eight authored branch constellations give Words a crescent, Running a broad left hook, Merchants a compact loop, Trials a diagonal fork, Creed a right curl, Faith a lower fork, Village a diagonal pair and Followers a small satellite. Contextual prerequisite paths and shape/fill state cues retain readable rank details.
 - Three distinct upgrade effects: initial talking ranks each add 20% of base phrase frequency, persuasion ranks add 0.5 conviction per phrase, and running ranks add 15% of base movement speed. The outer talking node's second rank adds 30% of base frequency. Initial node prices remain 6, 9 and 12 donations per branch; each outer node's second rank costs 18.
 - Full ranks on the original nine nodes produce 1.9 phrases/second, 3 conviction/phrase and 288 pixels/second movement. The balance target is all 15 listeners across the three groups with a small positive margin on a competent route inside the unchanged 11-second round; [route evidence](docs/PACING.md) records actual timings and limitations.
-- Versioned local progression retaining currency, purchased ranks, the recruitment-event total and round number. Existing single-purchase saves keep each old purchase as rank 1.
+- Selected inscriptions require recruits alongside donations: followers warm up audiences, spread invitations and support shared preaching. Running upgrades remain gold-only. The full catalog costs 1014 donations and 250 recruits; [rank allocation and provisional balance](docs/PACING.md#recruit-assignments---2026-10-03) explain the split.
+- Versioned local progression retaining both available recruits and a separate lifetime recruitment-event total, donations, purchased ranks and round number. Existing purchases keep their benefits without a retroactive recruit charge.
 
 Base movement is 180 pixels/second. Speech within 105 pixels produces one phrase/second; each phrase adds one conviction, and three conviction recruits a listener for three donations. Extra conviction carries toward the next listener. Partial speech stays with its gathering until round end. A typical three-recruit opening earns nine donations, enough for one first-tier upgrade.
 
 The original six inner nodes each have one rank and the original tier-III nodes each have two. Those twelve purchases cost 135 donations. Six new single-rank nodes add two gatherings and two further tiers each of talking and running, for 318 donations before the 30-donation helper (348 total). A previous node needs rank 1 to unlock its successor. One purchase action buys one rank, and stale selection requests cannot silently buy another. Two fully converted groups earn 30 donations, enough for a new 18-donation late rank; improving the route and speaking stats remains useful before a full village clear.
 
-All audiences reset each round. The cumulative recruited total counts **recruitment events**, including the same villagers on later rounds; it is not a population of unique permanent followers. Restarting preserves progression but begins a fresh timer and audience state. No offline rewards or partial-round continuation are implemented.
+All audiences reset each round. Each recruitment event adds one available recruit and one to the lifetime total, including the same villagers on later rounds. Assigning recruits to an inscription spends only the available balance; lifetime recruitment history is retained. These counts are not a population of unique permanent followers. Purchases require both the selected rank's donations and recruits together; an unaffordable or failed-save purchase spends neither. Restarting preserves progression but begins a fresh timer and audience state. No offline rewards or partial-round continuation are implemented.
 
-The complete first-map catalog has 32 nodes and 35 ranks costing 1014 donations. The real catalog is `data/upgrades.json`. A separate **144-node validation fixture** exercises graph capacity and navigation; it is not additional purchasable game content. A second town, magic and production art remain future work. Browser and Windows exports use the [publishing workflow](docs/PUBLISHING.md).
+The complete first-map catalog has 32 nodes and 35 ranks costing 1014 donations plus 250 recruits. The real catalog is `data/upgrades.json`. A separate **144-node validation fixture** exercises graph capacity and navigation; it is not additional purchasable game content. A second town, magic and production art remain future work. Browser and Windows exports use the [publishing workflow](docs/PUBLISHING.md).
 
 Buying every rank in the current catalog lights the ritual's inner circle.
 Click it, or the **Inner circle lit / Open** control below the graph, to see
 **This is the end of the demo**. **Keep playing** or Esc dismisses the message;
 movement, the village and further rounds remain available. Readiness is derived
 from saved ranks, so a completed save lights the centre after reload. This is
-independent of convincing the Priest. A future update will use this centre to
+independent of either resource balance and of convincing the Priest. A future
+update will use this centre to
 reach a new area's separate circle; no second area is implemented here.
 [Completion scope and controls](docs/RITUAL_COMPLETION.md).
 
@@ -106,11 +108,11 @@ audio behavior checks; a display run also checks real music playback/looping.
 
 ## Village expansion
 
-Meadow Invitations adds five neighbours after Compelling Creed III. It opens Talking IV and Running IV; East Lane Invitations then adds another five listeners and opens tier V. Both stat paths also require their preceding tier. Before the finale upgrades, player stats reach 3 phrases/second, 3 conviction/phrase and 396 pixels/second. Groups appear after purchase and are recreated from saved ranks. Helping Hand costs 30 donations after Meadow Invitations. This small teal-robed helper walks around props at 150 px/s and uses three one-second phrases to recruit one listener, then finds another. It rests between rounds and resets at the entrance. Player upgrades affect the cultist; the helper keeps its own pace. Leave it an audience to work on: overtaking its targets can waste its effort. Prices and timing remain provisional; see [the scoped design](docs/VILLAGE_EXPANSION.md) and [route measurements](docs/PACING.md).
+Meadow Invitations adds five neighbours after Compelling Creed III. It opens Talking IV and Running IV; East Lane Invitations then adds another five listeners and opens tier V. Both stat paths also require their preceding tier. Before the finale upgrades, player stats reach 3 phrases/second, 3 conviction/phrase and 396 pixels/second. Groups appear after purchase and are recreated from saved ranks. Helping Hand costs 30 donations and 5 recruits after Meadow Invitations. This small teal-robed helper walks around props at 150 px/s and uses three one-second phrases to recruit one listener, then finds another. It rests between rounds and resets at the entrance. Player upgrades affect the cultist; the helper keeps its own pace. Leave it an audience to work on: overtaking its targets can waste its effort. Prices and timing remain provisional; see [the scoped design](docs/VILLAGE_EXPANSION.md) and [route measurements and current recruit costs](docs/PACING.md).
 
 ## Local saves
 
-Progression is written to Godot's `user://progression.json`, normally beneath `%APPDATA%\Godot\app_userdata\Small Following` on Windows. Schema 2 stores purchased ranks; valid schema-1 saves migrate each existing purchase to rank 1 without changing coins, recruitment events or round number. Writes use a verified temporary file and prior-save backup. Invalid saves are validated/recovered with a visible notice; newer unsupported saves are preserved. A failed purchase save grants nothing and spends nothing. If saving earned donations fails, they remain in memory but may be lost on exit.
+Progression is written to Godot's `user://progression.json`, normally beneath `%APPDATA%\Godot\app_userdata\Small Following` on Windows. Schema 3 stores available recruits separately from lifetime recruitment events. Valid schema-1/2 saves keep their donations, recruitment history, round and purchased upgrades; their available recruits start at the lifetime total, with no retroactive charge. Schema-1 purchases still become rank 1. Writes use a verified temporary file and prior-save backup. Invalid saves are validated/recovered with a visible notice; newer unsupported saves are preserved. A failed purchase save grants nothing and spends neither resource. If saving earned donations/recruits fails, they remain in memory but may be lost on exit.
 
 See [save fields and recovery rules](docs/ARCHITECTURE.md#local-progression-and-recovery) before changing IDs or schema. Test scripts isolate their saves from ordinary player progress. Runtime saves do not belong in this repository.
 
@@ -168,6 +170,7 @@ From the project folder:
 $godotExe = 'C:\Program Files\Godot\Godot_v4.2.2-stable_mono_win64_console.exe'
 & $godotExe --headless --path . --import
 & $godotExe --headless --path . --script res://tests/test_progression.gd
+& $godotExe --headless --path . --script res://tests/test_recruit_economy.gd
 & $godotExe --headless --path . --script res://tests/smoke_test.gd
 & $godotExe --headless --path . --script res://tests/test_ritual_readability.gd
 & $godotExe --headless --path . --script res://tests/test_demo_completion.gd
@@ -183,6 +186,15 @@ For a ritual-only visual change, append `--ritual-only` after the capture
 command's `--`. It produces the 15 targeted seal, completion, prerequisite and
 large-fixture frames without replaying unrelated village captures. Run it with
 a rendering display; use a hidden window for unattended capture.
+
+For recruit-cost UI changes, use `--economy-only` instead. It captures only
+the village wallet, ranked costs, missing resources, gold-only running,
+helper details and completed centre. Keep this display run hidden for
+unattended verification.
+
+`tests/test_recruit_economy.gd` covers the recruit-cost allocation, movement
+exclusions, both-resource purchase guards, separate recruit counters and
+affected save compatibility. Its wallets and saves are isolated from play.
 
 The tests cover movement/cloth/collision, speech timing, round transitions, distinct rank effects, purchase guards, old-save migration and local-save validation/recovery. The readability suite exercises authored constellations and generic fixture placement, prerequisite ancestry, hover versus selection, navigation and transformed graph picking; rendered inspection checks the actual layout. The completion suite covers catalog-derived readiness, final-rank purchase, saved-rank reload, centre activation and dismissal independently of priest victory. Route tests drive the real scene at a fixed simulated timestep and count complete individual conversions, including full-rank completion time and remaining margin. Captures require a rendering display; headless tests cannot verify pixels. Human movement feel, pacing and large-graph navigation still need playtesting.
 

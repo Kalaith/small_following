@@ -29,6 +29,8 @@ func _run() -> void:
 	check(not is_instance_valid(scene.helper), "fresh village has no free helper")
 	scene.round_active = false
 	scene.progression.coins = 1000
+	scene.progression.total_recruits = 1000
+	scene.progression.available_recruits = 1000
 	check(not scene.purchase_upgrade("helper_1") and scene.coins == 1000, "helper requires meadow invitation")
 	for id in ["persuade_1", "persuade_2", "persuade_3", "meadow_1"]:
 		check(scene.purchase_upgrade(id), "helper prerequisite purchase: " + id)

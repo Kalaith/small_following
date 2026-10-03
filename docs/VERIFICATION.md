@@ -896,3 +896,81 @@ The user requested fewer unnecessary/display checks during publication. After
 that correction, verification was limited to live delivery and Butler status;
 no additional gameplay tests ran. No new live browser playthrough or subjective
 audio acceptance is claimed. No tools, shared catalogs or Git remotes changed.
+
+
+## 2026-10-03 - Recruits support selected inscriptions
+
+The inspected catalog still has 32 nodes, 35 ranks and 1014 donations in gold
+prices. All original catalog fields were compared against the starting commit
+and match: IDs, descriptions, effects, prerequisites and layout data. New
+per-rank recruit costs total exactly **250** across 22 ranks; the other 13
+ranks remain gold-only, including every running rank. [PACING](PACING.md#recruit-assignments---2026-10-03)
+records the intentional allocation and provisional balance assumptions.
+
+`available_recruits` is spendable; `total_recruits` retains lifetime recruitment
+events, including repeats after audience resets. Listener, helper, merchant and
+opponent rewards use the existing authorities, crediting both counters once.
+Purchases check both resources and persist one candidate before spending or
+granting anything. Schema 3 saves the separate balance. Schema-1/2 saves retain
+owned ranks and initialize availability from lifetime events with no retroactive
+bill. Completion still derives only from all purchased ranks.
+
+The installed **Godot 4.2.2.stable.mono.official.15073afe3** ran the focused
+checks below. Headless runtime scripts used `--fixed-fps 60` except the smoke
+run, which used its existing timing path. Logs were inspected, not only exit
+codes. All runtime suites exited 0 without warning/error diagnostics.
+
+| Check | Result |
+| --- | --- |
+| `tests/test_recruit_economy.gd` | 134 checks, 0 failures |
+| `tests/test_progression.gd` | 113 checks, 0 failures |
+| `tests/smoke_test.gd` | 92 checks, 0 failures |
+| `tests/test_pacing.gd` | 59 checks, 0 failures |
+| `tests/test_demo_completion.gd` | 46 checks, 0 failures |
+| `tests/test_ritual_readability.gd` | 73 checks, 0 failures |
+| Hidden `tests/capture_starter.gd --economy-only` | 7 PNGs; exit 0, no diagnostics |
+| Headless editor import | Exit 1; existing `_EDITOR_GET` error and cursor/Blender warnings |
+| Catalog comparison and `git diff --check` | Pass |
+
+The economy suite covers exact total and running exclusions, malformed cost
+data, each missing-resource combination, exact rank prices, stale/max/locked
+requests, failed-save rollback of both resources, separate counters, large
+reward saturation, old-save compatibility, current save round trips, damaged
+backup recovery and preservation of future saves. Scene checks exercise actual
+listener events/reset repeats, wallet labels, disabled reasons, gold-only
+running and both ranks through the purchase button. A full catalog bought with
+exact funds reaches zero available recruits while preserving 279 lifetime
+events and lighting the centre; a missing rank still blocks completion with
+abundant recruits. Other suites retain round transitions/movement, route
+conversion timing, completed-save reload, centre activation/dismissal and
+transformed selection with the separate 144-node fixture.
+
+Only affected visual states were captured at 1280 x 800 using Compatibility
+OpenGL 3.3 on the installed NVIDIA device, with a hidden offscreen window and
+Dummy audio. Actual PNGs were inspected: [village wallet](verification/economy-village.png),
+[second-rank cost](verification/economy-rank-ready.png),
+[recruits missing](verification/economy-recruits-missing.png),
+[both resources missing](verification/economy-both-missing.png),
+[gold-only running](verification/economy-running.png),
+[helper support details](verification/economy-helper.png) and
+[demo message at zero available recruits](verification/economy-demo.png).
+Wallet text, costs, supporting-role descriptions and missing-resource reasons
+fit the existing UI after minor spacing adjustments. The graph drawing and
+ritual artwork are unchanged. The node picker now says "needs resources" rather
+than incorrectly describing recruit-only shortages as missing donations.
+
+One initial economy test expected the superseded lifetime-label wording; the
+assertion was aligned with the final visible label and the full economy suite
+then passed. An initial sandbox runtime attempt crashed before startup; the
+headless checks above ran successfully outside that sandbox. Import remains a
+separate known engine/editor failure, not a successful validation claim.
+
+Tests disabled ordinary progression/settings persistence or used isolated
+`user://test_*` fixtures; player progression was not read or migrated. Existing
+purchase-setup fixtures were funded with recruits so their original behavior
+checks remain meaningful. Audio/helper/merchant/encounter-specific suites and
+the blanket screen capture suite were not rerun for this scoped update.
+No visible play window, installation, export, push or publishing was used.
+Human purchase-order/grind balance, alternate viewport sizes and play feel
+remain unverified; 250 is the requested initial spending target, not proven
+balance for a fresh playthrough.

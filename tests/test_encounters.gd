@@ -55,6 +55,8 @@ func _setup(full: bool):
 	scene.player.set_physics_process(false)
 	scene.round_active = false
 	scene.progression.coins = 5000
+	scene.progression.total_recruits = 1000
+	scene.progression.available_recruits = 1000
 	if full:
 		for item in scene.progression.catalog:
 			for rank in range(scene.progression.max_rank(item.id)):

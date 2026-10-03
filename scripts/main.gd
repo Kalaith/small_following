@@ -442,6 +442,7 @@ func _build_hud() -> void:
 	var status := _panel()
 	hud_layout.add_child(status)
 	status.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
+	status.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 	status.offset_left = -390
 	status.offset_right = -26
 	status.offset_top = 22
@@ -498,7 +499,7 @@ func _label(value: String, font_size: int, color: Color = Color("#fff1d0")) -> L
 
 
 func _update_hud() -> void:
-	stats_label.text = "%d donations    /    %d recruited" % [coins, total_recruits]
+	stats_label.text = "%d donations / %d recruits available" % [coins, progression.available_recruits]
 	round_label.text = "Round %d   /   %.1fs remaining" % [round_number, seconds_left]
 	save_label.text = "Progress notice: see the ritual screen." if not progression.last_error.is_empty() else ""
 	if progression.map_complete():

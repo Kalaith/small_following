@@ -5,6 +5,7 @@ var destination: String = "user://verification"
 var failed: bool = false
 var ritual_only: bool = false
 var settings_only: bool = false
+var economy_only: bool = false
 
 
 func _initialize() -> void:
@@ -28,6 +29,8 @@ func _capture() -> void:
 			ritual_only = true
 		elif argument == "--settings-only":
 			settings_only = true
+		elif argument == "--economy-only":
+			economy_only = true
 	DirAccess.make_dir_recursive_absolute(destination)
 	var scene = load("res://scenes/main.tscn").instantiate()
 	scene.persistence_enabled = false
@@ -36,6 +39,10 @@ func _capture() -> void:
 	scene.game_audio.output_enabled = false
 	root.add_child(scene)
 	scene.set_process(false)
+	if economy_only:
+		await capture_recruit_economy(scene)
+		await finish_capture(scene)
+		return
 	if settings_only:
 		await capture_settings(scene)
 		await finish_capture(scene)
@@ -89,6 +96,8 @@ func _capture() -> void:
 	scene.advance_round(100.0)
 	# Fund old first-rank progression only for the visual fixture, using normal purchase paths.
 	scene.progression.coins = 200
+	scene.progression.total_recruits = 250
+	scene.progression.available_recruits = 250
 	for item in scene.progression.catalog.slice(0, 9):
 		if scene.progression.rank(item.id) == 0:
 			scene.purchase_upgrade(item.id)
@@ -104,6 +113,8 @@ func _capture() -> void:
 	scene.advance_round(100.0)
 	await capture_expansion(scene)
 	scene.progression.coins = 200
+	scene.progression.total_recruits = 250
+	scene.progression.available_recruits = 250
 	for id in ["merchant_1", "merchant_2", "merchant_3", "merchant_4"]:
 		scene.purchase_upgrade(id)
 	scene.start_next_round()
@@ -131,6 +142,43 @@ func _capture() -> void:
 	await capture_readability(scene)
 	await capture_graph_fixture(scene)
 	await finish_capture(scene)
+
+
+func capture_recruit_economy(scene) -> void:
+	# Only the changed wallet/cost states; no normal save or unrelated screen suite.
+	scene.progression.add_donation(120, 40)
+	scene.progression.purchased = {"talk_1": 1, "talk_2": 1, "talk_3": 1}
+	scene._update_hud()
+	await save_frame("economy-village.png")
+	scene.advance_round(100.0)
+	var screen = scene.ritual_screen
+	screen.select_node("talk_3")
+	await save_frame("economy-rank-ready.png")
+	scene.progression.available_recruits = 0
+	screen.update_state()
+	await save_frame("economy-recruits-missing.png")
+	scene.progression.coins = 0
+	screen.update_state()
+	await save_frame("economy-both-missing.png")
+	scene.progression.coins = 6
+	screen.select_node("run_1")
+	await save_frame("economy-running.png")
+	# Longest changed supporting-role details remain in the same narrow panel.
+	scene.progression.coins = 1000
+	scene.progression.available_recruits = 40
+	scene.progression.purchased.merge({"persuade_1": 1, "persuade_2": 1, "persuade_3": 1, "meadow_1": 1})
+	screen.select_node("helper_1")
+	await save_frame("economy-helper.png")
+	for item in scene.progression.catalog:
+		scene.progression.purchased[item.id] = scene.progression.max_rank(item.id)
+	scene.progression.available_recruits = 0
+	screen.clear_selection()
+	screen.completion_button.pressed.emit()
+	if not screen.demo_message_visible():
+		failed = true
+		push_error("Zero available recruits blocked the completed centre")
+	await save_frame("economy-demo.png")
+	screen.dismiss_demo_message()
 
 
 func capture_settings(scene) -> void:
@@ -195,6 +243,7 @@ func finish_capture(scene) -> void:
 func capture_full_clear(scene) -> void:
 	# Same competent route model as pacing tests: small reactions, ordinary 95px stops.
 	scene.progression.total_recruits = 0
+	scene.progression.available_recruits = 0
 	scene.start_next_round()
 	scene.player.set_physics_process(false)
 	var order: Array[int] = [2, 0, 1]
@@ -228,6 +277,8 @@ func capture_expansion(scene) -> void:
 	scene.ritual_screen.select_node("run_5")
 	await save_frame("ritual-expansion-locked.png")
 	scene.progression.coins = 500
+	scene.progression.total_recruits = 250
+	scene.progression.available_recruits = 250
 	for item in scene.progression.catalog.slice(9, 16):
 		scene.purchase_upgrade(item.id)
 	scene.ritual_screen.select_node("east_1")
@@ -257,6 +308,8 @@ func capture_readability(scene) -> void:
 		push_error("Readability capture catalog failed: " + fixture.last_error)
 		return
 	fixture.coins = 9
+	fixture.total_recruits = 250
+	fixture.available_recruits = 250
 	screen.configure(fixture.catalog, fixture)
 	screen.overview_button.pressed.emit()
 	await save_frame("ritual-readability-overview.png")
@@ -311,6 +364,8 @@ func capture_demo_completion(scene) -> void:
 		final_id = fixture.catalog.back().id
 	fixture.purchased[final_id] -= 1
 	fixture.coins = fixture.next_cost(final_id)
+	fixture.available_recruits = fixture.next_recruit_cost(final_id)
+	fixture.total_recruits = fixture.available_recruits
 	screen.configure(fixture.catalog, fixture)
 	screen.overview_button.pressed.emit()
 	screen.select_node(final_id)
@@ -343,6 +398,8 @@ func capture_demo_completion(scene) -> void:
 
 func capture_encounters(scene) -> void:
 	scene.progression.coins = 5000
+	scene.progression.total_recruits = 250
+	scene.progression.available_recruits = 250
 	for item in scene.progression.catalog:
 		while scene.progression.rank(item.id) < scene.progression.max_rank(item.id):
 			if not scene.purchase_upgrade(item.id):

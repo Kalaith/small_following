@@ -83,17 +83,18 @@ func _run() -> void:
 	state.coins = 55
 	state.encounter_stage = 2
 	state.total_recruits = 123
+	state.available_recruits = 123
 	state.round_number = 8
 	state.save_path = "user://missing_demo_completion_test_directory/save.json"
 	check(not state.try_purchase("talk_3", 1) and not state.is_circle_complete() and state.rank("talk_3") == 1 and state.coins == 55, "failed final-rank save cannot grant completion or spend donations")
 	state.save_path = FIXTURE
-	check(state.try_purchase("talk_3", 1) and state.is_circle_complete() and state.coins == 37, "successful final rank lights the centre and charges only its existing price")
+	check(state.try_purchase("talk_3", 1) and state.is_circle_complete() and state.coins == 37, "successful final rank lights the centre and retains its existing donation price")
 	check(not state.map_complete(), "all ranks do not grant the separate Priest victory")
 	var restored = fresh()
 	check(restored.load_progress() and restored.is_circle_complete(), "completed save reload derives completion without a new flag")
-	check(restored.purchased == state.purchased and restored.coins == 37 and restored.total_recruits == 123 and restored.round_number == 8 and restored.encounter_stage == 2, "completed-save reload preserves ranks, donations, recruitment, round and encounter stage")
+	check(restored.purchased == state.purchased and restored.coins == 37 and restored.total_recruits == 123 and restored.available_recruits == state.available_recruits and restored.round_number == 8 and restored.encounter_stage == 2, "completed-save reload preserves ranks, both resources, lifetime recruitment, round and encounter stage")
 	var stored: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(FIXTURE))
-	check(stored.schema_version == 2 and stored.size() == 6, "completion adds no save-schema fields")
+	check(stored.schema_version == 3 and stored.size() == 7 and not stored.has("circle_complete"), "completion remains derived rather than adding a save flag")
 	await _test_screen()
 	clean_fixture()
 	print("DEMO COMPLETION RESULT: %d checks, %d failures" % [checks, failures])
