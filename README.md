@@ -18,7 +18,10 @@ From the project folder, `.\Run.ps1` also launches the game; pass `-GodotExe '<i
 | --- | --- |
 | Move the cultist | WASD / arrows / gamepad left stick |
 | Speak | Stay within range of a gathering |
-| Select an upgrade | Click its circle in the ritual |
+| Select an upgrade | Click its ritual node, or choose it in the node list below the graph |
+| Find a branch | Words / Running / Creed / Village / Followers buttons above the graph |
+| Enlarge the selected upgrade | Focus selected button |
+| Return to branch overview | Overview button (clears selection) |
 | Pan the ritual | Left-drag empty graph space, or middle-drag |
 | Zoom / restore view | Mouse wheel / Recenter button |
 | Buy selected upgrade | U / Inscribe button / gamepad X (left face button) |
@@ -27,13 +30,15 @@ From the project folder, `.\Run.ps1` also launches the game; pass `-GodotExe '<i
 
 Movement remains active during the ritual; Tab reveals the village between rounds. A new round returns the cultist to the starting entrance. Gamepad movement/action mappings exist but were not physically tested; graph selection and navigation currently require a mouse.
 
+Branch buttons show owned nodes/total nodes, with a `+` when a rank is affordable. Large test graphs use a branch dropdown with explicit ready counts. The node list includes every upgrade in the selected branch, including locked nodes, with rank and state; choosing one brings it into view. Overview clears selection and fits the whole graph; Recenter fits it while keeping the selected details. Hover previews prerequisite paths while the right panel keeps the selected upgrade's details.
+
 ## Current loop
 
 - A 1560 x 1100 village with real actors, paths, props, collision footprints and camera.
 - A directly movable purple cultist with normalized diagonal speed, world bounds and visibly trailing cloth.
 - Three initial nonblocking gatherings of five listeners each, plus two purchasable gatherings, with local speech feedback and recruitment/donation events.
 - **Provisional 11-second rounds**, tuned toward roughly three opening conversions through travel and conversation time. There is no three-recruit cap; [pacing evidence and assumptions](docs/PACING.md) explain the limit and upgraded comparisons.
-- A large purple occult upgrade circle: sixteen nodes across five rings, retaining second ranks on the three original tier-III nodes. Rank pips, current-to-next details, prerequisite connections and pan/zoom keep progression readable.
+- A large purple occult upgrade circle: sixteen nodes across five rings, retaining second ranks on the three original tier-III nodes. Words stays above, Running left, Creed right, and village/follower upgrades below as tiers progress outward. Quiet decoration, contextual prerequisite paths and shape/fill state cues support the existing rank details.
 - Three distinct upgrade effects: initial talking ranks each add 20% of base phrase frequency, persuasion ranks add 0.5 conviction per phrase, and running ranks add 15% of base movement speed. The outer talking node's second rank adds 30% of base frequency. Initial node prices remain 6, 9 and 12 donations per branch; each outer node's second rank costs 18.
 - Full ranks on the original nine nodes produce 1.9 phrases/second, 3 conviction/phrase and 288 pixels/second movement. The balance target is all 15 listeners across the three groups with a small positive margin on a competent route inside the unchanged 11-second round; [route evidence](docs/PACING.md) records actual timings and limitations.
 - Versioned local progression retaining currency, purchased ranks, the recruitment-event total and round number. Existing single-purchase saves keep each old purchase as rank 1.
@@ -61,6 +66,7 @@ See [save fields and recovery rules](docs/ARCHITECTURE.md#local-progression-and-
 - [Godot development guide and documentation map](docs/GAME_DEVELOPMENT_GUIDE.md)
 - [GDScript and scene standards](docs/CODE_STANDARDS.md)
 - [UI composition and review](docs/UI_STYLE.md)
+- [Approved ritual readability scope](docs/RITUAL_READABILITY.md)
 - [Design proposal template](docs/GDD_TEMPLATE.md)
 - [Commit message style](docs/COMMIT_STYLE.md)
 - [Confirmed direction and provisional rules](docs/GAME_DESIGN.md)
@@ -82,6 +88,8 @@ These captures come from the running scene with deterministic test setup; they a
 
 Expansion evidence: [five gatherings](docs/verification/village-expanded.png), [helper speaking](docs/verification/helper-speaking.png), [helper inscription](docs/verification/ritual-helper.png) and [locked final tier](docs/verification/ritual-expansion-locked.png).
 
+Readability evidence: [before the pass](docs/verification/ritual-readability-before.png), [branch overview after the pass](docs/verification/ritual-readability-overview.png), [East Lane prerequisites](docs/verification/ritual-readability-east.png), [hover preview](docs/verification/ritual-readability-hover.png), [purchase states](docs/verification/ritual-readability-states.png) and [large-fixture branch focus](docs/verification/ritual-fixture-branch.png). Cross-branch requirements appear when relevant to hover/selection; the fixed detail panel continues to name missing requirements.
+
 Additional evidence: [moving robe](docs/verification/starter-moving.png), [purchased node](docs/verification/ritual-purchased.png), [available second rank](docs/verification/ritual-rank-available.png), [maximum rank](docs/verification/ritual-rank-max.png), [full village conversion](docs/verification/village-full-clear.png), [next round](docs/verification/starter-next-round.png), and the test-only [144-node graph](docs/verification/ritual-144-fixture.png) and [focused distant node](docs/verification/ritual-fixture-focus.png). The large fixture demonstrates navigation; its nodes are not shipped upgrades.
 
 ## Supplied references: local transfer blocked
@@ -102,12 +110,13 @@ $godotExe = 'C:\Program Files\Godot\Godot_v4.2.2-stable_mono_win64_console.exe'
 & $godotExe --headless --path . --import
 & $godotExe --headless --path . --script res://tests/test_progression.gd
 & $godotExe --headless --path . --script res://tests/smoke_test.gd
+& $godotExe --headless --path . --script res://tests/test_ritual_readability.gd
 & $godotExe --headless --fixed-fps 60 --path . --script res://tests/test_pacing.gd
 & $godotExe --headless --fixed-fps 60 --path . --script res://tests/test_helper.gd
 & $godotExe --fixed-fps 60 --path . --script res://tests/capture_starter.gd -- "--capture-dir=$PWD\docs\verification"
 ```
 
-The tests cover movement/cloth/collision, speech timing, round transitions, distinct rank effects, purchase guards, old-save migration, local-save validation/recovery and transformed graph selection. Route tests drive the real scene at a fixed simulated timestep and count complete individual conversions, including full-rank completion time and remaining margin. Captures require a rendering display; headless tests cannot verify pixels. Human movement feel, pacing and large-graph navigation still need playtesting.
+The tests cover movement/cloth/collision, speech timing, round transitions, distinct rank effects, purchase guards, old-save migration and local-save validation/recovery. The readability suite exercises branch sectors, prerequisite ancestry, hover versus selection, navigation and transformed graph picking; rendered inspection checks the actual layout. Route tests drive the real scene at a fixed simulated timestep and count complete individual conversions, including full-rank completion time and remaining margin. Captures require a rendering display; headless tests cannot verify pixels. Human movement feel, pacing and large-graph navigation still need playtesting.
 
 Exact latest check counts, rendered inspection results and commands are recorded in [VERIFICATION.md](docs/VERIFICATION.md). The installed Mono build previously returned an `_EDITOR_GET` / `EditorSettings` error during headless editor import and exit 1 during automatic shutdown without a runtime diagnostic. Keep those environment results separate from successful script/runtime tests; do not describe import as clean unless a new run establishes that.
 

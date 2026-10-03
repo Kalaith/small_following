@@ -196,3 +196,109 @@ Automated UI input covers pan/zoom/selection, purchase buttons, next-round
 transitions and the 144-node fixture. Human steering, expanded progression
 prices, graph discovery and helper usefulness still need playtesting. No
 export, installation, remote setup, publishing or player-save changes occurred.
+
+
+## 2026-10-03 - ritual readability and navigation
+
+The approved [screen brief](RITUAL_READABILITY.md) was implemented against
+commit `7cb27cd`, which already contained the village expansion and helper.
+The existing sixteen nodes, nineteen purchases, prices, prerequisites,
+effects and saves were retained. SHA-256 comparisons verified unchanged
+`data/upgrades.json`, progression, main, player, gathering, helper and village
+scripts, both scenes and `project.godot`. The new `ritual_layout.gd` derives
+view positions without changing the catalog.
+
+Before the pass, all eighteen prerequisite connections and decorative ring
+polygons appeared together, with tiers changing angle between rings. The
+actual [before capture](verification/ritual-readability-before.png) preserves
+that local rendered baseline. The updated [overview](verification/ritual-readability-overview.png)
+keeps eleven same-branch progress edges; seven cross-branch links are
+conditional on hover/selection ancestry. Solid main paths, dashed crosslinks,
+direction marks and lower-contrast decoration distinguish progression from
+ornament. Words is above, Running left, Creed right, and village/follower
+upgrades below. All sixteen compact labels fit the inspected overview.
+
+The existing detail panel retains effects, costs, ranks and missing
+requirements. [East Lane](verification/ritual-readability-east.png) shows
+4 -> 5 groups and the original 33-donation price; the
+[missing-requirement state](verification/ritual-readability-missing.png) names
+Words IV explicitly. The [hover capture](verification/ritual-readability-hover.png)
+shows Words V ancestry while retaining East Lane's selected details.
+[Mixed states](verification/ritual-readability-states.png) distinguish a locked
+diamond/bar, hollow unaffordable circle, bright available circle/plus and
+completed fill/check. The [rank capture](verification/ritual-rank-available.png)
+also shows partially filled rank arcs. Rank details remain available through
+selection and the node picker.
+
+Overview clears selection and hover, fits the graph and disables purchasing.
+Recenter fits while retaining selection. Branch controls, a complete per-branch
+node list and Focus selected remain reachable outside the moving graph.
+Large graphs substitute a branch dropdown with owned/ready counts. Distant
+overview labels reduce; nodes remain drawn and pickable, major unlocks retain
+priority, and the list provides a navigation alternative. Collision-aware
+labels omit an obstructed caption rather than cover another node; selected
+facts remain in the fixed panel.
+
+### Final project verification
+
+Engine: **4.2.2.stable.mono.official.15073afe3**, GDScript, Compatibility,
+Windows. Commands ran in `D:\WebHatchery\godot\small_following` using the
+README executable. A process-local APPDATA test profile and isolated fixture
+saves kept ordinary player progress untouched.
+
+| Check | Result |
+| --- | --- |
+| All 15 GDScript files, including tests and fixture | `--check-only`: all exit 0, no parse errors |
+| `tests/test_progression.gd` | 113 checks, 0 failures, exit 0 |
+| `tests/smoke_test.gd` | 92 checks, 0 failures, exit 0 |
+| `tests/test_pacing.gd` | 59 checks, 0 failures, exit 0 |
+| `tests/test_helper.gd` | 34 checks, 0 failures, exit 0 |
+| `tests/test_ritual_readability.gd` | 60 checks, 0 failures, exit 0 |
+| Actual OpenGL capture script, fixed 60 Hz | 21 PNGs generated, exit 0, no runtime diagnostics |
+| Headless editor import | Exit 1, existing `_EDITOR_GET` error and cursor/Blender-path warnings |
+
+**358 checks passed.** [The current log](verification/readability-checks.txt)
+contains commands' per-script results and actual route data. Required runtime
+suites and captures produced no errors in the final scoped run. Initial sandbox
+probes printed the known certificate-store diagnostic; that did not recur in
+the final run. The installed editor's import problem remains unresolved and
+is not presented as a clean import.
+
+The new suite exercises sector/outward layout, default-hidden crosslinks,
+recursive ancestry, dim unrelated edges, explicit missing requirements,
+hover/selection isolation and mouse-exit recovery. Actual graph mouse handlers
+are checked after three zoom/pan combinations. Actual Overview, Recenter,
+branch, node-picker and Focus selected controls are exercised. The suite
+checks nonoverlapping overview labels and focuses/picks all 144 distinct
+fixture nodes without altering catalog data or purchases.
+
+Existing purchase, failed-write, stale/max-rank, migration, recovery, helper
+and round-transition suites remain passing. Pacing is unchanged: the original
+full-ranked core clears fifteen at **10.517 s**, with **0.483 s remaining**.
+Expanded-route and helper results remain those documented in [PACING](PACING.md);
+this UI pass adds no completion rule or balance adjustment.
+
+### Rendered review and delivery
+
+Actual 1280 x 800 frames used OpenGL 3.3 on NVIDIA GeForce RTX 4080 SUPER.
+Inspected overview, East Lane affordable/locked selection, mixed purchase
+states, hover preview, original rank states and the 144-node overview,
+branch navigation and distant focus. The first review caught empty
+`RANK 0/0` text and the lack of a visible way to clear path focus; both were
+fixed and the final captures inspected again. Final fixture captures retain
+their explicit test-only subtitle.
+
+Twenty-one frames were generated in a temporary directory from the actual
+project. Only the sixteen ritual-state images were added/refreshed here,
+including the preserved before image; unrelated village/robe screenshots
+were retained. The Library upload of `ritual-readability-east.png` succeeded
+(`libfile_9e00695a0fe48191b1e6fadd8d88a4fd`). The required Windows metadata
+helper still lacks `os.setxattr`, so local Library identity metadata was not
+written; the saved Library image exists. No unsupported reference transfer
+retry or helper bypass was performed.
+
+Human preference, long-session navigation, keyboard/gamepad graph traversal,
+alternate viewport sizes and a genuinely authored 100+ node tree remain
+unverified. The fixture demonstrates access and transform behavior rather
+than a finished large upgrade economy. No installation, export, remote,
+push or publishing change was made.

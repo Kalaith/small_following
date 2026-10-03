@@ -2,7 +2,7 @@
 
 - [ ] Human-playtest ordinary opening routes and the ranked-upgrade curve; confirm roughly three initial conversions and a close, complete 15-listener clear at full ranks inside 11 seconds. Check late-rank usefulness and whether their 18-donation prices feel attainable.
 - [ ] Decide audience resets, donation cadence, the meaning of a permanent follower and whether new rounds restore the starting position.
-- [ ] Human-test ritual rank pips, current-to-next details, selection, pan/zoom and village return at supported window sizes; evaluate navigation with the separate 144-node fixture before authoring a large upgrade catalog.
+- [ ] Human-test the ritual's branch sectors, focused prerequisite paths, state cues, rank details, branch navigation and village return. Review label density and targets at alternate window sizes, and navigate the separate 144-node fixture before authoring a large upgrade catalog.
 - [ ] Add accessible graph navigation and input rebinding; gamepad movement mappings do not yet provide gamepad upgrade-graph selection.
 - [ ] Recover the original Library village mockups and ritual references through a supported Windows workflow; inspect local pixels and reconcile visual direction. See [reference status](docs/reference/README.md).
 - [ ] Resolve the installed editor's `_EDITOR_GET` import-check error and unexplained automatic-shutdown exit status; keep those limitations separate from runtime check results.
