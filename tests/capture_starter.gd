@@ -4,6 +4,7 @@ const Fixture = preload("res://tests/fixtures/ritual_fixture.gd")
 var destination: String = "user://verification"
 var failed: bool = false
 var ritual_only: bool = false
+var settings_only: bool = false
 
 
 func _initialize() -> void:
@@ -25,6 +26,8 @@ func _capture() -> void:
 			destination = argument.trim_prefix("--capture-dir=")
 		elif argument == "--ritual-only":
 			ritual_only = true
+		elif argument == "--settings-only":
+			settings_only = true
 	DirAccess.make_dir_recursive_absolute(destination)
 	var scene = load("res://scenes/main.tscn").instantiate()
 	scene.persistence_enabled = false
@@ -33,6 +36,10 @@ func _capture() -> void:
 	scene.game_audio.output_enabled = false
 	root.add_child(scene)
 	scene.set_process(false)
+	if settings_only:
+		await capture_settings(scene)
+		await finish_capture(scene)
+		return
 	if ritual_only:
 		# Recheck changed ritual pixels without replaying unrelated village/audio fixtures.
 		scene.advance_round(100.0)
@@ -124,6 +131,38 @@ func _capture() -> void:
 	await capture_readability(scene)
 	await capture_graph_fixture(scene)
 	await finish_capture(scene)
+
+
+func capture_settings(scene) -> void:
+	for frame in range(8):
+		await process_frame
+	scene.set_settings_visible(true)
+	await save_frame("settings-village.png")
+	scene.settings_screen.tabs.current_tab = 1
+	for frame in range(4):
+		await process_frame
+	await save_frame("settings-keys.png")
+	var key_scroll: ScrollContainer = scene.settings_screen.tabs.get_child(1).get_child(1)
+	key_scroll.scroll_vertical = 1000
+	await save_frame("settings-keys-shortcuts.png")
+	key_scroll.scroll_vertical = 0
+	scene.settings_screen.begin_capture("move_left", 0)
+	await save_frame("settings-keys-capture.png")
+	scene._rebind_key("move_left", 0, KEY_D)
+	await save_frame("settings-keys-conflict.png")
+	scene.settings_screen.cancel_capture()
+	var original_size: Vector2i = root.size
+	root.size = Vector2i(1024, 768)
+	for frame in range(4):
+		await process_frame
+	await save_frame("settings-keys-compact.png")
+	scene.settings_screen.tabs.current_tab = 0
+	await save_frame("settings-compact.png")
+	root.size = original_size
+	scene.advance_round(100.0)
+	for frame in range(4):
+		await process_frame
+	await save_frame("settings-ritual.png")
 
 
 func capture_graph_fixture(scene) -> void:

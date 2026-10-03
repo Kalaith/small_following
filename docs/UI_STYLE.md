@@ -19,7 +19,7 @@ input/feedback in the design proposal. The current baseline is:
 | Completed ritual | Inspect the lit centre or keep playing | Filled violet/lilac centre with a visible Open control | Completion means every current catalog rank is bought | Exact demo message appears on activation |
 | Demo message | Dismiss and continue | Exact text: This is the end of the demo | Keep playing button and Esc/Tab/Enter hints | The next area's separate circle remains future work |
 | Village between rounds | Walk and inspect, return to ritual or start next round | Visible village with earning stopped | Round-complete state and Tab/Enter guidance | Ritual details return with the ritual |
-| Settings | Adjust sound/fullscreen, then return | Centered violet utility panel | Percentages, switches, save status and continuing-timer reminder | Game/upgrade details remain behind the dimmed backdrop |
+| Settings | Adjust sound/fullscreen or key bindings, then return | Centered violet panel with Sound & display and Key mapping tabs | Percentages, bindings, conflicts, save status and continuing-timer reminder | Game/upgrade details remain behind the dimmed backdrop |
 
 The settings screen brief and transitions are documented in [SETTINGS](SETTINGS.md).
 There is no implemented title screen or town selector.
@@ -180,10 +180,14 @@ available on selection rather than hover alone. Keep teaching short and name
 the actual button or gesture. If help is expanded in future, provide a visible
 way to reopen it rather than leaving long instructions across play.
 
-Keyboard/gamepad graph traversal, input rebinding and touch controls are
+Keyboard/gamepad graph traversal, gamepad rebinding and touch controls are
 outstanding work. Physical gamepad behavior is unverified. A future touch
 target needs visible movement, selection, navigation and dismissal controls;
 the current desktop prototype does not establish touch support.
+
+Keyboard rebinding is available in Settings → Key mapping; [SETTINGS](SETTINGS.md)
+owns capture, conflicts and reserved navigation rules. Runtime hints should use
+the current Input Map binding rather than a hardcoded remappable key.
 
 ## 6. Viewport and layout
 

@@ -817,3 +817,48 @@ exited 0 with no diagnostic warnings/errors. Headless import still exits 1
 with the existing `_EDITOR_GET` error and cursor/Blender-path warnings.
 Test saves were isolated; no rendered or human playtest claim for this fix.
 The requested mapping tab is the next implementation slice.
+
+## 2026-10-03 - Saved keyboard mapping tab
+
+Settings now has Sound & display and Key mapping tabs. Nine gameplay, movement,
+audio and fullscreen actions have primary/alternate physical key slots. A clear
+conflict message preserves existing assignments; Restore default keys and
+alternate clearing share the validated settings owner. Esc/Tab stay fixed.
+Old preference files keep their sound/display choices and receive corrected
+keyboard defaults. Staged writes and backup recovery also validate bindings.
+
+Final checks used the installed Godot 4.2.2 Mono executable:
+
+- `test_key_mapping.gd`: 73 checks, 0 failures both headless and rendered.
+  Physical arrow/WASD events drive the actual player through village, ritual
+  and settings. Coverage includes remapped movement, alternate assignment and
+  clearing, conflicts, modifier/echo rejection, Esc cancellation, Tab escape,
+  movement during capture, shortcut/hint updates, isolated scene restart,
+  legacy preferences, malformed binding data, backup recovery and save failure.
+  The display run clicked the actual tab, binding and Clear controls. Headless
+  tests use control signals where Dummy font metrics cannot establish geometry.
+- All headless regressions passed at fixed 60 fps: smoke 92, progression 113,
+  pacing 59, helper 34, encounters 210, ritual readability 73, demo completion
+  46, audio 27 and settings 27 checks; merchants and exit also passed.
+- Rendered settings checks: 29 checks, 0 failures, including actual fullscreen
+  and windowed transitions. All runtime processes exited 0 without diagnostic
+  errors or warnings. All fixture saves were separate from normal user saves.
+- Headless editor import still exits 1 with the recorded `_EDITOR_GET` error
+  and cursor/Blender-path warnings; it is not a clean import.
+
+Ran the complete `tests/capture_starter.gd` display sequence and its new
+`--settings-only` sequence, both exit 0 with no diagnostics. Inspected actual
+[key mapping](verification/settings-keys.png),
+[scrolled shortcuts](verification/settings-keys-shortcuts.png),
+[conflict feedback](verification/settings-keys-conflict.png),
+[compact mapping](verification/settings-keys-compact.png),
+[sound/display](verification/settings-village.png),
+[settings over the ritual](verification/settings-ritual.png), and the refreshed
+[ritual overview](verification/ritual-readability-overview.png).
+The 1280 x 800 and 1024 x 640 output frames retain reachable scrollable mappings,
+feedback and footer controls. The full capture still converts all 15 listeners
+at 10.517 seconds, leaving 0.483 seconds. Refreshed general captures carry the
+updated movement/shortcut hints.
+
+Human movement feel, physical gamepads, keyboard layouts and exported browser
+storage/input remain unverified. No publishing or tool installation occurred.

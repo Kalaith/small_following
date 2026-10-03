@@ -1,10 +1,12 @@
 extends RefCounted
 ## Preferences never share a file or schema with earned progression.
+const Keys = preload("res://scripts/key_bindings.gd")
 const DEFAULTS: Dictionary = {
 	"master": 1.0, "music": 1.0, "footsteps": 1.0, "speech": 1.0,
 	"muted": false, "voice_muted": false, "fullscreen": false,
 }
 var values: Dictionary = DEFAULTS.duplicate()
+var key_bindings: Dictionary = Keys.defaults()
 var save_enabled: bool = true
 var path: String = "user://settings.json"
 var last_error: String = ""
@@ -29,7 +31,7 @@ func valid(data: Variant) -> bool:
 			var amount: float = float(candidate[key])
 			if not is_finite(amount) or amount < 0.0 or amount > 1.0:
 				return false
-	return true
+	return not data.has("key_bindings") or Keys.valid(data.key_bindings)
 
 
 func _read(filename: String) -> Variant:
@@ -45,6 +47,7 @@ func load_settings() -> void:
 	var data: Variant = _read(path)
 	if valid(data):
 		values = data.values.duplicate()
+		key_bindings = Keys.normalized(data.get("key_bindings", Keys.defaults()))
 		return
 	# Preserve future formats rather than replacing them with an older backup.
 	if data is Dictionary and data.get("schema") != 1:
@@ -54,6 +57,7 @@ func load_settings() -> void:
 	var backup: Variant = _read(path + ".bak")
 	if valid(backup):
 		values = backup.values.duplicate()
+		key_bindings = Keys.normalized(backup.get("key_bindings", Keys.defaults()))
 		last_error = "Recovered settings from backup."
 	elif FileAccess.file_exists(path) or FileAccess.file_exists(path + ".bak"):
 		writes_blocked = true
@@ -65,7 +69,7 @@ func save_settings() -> bool:
 		return true
 	if writes_blocked:
 		return false
-	var snapshot := {"schema": 1, "values": values}
+	var snapshot := {"schema": 1, "values": values, "key_bindings": key_bindings}
 	if not valid(snapshot):
 		last_error = "Settings are invalid and could not be saved."
 		return false
@@ -91,3 +95,16 @@ func save_settings() -> bool:
 func _failed() -> bool:
 	last_error = "Could not save settings. Changes last this session."
 	return false
+
+
+func rebind(action: String, slot: int, code: int) -> String:
+	var error: String = Keys.change_error(key_bindings, action, slot, code)
+	if error.is_empty():
+		key_bindings[action][slot] = code
+		Keys.apply(key_bindings)
+	return error
+
+
+func reset_keys() -> void:
+	key_bindings = Keys.defaults()
+	Keys.apply(key_bindings)

@@ -158,6 +158,13 @@ The settings footer also includes the requested Exit Game action (2026-10-03).
 Desktop exit flushes pending preference/progression writes before quitting;
 relaunch retains the existing fresh-round policy. Browser users close the tab.
 
+Requested 2026-10-03: correct horizontal arrow movement and add a separate key
+mapping tab in settings. Implemented: two physical keyboard slots for movement
+and gameplay/audio/fullscreen shortcuts, conflict feedback, restore defaults
+and saved bindings. Esc and Tab stay fixed for navigation; direct movement and
+the timer remain active during key capture. These interaction details are local
+implementation choices. [Mapping and persistence rules](SETTINGS.md).
+
 ## First-map finale
 
 See [FIRST_MAP](FIRST_MAP.md) for the scoped design and provisional encounter rules. Implemented: two optional merchants, four merchant inscriptions, three opponents and a priest boss who walk to the center, twelve further inscriptions, and saved first-map completion. The full catalog has 32 nodes and 35 ranks. Town Debate opens the ordered encounters after East Lane Invitations. One opponent is attempted per round; victory persists, while partial conviction resets. The Priest ends the first map's objective. The completed ritual centre is reserved for a separate circle in the next area; that content remains future work. Costs, names, resistances and numerical balance are provisional.

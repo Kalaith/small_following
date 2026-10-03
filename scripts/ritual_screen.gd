@@ -21,6 +21,7 @@ const MAX_ZOOM: float = 2.4
 const CORE_RADIUS: float = 66.0
 const CORE_ORNAMENT_RADIUS: float = 82.0
 const Layout = preload("res://scripts/ritual_layout.gd")
+const Keys = preload("res://scripts/key_bindings.gd")
 
 class GraphCanvas extends Control:
 	var screen: Control
@@ -75,6 +76,7 @@ var _effect_label: Label
 var _node_description: Label
 var _status_label: Label
 var _hint_label: Label
+var _demo_hint: Label
 var _legend_label: Label
 var _error_label: Label
 var _detail_x: float = 0.0
@@ -123,13 +125,15 @@ func update_state(round_recruits: int = 0) -> void:
 	_round_recruits = round_recruits
 	if not _built:
 		return
+	_hint_label.text = "Tab: village  /  %s: next round\nMovement keys still move your cultist." % Keys.hint("next_round")
+	_demo_hint.text = "Esc: dismiss / Tab: village / %s: next round" % Keys.hint("next_round")
 	_subtitle_label.text = "ROUND COMPLETE  /  %d NEW FOLLOWERS" % _round_recruits
 	if is_instance_valid(_progression) and _progression.has_method("map_complete"):
 		if _progression.map_complete():
-			_subtitle_label.text = "BRAMBLEWICK COMPLETE / Priest convinced / Enter: play again"
+			_subtitle_label.text = "BRAMBLEWICK COMPLETE / Priest convinced / %s: play again" % Keys.hint("next_round")
 		elif _progression.has_unlock("encounter_unlock"):
 			var opponents: Array[String] = ["Skeptic", "Town Guard", "Zealot", "Priest"]
-			_subtitle_label.text = "TOWN DEBATE %d/4 / Next: %s / Enter: next round" % [_progression.encounter_stage, opponents[_progression.encounter_stage]]
+			_subtitle_label.text = "TOWN DEBATE %d/4 / Next: %s / %s: next round" % [_progression.encounter_stage, opponents[_progression.encounter_stage], Keys.hint("next_round")]
 	var coins: int = int(_progression.get("coins")) if is_instance_valid(_progression) else 0
 	_coins_label.text = "%d  donations" % coins
 	var save_error: String = str(_progression.get("last_error")) if is_instance_valid(_progression) else ""
@@ -446,7 +450,7 @@ func _build_controls() -> void:
 	_node_description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_status_label = _label("", 14, MUTED)
 	_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_hint_label = _label("Tab: village  /  Enter: next round\nWASD still moves your cultist.", 12, MUTED)
+	_hint_label = _label("", 12, MUTED)
 	_legend_label = _label("Diamond: locked   /   Hollow: needs donations   /   +: ready   /   Check: complete\nDrag to explore · Scroll to zoom · Hover or select to trace requirements", 11, MUTED)
 	_error_label = _label("", 11, LILAC)
 	_error_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -532,7 +536,8 @@ func _build_demo_message() -> void:
 	body.add_child(demo_continue_button)
 	demo_continue_button.custom_minimum_size.y = 46
 	demo_continue_button.pressed.connect(dismiss_demo_message)
-	var hint: Label = _label("Esc: dismiss / Tab: village / Enter: next round", 12, MUTED)
+	var hint: Label = _label("", 12, MUTED)
+	_demo_hint = hint
 	remove_child(hint)
 	body.add_child(hint)
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER

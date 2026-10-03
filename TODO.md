@@ -3,7 +3,7 @@
 - [ ] Human-playtest ordinary opening routes and the ranked-upgrade curve; confirm roughly three initial conversions and a close, complete 15-listener clear at full ranks inside 11 seconds. Check late-rank usefulness and whether their 18-donation prices feel attainable.
 - [ ] Decide audience resets, donation cadence, the meaning of a permanent follower and whether new rounds restore the starting position.
 - [ ] Human-review the composed ritual seal against the inspected reference direction, including its distinct constellations, quiet motifs and completion glow. Test focused prerequisite paths, state cues, rank details, branch navigation, centre discovery, dismissal and village return. Review alternate window sizes and navigate the separate 144-node fixture before authoring a large upgrade catalog.
-- [ ] Add accessible graph navigation and input rebinding; gamepad movement mappings do not yet provide gamepad upgrade-graph selection.
+- [ ] Add accessible graph navigation and gamepad rebinding; gamepad movement mappings do not yet provide gamepad upgrade-graph selection.
 - [ ] When a supported Windows Library workflow is available, archive the original village mockups and ritual references locally and verify provenance. The parent inspected the new seal references; further transfer retries are not needed for this redesign. See [reference status](docs/reference/README.md).
 - [ ] Resolve the installed editor's `_EDITOR_GET` import-check error and unexplained automatic-shutdown exit status; keep those limitations separate from runtime check results.
 - [ ] Check movement feel, robe readability, gathering selection and HUD legibility in a human playtest.

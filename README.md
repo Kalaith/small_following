@@ -32,8 +32,14 @@ From the project folder, `.\Run.ps1` also launches the game; pass `-GodotExe '<i
 | Mute / unmute all audio | M |
 | Mute / unmute nonsense speech | V |
 | Open / close settings | Settings button / Esc |
+| Change keyboard controls | Settings → Key mapping; click a binding and press a key |
 | Toggle fullscreen | Settings switch / F11 |
 | Exit the desktop game | Settings → Exit Game |
+
+The table shows default keys. Settings → Key mapping provides primary and
+alternate keys for movement and gameplay/audio/fullscreen shortcuts, conflict
+messages, and Restore default keys. Bindings save automatically. Esc and Tab
+stay fixed for navigation; gamepad bindings remain available.
 
 Movement remains active during the ritual; Tab reveals the village between rounds. A new round returns the cultist to the starting entrance. Gamepad movement/action mappings exist but were not physically tested; graph selection and navigation currently require a mouse.
 
@@ -165,6 +171,7 @@ $godotExe = 'C:\Program Files\Godot\Godot_v4.2.2-stable_mono_win64_console.exe'
 & $godotExe --headless --path . --script res://tests/smoke_test.gd
 & $godotExe --headless --path . --script res://tests/test_ritual_readability.gd
 & $godotExe --headless --path . --script res://tests/test_demo_completion.gd
+& $godotExe --headless --fixed-fps 60 --path . --script res://tests/test_key_mapping.gd
 & $godotExe --headless --fixed-fps 60 --path . --script res://tests/test_pacing.gd
 & $godotExe --headless --fixed-fps 60 --path . --script res://tests/test_helper.gd
 & $godotExe --headless --fixed-fps 60 --path . --script res://tests/test_merchants.gd

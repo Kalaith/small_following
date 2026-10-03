@@ -18,7 +18,7 @@ The project targets Godot 4.2.2, GDScript and Compatibility rendering. It has no
 | `data/upgrades.json` | 32 real upgrade definitions with stable IDs, per-rank effects/prices, rank limits, prerequisites and graph coordinates |
 | `scripts/village.gd` | Deterministic ground/props and collision footprints |
 | `scripts/game_audio.gd` | Promo music loop, distance-based footsteps, throttled phrase cues and per-channel sound controls; no gameplay authority |
-| `scripts/settings_screen.gd`, `scripts/settings_store.gd` | Sound/display page and independently validated preference storage; see [settings contract](SETTINGS.md) |
+| `scripts/settings_screen.gd`, `scripts/settings_store.gd`, `scripts/key_bindings.gd` | Sound/display and key mapping tabs, validated preference storage and keyboard Input Map application; see [settings contract](SETTINGS.md) |
 | `tests/` | Isolated economy/save checks, scene integration, route simulation and rendered captures |
 | `assets/` | Project icon and original music/footstep/synthetic speech assets with provenance |
 | `docs/reference/` | Reference provenance and transfer status; never a runtime background source |
@@ -193,7 +193,8 @@ Restarting restores currency, purchases, the event total and saved round number,
 There is no dialogue system, magic or second town. Audio and independently
 saved settings are implemented; Web/Windows export workflows are documented
 in [PUBLISHING](PUBLISHING.md). Window resizing scales the canvas; accessible
-UI scaling and input rebinding remain future work. Application focus does not
+UI scaling and gamepad rebinding remain future work. Keyboard bindings use the
+separate settings store described in [SETTINGS](SETTINGS.md). Application focus does not
 implement a pause/earnings policy.
 
 Split reusable props, villagers, HUD and town definitions into scenes/resources as content grows. Town definitions should own stable IDs, positions, capacities and unlock rules; mutable town progress belongs in the save. Extend schema only for implemented features. Keep reward ownership centralized so future player speech, minions and spells cannot pay the same event twice.

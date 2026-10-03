@@ -8,6 +8,7 @@ const Helper = preload("res://scripts/helper.gd")
 const GameAudio = preload("res://scripts/game_audio.gd")
 const SettingsStore = preload("res://scripts/settings_store.gd")
 const SettingsScreen = preload("res://scripts/settings_screen.gd")
+const Keys = preload("res://scripts/key_bindings.gd")
 const ROUND_SECONDS: float = 11.0
 const START_POSITION := Vector2(780, 680)
 const BASE_RUN_SPEED: float = 180.0
@@ -55,6 +56,7 @@ func _ready() -> void:
 	if not settings_path_override.is_empty():
 		settings.path = settings_path_override
 	settings.load_settings()
+	Keys.apply(settings.key_bindings)
 	game_audio.apply_preferences(settings.values)
 	game_audio.name = "GameAudio"
 	add_child(game_audio)
@@ -112,6 +114,9 @@ func _process(delta: float) -> void:
 
 
 func _input(event: InputEvent) -> void:
+	if settings_screen.visible and settings_screen.capture_key(event):
+		get_viewport().set_input_as_handled()
+		return
 	if event.is_echo():
 		return
 	if event.is_action_pressed("toggle_settings"):
@@ -159,6 +164,7 @@ func set_fullscreen(enabled: bool) -> void:
 
 
 func set_settings_visible(value: bool) -> void:
+	settings_screen.cancel_capture()
 	if value:
 		ritual_screen.dismiss_demo_message()
 	settings_screen.visible = value
@@ -196,6 +202,7 @@ func _refresh_settings() -> void:
 	if message.is_empty():
 		message = "Saving preferences..." if not settings_timer.is_stopped() else "Preferences saved automatically."
 	settings_screen.refresh(game_audio, is_fullscreen(), message)
+	settings_screen.refresh_bindings(settings.key_bindings)
 
 
 func _exit_tree() -> void:
@@ -241,6 +248,31 @@ func _build_settings() -> void:
 	settings_screen.mute_requested.connect(game_audio.toggle_mute)
 	settings_screen.voice_mute_requested.connect(game_audio.toggle_voice)
 	settings_screen.fullscreen_requested.connect(set_fullscreen)
+	settings_screen.binding_requested.connect(_rebind_key)
+	settings_screen.reset_keys_requested.connect(_reset_keys)
+	_refresh_settings()
+
+
+func _rebind_key(action: String, slot: int, code: int) -> void:
+	var error: String = settings.rebind(action, slot, code)
+	if not error.is_empty():
+		settings_screen.binding_message.text = error
+		return
+	settings_screen.cancel_capture()
+	settings_screen.binding_message.text = "%s: %s" % [Keys.ACTIONS[action], Keys.key_name(code)]
+	_keys_changed()
+
+
+func _reset_keys() -> void:
+	settings.reset_keys()
+	settings_screen.binding_message.text = "Default keys restored."
+	_keys_changed()
+
+
+func _keys_changed() -> void:
+	_queue_settings_save()
+	ritual_screen.update_state(round_recruits)
+	_update_hud()
 
 
 func advance_round(delta: float) -> void:
@@ -431,7 +463,7 @@ func _build_hud() -> void:
 	help_panel.add_child(help_rows)
 	context_label = _label("", 17)
 	help_rows.add_child(context_label)
-	help_rows.add_child(_label("WASD / arrows / left stick - Stand near a gathering to speak", 13, Color("#d9dfc2")))
+	help_rows.add_child(_label("Movement keys / left stick - Stand near a gathering to speak", 13, Color("#d9dfc2")))
 	save_label = _label("", 13, Color("#ffe4a1"))
 	canvas.add_child(save_label)
 	save_label.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
@@ -470,9 +502,9 @@ func _update_hud() -> void:
 	round_label.text = "Round %d   /   %.1fs remaining" % [round_number, seconds_left]
 	save_label.text = "Progress notice: see the ritual screen." if not progression.last_error.is_empty() else ""
 	if progression.map_complete():
-		context_label.text = "Bramblewick complete!" + ("  Tab: ritual / Enter: play again" if not round_active else "  Enjoy the village.")
+		context_label.text = "Bramblewick complete!" + ("  Tab: ritual / %s: play again" % Keys.hint("next_round") if not round_active else "  Enjoy the village.")
 	elif not round_active:
-		context_label.text = "Round complete - Tab: ritual / Enter: next round"
+		context_label.text = "Round complete - Tab: ritual / %s: next round" % Keys.hint("next_round")
 	elif is_instance_valid(encounter) and not encounter.defeated:
 		context_label.text = "Convince %s in the town center" % Encounter.PROFILES[encounter.stage].title
 	elif is_instance_valid(nearest_group):

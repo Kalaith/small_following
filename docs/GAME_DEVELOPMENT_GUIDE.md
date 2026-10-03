@@ -135,6 +135,7 @@ $godotExe = 'C:\Program Files\Godot\Godot_v4.2.2-stable_mono_win64_console.exe'
 & $godotExe --headless --fixed-fps 60 --path . --script res://tests/test_demo_completion.gd
 & $godotExe --headless --fixed-fps 60 --path . --script res://tests/test_audio.gd
 & $godotExe --headless --fixed-fps 60 --path . --script res://tests/test_settings.gd
+& $godotExe --headless --fixed-fps 60 --path . --script res://tests/test_key_mapping.gd
 & $godotExe --headless --fixed-fps 60 --path . --script res://tests/test_exit.gd
 ```
 
