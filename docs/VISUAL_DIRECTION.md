@@ -55,3 +55,13 @@ Record sources, licenses, dimensions and import choices when art arrives. Check 
 ## Visual review checklist
 
 Inspect captures of the running village and ritual separately from supplied references. Check player contrast, robe motion, traversable roads, local speech feedback and unobtrusive HUD. In the ritual, check that the seal dominates, the palette is purple, rank pips and selected current-to-next details remain readable, partial/maximum/locked states are clear and navigation returns from distant rings. Verify both the initial catalog and the large fixture at supported window sizes. Rendered captures verify composition; human interaction is still needed to judge navigation and movement feel.
+
+## 2026-10-03 merchant and opponent placeholders
+
+Merchant hats and purses, Skeptic spectacles/book, Guard helmet/shield, Zealot hood
+and medallion, and Priest mitre/stole/crozier are original procedural geometry in
+`gathering.gd` and `encounter.gd`. They add no external asset or license dependency.
+No original artwork was replaced and no mockup pixels were incorporated.
+Actual rendered states are `verification/village-merchants.png`,
+`verification/opponent-{skeptic,guard,zealot,priest}.png` and
+`verification/village-complete.png`. These remain prototype placeholders.

@@ -88,8 +88,8 @@ original nine-node core with one rank on inner nodes and two on tier-III nodes; 
 Validate definitions before making them available: nonempty unique IDs,
 supported positive finite effects, valid coordinates, rank bounds, one price
 and effect per rank, and existing acyclic prerequisites. `cost` and `effect`
-must agree with the first rank. Supported effects are `speech_speed_add`,
-`conviction_add`, `run_speed_add`, `meadow_unlock`, `east_unlock` and `helper_unlock`; implement and test a new effect before
+must agree with the first rank. Supported effects are enumerated in `Progression.EFFECT_KEYS`, including the
+merchant and opponent effects described in ARCHITECTURE; implement and test a new effect before
 adding it to production data.
 
 Keep fixture content under `tests/fixtures/`. Tests of 144 nodes must not
@@ -99,7 +99,8 @@ must remain visible and prevent unsafe progression writes.
 ## 6. Save contract and errors
 
 Use `user://` and Godot file APIs for runtime persistence. Schema 2 stores
-`coins`, integer `purchased` ranks, `total_recruits` and `round_number`.
+`coins`, integer `purchased` ranks, `total_recruits`, `round_number` and optional
+`encounter_stage` (integer 0–4, default zero for older saves).
 Unpurchased entries are absent; stored ranks begin at 1. Validate types, finite
 numbers, bounds, IDs and prerequisites before applying a snapshot.
 

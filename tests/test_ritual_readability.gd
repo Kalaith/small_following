@@ -37,7 +37,7 @@ func _run() -> void:
 	_test_labels(screen)
 	await _test_large_graph(screen)
 	screen.configure(scene.progression.catalog, scene.progression)
-	check(screen.node_positions.size() == 20, "restoring production data preserves all twenty upgrades")
+	check(screen.node_positions.size() == 32, "restoring production data preserves all thirty-two upgrades")
 	check(JSON.stringify(scene.progression.catalog) == original_catalog, "view layout never mutates catalog definitions")
 	check(scene.progression.purchased == original_purchases and scene.coins == original_coins, "view navigation never changes ranks or donations")
 	scene.queue_free()
@@ -51,6 +51,9 @@ func _test_sectors(screen, catalog: Array) -> void:
 		"talk": Vector2.UP, "run": Vector2.LEFT, "persuade": Vector2.RIGHT,
 		"gather": Vector2.from_angle(deg_to_rad(65.0)),
 		"helper": Vector2.from_angle(deg_to_rad(120.0)),
+		"merchant": Vector2.from_angle(deg_to_rad(-135.0)),
+		"trial": Vector2.from_angle(deg_to_rad(-45.0)),
+		"faith": Vector2.from_angle(deg_to_rad(95.0)),
 	}
 	for branch in directions:
 		var previous_radius: float = 0.0
@@ -105,9 +108,9 @@ func _test_navigation_controls(screen) -> void:
 	var represented: int = 0
 	for summary in summaries:
 		represented += int(summary.count)
-	check(summaries.size() == 6 and represented == 20, "branch navigation accounts for every production upgrade")
-	check(screen._branch_buttons.has("run") and screen._branch_buttons["run"].visible, "running has a visible branch navigation control")
-	screen._branch_buttons["run"].pressed.emit()
+	check(summaries.size() == 8 and represented == 32, "branch navigation accounts for every production upgrade")
+	check(screen.branch_picker.visible and screen.branch_picker.item_count == 8, "eight branches use the visible branch dropdown")
+	screen.branch_picker.item_selected.emit(screen._branch_order.find("run"))
 	check(screen.selected_id == "run_1" and screen._node_title.text.contains("Footsteps"), "branch button focuses an available progression choice and refreshes details")
 	var target_index: int = _find_item(screen.node_picker, "run_5")
 	check(target_index >= 0, "node picker offers the distant tier without requiring a tiny hit target")
@@ -131,6 +134,7 @@ func _test_overview_control(screen) -> void:
 	screen.overview_button.pressed.emit()
 	check(screen.selected_id.is_empty() and screen._hovered_id.is_empty(), "overview button clears both selection and hover")
 	check(screen.pan.is_zero_approx() and is_equal_approx(screen.zoom, overview_zoom), "overview button restores the complete fitted graph")
+	check(screen.branch_picker.selected == -1 and screen.branch_picker.text.contains("Browse"), "overview branch selector does not imply a selected branch")
 	check(screen.purchase_button.disabled and screen.get_selected_rank() == 0, "overview button removes the previous purchasable selection")
 	check(not screen._rank_label.visible and not screen._branch_label.visible, "overview hides empty rank and branch readouts")
 	screen._progression.coins = original_coins

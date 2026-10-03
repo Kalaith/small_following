@@ -46,8 +46,9 @@ Partial encounters are transient. Test saves use isolated paths.
 
 ## Content and UI brief
 
-The target is 32 real nodes, 35 ranks, across seven sectors and six rings. Merchant
-and Trials sectors fill the upper diagonals; existing sectors retain direction.
+The implemented catalog has 32 real nodes, 35 ranks, across eight sectors and six
+rings. Merchant and Trials sectors fill the upper diagonals; Faith fills the lower
+center. Existing sectors retain direction.
 Every node has a real benefit and visible selection details. Pan/zoom, overview,
 branch navigation and the separate 144-node fixture remain supported.
 
@@ -69,3 +70,5 @@ no external artwork or reference pixels are incorporated.
 Human steering, economy pacing, alternate sizes and the overall time to finish
 the map need playtesting. Automated route timings are evidence about the scripted
 routes only. See PACING and VERIFICATION for actual results.
+
+Implementation and automated/rendered acceptance are complete; human difficulty, economy and alternate-size review remain outstanding. See [verification](VERIFICATION.md).

@@ -32,7 +32,18 @@ Exit checks: missing, valid, malformed, unsupported-version and backup save path
 
 This is a bounded local-save milestone with one implemented migration. Unique persistent followers, town data, settings, mid-round continuation and offline rewards are not implied. Further schema changes require explicit migrations.
 
-## 3. A second town
+## First-map finale (implemented; human acceptance outstanding)
+
+Merchants, three town opponents and the Priest complete Bramblewick's playable
+objective. The circle contains 32 working nodes / 35 ranks. Automated routes,
+saved victories and rendered captures are documented in VERIFICATION.
+
+Exit checks: actual player speech defeats each opponent, failed attempts retry,
+completion survives reload/recovery, direct movement and village rounds remain
+available, and human play confirms difficulty, economy and the full ritual's
+readability. Human checks remain open; the later-map direction is deferred.
+
+## 3. A second town (future direction)
 
 Define a town unlock rule and implement a second, more populated town. Move town definitions into appropriately owned data and extend the save only for implemented state. Decide the audience lifecycle and what a permanent following means before expanding its counters.
 

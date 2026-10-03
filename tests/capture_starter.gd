@@ -76,6 +76,7 @@ func _capture() -> void:
 	scene._update_hud()
 	await save_frame("village-merchants.png")
 	scene.advance_round(100.0)
+	await capture_encounters(scene)
 	await capture_readability(scene)
 	var fake = load("res://scripts/progression.gd").new()
 	fake.save_enabled = false
@@ -189,3 +190,38 @@ func capture_readability(scene) -> void:
 	screen.select_node("east_1")
 	await save_frame("ritual-readability-east.png")
 	screen.configure(scene.progression.catalog, scene.progression)
+
+
+func capture_encounters(scene) -> void:
+	scene.progression.coins = 5000
+	for item in scene.progression.catalog:
+		while scene.progression.rank(item.id) < scene.progression.max_rank(item.id):
+			if not scene.purchase_upgrade(item.id):
+				failed = true
+				push_error("Could not prepare encounter capture: " + item.id)
+				return
+	for stage in range(4):
+		scene.start_next_round()
+		scene.player.position = Vector2(790, 660)
+		scene.player.get_node("Camera2D").reset_smoothing()
+		scene.advance_round(1.5)
+		scene._update_hud()
+		if stage == 0:
+			await save_frame("opponent-arrival.png")
+		scene.advance_round(2.9)
+		scene._update_hud()
+		await save_frame("opponent-%s.png" % scene.Encounter.PROFILES[stage].id)
+		while scene.round_active and not scene.encounter.defeated:
+			scene.advance_round(1.0 / 60.0)
+		if not scene.encounter.defeated:
+			failed = true
+			push_error("Encounter capture failed to convince opponent")
+			return
+		scene._update_hud()
+		if stage == 3:
+			await save_frame("village-complete.png")
+		scene.advance_round(100)
+	scene.ritual_screen.overview_button.pressed.emit()
+	await save_frame("ritual-map-complete.png")
+	scene.ritual_screen.focus_node("priest_2")
+	await save_frame("ritual-priest-details.png")

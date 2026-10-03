@@ -116,6 +116,12 @@ func update_state(round_recruits: int = 0) -> void:
 	if not _built:
 		return
 	_subtitle_label.text = "ROUND COMPLETE  /  %d NEW FOLLOWERS" % _round_recruits
+	if is_instance_valid(_progression) and _progression.has_method("map_complete"):
+		if _progression.map_complete():
+			_subtitle_label.text = "BRAMBLEWICK COMPLETE / Priest convinced / Enter: play again"
+		elif _progression.has_unlock("encounter_unlock"):
+			var opponents: Array[String] = ["Skeptic", "Town Guard", "Zealot", "Priest"]
+			_subtitle_label.text = "TOWN DEBATE %d/4 / Next: %s / Enter: next round" % [_progression.encounter_stage, opponents[_progression.encounter_stage]]
 	var coins: int = int(_progression.get("coins")) if is_instance_valid(_progression) else 0
 	_coins_label.text = "%d  donations" % coins
 	var save_error: String = str(_progression.get("last_error")) if is_instance_valid(_progression) else ""
@@ -129,7 +135,7 @@ func update_state(round_recruits: int = 0) -> void:
 	var rank_limit: int = _max_rank(selected_id)
 	var cost: int = _next_cost(selected_id)
 	var branch: String = str(item.get("branch", ""))
-	var branch_name: String = {"talk": "THE VOICE", "persuade": "THE CONVICTION", "run": "THE PILGRIM", "gather": "THE VILLAGE", "helper": "THE COMPANION"}.get(branch, "THE CIRCLE")
+	var branch_name: String = {"talk": "THE VOICE", "persuade": "THE CONVICTION", "run": "THE PILGRIM", "gather": "THE VILLAGE", "helper": "THE COMPANION", "merchant": "THE MERCHANT", "trial": "THE TRIALS", "faith": "THE FAITH"}.get(branch, "THE CIRCLE")
 	_branch_label.text = "%s  /  RING %s" % [branch_name, _roman(int(item.get("ring", 1)))]
 	_node_title.text = str(item.get("title", "Choose an inscription"))
 	_rank_label.text = "RANK %d / %d  %s" % [_displayed_rank, rank_limit, "- COMPLETE" if state == "purchased" else ""]
@@ -351,10 +357,10 @@ func _effect_text(id: String, branch: String, complete: bool) -> String:
 	var preview: Dictionary = _progression.call("effect_preview", id)
 	var current: Dictionary = preview.get("current", {})
 	var next: Dictionary = preview.get("next", {})
-	if branch == "merchant":
+	if branch in ["merchant", "trial", "faith"]:
 		var item: Dictionary = _by_id[id]
 		var key: String = str(item.effect.keys()[0])
-		var label: String = {"merchant_unlock": "MERCHANT PAIR", "merchant_conviction_add": "MERCHANT CONVICTION", "merchant_donation_add": "GOLD PER MERCHANT"}[key]
+		var label: String = {"merchant_unlock": "MERCHANT PAIR", "merchant_conviction_add": "MERCHANT CONVICTION", "merchant_donation_add": "GOLD PER MERCHANT", "encounter_unlock": "TOWN DEBATE", "encounter_conviction_add": "ALL OPPONENTS / CONVICTION", "skeptic_conviction_add": "SKEPTIC / CONVICTION", "guard_conviction_add": "GUARD / CONVICTION", "zealot_conviction_add": "ZEALOT / CONVICTION", "priest_conviction_add": "PRIEST / CONVICTION"}[key]
 		return "%s\n%.1f%s" % [label, current[key], "" if complete else " -> %.1f" % next[key]]
 	var stat_key: String = {"talk": "speech_frequency", "persuade": "conviction", "run": "run_multiplier", "gather": "gatherings", "helper": "helpers"}.get(branch, "")
 	var heading: String = {"talk": "TALKING FREQUENCY", "persuade": "CONVICTION PER PHRASE", "run": "RUNNING SPEED", "gather": "VILLAGE GATHERINGS", "helper": "HELPERS"}.get(branch, "")
@@ -482,6 +488,9 @@ func _update_branch_navigation() -> void:
 			branch_picker.set_item_text(index, "%s · %d ready" % [text, summary.available])
 			if str(summary.id) == selected_branch:
 				branch_picker.select(index)
+	if selected_branch.is_empty():
+		branch_picker.select(-1)
+		branch_picker.text = "Browse %d ritual branches" % _branch_order.size()
 	_browse_ids.clear()
 	node_picker.clear()
 	for summary in get_branch_summaries():
@@ -869,6 +878,15 @@ func _draw_glyph(canvas: Control, at: Vector2, branch: String, color: Color) -> 
 			for x in [-9, 0, 9]:
 				canvas.draw_circle(at + Vector2(x, -5) * scale, 3.0 * scale, color)
 				canvas.draw_line(at + Vector2(x, 0) * scale, at + Vector2(x, 8) * scale, color, 2.0, true)
+		"merchant":
+			canvas.draw_arc(at, 10 * scale, 0, TAU, 20, color, 1.6, true)
+			canvas.draw_line(at + Vector2(0, -7) * scale, at + Vector2(0, 7) * scale, color, 2, true)
+		"trial":
+			canvas.draw_polyline(PackedVector2Array([at + Vector2(-9, -9) * scale, at + Vector2(9, -9) * scale, at + Vector2(8, 5) * scale, at + Vector2(0, 12) * scale, at + Vector2(-8, 5) * scale, at + Vector2(-9, -9) * scale]), color, 1.6, true)
+		"faith":
+			canvas.draw_line(at + Vector2(0, -12) * scale, at + Vector2(0, 12) * scale, color, 2, true)
+			canvas.draw_line(at + Vector2(-8, -4) * scale, at + Vector2(8, -4) * scale, color, 2, true)
+			canvas.draw_arc(at, 15 * scale, 0, TAU, 24, color, 1, true)
 		"run":
 			for x in [-5, 4]:
 				canvas.draw_polyline(PackedVector2Array([at + Vector2(x - 4, -10) * scale, at + Vector2(x + 3, 0) * scale, at + Vector2(x - 4, 10) * scale]), color, 1.7, true)

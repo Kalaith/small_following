@@ -10,11 +10,12 @@ The project targets Godot 4.2.2, GDScript and Compatibility rendering. It has no
 | `scripts/main.gd` | Round timing, nearest audience, reward events, progression integration and compact village HUD |
 | `scripts/player.gd`, `scenes/player.tscn` | Direct CharacterBody2D movement, feet collision, camera, drawn cultist and trailing cloth |
 | `scripts/helper.gd` | One autonomous recruiter, grid travel, individual targets and independent phrase effort |
-| `scripts/gathering.gd` | Five listeners, phrase timing, conviction, local feedback and recruitment signal |
+| `scripts/gathering.gd` | Typed villager/merchant audiences, phrase timing, conviction, local feedback and recruitment signal |
+| `scripts/encounter.gd` | Opponent arrival, objections, conviction decay and one victory signal |
 | `scripts/progression.gd` | Catalog validation, authoritative purchase checks, stat calculations and versioned local progression |
 | `scripts/ritual_screen.gd` | Procedural ritual geometry, pan/zoom, selection, readable details and action signals |
 | `scripts/ritual_layout.gd` | Presentation-only sector placement from existing branch/ring metadata |
-| `data/upgrades.json` | Sixteen real upgrade definitions with stable IDs, per-rank effects/prices, rank limits, prerequisites and graph coordinates |
+| `data/upgrades.json` | 32 real upgrade definitions with stable IDs, per-rank effects/prices, rank limits, prerequisites and graph coordinates |
 | `scripts/village.gd` | Deterministic ground/props and collision footprints |
 | `tests/` | Isolated economy/save checks, scene integration, route simulation and rendered captures |
 | `assets/` | Project icon; reserve future subfolders for licensed production assets |
@@ -22,7 +23,7 @@ The project targets Godot 4.2.2, GDScript and Compatibility rendering. It has no
 
 The map is 1560 x 1100 world pixels, with a 1280 x 800 base viewport. These are top-down coordinates, not an isometric grid. Feet are the actor origin and sorting anchor; actors and props share Y sorting. Collision layer 1 is the player, layer 2 is world obstacles. Listeners do not block movement. Cloth is purely visual.
 
-Movement never checks round activity or ritual visibility. Round logic chooses only the nearest unfinished gathering within range. The ritual emits action requests; it does not award upgrades directly. `main.gd` enforces between-round purchasing, while `progression.gd` validates the next rank, its cost, prerequisites and the request's expected current rank. Disabled buttons are feedback, not the economy's only guard.
+Movement never checks round activity or ritual visibility. Round logic chooses the arrived undefeated opponent when in range, otherwise the nearest unfinished gathering. The ritual emits action requests; it does not award upgrades directly. `main.gd` enforces between-round purchasing, while `progression.gd` validates the next rank, its cost, prerequisites and the request's expected current rank. Disabled buttons are feedback, not the economy's only guard.
 
 ## Round and speech model
 
@@ -30,7 +31,7 @@ The provisional round lasts 11 seconds. Each new round returns the cultist to `(
 
 Each audience owns its phrase timer and conviction progress. Base speech produces one phrase per second, adding one conviction; three conviction recruits a listener and awards three donations. Partial phrase time and conviction stay with the gathering while the player leaves range. Conviction above the recruitment threshold carries to the next listener. Round reset clears both values.
 
-Talking upgrades add to a base phrase-frequency multiplier: interval = `1 / (1 + sum(purchased speech_speed_add))`. The three original first ranks each add 0.2; `talk_3` rank 2 adds 0.3. Each persuasion rank adds 0.5 conviction per phrase. Each original running rank adds 0.15 to the base 180-pixel/second speed multiplier. Full ranks in the original core therefore give 1.9 phrases/second, 3 conviction/phrase and 288 pixels/second. The two new talking tiers add 0.5 and 0.6 base phrases/s; each new running tier adds 0.3 of base speed. Full player stats are 3 phrases/s, 3 conviction/phrase and 396 px/s. These are distinct axes; do not collapse them into one generic persuasion-rate stat.
+Talking upgrades add to a base phrase-frequency multiplier: interval = `1 / (1 + sum(purchased speech_speed_add))`. The three original first ranks each add 0.2; `talk_3` rank 2 adds 0.3. Each persuasion rank adds 0.5 conviction per phrase. Each original running rank adds 0.15 to the base 180-pixel/second speed multiplier. Full ranks in the original core therefore give 1.9 phrases/second, 3 conviction/phrase and 288 pixels/second. The two new talking tiers add 0.5 and 0.6 base phrases/s; each new running tier adds 0.3 of base speed. Before finale inscriptions, player stats reach 3 phrases/s, 3 conviction/phrase and 396 px/s; the final catalog reaches 3.5 phrases/s, 5 conviction/phrase and 432 px/s before specialist bonuses. These are distinct axes; do not collapse them into one generic persuasion-rate stat.
 
 Full-village success follows only from ordinary travel, phrase intervals and conviction. There is no full-upgrade completion shortcut, extra time or conversion cap. The pacing test records the actual completion time of all 15 listeners on practical routes and compares partial/nonoptimal builds with the same 11-second boundary.
 
@@ -40,19 +41,19 @@ The cumulative `total_recruits` value counts **recruitment events**, including r
 
 ## Upgrade data and graph expansion
 
-Catalog schema 1 contains an `upgrades` array. Each definition supplies `id`, `title`, `description`, `branch`, `ring`, `angle_degrees`, `cost`, `requires` and an `effect` dictionary. Ranked definitions add `max_rank` and `rank_costs`; optional `rank_effects` supplies a different effect dictionary for each rank. Supported effect keys are `speech_speed_add`, `conviction_add`, `run_speed_add`, `meadow_unlock`, `east_unlock` and `helper_unlock`. Unlock effects must have value 1, one rank and one occurrence per catalog. IDs are save references and must remain stable.
+Catalog schema 1 contains an `upgrades` array. Each definition supplies `id`, `title`, `description`, `branch`, `ring`, `angle_degrees`, `cost`, `requires` and an `effect` dictionary. Ranked definitions add `max_rank` and `rank_costs`; optional `rank_effects` supplies a different effect dictionary for each rank. Supported effect keys are enumerated in `Progression.EFFECT_KEYS`: frequency, conviction, running, invitations/helper, merchant conviction/donations, debate unlock and general or type-specific opponent conviction. Merchant donation increments must be whole numbers. Unlock effects must have value 1, one rank and one occurrence per catalog. IDs are save references and must remain stable.
 
 An omitted `max_rank` defaults to 1; valid limits are integers from 1 to 100. `rank_costs` must match the rank count, contain positive bounded integers and begin with the original `cost`. When present, `rank_effects` must match the rank count, contain supported positive effects and begin with the original `effect`; otherwise every rank repeats `effect`. Keeping first-rank values stable preserves the benefit of old purchases. The current catalog uses a distinct second effect only for `talk_3`. Catalog loading also rejects duplicate IDs, invalid coordinates/costs/effects, missing/self/duplicate prerequisites and prerequisite cycles.
 
 If catalog loading fails, the scene shows its notice and disables rounds/save writes without loading or replacing existing progression. Repair the definitions before resuming.
 
-The original catalog core retains three branches with three nodes each. The six inner nodes have one rank; `talk_3`, `persuade_3` and `run_3` have two. First-rank costs remain 6, 9 and 12 donations by ring; each second rank costs 18. This core is twelve purchases costing 135 donations. Six new single-rank nodes add two gathering unlocks and two stat tiers for talking/running, making eighteen purchases costing 318 donations before the single-rank, 30-donation helper. The full catalog has sixteen nodes, nineteen purchases and costs 348 donations. `main.apply_upgrades` creates each unlocked gathering exactly once; save reload reconstructs them from the same ranks. A prerequisite requires at least rank 1, not all ranks, of its referenced node.
+The original catalog core retains three branches with three nodes each. The six inner nodes have one rank; `talk_3`, `persuade_3` and `run_3` have two. First-rank costs remain 6, 9 and 12 donations by ring; each second rank costs 18. This core is twelve purchases costing 135 donations. Six new single-rank nodes add two gathering unlocks and two stat tiers for talking/running, making eighteen purchases costing 318 donations before the single-rank, 30-donation helper. That earlier village expansion has sixteen nodes, nineteen purchases and costs 348 donations. The first-map finale adds sixteen nodes; the complete catalog has 32 nodes and 35 ranks. `main.apply_upgrades` creates each unlocked gathering exactly once; save reload reconstructs them from the same ranks. A prerequisite requires at least rank 1, not all ranks, of its referenced node.
 
 `try_purchase(id, expected_rank = -1)` validates the requested node and next rank. UI requests include the selected current rank; a stale request after a previous purchase is rejected. One input buys one rank, a maximum-rank request spends nothing, and a failed candidate save grants nothing. The optional expected rank supports programmatic purchases without weakening the maximum-rank, prerequisite or affordability checks. Stats sum effects only through each saved purchased rank.
 
 `ritual_layout.gd` maps known branches to stable presentation sectors: Words
 above, Running left, Creed right, Village lower right and Followers lower
-left. Ring metadata controls outward distance. Siblings in one branch/ring
+left. Merchants and Trials fill the upper diagonals; Faith occupies the lower center. Ring metadata controls outward distance. Siblings in one branch/ring
 receive separate lanes within the sector; unfamiliar fixture branches use
 their initial catalog angle without rotating each successive tier. The view
 does not mutate catalog coordinates, effects, prices or prerequisites.
@@ -68,9 +69,8 @@ current-to-next effect, rank and purchase state.
 
 State drawings combine brightness, fill, outline/marks and rank pips rather
 than color alone. Overview labels reduce with zoom; selected details and
-visible navigation retain access to every node. Branch summaries drive five
-buttons for production data and a dropdown when a catalog has more than six
-branches. They report owned-node and affordable-purchase counts. A separate
+visible navigation retain access to every node. Branch summaries drive a dropdown
+for the eight production branches; catalogs with six or fewer use buttons. They report owned-node and affordable-purchase counts. A separate
 node picker lists every entry in the selected branch, including locked nodes,
 and focuses the chosen node. `focus_node` centers selection at a readable zoom;
 `focus_branch` chooses a useful starting node in that branch. These operations
@@ -117,7 +117,7 @@ ordinary schema-2 ranks; no target or per-round audience data is saved.
 
 ## Local progression and recovery
 
-`user://progression.json` stores schema 2 with `coins`, `purchased` (an ID-to-integer-rank dictionary), `total_recruits` and `round_number`. Purchased entries must be integers from 1 through that node's `max_rank`; unpurchased IDs are absent, not stored as rank 0. Counters are bounded integers; purchased IDs must exist in the catalog and include their prerequisites. Nothing in a save is executable. On ordinary Windows Godot installations, `user://` resolves beneath `%APPDATA%\Godot\app_userdata\Small Following`; use the engine's user-data location when running with custom settings.
+`user://progression.json` stores schema 2 with `coins`, `purchased` (an ID-to-integer-rank dictionary), `total_recruits`, `round_number` and optional `encounter_stage`. Purchased entries must be integers from 1 through that node's `max_rank`; unpurchased IDs are absent, not stored as rank 0. Counters are bounded integers; purchased IDs must exist in the catalog and include their prerequisites. Nothing in a save is executable. On ordinary Windows Godot installations, `user://` resolves beneath `%APPDATA%\Godot\app_userdata\Small Following`; use the engine's user-data location when running with custom settings.
 
 The schema-1 migration accepts the earlier ID-to-true purchase dictionary and maps each true value to rank 1. Currency, recruitment-event total and round number are preserved exactly; new second ranks are not granted. Loading alone leaves the valid old file untouched. The first successful schema-2 write retains the original schema-1 file as `.bak` through the ordinary staged writer. Schema-1 backups can also be validated and migrated for recovery. Routine tests use isolated fixture saves and do not migrate the player's live save.
 
@@ -159,3 +159,30 @@ ordinary progression. Inspect rendered states separately from the graph-model
 checks. Export checks become relevant once a platform and templates are
 selected. Record exact engine, commands, results and known environment
 failures in [VERIFICATION.md](VERIFICATION.md).
+
+## First-map opponents and typed listeners
+
+`gathering.gd` preserves its ordinary five listeners / three conviction / three
+reward defaults. The optional merchant pair uses nine conviction and twelve
+base donations. `main` applies purchased merchant donation bonuses and targeted
+player conviction. Helpers read the audience threshold and keep their own stats.
+
+`encounter.gd` owns four profiles and a two-segment clear path from the eastern
+entrance to (790, 570). It subtracts actual travel time before accepting speech,
+then applies whole-phrase objections, conviction and unattended decay. Opponents
+are nonblocking actors under the existing Y-sorted parent. Helpers do not target
+them. Main supplies only clamped active-round time, prioritizes an arrived opponent
+in speech range, and creates at most one opponent per round.
+
+`Progression.complete_encounter(expected_stage)` rejects duplicates, missing unlocks
+and out-of-order results. It increments the stage, recruitment-event total and
+fixed victory reward together, then saves. Earned victory follows the existing
+in-memory retention policy on failed storage; a notice warns it may be lost on
+exit. `map_complete()` means stage four, earned through normal Priest persuasion.
+It does not require every upgrade or complete other listeners automatically.
+
+The optional schema-2 `encounter_stage` is an integer 0–4 and defaults to zero in
+older schema-1/2 saves. Nonzero values require the saved `debate_1` unlock with its
+usual prerequisites. Stage four suppresses further opponents on reload and shows
+the completed-map UI. Stage zero through three starts the next attempt on a fresh
+round. Conviction, objections, arrival and partial speech are never persisted.

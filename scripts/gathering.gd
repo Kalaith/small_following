@@ -1,10 +1,12 @@
 extends Node2D
-## Session-only gathering. Each round repopulates five placeholder listeners.
+## Session-only typed gathering. Audiences reset each round.
 signal recruited(donation: int)
 
 const LISTENER_COUNT: int = 5
 const CONVICTION_REQUIRED: float = 3.0
 const DONATION: int = 3
+const MERCHANT_COUNT: int = 2
+const MERCHANT_CONVICTION: float = 9.0
 
 var listener_count: int = LISTENER_COUNT
 var conviction_required: float = CONVICTION_REQUIRED

@@ -313,3 +313,73 @@ Rendered `capture_starter.gd` completed with exit 0 on Compatibility/NVIDIA.
 Inspected `village-merchants.png`: distinct hats/purses, local speech feedback,
 visible cultist and compact HUD. Original practical full-clear capture remains
 15 conversions in 10.517 seconds, with 0.483 seconds left. Human play is unverified.
+
+## 2026-10-03 — first-map opponents, priest and completed circle
+
+Implemented three opponents (Skeptic, Town Guard, Zealot), the Priest boss,
+walking arrivals, distinct resistances, one attempt per round, saved victories
+and explicit Bramblewick completion. Added twelve inscriptions after the merchant
+slice; production now has 32 nodes / 35 ranks / eight branches / six rings.
+
+### Commands and inspected results
+
+Used the installed Godot 4.2.2 Mono executable from README with Compatibility.
+Ran headless `--path . --import`, then each script with `--headless --fixed-fps 60
+--path . --script res://tests/<name>.gd`. Inspected all logs, including exit-zero
+runs. Latest results:
+
+| Suite | Checks | Failures | Exit |
+| --- | ---: | ---: | ---: |
+| `smoke_test.gd` | 92 | 0 | 0 |
+| `test_progression.gd` | 113 | 0 | 0 |
+| `test_pacing.gd` | 59 | 0 | 0 |
+| `test_helper.gd` | 34 | 0 | 0 |
+| `test_merchants.gd` | 17 assertions | 0 | 0 |
+| `test_encounters.gd` | 206 | 0 | 0 |
+| `test_ritual_readability.gd` | 67 | 0 | 0 |
+
+Headless import still exits 1 with the previously recorded `_EDITOR_GET` /
+EditorSettings error, plus cursor/Blender-path warnings. There are no new script
+parse errors. This is an environment limitation, not a clean import result.
+After the final branch-selector text fix, reran smoke and readability; all other
+runtime results above are from the same gameplay code before that text-only fix.
+
+Encounter coverage includes real arrival time before speech, objections, decay,
+complete versus incomplete routes, fresh retries, intermission inactivity, ordered
+victories, duplicate prevention, exact saved rewards, full scene reload, older
+save defaults, invalid stage fields, backup recovery and failed-storage notices.
+New inscriptions reject stale and maximum-rank purchases. Merchant checks cover
+thresholds, overflow, duplicate rewards, targeted bonuses, round reset and a
+helper needing nine ordinary phrases. Core tests preserve movement during ritual,
+round transitions, migration and failure behavior. The separate 144-node fixture
+still passes navigation, transformed picking and node reachability.
+
+The original practical route still converts all 15 at 10.517s (0.483s left).
+The practical full Priest route walks 28.8px and completes at 9.133s (1.867s left).
+The minimum unlock build reaches only 32.5/240; waiting six seconds even at full
+ranks reaches 196/240. Both correctly fail and retry. See [PACING](PACING.md).
+
+### Rendered inspection
+
+Ran `tests/capture_starter.gd` with `--fixed-fps 60` and the rendering display,
+writing to `docs/verification`; exit 0, Compatibility / NVIDIA RTX 4080 SUPER.
+Inspected actual 1280x800 PNG pixels for merchant speech, walking arrival,
+Skeptic/Guard/Zealot/Priest, village completion, the full circle and Priest details.
+The figures have distinct equipment/silhouettes. Opponent hints sit above their
+figures, leaving the cultist visible. Feet sorting naturally occludes the visitor
+behind the market awning during arrival. The Faith branch fills the lower circle;
+new glyphs distinguish merchant, trial and faith nodes. Overview identifies the
+eight-branch browser without implying a selection. The selected Priest upgrade
+shows its conviction benefit and completed rank. Village and ritual both display
+the saved map-completion state.
+
+New evidence: `opponent-arrival.png`, `opponent-skeptic.png`, `opponent-guard.png`,
+`opponent-zealot.png`, `opponent-priest.png`, `village-complete.png`,
+`ritual-map-complete.png`, `ritual-priest-details.png`. Existing captures were
+regenerated with the expanded catalog. Captures use funded, isolated test states;
+they do not modify the player's save or establish a fresh-save human campaign.
+
+No human playtest, alternate-size acceptance, physical gamepad test or exported
+build is claimed. Prices, opponent difficulty and time to finish the map remain
+provisional. Later maps are deferred. Original art/reference-transfer limitations
+are unchanged. No installation, publishing, remote or export settings changed.

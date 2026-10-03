@@ -151,3 +151,58 @@ is a deliberate route-choice limitation, not guaranteed passive income.
 Neither measured full-catalog route clears 25; full-clear time and margin
 remain undefined for those runs. The original core 15-person target retains
 its existing verified margin. Human enjoyment and price acceptance are open.
+
+## 2026-10-03 — merchants and first-map finale
+
+The original core route and 11-second boundary are unchanged: 15 conversions in
+10.517 seconds, 0.483 seconds remaining on the practical garden–well–market route.
+The earlier opening, incomplete-core and expanded-route comparisons still pass.
+
+### Provisional content values
+
+Merchants are an optional pair at (1020, 650), each requiring 9 conviction and
+paying 12 donations (18 with Generous Purses). Targeted upgrades add 3 merchant
+conviction in total; full general stats give 5, so full merchant phrases contribute
+8. Two 9-point listeners therefore need three full-strength phrases, retaining
+overflow. A helper still needs nine one-second phrases per merchant.
+
+Town Debate opens after East Lane Invitations. One opponent walks from (1470, 630)
+via (1000, 630) to (790, 570) at 220 px/s, about 3.129 seconds before speech can
+begin. Arrival consumes active round time. The player starts about 110.5px from
+the center and must move into the ordinary 105px speech radius.
+
+| Opponent | Conviction | Opening phrases rebutted | Conviction lost per second out of range | Victory donations |
+| --- | ---: | ---: | ---: | ---: |
+| Skeptic | 42 | 0 | 0 | 30 |
+| Town Guard | 72 | 2 | 0 | 45 |
+| Zealot | 108 | 0 | 6 | 60 |
+| Priest | 240 | 3 | 9 | 120 |
+
+The 32-node / 35-rank catalog costs 1014 donations. Finale stat nodes raise the
+cultist to 3.5 phrases/s, 5 base conviction/phrase and 432 px/s. Opponent bonuses
+raise phrases to 10 for Skeptic/Guard, 11 for Zealot and 14 for Priest. Neither
+movement nor talking frequency is folded into conviction.
+
+### Actual encounter measurements
+
+`tests/test_encounters.gd` uses the live scene, fixed 1/60-second steps, actual
+movement/collision and completed opponent conversion. All saves are isolated.
+
+| Scenario | Result | Time used | Time remaining | Conviction at end |
+| --- | --- | ---: | ---: | ---: |
+| Full priest, 0.2s reaction then move to an 85px stop | Priest convinced | 9.133s | 1.867s | 240 |
+| Minimum debate unlock build, same route | Incomplete | 11.000s | 0 | 32.5 |
+| Full priest, wait 6s before moving into range | Incomplete | 11.000s | 0 | 196 |
+
+Both full-build movement routes cover 28.8px; the slower minimum build covers
+27px. No teleport is used in these three route cases. A separate staged campaign
+fixture places the cultist near the center to verify victory ordering and reloads:
+Skeptic completes at 4.567s, Guard at 6.000s, Zealot at 6.000s and Priest at 9.133s.
+Those campaign times include opponent arrival but do not establish player travel.
+
+The late route proves full purchases alone cannot auto-complete the boss. Failed
+attempts reset next round; victories advance once and the Priest saves map completion.
+The player can keep earning after completion. Human steering, merchant versus
+villager route value, time to afford the whole circle and overall difficulty still
+need playtesting; the numbers above are implementation defaults, not user-approved
+balance or evidence of human play feel.

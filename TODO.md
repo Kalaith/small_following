@@ -8,8 +8,9 @@
 - [ ] Resolve the installed editor's `_EDITOR_GET` import-check error and unexplained automatic-shutdown exit status; keep those limitations separate from runtime check results.
 - [ ] Check movement feel, robe readability, gathering selection and HUD legibility in a human playtest.
 - [ ] Decide quit/restart behavior beyond the current fresh-round policy; verify schema-1 migration and schema-2 save recovery in the eventual export.
-- [ ] Add and test the first town unlock and a second, more populated town; extend local saves only for implemented progression.
+- [ ] After first-map playtesting, choose the next-map direction and transition rules; further maps await user direction.
 - [ ] Human-playtest the two gathering unlocks, later speaking/running tiers and helper value. Compare leaving the garden to the helper with overtaking its targets; tune prices and effort from actual play.
+- [ ] Human-playtest merchant value, opponent arrival/objections/decay, the Priest difficulty and total time to finish Bramblewick; tune provisional costs and inspect the eight-branch circle at alternate sizes.
 - [ ] Decide further minion tasks, magic scope and whether previous towns or offline time earn income.
 - [ ] Choose production art treatment, source licensed assets/audio and replace procedural placeholders.
 - [ ] Add audio controls and appropriate accessibility settings as those systems arrive.

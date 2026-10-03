@@ -32,7 +32,7 @@ func _run() -> void:
 	scene.set_process(false)
 	scene.seconds_left = scene.ROUND_SECONDS
 	var player = scene.player
-	check(scene.groups.size() == 3 and scene.progression.catalog.size() == 20, "three gatherings and twenty real upgrades")
+	check(scene.groups.size() == 3 and scene.progression.catalog.size() == 32, "three gatherings and thirty-two real upgrades")
 	check(player.get_node("Camera2D").enabled, "following camera enabled")
 	for action in ["move_left", "move_right", "move_up", "move_down", "next_round", "buy_upgrade", "toggle_ritual"]:
 		check(InputMap.has_action(action) and not InputMap.action_get_events(action).is_empty(), "mapped action: " + action)
@@ -217,7 +217,7 @@ func _test_graph(scene) -> void:
 	screen.focus_node("fixture_12_11")
 	check(screen.hit_test(screen.world_to_screen(screen.node_positions["fixture_12_11"])) == "fixture_12_11", "outermost ring remains navigable after pan/zoom")
 	screen.configure(scene.progression.catalog, scene.progression)
-	check(screen.node_positions.size() == 20, "fixture never becomes gameplay content")
+	check(screen.node_positions.size() == 32, "fixture never becomes gameplay content")
 	screen.select_node("talk_1")
 	check(screen.purchase_button.disabled, "purchased node button shows maximum state")
 	screen.select_node("talk_3")

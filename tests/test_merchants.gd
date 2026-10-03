@@ -35,6 +35,16 @@ func _run() -> void:
 	check(merchants.donation == 18, "purse upgrade updates existing merchants")
 	scene.start_next_round()
 	check(merchants.recruits == 0 and merchants.progress == 0.0 and merchants.donation == 18, "merchant resets retain purchased donation bonus")
+	var helper = load("res://scripts/helper.gd").new()
+	scene.get_node("Actors").add_child(helper)
+	helper.target_group = merchants
+	helper.target_index = 0
+	helper.position = merchants.listeners[0].global_position
+	helper.set_active(true)
+	helper.advance(8.0, scene.groups)
+	check(merchants.recruits == 0 and is_equal_approx(helper.conviction, 8.0), "helper cannot bypass merchant threshold with player bonuses")
+	helper.advance(1.0, scene.groups)
+	check(merchants.recruits == 1 and helper.completed_recruits == 1, "helper uses nine baseline phrases for a merchant")
 	scene.queue_free()
 	await process_frame
 	print("MERCHANT RESULT: %d failures" % failures)

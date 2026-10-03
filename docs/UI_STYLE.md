@@ -58,7 +58,7 @@ The visible nodes and progression paths form the occult seal. Keep Words at
 the top, Running at the left, Creed at the right, and village invitations and
 followers in the lower sectors. Advance tiers outward within their branch;
 do not make the eye zigzag across the circle to follow a sequence. The
-sixteen-node catalog spans five rings and retains two ranks on the original
+32-node catalog spans six rings and retains two ranks on the original
 tier-III nodes. The [approved readability brief](RITUAL_READABILITY.md)
 describes the scope; layout must not change catalog rules.
 
@@ -120,8 +120,8 @@ button, or use the middle button, to pan; wheel zoom anchors at the pointer.
 Recenter must recover a useful view. Verify that dragging does not accidentally
 select/buy, and that drawing and hit testing agree after transforms.
 
-The Words, Running, Creed, Village and Followers buttons above the graph focus
-a branch. They show owned nodes/total nodes and a `+` when a rank is affordable;
+The branch selector above the graph focuses Words, Running, Creed, Village,
+Followers, Merchants, Trials or Faith. Smaller catalogs use branch buttons. They show owned nodes/total nodes and a `+` when a rank is affordable;
 their tooltips give the exact ready count. With more than six branches, a
 dropdown provides branch names and owned/ready counts. The node list below
 the graph exposes every upgrade in the selected branch, with its full title,

@@ -4,9 +4,13 @@ extends RefCounted
 
 const SAVE_VERSION: int = 2
 const MAX_COUNTER: int = 1000000000
-const EFFECT_KEYS: Array[String] = ["merchant_conviction_add", "merchant_donation_add", "speech_speed_add", "conviction_add", "run_speed_add", "meadow_unlock", "east_unlock", "helper_unlock", "merchant_unlock"]
-const UNLOCK_KEYS: Array[String] = ["meadow_unlock", "east_unlock", "helper_unlock", "merchant_unlock"]
+const EFFECT_KEYS: Array[String] = ["encounter_conviction_add", "skeptic_conviction_add", "guard_conviction_add", "zealot_conviction_add", "priest_conviction_add", "merchant_conviction_add", "merchant_donation_add", "speech_speed_add", "conviction_add", "run_speed_add", "meadow_unlock", "east_unlock", "helper_unlock", "merchant_unlock", "encounter_unlock"]
+const UNLOCK_KEYS: Array[String] = ["meadow_unlock", "east_unlock", "helper_unlock", "merchant_unlock", "encounter_unlock"]
 
+const BASE_MERCHANT_DONATION: int = 12
+const ENCOUNTER_REWARDS: Array[int] = [30, 45, 60, 120]
+
+var encounter_stage: int = 0
 var coins: int = 0
 var total_recruits: int = 0
 var round_number: int = 1
@@ -80,6 +84,8 @@ func load_catalog(path: String = "res://data/upgrades.json") -> bool:
 	for entry in candidate:
 		for rank_effect in entry.rank_effects:
 			for effect in rank_effect:
+				if effect == "merchant_donation_add" and not _integer_between(rank_effect[effect], 1, 100):
+					return _fail("Merchant donations must be whole numbers: " + entry.id)
 				if effect in UNLOCK_KEYS:
 					if entry.max_rank != 1 or rank_effect[effect] != 1 or unlocks.has(effect):
 						return _fail("Unlocks must appear once, at one rank and value 1: " + entry.id)
@@ -191,8 +197,27 @@ func conviction_for(npc_type: String) -> float:
 	return conviction_per_phrase() + (_sum_effect("merchant_conviction_add") if npc_type == "merchant" else 0.0)
 
 
+func encounter_conviction(kind: String) -> float:
+	return conviction_per_phrase() + _sum_effect("encounter_conviction_add") + _sum_effect(kind + "_conviction_add")
+
+
+func complete_encounter(expected_stage: int) -> bool:
+	if expected_stage != encounter_stage or encounter_stage >= 4 or not has_unlock("encounter_unlock"):
+		return false
+	coins = mini(coins + ENCOUNTER_REWARDS[encounter_stage], MAX_COUNTER)
+	total_recruits = mini(total_recruits + 1, MAX_COUNTER)
+	encounter_stage += 1
+	# Like earned donations, victory stays in memory on failed storage; expose the error.
+	save_progress()
+	return true
+
+
+func map_complete() -> bool:
+	return encounter_stage == 4
+
+
 func merchant_donation() -> int:
-	return 12 + int(_sum_effect("merchant_donation_add"))
+	return BASE_MERCHANT_DONATION + int(_sum_effect("merchant_donation_add"))
 
 
 func gathering_count() -> int:
@@ -210,6 +235,10 @@ func effect_preview(id: String) -> Dictionary:
 		"merchant_donation_add": merchant_donation(),
 		"helpers": int(has_unlock("helper_unlock")),
 	}
+	current.encounter_unlock = int(has_unlock("encounter_unlock"))
+	current.encounter_conviction_add = conviction_per_phrase() + _sum_effect("encounter_conviction_add")
+	for kind in ["skeptic", "guard", "zealot", "priest"]:
+		current[kind + "_conviction_add"] = encounter_conviction(kind)
 	var result: Dictionary = {"current": current, "next": {}}
 	var upgrade: Dictionary = find_upgrade(id)
 	if upgrade.is_empty() or rank(id) >= max_rank(id):
@@ -220,7 +249,7 @@ func effect_preview(id: String) -> Dictionary:
 	result.next.conviction += float(effect.get("conviction_add", 0.0))
 	result.next.run_multiplier += float(effect.get("run_speed_add", 0.0))
 	result.next.gatherings += int(effect.get("meadow_unlock", 0)) + int(effect.get("east_unlock", 0))
-	for key in ["merchant_unlock", "merchant_conviction_add", "merchant_donation_add"]:
+	for key in ["merchant_unlock", "merchant_conviction_add", "merchant_donation_add", "encounter_unlock", "encounter_conviction_add", "skeptic_conviction_add", "guard_conviction_add", "zealot_conviction_add", "priest_conviction_add"]:
 		result.next[key] += float(effect.get(key, 0.0))
 	result.next.helpers += int(effect.get("helper_unlock", 0))
 	return result
@@ -270,10 +299,11 @@ func load_progress() -> bool:
 
 
 func _snapshot() -> Dictionary:
-	return {"schema_version": SAVE_VERSION, "coins": coins, "total_recruits": total_recruits, "round_number": round_number, "purchased": purchased.duplicate(true)}
+	return {"schema_version": SAVE_VERSION, "coins": coins, "total_recruits": total_recruits, "round_number": round_number, "purchased": purchased.duplicate(true), "encounter_stage": encounter_stage}
 
 
 func _apply_snapshot(state: Dictionary) -> void:
+	encounter_stage = int(state.get("encounter_stage", 0))
 	coins = int(state.coins)
 	total_recruits = int(state.total_recruits)
 	round_number = int(state.round_number)
@@ -300,7 +330,12 @@ func _validated_snapshot(raw: Variant) -> Dictionary:
 			return {}
 	if not _integer_between(raw.get("round_number"), 1, MAX_COUNTER) or not raw.get("purchased") is Dictionary:
 		return {}
+	if not _integer_between(raw.get("encounter_stage", 0), 0, 4):
+		return {}
+	if int(raw.get("encounter_stage", 0)) > 0 and not raw.purchased.has("debate_1"):
+		return {}
 	var normalized: Dictionary = raw.duplicate(true)
+	normalized.encounter_stage = int(raw.get("encounter_stage", 0))
 	normalized.schema_version = SAVE_VERSION
 	for id in raw.purchased:
 		if not id is String:

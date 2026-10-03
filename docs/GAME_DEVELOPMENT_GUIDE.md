@@ -20,6 +20,7 @@ source for confirmed direction and provisional rules.
 | [ARCHITECTURE](ARCHITECTURE.md) | Implemented runtime ownership and save/catalog contracts |
 | [PACING](PACING.md) | Balance assumptions, measured conversions and route limits |
 | [VISUAL_DIRECTION](VISUAL_DIRECTION.md) | Art direction and asset requirements |
+| [First-map finale](FIRST_MAP.md) | Merchant and town opponent scope |
 | [MILESTONES](MILESTONES.md) | Bounded stages and their exit checks |
 | [VERIFICATION](VERIFICATION.md) | Dated results, evidence and known limitations |
 | [Documentation agent checklist](AGENTS.md) | Maintaining this documentation set |
@@ -75,6 +76,7 @@ are supported project patterns; changing them to sprites is an art decision.
 | `player.gd` | Input, physics movement, bounds and visual cloth motion |
 | `main.gd` | Round time, audience selection, reward routing and transitions |
 | `helper.gd` | Single-listener targeting, prop-aware travel and helper phrase timing |
+| `encounter.gd` | Town opponent arrival, resistance and conviction |
 | `gathering.gd` | Phrase time, conviction overflow and individual recruitment events |
 | `progression.gd` | Validated catalog, purchase authority, stats and durable progression |
 | `ritual_screen.gd` | Graph view, selection, pan/zoom, details and action requests |
@@ -126,6 +128,8 @@ $godotExe = 'C:\Program Files\Godot\Godot_v4.2.2-stable_mono_win64_console.exe'
 & $godotExe --headless --path . --script res://tests/test_progression.gd
 & $godotExe --headless --fixed-fps 60 --path . --script res://tests/test_pacing.gd
 & $godotExe --headless --fixed-fps 60 --path . --script res://tests/test_helper.gd
+& $godotExe --headless --fixed-fps 60 --path . --script res://tests/test_merchants.gd
+& $godotExe --headless --fixed-fps 60 --path . --script res://tests/test_encounters.gd
 ```
 
 The installed editor has a recorded `_EDITOR_GET` import failure. Preserve

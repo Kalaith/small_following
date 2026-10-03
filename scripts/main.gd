@@ -3,6 +3,7 @@ extends Node2D
 const Gathering = preload("res://scripts/gathering.gd")
 const Progression = preload("res://scripts/progression.gd")
 const RitualScreen = preload("res://scripts/ritual_screen.gd")
+const Encounter = preload("res://scripts/encounter.gd")
 const Helper = preload("res://scripts/helper.gd")
 const ROUND_SECONDS: float = 11.0
 const START_POSITION := Vector2(780, 680)
@@ -14,6 +15,7 @@ var catalog_ready: bool = false
 var progression = Progression.new()
 var groups: Array[Node2D] = []
 var added_gatherings: Dictionary = {}
+var encounter: Node2D = null
 var helper: Node2D = null
 var seconds_left: float = ROUND_SECONDS
 var round_active: bool = true
@@ -55,6 +57,7 @@ func _ready() -> void:
 	_build_hud()
 	_build_ritual()
 	apply_upgrades()
+	_reset_encounter()
 	_update_hud()
 	if not catalog_ready:
 		set_ritual_visible(true)
@@ -67,8 +70,8 @@ func _add_gathering(title: String, at: Vector2, merchant: bool = false) -> void:
 	gathering.position = at
 	if merchant:
 		gathering.npc_type = "merchant"
-		gathering.listener_count = 2
-		gathering.conviction_required = 9.0
+		gathering.listener_count = Gathering.MERCHANT_COUNT
+		gathering.conviction_required = Gathering.MERCHANT_CONVICTION
 		gathering.donation = progression.merchant_donation()
 	gathering.recruited.connect(_on_recruited)
 	$Actors.add_child(gathering)
@@ -103,6 +106,13 @@ func advance_round(delta: float) -> void:
 	if not round_active:
 		return
 	var usable_delta: float = minf(maxf(delta, 0.0), seconds_left)
+	var speaking_to_opponent: bool = false
+	if is_instance_valid(encounter) and not encounter.defeated:
+		var speech_delta: float = encounter.advance_arrival(usable_delta)
+		speaking_to_opponent = encounter.arrived and player.global_position.distance_to(encounter.global_position) <= player.speaking_radius
+		encounter.advance_speech(speech_delta, speaking_to_opponent, progression.speech_interval(), progression.encounter_conviction(str(Encounter.PROFILES[encounter.stage].id)))
+	if speaking_to_opponent:
+		nearest_group = null
 	if is_instance_valid(nearest_group):
 		nearest_group.set_listening(true)
 		nearest_group.tick_persuasion(usable_delta, progression.speech_interval(), progression.conviction_for(nearest_group.npc_type))
@@ -118,6 +128,24 @@ func advance_round(delta: float) -> void:
 			group.set_listening(false)
 		progression.save_progress()
 		set_ritual_visible(true)
+
+
+func _reset_encounter() -> void:
+	if is_instance_valid(encounter):
+		encounter.get_parent().remove_child(encounter)
+		encounter.queue_free()
+	encounter = null
+	if not progression.has_unlock("encounter_unlock") or progression.map_complete():
+		return
+	encounter = Encounter.new()
+	encounter.stage = progression.encounter_stage
+	encounter.convinced.connect(_on_encounter_convinced)
+	$Actors.add_child(encounter)
+
+
+func _on_encounter_convinced(stage: int) -> void:
+	if round_active and progression.complete_encounter(stage):
+		round_recruits += 1
 
 
 func _on_recruited(donation: int) -> void:
@@ -180,6 +208,7 @@ func start_next_round() -> void:
 	player.position = START_POSITION
 	if is_instance_valid(helper):
 		helper.reset_round(START_POSITION)
+	_reset_encounter()
 	player.get_node("Camera2D").reset_smoothing()
 	set_ritual_visible(false)
 	_update_hud()
@@ -279,8 +308,12 @@ func _update_hud() -> void:
 	stats_label.text = "%d donations    /    %d recruited" % [coins, total_recruits]
 	round_label.text = "Round %d   /   %.1fs remaining" % [round_number, seconds_left]
 	save_label.text = "Progress notice: see the ritual screen." if not progression.last_error.is_empty() else ""
-	if not round_active:
+	if progression.map_complete():
+		context_label.text = "Bramblewick complete!" + ("  Tab: ritual / Enter: play again" if not round_active else "  Enjoy the village.")
+	elif not round_active:
 		context_label.text = "Round complete - Tab: ritual / Enter: next round"
+	elif is_instance_valid(encounter) and not encounter.defeated:
+		context_label.text = "Convince %s in the town center" % Encounter.PROFILES[encounter.stage].title
 	elif is_instance_valid(nearest_group):
 		context_label.text = "Speaking with %s..." % nearest_group.group_name
 	else:

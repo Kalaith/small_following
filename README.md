@@ -1,6 +1,6 @@
 # Small Following
 
-A small Godot prototype for a cute incremental game where **you are the robed cultist**: walk between village gatherings, speak, recruit and earn donations. Short rounds lead into a purple ritual-circle upgrade screen with twenty working nodes, twenty-three purchasable ranks and local progression saves. Art is procedural placeholder geometry; this is not a finished game.
+A small Godot prototype for a cute incremental game where **you are the robed cultist**: walk between village gatherings, speak, recruit and earn donations. Short rounds lead into a purple ritual-circle upgrade screen with 32 working nodes, 35 purchasable ranks and local progression saves. Art is procedural placeholder geometry; this is not a finished game.
 
 ## Run
 
@@ -19,7 +19,7 @@ From the project folder, `.\Run.ps1` also launches the game; pass `-GodotExe '<i
 | Move the cultist | WASD / arrows / gamepad left stick |
 | Speak | Stay within range of a gathering |
 | Select an upgrade | Click its ritual node, or choose it in the node list below the graph |
-| Find a branch | Words / Running / Creed / Village / Followers buttons above the graph |
+| Find a branch | Branch selector above the graph (eight named branches) |
 | Enlarge the selected upgrade | Focus selected button |
 | Return to branch overview | Overview button (clears selection) |
 | Pan the ritual | Left-drag empty graph space, or middle-drag |
@@ -30,7 +30,7 @@ From the project folder, `.\Run.ps1` also launches the game; pass `-GodotExe '<i
 
 Movement remains active during the ritual; Tab reveals the village between rounds. A new round returns the cultist to the starting entrance. Gamepad movement/action mappings exist but were not physically tested; graph selection and navigation currently require a mouse.
 
-Branch buttons show owned nodes/total nodes, with a `+` when a rank is affordable. Large test graphs use a branch dropdown with explicit ready counts. The node list includes every upgrade in the selected branch, including locked nodes, with rank and state; choosing one brings it into view. Overview clears selection and fits the whole graph; Recenter fits it while keeping the selected details. Hover previews prerequisite paths while the right panel keeps the selected upgrade's details.
+The branch selector shows owned nodes/total nodes and ready purchase counts for all eight branches. Smaller catalogs use branch buttons; the large test fixture also uses the selector. The node list includes every upgrade in the selected branch, including locked nodes, with rank and state; choosing one brings it into view. Overview clears selection and fits the whole graph; Recenter fits it while keeping the selected details. Hover previews prerequisite paths while the right panel keeps the selected upgrade's details.
 
 ## Current loop
 
@@ -38,7 +38,7 @@ Branch buttons show owned nodes/total nodes, with a `+` when a rank is affordabl
 - A directly movable purple cultist with normalized diagonal speed, world bounds and visibly trailing cloth.
 - Three initial nonblocking gatherings of five listeners each, plus two purchasable gatherings, with local speech feedback and recruitment/donation events.
 - **Provisional 11-second rounds**, tuned toward roughly three opening conversions through travel and conversation time. There is no three-recruit cap; [pacing evidence and assumptions](docs/PACING.md) explain the limit and upgraded comparisons.
-- A large purple occult upgrade circle: sixteen nodes across five rings, retaining second ranks on the three original tier-III nodes. Words stays above, Running left, Creed right, and village/follower upgrades below as tiers progress outward. Quiet decoration, contextual prerequisite paths and shape/fill state cues support the existing rank details.
+- A large purple occult upgrade circle: 32 nodes across six rings, retaining second ranks on the three original tier-III nodes. Words stays above, Running left, Creed right, Merchants upper left, Trials upper right, and Village, Followers and Faith below as tiers progress outward. Quiet decoration, contextual prerequisite paths and shape/fill state cues support the existing rank details.
 - Three distinct upgrade effects: initial talking ranks each add 20% of base phrase frequency, persuasion ranks add 0.5 conviction per phrase, and running ranks add 15% of base movement speed. The outer talking node's second rank adds 30% of base frequency. Initial node prices remain 6, 9 and 12 donations per branch; each outer node's second rank costs 18.
 - Full ranks on the original nine nodes produce 1.9 phrases/second, 3 conviction/phrase and 288 pixels/second movement. The balance target is all 15 listeners across the three groups with a small positive margin on a competent route inside the unchanged 11-second round; [route evidence](docs/PACING.md) records actual timings and limitations.
 - Versioned local progression retaining currency, purchased ranks, the recruitment-event total and round number. Existing single-purchase saves keep each old purchase as rank 1.
@@ -49,11 +49,11 @@ The original six inner nodes each have one rank and the original tier-III nodes 
 
 All audiences reset each round. The cumulative recruited total counts **recruitment events**, including the same villagers on later rounds; it is not a population of unique permanent followers. Restarting preserves progression but begins a fresh timer and audience state. No offline rewards or partial-round continuation are implemented.
 
-The real catalog is `data/upgrades.json`. A separate **144-node validation fixture** exercises graph capacity and navigation; it is not additional purchasable game content. A second town, magic, audio, production assets and an exported release remain future work.
+The complete first-map catalog has 32 nodes and 35 ranks costing 1014 donations. The real catalog is `data/upgrades.json`. A separate **144-node validation fixture** exercises graph capacity and navigation; it is not additional purchasable game content. A second town, magic, audio, production assets and an exported release remain future work.
 
 ## Village expansion
 
-Meadow Invitations adds five neighbours after Compelling Creed III. It opens Talking IV and Running IV; East Lane Invitations then adds another five listeners and opens tier V. Both stat paths also require their preceding tier. Full player stats become 3 phrases/second, 3 conviction/phrase and 396 pixels/second. Groups appear after purchase and are recreated from saved ranks. Helping Hand costs 30 donations after Meadow Invitations. This small teal-robed helper walks around props at 150 px/s and uses three one-second phrases to recruit one listener, then finds another. It rests between rounds and resets at the entrance. Player upgrades affect the cultist; the helper keeps its own pace. Leave it an audience to work on: overtaking its targets can waste its effort. Prices and timing remain provisional; see [the scoped design](docs/VILLAGE_EXPANSION.md) and [route measurements](docs/PACING.md).
+Meadow Invitations adds five neighbours after Compelling Creed III. It opens Talking IV and Running IV; East Lane Invitations then adds another five listeners and opens tier V. Both stat paths also require their preceding tier. Before the finale upgrades, player stats reach 3 phrases/second, 3 conviction/phrase and 396 pixels/second. Groups appear after purchase and are recreated from saved ranks. Helping Hand costs 30 donations after Meadow Invitations. This small teal-robed helper walks around props at 150 px/s and uses three one-second phrases to recruit one listener, then finds another. It rests between rounds and resets at the entrance. Player upgrades affect the cultist; the helper keeps its own pace. Leave it an audience to work on: overtaking its targets can waste its effort. Prices and timing remain provisional; see [the scoped design](docs/VILLAGE_EXPANSION.md) and [route measurements](docs/PACING.md).
 
 ## Local saves
 
@@ -113,6 +113,8 @@ $godotExe = 'C:\Program Files\Godot\Godot_v4.2.2-stable_mono_win64_console.exe'
 & $godotExe --headless --path . --script res://tests/test_ritual_readability.gd
 & $godotExe --headless --fixed-fps 60 --path . --script res://tests/test_pacing.gd
 & $godotExe --headless --fixed-fps 60 --path . --script res://tests/test_helper.gd
+& $godotExe --headless --fixed-fps 60 --path . --script res://tests/test_merchants.gd
+& $godotExe --headless --fixed-fps 60 --path . --script res://tests/test_encounters.gd
 & $godotExe --fixed-fps 60 --path . --script res://tests/capture_starter.gd -- "--capture-dir=$PWD\docs\verification"
 ```
 
@@ -125,3 +127,27 @@ No Git remote was created and no push, publishing, installation or export-platfo
 ## Merchants
 
 Merchant Invitations adds two distinct hat-and-purse NPCs near the market after Meadow Invitations. Each needs 9 conviction and gives 12 donations. Fair Bargain and Trusted Patron each add 1.5 merchant-only conviction per phrase; Generous Purses adds 6 donations per merchant. The helper uses the higher threshold with its own unchanged stats. The original village route is unchanged. See [first-map scope](docs/FIRST_MAP.md).
+
+## Completing Bramblewick
+
+Buy **Town Debate** after East Lane Invitations. Each new round brings the next
+opponent along the east path into the town center: **Skeptic → Town Guard → Zealot
+→ Priest**. Stand within speaking range after arrival to convince them. The Guard
+rebuts two opening phrases; the Zealot loses conviction while unattended. The
+Priest has three objections, loses conviction when left alone, and requires 240
+conviction. Failed attempts retry next round. Each victory advances saved progress.
+
+The Trials and Faith branches add targeted conviction. Creed IV/V, Words VI and
+Running VI remain distinct general upgrades. At full ranks, the cultist has 3.5
+phrases/s, 5 base conviction/phrase and 432 px/s movement; specialist effects raise
+merchant conviction to 8 and Priest conviction to 14. The practical scripted boss
+route wins in 9.133 seconds with 1.867 seconds left; incomplete and late routes fail.
+These values remain provisional until human playtesting.
+
+Convincing the Priest saves **Bramblewick complete**. Village rounds, direct movement
+and remaining purchases stay available afterwards. Further maps await future direction.
+Older saves start with no opponents defeated and retain all existing progression.
+
+[Priest encounter](docs/verification/opponent-priest.png) ·
+[Completed ritual circle](docs/verification/ritual-map-complete.png) ·
+[Encounter rules and scope](docs/FIRST_MAP.md)
