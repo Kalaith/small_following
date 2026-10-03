@@ -14,7 +14,7 @@ included; browser fullscreen behavior needs separate exported verification.
 The player's decision is how loud the game should be and whether to use the
 whole display. The primary action is to adjust a control, then return to play.
 A centered violet panel contains Sound and Display sections, with a persistent
-Back to game button. Scrollable contents keep the back action reachable on
+Back to game button and the requested Exit Game button. Scrollable contents keep both actions reachable on
 shorter viewports. Percentage labels and switch positions show current values.
 Save status appears below the controls. The village or ritual remains visible
 behind a dimmed backdrop; no upgrade information is duplicated here.
@@ -28,6 +28,7 @@ header's unused right-hand space. It disappears while the page is open.
 | --- | --- |
 | Settings button / Esc | Opens over the current village or ritual |
 | Back to game / Esc | Closes and returns to the underlying current phase |
+| Exit Game | Attempts to flush preferences and progression, then closes the desktop game |
 | Tab between rounds | Closes settings and reveals the village |
 | Fullscreen switch / F11 | Toggles the actual game window mode |
 | M / V | Toggles all audio / speech; switches stay synchronized |
@@ -38,6 +39,13 @@ underneath settings. Enter/U cannot start a hidden round or purchase an upgrade
 while settings is open. The backdrop blocks clicks reaching the ritual graph.
 Settings controls do not capture movement arrows or leave keyboard focus on
 the underlying ritual. The timer behavior is explained on the page.
+
+Exit Game (requested 2026-10-03) shares the fixed footer with Back to game and
+has no keyboard shortcut, so Esc continues to mean return. Exiting preserves
+the existing fresh-round-on-relaunch policy. Save writes use the existing
+failure policies and are best effort; quitting does not bypass validation.
+In browser builds the exit button is disabled with a tooltip explaining that
+the browser tab must be closed instead; the game cannot close a user-owned tab.
 
 ## Sound and display rules
 

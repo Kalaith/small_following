@@ -128,6 +128,10 @@ mute switches and fullscreen. Esc opens/closes the page; F11 toggles fullscreen.
 Preferences persist separately from progression. Movement and the timer remain
 active, with this behavior explained on the page. [Scope and screen brief](SETTINGS.md).
 
+The settings footer also includes the requested Exit Game action (2026-10-03).
+Desktop exit flushes pending preference/progression writes before quitting;
+relaunch retains the existing fresh-round policy. Browser users close the tab.
+
 ## First-map finale
 
 See [FIRST_MAP](FIRST_MAP.md) for the scoped design and provisional encounter rules. Implemented: two optional merchants, four merchant inscriptions, three opponents and a priest boss who walk to the center, twelve further inscriptions, and saved first-map completion. The full catalog has 32 nodes and 35 ranks. Town Debate opens the ordered encounters after East Lane Invitations. One opponent is attempted per round; victory persists, while partial conviction resets. The Priest ends the first map's objective; later maps await new direction. Costs, names, resistances and numerical balance are provisional.

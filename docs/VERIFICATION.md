@@ -565,3 +565,29 @@ Pacing remains unchanged: the practical original-core route converts all 15
 at 10.517 seconds, leaving 0.483 seconds. This is automated route evidence,
 not a human playtest. No browser/export fullscreen, storage, gamepad or
 subjective audio acceptance is claimed. No publishing or installation occurred.
+
+## 2026-10-03 - Exit Game in settings
+
+Added Exit Game beside Back to game in the fixed settings footer. It attempts
+settings/progression saves before `SceneTree.quit()`. Esc still returns to play.
+Web builds disable the action and explain closing the browser tab via tooltip;
+browser export behavior was not exercised.
+
+`tests/test_exit.gd` clicked the actual button through viewport mouse input,
+verified the latest volume and donation values in isolated fixture saves before
+the preference debounce elapsed, and observed normal process exit 0 both
+headless and on a rendering display. The test has a failure watchdog if shutdown
+does not occur. Final logs contain no errors or warnings; no normal saves were
+read or written.
+
+All regression suites passed at headless fixed 60 fps: settings 27, audio 27,
+smoke 92, progression 113, pacing 59, helper 34, encounters 206 and ritual
+readability 67 checks, all with 0 failures and exit 0; merchants also reports
+0 failures and exit 0. Headless editor import retains the existing exit-1
+`_EDITOR_GET` error and cursor/Blender-path warnings.
+
+Ran `tests/capture_starter.gd` on the rendering display (exit 0), and inspected
+the updated village, ritual and compact settings PNGs. Exit Game and Back to
+game remain fully visible at 1280 x 800 and the 1024 x 640 compact output.
+The capture still converts all 15 listeners at 10.517 seconds, leaving 0.483
+seconds. No export, publishing or tool installation occurred.

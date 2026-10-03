@@ -198,6 +198,14 @@ func _exit_tree() -> void:
 		settings.save_settings()
 
 
+func exit_game() -> void:
+	if OS.has_feature("web"):
+		return
+	_save_settings()
+	progression.save_progress()
+	get_tree().quit()
+
+
 func _build_settings() -> void:
 	settings_timer = Timer.new()
 	settings_timer.one_shot = true
@@ -223,6 +231,7 @@ func _build_settings() -> void:
 	for state in ["normal", "hover", "pressed"]:
 		settings_button.add_theme_stylebox_override(state, settings_screen.close_button.get_theme_stylebox(state))
 	settings_screen.close_requested.connect(set_settings_visible.bind(false))
+	settings_screen.exit_requested.connect(exit_game)
 	settings_screen.volume_changed.connect(game_audio.set_volume)
 	settings_screen.mute_requested.connect(game_audio.toggle_mute)
 	settings_screen.voice_mute_requested.connect(game_audio.toggle_voice)

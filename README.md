@@ -31,6 +31,7 @@ From the project folder, `.\Run.ps1` also launches the game; pass `-GodotExe '<i
 | Mute / unmute nonsense speech | V |
 | Open / close settings | Settings button / Esc |
 | Toggle fullscreen | Settings switch / F11 |
+| Exit the desktop game | Settings → Exit Game |
 
 Movement remains active during the ritual; Tab reveals the village between rounds. A new round returns the cultist to the starting entrance. Gamepad movement/action mappings exist but were not physically tested; graph selection and navigation currently require a mouse.
 

@@ -1,6 +1,7 @@
 extends Control
 ## A focused utility page over the current village or ritual; never pauses play.
 signal close_requested
+signal exit_requested
 signal volume_changed(channel: String, value: float)
 signal mute_requested
 signal voice_mute_requested
@@ -12,6 +13,7 @@ var mute_button: CheckButton
 var speech_button: CheckButton
 var fullscreen_button: CheckButton
 var close_button: Button
+var exit_button: Button
 var notice: Label
 var panel: PanelContainer
 
@@ -102,7 +104,20 @@ func _ready() -> void:
 		style.set_border_width_all(1)
 		style.set_corner_radius_all(6)
 		close_button.add_theme_stylebox_override(state, style)
-	body.add_child(close_button)
+	var actions := HBoxContainer.new()
+	actions.add_theme_constant_override("separation", 12)
+	body.add_child(actions)
+	close_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	actions.add_child(close_button)
+	exit_button = Button.new()
+	exit_button.text = "Exit Game"
+	exit_button.custom_minimum_size = Vector2(140, 44)
+	exit_button.focus_mode = Control.FOCUS_NONE
+	exit_button.pressed.connect(func() -> void: exit_requested.emit())
+	# A browser owns its tab's lifetime; SceneTree.quit cannot close it.
+	exit_button.disabled = OS.has_feature("web")
+	exit_button.tooltip_text = "Close the browser tab to exit." if exit_button.disabled else "Save preferences and close Small Following."
+	actions.add_child(exit_button)
 	resized.connect(_layout)
 	_layout()
 	hide()
