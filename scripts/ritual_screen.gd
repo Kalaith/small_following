@@ -115,7 +115,7 @@ func update_state(round_recruits: int = 0) -> void:
 	var rank_limit: int = _max_rank(selected_id)
 	var cost: int = _next_cost(selected_id)
 	var branch: String = str(item.get("branch", ""))
-	var branch_name: String = {"talk": "THE VOICE", "persuade": "THE CONVICTION", "run": "THE PILGRIM"}.get(branch, "THE CIRCLE")
+	var branch_name: String = {"talk": "THE VOICE", "persuade": "THE CONVICTION", "run": "THE PILGRIM", "gather": "THE VILLAGE"}.get(branch, "THE CIRCLE")
 	_branch_label.text = "%s  /  RING %s" % [branch_name, _roman(int(item.get("ring", 1)))]
 	_node_title.text = str(item.get("title", "Choose an inscription"))
 	_rank_label.text = "RANK %d / %d  %s" % [_displayed_rank, rank_limit, "- COMPLETE" if state == "purchased" else ""]
@@ -247,12 +247,16 @@ func _effect_text(id: String, branch: String, complete: bool) -> String:
 	var preview: Dictionary = _progression.call("effect_preview", id)
 	var current: Dictionary = preview.get("current", {})
 	var next: Dictionary = preview.get("next", {})
-	var stat_key: String = {"talk": "speech_frequency", "persuade": "conviction", "run": "run_multiplier"}.get(branch, "")
-	var heading: String = {"talk": "TALKING FREQUENCY", "persuade": "CONVICTION PER PHRASE", "run": "RUNNING SPEED"}.get(branch, "")
-	var units: String = {"talk": "phrases/s", "persuade": "conviction", "run": "x base"}.get(branch, "")
+	var stat_key: String = {"talk": "speech_frequency", "persuade": "conviction", "run": "run_multiplier", "gather": "gatherings"}.get(branch, "")
+	var heading: String = {"talk": "TALKING FREQUENCY", "persuade": "CONVICTION PER PHRASE", "run": "RUNNING SPEED", "gather": "VILLAGE GATHERINGS"}.get(branch, "")
+	var units: String = {"talk": "phrases/s", "persuade": "conviction", "run": "x base", "gather": "groups of five"}.get(branch, "")
 	if stat_key.is_empty() or not current.has(stat_key):
 		return ""
 	var current_value: float = float(current[stat_key])
+	if branch == "gather":
+		if complete or not next.has(stat_key):
+			return "%s\n%d groups / %d listeners" % [heading, int(current_value), int(current_value) * 5]
+		return "%s\n%d → %d groups of five" % [heading, int(current_value), int(next[stat_key])]
 	if complete or not next.has(stat_key):
 		return "%s\n%.2f %s" % [heading, current_value, units]
 	return "%s\n%.2f → %.2f %s" % [heading, current_value, float(next[stat_key]), units]
@@ -562,6 +566,14 @@ func _draw_node(canvas: Control, item: Dictionary) -> void:
 		canvas.draw_colored_polygon(PackedVector2Array([diamond + Vector2(0, -3), diamond + Vector2(3, 0), diamond + Vector2(0, 3), diamond + Vector2(-3, 0)]), LILAC)
 	if zoom >= 0.50:
 		var title: String = str(item.get("title", id))
+		if zoom < 0.8:
+			# A fitted overview keeps every glyph visible; full titles/ranks remain in details.
+			title = title.replace("Quickened Words", "Words").replace("Compelling Creed", "Creed").replace("Fleet Footsteps", "Run").replace(" Invitations", "")
+			var compact_width: float = _font.get_string_size(title, HORIZONTAL_ALIGNMENT_LEFT, -1, 12).x
+			var compact_at: Vector2 = point + Vector2(-compact_width * 0.5, radius + 17.0)
+			canvas.draw_rect(Rect2(compact_at + Vector2(-3, -12), Vector2(compact_width + 6, 16)), INK)
+			canvas.draw_string(_font, compact_at, title, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, color)
+			return
 		var text_size: int = 13 if zoom < 1.15 else 15
 		var title_width: float = _font.get_string_size(title, HORIZONTAL_ALIGNMENT_LEFT, -1, text_size).x
 		var tier: String = "%s  /  RANK %d/%d" % [_roman(int(item.get("ring", 1))), current_rank, rank_limit]
@@ -599,6 +611,10 @@ func _draw_glyph(canvas: Control, at: Vector2, branch: String, color: Color) -> 
 		"persuade":
 			canvas.draw_polyline(PackedVector2Array([at + Vector2(0, -12) * scale, at + Vector2(9, 0) * scale, at + Vector2(0, 12) * scale, at + Vector2(-9, 0) * scale, at + Vector2(0, -12) * scale]), color, 1.6, true)
 			canvas.draw_line(at + Vector2(0, -6) * scale, at + Vector2(0, 6) * scale, color, 1.2, true)
+		"gather":
+			for x in [-9, 0, 9]:
+				canvas.draw_circle(at + Vector2(x, -5) * scale, 3.0 * scale, color)
+				canvas.draw_line(at + Vector2(x, 0) * scale, at + Vector2(x, 8) * scale, color, 2.0, true)
 		"run":
 			for x in [-5, 4]:
 				canvas.draw_polyline(PackedVector2Array([at + Vector2(x - 4, -10) * scale, at + Vector2(x + 3, 0) * scale, at + Vector2(x - 4, 10) * scale]), color, 1.7, true)

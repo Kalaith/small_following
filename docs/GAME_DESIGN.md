@@ -13,8 +13,9 @@ This project is a bounded prototype of movement, a short earning round and a wor
 - An ordinary opening round should allow roughly three conversions and be too short to clear the village. This is a pacing target, not a hard recruitment cap.
 - Round end opens a large occult ritual-circle upgrade screen, using purple, violet and lilac rather than the references' red.
 - The initial upgrades improve talking speed, persuasion effectiveness and running speed through distinct mechanics.
-- Add ranks to selected existing nodes before adding more nodes. With full ranks, a competent practical route should fully convert all three groups inside the round with little time to spare; merely reaching the groups does not meet this target.
+- Preserve the original ranked progression. With full ranks on the original nine nodes, a competent practical route should fully convert all three groups inside the round with little time to spare; merely reaching the groups does not meet this target.
 - The upgrade structure must accommodate over 100 future upgrades/layers through data and navigable rings or branches.
+- Add purchasable NPC groups, further speaking and moving tiers gated by group unlocks, and one helper that travels to individual NPCs to recruit them (requested 2026-10-03).
 - Progression eventually reaches larger, more populated towns. Later minions and magic reduce travel demands while preserving direct control.
 - Robes visibly trail and flap as the cultist moves.
 - During village play, the playable space dominates and the HUD remains minimal and contextual.
@@ -28,13 +29,13 @@ These are current implementation defaults, not previously confirmed balance deci
 | --- | --- | --- |
 | Round duration | 11 seconds | Target roughly three opening conversions; validate with human routes as well as simulation. |
 | Starting position | World position (780, 680), restored at each new round | Makes opening routes repeatable; decide whether later rounds should preserve position. |
-| Gatherings | Three groups, five listeners each | A small route-choice sample; village capacity is 15, not three. |
+| Gatherings | Three initial groups, five listeners each; two unlockable groups | A small route-choice sample; initial capacity is 15 and expanded capacity is 25. |
 | Talking range | 105 world pixels | One nearest unfinished audience receives phrases. |
 | Base talking | One phrase per second | Talking speed changes phrase frequency. |
 | Base persuasion | One conviction per phrase; three conviction recruits a listener | Persuasion changes work done per phrase. |
 | Base movement | 180 world pixels per second | Running upgrades change travel time while preserving ordinary direct movement. |
 | Donations | Three per recruitment event | A typical opening round can afford an initial six-donation upgrade. |
-| Ranked progression | Six inner nodes with one rank, three outer nodes with two | Keep the graph at nine nodes while improving the fully upgraded clear. |
+| Ranked progression | Original six inner nodes with one rank, three tier-III nodes with two; six new single-rank nodes | Preserve the original clear and extend progression through populated groups. |
 | Audience lifecycle | Reset all groups each round | The same villagers may be recruited again; the total counts events, not unique followers. |
 | Round boundary | Earning stops and the ritual screen opens; the player starts the next round | Allows unhurried decisions. Movement input stays available. |
 
@@ -52,7 +53,7 @@ The ritual screen is a deliberate full-screen intermission. Tab returns to the v
 
 ## Bounded upgrade content
 
-The shipped catalog retains **nine real nodes**: three tiers in each of three branches. The six inner nodes each have one rank; the three outer tier-III nodes each have two. There are twelve purchases in total. A node in the next ring requires at least rank 1 of the previous node in its branch. Initial node costs remain 6, 9 and 12 donations respectively; the second rank of each outer node costs 18. Each rank is permanent for the local save.
+The original progression retains **nine real nodes**: three tiers in each of three branches. The six inner nodes each have one rank; the three outer tier-III nodes each have two. Those nodes contain twelve purchases. A node in the next ring requires at least rank 1 of the previous node in its branch. Initial node costs remain 6, 9 and 12 donations respectively; the second rank of each outer node costs 18. Each rank is permanent for the local save.
 
 | Branch | Effect per purchased rank | Distinct result |
 | --- | --- | --- |
@@ -70,6 +71,12 @@ The graph is authored in `data/upgrades.json`, with stable IDs, ring/branch plac
 
 Adding a definition is appropriate only when its effect is implemented and tested. A large graph is a content capacity, not a promise that hundreds of upgrades are already designed or fun.
 
+### Expanded village (implemented)
+
+Six new single-rank nodes extend the catalog to fifteen nodes and eighteen purchases. Meadow Invitations and East Lane Invitations each add five listeners; each opens another talking and running tier. The new tiers preserve distinct frequency and movement effects. Total catalog cost is 318 donations; all player upgrades give 3 phrases/s, 3 conviction/phrase and 396 px/s. Existing ranks and saves retain their benefits. Exact prerequisites, costs and provisional choices are in [VILLAGE_EXPANSION](VILLAGE_EXPANSION.md).
+
+New groups appear on purchase, reset each round and are recreated from saved upgrades after relaunch. The original 15-listener route remains the earlier progression benchmark. Expanded-route evidence is recorded separately in [PACING](PACING.md). The helper requested in this extension is the next implementation slice.
+
 ## Progression and save scope
 
 Versioned local progression keeps donations, purchased upgrade ranks, the recruitment-event total and round number. Existing schema-1 single-purchase saves migrate each purchased node to rank 1 without changing those counters; new ranks must still be earned. A restart begins a fresh timed round with the retained values; it does not resume a partial conversation or award offline income. The cumulative total deliberately includes repeat recruitment of the same prototype villagers.
@@ -82,7 +89,7 @@ Later minions may collect donations, attract villagers or preach to assigned aud
 
 Keep village HUD information to time, donations and the explicitly named recruitment count. Put speech progress beside the active gathering. Use robe movement and small local audience reactions for feedback rather than a field of floating numbers.
 
-During upgrade selection, the ritual itself is the main composition: concentric rings, connected node circles, intersecting lines and restrained rune-like marks in violet light. Rank pips and current/maximum labels distinguish a partly upgraded node from a finished one. Details must show the selected rank, current-to-next effect, cost, prerequisite and purchase state at a readable scale. The nine nodes need room to breathe; pan/zoom is for future scale, not a substitute for a readable initial layout.
+During upgrade selection, the ritual itself is the main composition: concentric rings, connected node circles, intersecting lines and restrained rune-like marks in violet light. Rank pips and current/maximum labels distinguish a partly upgraded node from a finished one. Details must show the selected rank, current-to-next effect, cost, prerequisite and purchase state at a readable scale. The node glyphs need room to breathe; pan/zoom is for future scale, not a substitute for a readable initial layout.
 
 ## Open decisions
 

@@ -4,7 +4,8 @@ extends RefCounted
 
 const SAVE_VERSION: int = 2
 const MAX_COUNTER: int = 1000000000
-const EFFECT_KEYS: Array[String] = ["speech_speed_add", "conviction_add", "run_speed_add"]
+const EFFECT_KEYS: Array[String] = ["speech_speed_add", "conviction_add", "run_speed_add", "meadow_unlock", "east_unlock"]
+const UNLOCK_KEYS: Array[String] = ["meadow_unlock", "east_unlock"]
 
 var coins: int = 0
 var total_recruits: int = 0
@@ -75,7 +76,14 @@ func load_catalog(path: String = "res://data/upgrades.json") -> bool:
 		normalized.rank_effects = effects.duplicate(true)
 		ids[entry.id] = normalized
 		candidate.append(normalized)
+	var unlocks: Dictionary = {}
 	for entry in candidate:
+		for rank_effect in entry.rank_effects:
+			for effect in rank_effect:
+				if effect in UNLOCK_KEYS:
+					if entry.max_rank != 1 or rank_effect[effect] != 1 or unlocks.has(effect):
+						return _fail("Unlocks must appear once, at one rank and value 1: " + entry.id)
+					unlocks[effect] = true
 		var seen: Dictionary = {}
 		for requirement in entry.requires:
 			if not requirement is String or not ids.has(requirement) or requirement == entry.id or seen.has(requirement):
@@ -175,11 +183,20 @@ func run_multiplier() -> float:
 	return 1.0 + _sum_effect("run_speed_add")
 
 
+func has_unlock(key: String) -> bool:
+	return key in UNLOCK_KEYS and _sum_effect(key) >= 1.0
+
+
+func gathering_count() -> int:
+	return 3 + int(has_unlock("meadow_unlock")) + int(has_unlock("east_unlock"))
+
+
 func effect_preview(id: String) -> Dictionary:
 	var current: Dictionary = {
 		"speech_frequency": 1.0 + _sum_effect("speech_speed_add"),
 		"conviction": conviction_per_phrase(),
 		"run_multiplier": run_multiplier(),
+		"gatherings": gathering_count(),
 	}
 	var result: Dictionary = {"current": current, "next": {}}
 	var upgrade: Dictionary = find_upgrade(id)
@@ -190,6 +207,7 @@ func effect_preview(id: String) -> Dictionary:
 	result.next.speech_frequency += float(effect.get("speech_speed_add", 0.0))
 	result.next.conviction += float(effect.get("conviction_add", 0.0))
 	result.next.run_multiplier += float(effect.get("run_speed_add", 0.0))
+	result.next.gatherings += int(effect.get("meadow_unlock", 0)) + int(effect.get("east_unlock", 0))
 	return result
 
 

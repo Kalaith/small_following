@@ -89,7 +89,8 @@ func simulate_route(label: String, order: Array[int], quotas: Array[int], durati
 	var audience_counts: Array[int] = []
 	for group in scene.groups:
 		audience_counts.append(group.recruits)
-	var full_clear_seconds: float = recruit_times[14] if recruit_times.size() == 15 else -1.0
+	var capacity: int = scene.groups.size() * 5
+	var full_clear_seconds: float = recruit_times[capacity - 1] if recruit_times.size() == capacity else -1.0
 	var result: Dictionary = {
 		"route": label,
 		"seconds": configured_duration,
@@ -187,5 +188,16 @@ func _run() -> void:
 	slow_options.switch_seconds = 0.30
 	var slow: Dictionary = await simulate_route("full ranks hesitant garden-well-market", [2, 0, 1], [5, 5, 5], -1.0, FULL_RANKS, slow_options)
 	check(slow.recruits < 15, "full ranks do not guarantee a clear with longer pauses")
+	var expanded_ranks: Array[String] = FULL_RANKS.duplicate()
+	expanded_ranks.append_array(["meadow_1", "talk_4", "run_4", "east_1", "talk_5", "run_5"])
+	var expanded: Dictionary = await simulate_route("expanded practical garden-meadow-well-market-east", [2, 3, 0, 1, 4], [5, 5, 5, 5, 5], -1.0, expanded_ranks, PRACTICAL)
+	check(expanded.groups.size() == 5 and expanded.recruits > 15 and expanded.donations == expanded.recruits * 3, "expanded ranks recruit actual extra listeners at ordinary donation rates")
+	var partial_expansion: Array[String] = expanded_ranks.duplicate()
+	partial_expansion.erase("talk_5")
+	partial_expansion.erase("run_5")
+	var expanded_partial: Dictionary = await simulate_route("expanded without final stat tier", [2, 3, 0, 1, 4], [5, 5, 5, 5, 5], -1.0, partial_expansion, PRACTICAL)
+	check(expanded.recruits > expanded_partial.recruits, "new final speaking and running tier improves actual expanded route yield")
+	var expanded_slow: Dictionary = await simulate_route("expanded hesitant route", [2, 3, 0, 1, 4], [5, 5, 5, 5, 5], -1.0, expanded_ranks, slow_options)
+	check(expanded_slow.recruits < expanded.recruits, "expanded population still rewards route execution")
 	print("PACING RESULT: %d checks, %d failures" % [checks, failures])
 	quit(0 if failures == 0 else 1)

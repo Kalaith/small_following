@@ -107,7 +107,7 @@ every phase; opening the ritual must not pause the scene tree.
    before starting the next slice. Make regular commits for smaller fixes and
    documentation changes too; the larger feature can continue across commits.
 
-For upgrade work, preserve the nine-node catalog and existing IDs. The outer
+For upgrade work, preserve the original nine nodes and existing IDs while extending the requested village expansion. The outer
 three nodes have two ranks; the inner six have one. Extend content only within
 the requested scope and only with implemented effects. The 144-node fixture
 proves graph capacity; it does not add shipped upgrades.

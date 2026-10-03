@@ -83,13 +83,13 @@ requests. Disabled controls only explain these rules.
 
 Author upgrades in `data/upgrades.json`, whose catalog schema is currently 1.
 The save schema is independently versioned at 2. Preserve stable IDs and the
-current nine-node graph with one rank on inner nodes and two on outer nodes.
+original nine-node core with one rank on inner nodes and two on tier-III nodes; the requested village expansion adds implemented nodes.
 
 Validate definitions before making them available: nonempty unique IDs,
 supported positive finite effects, valid coordinates, rank bounds, one price
 and effect per rank, and existing acyclic prerequisites. `cost` and `effect`
 must agree with the first rank. Supported effects are `speech_speed_add`,
-`conviction_add` and `run_speed_add`; implement and test a new effect before
+`conviction_add`, `run_speed_add`, `meadow_unlock` and `east_unlock`; implement and test a new effect before
 adding it to production data.
 
 Keep fixture content under `tests/fixtures/`. Tests of 144 nodes must not

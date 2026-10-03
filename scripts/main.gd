@@ -12,6 +12,7 @@ var save_path_override: String = ""
 var catalog_ready: bool = false
 var progression = Progression.new()
 var groups: Array[Node2D] = []
+var added_gatherings: Dictionary = {}
 var seconds_left: float = ROUND_SECONDS
 var round_active: bool = true
 var round_recruits: int = 0
@@ -125,6 +126,13 @@ func purchase_upgrade(id: String, expected_rank: int = -1) -> bool:
 
 func apply_upgrades() -> void:
 	player.movement_speed = BASE_RUN_SPEED * progression.run_multiplier()
+	for entry in [
+		{"key": "meadow_unlock", "title": "Meadow neighbours", "at": Vector2(470, 800)},
+		{"key": "east_unlock", "title": "East lane visitors", "at": Vector2(1250, 580)},
+	]:
+		if progression.has_unlock(entry.key) and not added_gatherings.has(entry.key):
+			_add_gathering(entry.title, entry.at)
+			added_gatherings[entry.key] = true
 
 
 func set_ritual_visible(value: bool) -> void:

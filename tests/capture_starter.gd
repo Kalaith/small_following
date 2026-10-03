@@ -52,7 +52,7 @@ func _capture() -> void:
 	scene.advance_round(100.0)
 	# Fund old first-rank progression only for the visual fixture, using normal purchase paths.
 	scene.progression.coins = 200
-	for item in scene.progression.catalog:
+	for item in scene.progression.catalog.slice(0, 9):
 		if scene.progression.rank(item.id) == 0:
 			scene.purchase_upgrade(item.id)
 	scene.progression.coins = 54
@@ -65,6 +65,7 @@ func _capture() -> void:
 	await save_frame("ritual-rank-max.png")
 	await capture_full_clear(scene)
 	scene.advance_round(100.0)
+	await capture_expansion(scene)
 	var fake = load("res://scripts/progression.gd").new()
 	fake.save_enabled = false
 	fake.catalog = Fixture.build()
@@ -111,3 +112,18 @@ func capture_full_clear(scene) -> void:
 		failed = true
 		push_error("Full-rank capture route failed to clear all three groups.")
 	await save_frame("village-full-clear.png")
+
+
+func capture_expansion(scene) -> void:
+	scene.progression.coins = 500
+	for item in scene.progression.catalog.slice(9):
+		scene.purchase_upgrade(item.id)
+	scene.ritual_screen.select_node("east_1")
+	scene.ritual_screen.reset_view()
+	await save_frame("ritual-expansion.png")
+	scene.start_next_round()
+	scene.player.position = scene.START_POSITION
+	scene.player.get_node("Camera2D").reset_smoothing()
+	scene._update_hud()
+	await save_frame("village-expanded.png")
+	scene.advance_round(100.0)

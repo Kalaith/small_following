@@ -1,6 +1,6 @@
 # Small Following
 
-A small Godot prototype for a cute incremental game where **you are the robed cultist**: walk between village gatherings, speak, recruit and earn donations. Short rounds lead into a purple ritual-circle upgrade screen with nine working nodes, twelve purchasable ranks and local progression saves. Art is procedural placeholder geometry; this is not a finished game.
+A small Godot prototype for a cute incremental game where **you are the robed cultist**: walk between village gatherings, speak, recruit and earn donations. Short rounds lead into a purple ritual-circle upgrade screen with fifteen working nodes, eighteen purchasable ranks and local progression saves. Art is procedural placeholder geometry; this is not a finished game.
 
 ## Run
 
@@ -31,20 +31,24 @@ Movement remains active during the ritual; Tab reveals the village between round
 
 - A 1560 x 1100 village with real actors, paths, props, collision footprints and camera.
 - A directly movable purple cultist with normalized diagonal speed, world bounds and visibly trailing cloth.
-- Three nonblocking gatherings of five listeners each, with local speech feedback and recruitment/donation events.
+- Three initial nonblocking gatherings of five listeners each, plus two purchasable gatherings, with local speech feedback and recruitment/donation events.
 - **Provisional 11-second rounds**, tuned toward roughly three opening conversions through travel and conversation time. There is no three-recruit cap; [pacing evidence and assumptions](docs/PACING.md) explain the limit and upgraded comparisons.
-- A large purple occult upgrade circle: the same nine nodes across three rings/branches, with a second rank on each outermost node. Rank pips, current-to-next details, prerequisite connections and pan/zoom keep progression readable.
+- A large purple occult upgrade circle: fifteen nodes across five rings, retaining second ranks on the three original tier-III nodes. Rank pips, current-to-next details, prerequisite connections and pan/zoom keep progression readable.
 - Three distinct upgrade effects: initial talking ranks each add 20% of base phrase frequency, persuasion ranks add 0.5 conviction per phrase, and running ranks add 15% of base movement speed. The outer talking node's second rank adds 30% of base frequency. Initial node prices remain 6, 9 and 12 donations per branch; each outer node's second rank costs 18.
-- Full ranks produce 1.9 phrases/second, 3 conviction/phrase and 288 pixels/second movement. The balance target is all 15 listeners across the three groups with a small positive margin on a competent route inside the unchanged 11-second round; [route evidence](docs/PACING.md) records actual timings and limitations.
+- Full ranks on the original nine nodes produce 1.9 phrases/second, 3 conviction/phrase and 288 pixels/second movement. The balance target is all 15 listeners across the three groups with a small positive margin on a competent route inside the unchanged 11-second round; [route evidence](docs/PACING.md) records actual timings and limitations.
 - Versioned local progression retaining currency, purchased ranks, the recruitment-event total and round number. Existing single-purchase saves keep each old purchase as rank 1.
 
 Base movement is 180 pixels/second. Speech within 105 pixels produces one phrase/second; each phrase adds one conviction, and three conviction recruits a listener for three donations. Extra conviction carries toward the next listener. Partial speech stays with its gathering until round end. A typical three-recruit opening earns nine donations, enough for one first-tier upgrade.
 
-The six inner nodes each have one rank. The three outer nodes each have two; the entire catalog costs 135 donations, including 54 for the three added ranks. A previous node needs rank 1 to unlock its successor. One purchase action buys one rank, and stale selection requests cannot silently buy another. Two fully converted groups earn 30 donations, enough for a new 18-donation late rank; improving the route and speaking stats remains useful before a full village clear.
+The original six inner nodes each have one rank and the original tier-III nodes each have two. Those twelve purchases cost 135 donations. Six new single-rank nodes add two gatherings and two further tiers each of talking and running, for 318 donations across the whole catalog. A previous node needs rank 1 to unlock its successor. One purchase action buys one rank, and stale selection requests cannot silently buy another. Two fully converted groups earn 30 donations, enough for a new 18-donation late rank; improving the route and speaking stats remains useful before a full village clear.
 
 All audiences reset each round. The cumulative recruited total counts **recruitment events**, including the same villagers on later rounds; it is not a population of unique permanent followers. Restarting preserves progression but begins a fresh timer and audience state. No offline rewards or partial-round continuation are implemented.
 
-The real catalog is `data/upgrades.json`. A separate **144-node validation fixture** exercises graph capacity and navigation; it is not additional purchasable game content. Larger towns, helpers, magic, audio, production assets and an exported release remain future work.
+The real catalog is `data/upgrades.json`. A separate **144-node validation fixture** exercises graph capacity and navigation; it is not additional purchasable game content. A second town, helpers, magic, audio, production assets and an exported release remain future work.
+
+## Village expansion
+
+Meadow Invitations adds five neighbours after Compelling Creed III. It opens Talking IV and Running IV; East Lane Invitations then adds another five listeners and opens tier V. Both stat paths also require their preceding tier. Full player stats become 3 phrases/second, 3 conviction/phrase and 396 pixels/second. Groups appear after purchase and are recreated from saved ranks. Prices and timing remain provisional; see [the scoped design](docs/VILLAGE_EXPANSION.md) and [route measurements](docs/PACING.md).
 
 ## Local saves
 

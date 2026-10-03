@@ -49,7 +49,7 @@ func snapshot(version: int, upgrades: Dictionary) -> Dictionary:
 
 func legacy_purchases(state: RefCounted) -> Dictionary:
 	var result: Dictionary = {}
-	for entry in state.catalog:
+	for entry in state.catalog.slice(0, 9):
 		result[entry.id] = true
 	return result
 
@@ -57,7 +57,7 @@ func legacy_purchases(state: RefCounted) -> Dictionary:
 func _run() -> void:
 	clean_fixture()
 	var state = fresh()
-	check(state.catalog.size() == 9, "nine real definitions load")
+	check(state.catalog.size() == 15, "fifteen implemented definitions load")
 	check(state.max_rank("talk_1") == 1 and state.max_rank("talk_3") == 2 and state.rank("talk_3") == 0, "ranks extend outer seals without adding nodes")
 	check(state.max_rank("none") == 0 and state.next_cost("none") == 0, "unknown nodes have no purchasable rank")
 	check(state.load_progress() and state.coins == 0 and state.round_number == 1, "missing save has fresh defaults")
@@ -93,13 +93,26 @@ func _run() -> void:
 	var full = fresh()
 	full.save_enabled = false
 	full.coins = 135
-	for entry in full.catalog:
+	for entry in full.catalog.slice(0, 9):
 		for desired_rank in range(full.max_rank(entry.id)):
 			check(full.try_purchase(entry.id, desired_rank), "purchase each shipped rank: " + entry.id + " rank " + str(desired_rank + 1))
 	check(full.coins == 0 and full.purchased.size() == 9, "all twelve purchases cost exactly 135 across the original nine nodes")
 	check(is_equal_approx(full.speech_interval(), 1.0 / 1.9) and full.conviction_per_phrase() == 3.0 and is_equal_approx(full.run_multiplier(), 1.6), "full ranks apply their distinct cumulative effects")
 	full.coins = 100
 	check(not full.try_purchase("run_3", 2) and full.coins == 100, "maximum rank rejects repeated purchase even with sufficient currency")
+	check(full.status("talk_4") == "locked" and full.status("run_4") == "locked" and full.status("east_1") == "locked", "new tiers require gathering invitations")
+	check(full.gathering_count() == 3 and full.effect_preview("meadow_1").next.gatherings == 4, "unlock preview counts actual groups")
+	full.coins = 183
+	for id in ["meadow_1", "talk_4", "run_4", "east_1", "talk_5", "run_5"]:
+		var before_coins: int = full.coins
+		var price: int = full.next_cost(id)
+		check(full.try_purchase(id, 0) and full.coins == before_coins - price, "expansion purchase charges exact price: " + id)
+		check(not full.try_purchase(id, 0) and not full.try_purchase(id, 1) and full.coins == before_coins - price, "stale and maximum expansion purchases cannot charge: " + id)
+	check(full.coins == 0 and full.gathering_count() == 5 and is_equal_approx(full.speech_interval(), 1.0 / 3.0) and is_equal_approx(full.run_multiplier(), 2.2) and full.conviction_per_phrase() == 3.0, "six expansion nodes cost 183 and apply distinct effects")
+	full.save_enabled = true
+	check(full.save_progress(), "expanded ranks save using schema 2")
+	var expanded_reload = fresh()
+	check(expanded_reload.load_progress() and expanded_reload.purchased == full.purchased and expanded_reload.gathering_count() == 5, "expanded rank round trip restores invitations")
 	var stale = fresh()
 	stale.save_enabled = false
 	stale.coins = 100
@@ -181,9 +194,19 @@ func _run() -> void:
 
 	var definitions: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/upgrades.json"))
 	var modified: Dictionary = definitions.duplicate(true)
+	for value in [0.5, 2.0]:
+		modified = definitions.duplicate(true)
+		modified.upgrades[9].effect = {"meadow_unlock": value}
+		write_fixture(CATALOG_FIXTURE, JSON.stringify(modified))
+		check(not state.load_catalog(CATALOG_FIXTURE), "unlock rejects nonbinary count: " + str(value))
+	modified = definitions.duplicate(true)
+	modified.upgrades[12].effect = {"meadow_unlock": 1}
+	write_fixture(CATALOG_FIXTURE, JSON.stringify(modified))
+	check(not state.load_catalog(CATALOG_FIXTURE), "same gathering cannot be unlocked by duplicate effects")
+	modified = definitions.duplicate(true)
 	modified.upgrades[0].requires = ["talk_3"]
 	write_fixture(CATALOG_FIXTURE, JSON.stringify(modified))
-	check(not state.load_catalog(CATALOG_FIXTURE) and state.catalog.size() == 9, "cyclic catalog rejected without replacing current definitions")
+	check(not state.load_catalog(CATALOG_FIXTURE) and state.catalog.size() == 15, "cyclic catalog rejected without replacing current definitions")
 	modified = definitions.duplicate(true)
 	modified.upgrades[1].id = "talk_1"
 	write_fixture(CATALOG_FIXTURE, JSON.stringify(modified))

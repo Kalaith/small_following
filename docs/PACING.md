@@ -18,7 +18,7 @@ Base recruitment needs 45 seconds of speech alone to clear the village. Four bas
 
 ## Selected nodes gain ranks
 
-The graph still contains nine nodes. The six inner/middle nodes remain single-rank; each outer node has two ranks. Every previously available purchase retains its cost and effect. Only the second ranks below are new.
+The original progression core contains nine nodes. The six inner/middle nodes remain single-rank; each outer node has two ranks. Every previously available purchase retains its cost and effect. Only the second ranks below are new.
 
 | Existing outer node | Rank 1, unchanged | New rank 2 | Rank 2 cost | Fully upgraded branch |
 | --- | --- | --- | --- | --- |
@@ -106,3 +106,25 @@ The original nine purchases cost **81 donations**. The three new ranks cost **54
 The scripted routes verify mechanics, realistic positioning allowances and repeatable timing. They do not establish human reaction speed, route discovery, animation readability, input comfort or enjoyment. The simulation runs at fixed 60 Hz; rendered frame pacing and longer human pauses should be tested separately. It does not call a hidden clear-village action, teleport between groups or grant an all-upgrades bonus.
 
 The next human playtest should confirm roughly three opening conversions without coaching, then try full ranks on garden -> well -> market with ordinary keyboard movement. Check that all five listeners at each group visibly finish and that the remaining fraction of a second feels close but fair. Track hesitation, overshoot and selected route alongside the result before changing duration. If margins are too strict in human play, tune the added rank effects or movement/feedback with fresh evidence; do not silently extend the 11-second base round or add a special full-upgrade win condition.
+
+
+## Expanded village - 2026-10-03
+
+Two optional invitations add five listeners each at (470, 800) and (1250, 580).
+The eleven-second round and all opening/core-rank routes are unchanged. Six
+new purchases cost 183 donations (318 including the original core). Full
+player stats become 3 phrases/s, 3 conviction/phrase and 396 px/s. Exact costs
+and prerequisites are in [VILLAGE_EXPANSION](VILLAGE_EXPANSION.md).
+
+Measured real motion and conversation with the same practical allowances:
+
+| Expanded route: garden / meadow / well / market / east | Recruits / 25 | Donations | Completion |
+| --- | --- | --- | --- |
+| All player ranks | 23 | 69 | Incomplete; last recruit at 10.900 s |
+| Without Talking V and Running V | 19 | 57 | Incomplete |
+| All player ranks, longer hesitation | 20 | 60 | Incomplete |
+
+The full player route walks 1135.2 px. More listeners do not imply an automatic
+25-person clear; routes and additional speaking capacity remain relevant.
+The original core still clears its 15 listeners at 10.517 s with 0.483 s left.
+These are deterministic simulations, not human playtest results.

@@ -32,7 +32,7 @@ func _run() -> void:
 	scene.set_process(false)
 	scene.seconds_left = scene.ROUND_SECONDS
 	var player = scene.player
-	check(scene.groups.size() == 3 and scene.progression.catalog.size() == 9, "three gatherings and only nine real upgrades")
+	check(scene.groups.size() == 3 and scene.progression.catalog.size() == 15, "three gatherings and fifteen real upgrades")
 	check(player.get_node("Camera2D").enabled, "following camera enabled")
 	for action in ["move_left", "move_right", "move_up", "move_down", "next_round", "buy_upgrade", "toggle_ritual"]:
 		check(InputMap.has_action(action) and not InputMap.action_get_events(action).is_empty(), "mapped action: " + action)
@@ -113,8 +113,45 @@ func _run() -> void:
 	await process_frame
 	await _test_relaunch()
 	await _test_migrated_rank_loop()
+	await _test_expanded_village()
 	print("SMOKE RESULT: %d checks, %d failures" % [checks, failures])
 	quit(0 if failures == 0 else 1)
+
+
+func _test_expanded_village() -> void:
+	var path: String = "user://integration_expansion_%d.json" % Time.get_ticks_usec()
+	var scene = load("res://scenes/main.tscn").instantiate()
+	scene.save_path_override = path
+	root.add_child(scene)
+	scene.set_process(false)
+	scene.round_active = false
+	scene.progression.coins = 1000
+	check(not scene.purchase_upgrade("meadow_1") and scene.groups.size() == 3, "locked invitation cannot spawn listeners")
+	for item in scene.progression.catalog:
+		check(scene.purchase_upgrade(item.id), "expanded scene purchase: " + item.id)
+	check(scene.groups.size() == 5 and scene.added_gatherings.size() == 2, "invitations create two actual groups immediately")
+	scene.apply_upgrades()
+	check(scene.groups.size() == 5, "applying upgrades again does not duplicate listeners")
+	scene.start_next_round()
+	scene.player.position = scene.groups[3].position
+	var before: int = scene.coins
+	scene.advance_round(3.0)
+	check(scene.groups[3].recruits == 5 and scene.coins == before + 15, "new listeners recruit and pay through ordinary conversation")
+	scene.advance_round(100.0)
+	scene.start_next_round()
+	check(scene.groups[3].recruits == 0 and scene.groups.size() == 5, "expanded audiences reset next round and remain unlocked")
+	scene.queue_free()
+	await process_frame
+	var restored = load("res://scenes/main.tscn").instantiate()
+	restored.save_path_override = path
+	root.add_child(restored)
+	restored.set_process(false)
+	check(restored.groups.size() == 5 and restored.groups[3].recruits == 0 and restored.progression.rank("talk_5") == 1, "relaunch recreates expanded village from saved ranks")
+	restored.queue_free()
+	await process_frame
+	for suffix in ["", ".tmp", ".bak", ".corrupt"]:
+		if FileAccess.file_exists(path + suffix):
+			DirAccess.remove_absolute(path + suffix)
 
 
 func _test_graph(scene) -> void:
@@ -180,7 +217,7 @@ func _test_graph(scene) -> void:
 	screen.focus_node("fixture_12_11")
 	check(screen.hit_test(screen.world_to_screen(screen.node_positions["fixture_12_11"])) == "fixture_12_11", "outermost ring remains navigable after pan/zoom")
 	screen.configure(scene.progression.catalog, scene.progression)
-	check(screen.node_positions.size() == 9, "fixture never becomes gameplay content")
+	check(screen.node_positions.size() == 15, "fixture never becomes gameplay content")
 	screen.select_node("talk_1")
 	check(screen.purchase_button.disabled, "purchased node button shows maximum state")
 	screen.select_node("talk_3")

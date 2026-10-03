@@ -123,3 +123,27 @@ lines at EOF in several files and whitespace-only lines in the historical
 `verification/checks.txt` log; these produce whitespace diagnostics. Original
 assets and historical output were preserved. No runtime caches, player saves
 or export outputs are staged.
+
+
+## 2026-10-03 - village invitations and further stat tiers
+
+Godot 4.2.2 Mono / Compatibility, Windows, 1280 x 800 captures. The requested
+extension preserves all original IDs/ranks and adds six functioning nodes.
+Commands are the README checks; logs were inspected for diagnostics.
+
+- Headless editor import: exit 1, existing `_EDITOR_GET` / EditorSettings error,
+  plus custom-cursor and missing Blender-path warnings. No script parse errors.
+- Progression: 109 checks, zero failures, including new unlock validation,
+  prerequisite/max/stale guards and schema-2 round trips.
+- Smoke: 91 checks, zero failures; invitation purchases create/reset/reload
+  actual listeners without duplication. Original movement/transition and
+  144-node transformed selection checks still pass.
+- Pacing: 54 checks, zero failures. Opening yields remain three; original
+  core practical clear remains 15 at 10.517 s (0.483 s left). Expanded full
+  player route recruits 23/25; incomplete final tier 19/25; hesitant 20/25.
+- Render capture: exit 0, actual OpenGL NVIDIA renderer. Inspected expanded
+  village and ritual PNGs. All five groups occupy clear ground; overview
+  captions were shortened after inspecting overlap at the fitted zoom.
+
+Human steering, expanded economy and graph discovery remain unverified.
+Helper implementation follows in its own slice; no second town or offline work.

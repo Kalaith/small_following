@@ -30,7 +30,7 @@ Work only inside this project unless the user explicitly broadens the task. Read
 - Use feet origins and Y sorting for 2D actors/props. World collision is layer 2; player is layer 1.
 - Keep movement independent of earning, rounds, upgrade UI and automation. Minions and magic must preserve control.
 - Author upgrade definitions in `data/upgrades.json`, with stable IDs and supported effect types. Keep purchase validation in the progression owner, never only in button state.
-- Keep the current nine-node graph. The outer tier-III nodes have two ranks; inner nodes have one. Validate rank bounds, per-rank price and stale expected-rank requests. One input buys one rank; maximum-rank purchases must spend nothing.
+- Preserve the original nine-node core while extending it for the requested village expansion. The outer tier-III nodes have two ranks; inner nodes have one. Validate rank bounds, per-rank price and stale expected-rank requests. One input buys one rank; maximum-rank purchases must spend nothing.
 - Extend the graph through data and ring/branch placement; retain pan/zoom, transformed hit testing and readable selection details. Do not add dozens of fake purchasable nodes to production data.
 - Use typed GDScript where useful. Keep balance in named constants and catalog data, with assumptions recorded in `docs/PACING.md`.
 - Store runtime progression under `user://`, using explicit schema validation, staged writes and backup recovery. Purchases must not deduct currency if saving fails. Never store runtime saves or secrets in source.
