@@ -1,5 +1,25 @@
 # Verification record - ranked progression, 2026-10-02
 
+## 2026-10-03 - Requested magical-seal art correction: blocked on references
+
+The even-sector layout was a mechanical readability/coverage pass. The user
+has clarified that it does not yet deliver the intended magical-circle art
+direction. The next visual slice must integrate current upgrade nodes into
+coherent rings, sigils and interlocking motifs, using quieter decoration and
+clear interactive/prerequisite paths. Current spacing checks and screenshots
+do not establish acceptance of that composition.
+
+Three new references resolve in Library, but current supported reads return
+no image blocks and Windows materialization remains unavailable. No pixels
+were inspected and no reference-dependent redraw was attempted. The
+[reference record](reference/README.md) retains exact identifiers and metadata.
+Actual access and a rendered comparison against those references are pending.
+
+The interrupted completion work was resumed after the user reset usage.
+Its applied runtime/render evidence below is retained; local commit
+`c2c9205` delivers the centre independently of the pending art correction.
+No further gameplay behavior or catalog changes were made for this checkpoint.
+
 ## 2026-10-03 - Completed circle and demo message
 
 The all-ranks centre is derived by `Progression.is_circle_complete()` from

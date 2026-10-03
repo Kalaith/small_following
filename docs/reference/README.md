@@ -25,6 +25,29 @@ Canonical filenames and sizes have not been resolved on this executor; none are 
 
 ## Transfer blocker
 
+### Magical-seal composition references, 2026-10-03
+
+The user subsequently clarified that evenly distributing nodes is insufficient:
+the ritual should be a deliberately composed purple magical seal. Actual
+reference pixels are required before the next visual redesign.
+
+| Library file | Resolved original | Reported dimensions | Bytes |
+| --- | --- | --- | --- |
+| `libfile_589bc943fb4881919e95da7df2057d61` | `image(20261003-103904).png` | 640 x 666 | 359,246 |
+| `libfile_b3c863f134f48191b8a08bfe8afef572` | `image(20261003-103904-1).png` | 1000 x 651 | 553,652 |
+| `libfile_1ebed7e4e6848191936e90de962b28ee` | `image(20261003-103905).png` | 580 x 533 | 140,646 |
+
+Current image reads returned captions and asset pointers, not image blocks.
+Preparation for an explicitly Windows-local destination returned no local
+paths. The required metadata operation still lacks Windows support
+(`os.setxattr` is absent), so the known failing download was not repeated.
+No original was installed locally and none of these pixels were inspected.
+Captions and reported dimensions are not visual evidence.
+
+The reference-dependent art pass is pending accessible originals or supported
+pixel access. No guessed redesign has been substituted. The independently
+implemented all-ranks centre and dismissible demo message remain intact.
+
 ### Fuller-circle reference, 2026-10-03
 
 The newly supplied `libfile_f75084b9c8c88191a60b3ddb2b39514f` resolves to

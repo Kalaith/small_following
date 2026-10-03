@@ -15,12 +15,22 @@ is dismissible and repeatable. Recorded checks and actual captures belong in
 [VERIFICATION](VERIFICATION.md); human usability and alternate-size acceptance
 remain outstanding.
 
+The user clarified that even spacing is insufficient: the intended visual
+result is a composed purple magical seal with coherent concentric rings,
+sigils, interlocking geometric motifs and integrated upgrade nodes. Keep
+decoration quiet and real interactions and prerequisite paths clear, without
+arbitrary visual noise. The current fan layout is an interim mechanical pass,
+not accepted final art direction. Redesign awaits actual pixel inspection of
+all three new references; supported Windows Library materialization remains
+blocked. No new composition is implemented or inferred from unseen references.
+The completed-centre interaction remains delivered and must be preserved.
+
 The current production catalog remains 32 nodes and 35 ranks costing 1014
 donations. Preserve every ID, price, rank, prerequisite, effect and save field.
 The priest objective and its saved **Bramblewick complete** state remain
 independent of buying every inscription.
 
-## Layout and screen brief
+## Current interim layout and screen brief
 
 The purple node network remains the focal area, with useful selection details
 in the stationary right panel. Eight evenly spaced semantic sectors retain

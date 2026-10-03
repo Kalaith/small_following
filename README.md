@@ -67,6 +67,14 @@ independent of convincing the Priest. A future update will use this centre to
 reach a new area's separate circle; no second area is implemented here.
 [Completion scope and controls](docs/RITUAL_COMPLETION.md).
 
+The outward spacing pass is an interim layout, not the accepted final art
+direction. The requested redesign is a composed purple magical ritual seal:
+coherent concentric rings, sigils and interlocking geometric motifs with the
+existing upgrade nodes integrated into the composition. Decoration must stay
+quiet and interactions and prerequisite paths clear. Redesign is pending
+actual pixel inspection of the three new references; supported Windows
+Library materialization remains blocked. The completed centre remains implemented.
+
 ## Audio
 
 The promo's original instrumental score now plays quietly in the background,

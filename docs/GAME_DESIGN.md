@@ -16,6 +16,7 @@ This project is a bounded first-map prototype of movement, short earning rounds,
 - Preserve the original ranked progression. With full ranks on the original nine nodes, a competent practical route should fully convert all three groups inside the round with little time to spare; merely reaching the groups does not meet this target.
 - The upgrade structure must accommodate over 100 future upgrades/layers through data and navigable rings or branches.
 - Spread the existing inscriptions more fully around the circle. When every current upgrade rank is bought, the inner circle lights up and can show **This is the end of the demo**; dismissal allows continued play. The centre will later lead to a new area's separate circle (requested 2026-10-03).
+- The circle should form a composed purple magical ritual seal: coherent concentric rings, sigils and interlocking geometric motifs with existing upgrade nodes integrated. Even spacing alone is insufficient. Keep decoration quiet and prerequisite paths and interactions clear; avoid arbitrary visual noise (clarified 2026-10-03).
 - Add purchasable NPC groups, further speaking and moving tiers gated by group unlocks, and one helper that travels to individual NPCs to recruit them (requested 2026-10-03).
 - Progression eventually reaches larger, more populated towns. Later minions and magic reduce travel demands while preserving direct control.
 - Robes visibly trail and flap as the cultist moves.
@@ -77,6 +78,12 @@ Eight evenly spaced semantic sectors spread the current content around the
 seal. Tiers move outward in gentle fans, retaining readable main paths and
 contextual cross-branch requirements. This presentation changes no catalog
 definition, price, prerequisite or effect.
+
+This spacing pass is an interim implementation, not accepted final art
+direction. The composed-seal redesign is pending actual pixel inspection of
+all three newly supplied references. Their supported Windows Library transfer
+remains blocked, so no reference-based composition has been implemented or
+claimed. The completed-centre behavior stays in place.
 
 Adding a definition is appropriate only when its effect is implemented and tested. A large graph is a content capacity, not a promise that hundreds of upgrades are already designed or fun.
 
