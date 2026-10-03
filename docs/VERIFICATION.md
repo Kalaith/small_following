@@ -383,3 +383,52 @@ No human playtest, alternate-size acceptance, physical gamepad test or exported
 build is claimed. Prices, opponent difficulty and time to finish the map remain
 provisional. Later maps are deferred. Original art/reference-transfer limitations
 are unchanged. No installation, publishing, remote or export settings changed.
+
+## 2026-10-03 - 72-second local promo video
+
+Created `exports/promo/Small_Following_Promo.mp4`: 72.000 seconds, 1920 x 1080,
+30 fps, 2,160 H.264/yuv420p frames and 48 kHz stereo AAC. Size: 23,140,670 bytes.
+The edit contains 51 seconds of actual staged Godot footage and 21 seconds of
+animated promotional illustrations. Titles distinguish prototype gameplay and
+prepared builds from the illustrations. Music is an original locally synthesized
+instrumental; there is no narration or sampled commercial recording.
+
+The new [capture script](../tools/promo/capture_promo.gd) ran with the installed
+Godot 4.2.2 executable, Compatibility rendering and `--fixed-fps 60`, writing
+every second rendered frame. It disables persistence before scene startup.
+All 1,530 gameplay PNGs were saved; exit 0, 0 capture assertions failed:
+
+- Opening: 3 recruits / 9 donations through real travel and speaking.
+- Ritual: actual opening donations buy Talking I; rank 1 and 3 coins remain.
+- Original full core: all 15 listeners recruited in the normal 11-second round.
+- Expansion: 24 recruits, including 3 completed by the helper.
+- Finale: Priest convinced; 1 second remains when the 10-second take ends.
+
+Prepared later builds use normal purchase validation with temporary setup funds.
+The finale starts at encounter stage 3. Those take preparations are outside the
+footage; this is an edited showcase, not an uninterrupted fresh-save campaign.
+No player progression was read or written, and no production gameplay changed.
+
+Ran `tests/capture_starter.gd` again with the rendering display, writing only to
+`exports/promo/starter-check`; exit 0. Its core clear still reports 15 recruits
+at 10.517 seconds, with 0.483 seconds left. Inspected its actual starter PNG.
+Headless import and behavioral suites were not rerun for this media-only work;
+the previously documented editor-import limitation remains unresolved.
+
+Ran the [renderer](../tools/promo/render_promo.py) and
+[review extractor](../tools/promo/review_promo.py). FFprobe confirms duration,
+frame count, resolution and streams. Full FFmpeg decode exits 0 without errors.
+Inspected encoded title, ritual, helper and closing frames at full size, plus
+16 sampled frames across every segment. Gameplay retains the full viewport;
+promo headlines sit outside it. Measured audio is -15.06 LUFS integrated,
+-1.84 dBTP, with no silence interval at least 0.5 seconds below -50 dB.
+This is programmatic audio verification, not a subjective listening review.
+
+SHA-256: `80b91125e8a37767714493d3e034c10d911cb02e43dbabbfe20c0b8f6f1cca1e`.
+Review PNGs, contact sheet, timeline, audio, encoder logs and stream metadata
+remain beside the MP4 in ignored `exports/promo/`. Reproduction instructions
+and exact built-in image-generation prompts are in [promo notes](../tools/promo/README.md)
+and [art provenance](../tools/promo/art-prompts.json). Source illustrations were
+copied without replacing existing project art. Fonts were rasterized locally,
+not redistributed. The inspected `D:\VideoGeneration` workspace was unchanged.
+No service startup, package installation, publishing or game export occurred.

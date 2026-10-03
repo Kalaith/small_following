@@ -60,3 +60,17 @@ Final: `exports/promo/Small_Following_Promo.mp4`. Editable timing is in
 `render_promo.py`; the render writes `timeline.json`, a source WAV, separate
 encoded shots, FFmpeg logs, stream metadata and a full decode check. The
 source art and original score are promo assets, not installed game content.
+
+## Review
+
+```powershell
+python tools/promo/review_promo.py
+```
+
+Extracts 16 encoded frames, a contact sheet, audio loudness/silence analysis and
+a SHA-256 delivery hash. The October 3, 2026 render contains exactly 2,160 video
+frames and lasts 72 seconds; full decoding reports no errors. The 23,140,670-byte
+file measures -15.06 LUFS integrated and -1.84 dBTP. No silence interval of at
+least 0.5 seconds below -50 dB was detected. Encoded title, ritual, helper and
+ending frames were inspected at full size, plus all 16 contact-sheet samples.
+Audio was measured programmatically; no subjective listening review is claimed.

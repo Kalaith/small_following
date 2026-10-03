@@ -124,6 +124,16 @@ Exact latest check counts, rendered inspection results and commands are recorded
 
 No Git remote was created and no push, publishing, installation or export-platform change was performed.
 
+## Local promo video
+
+The 72-second [Small Following promo](exports/promo/Small_Following_Promo.mp4)
+combines 51 seconds of actual staged prototype gameplay with 21 seconds of
+original illustrated title sequences and an original instrumental score.
+The local MP4 is 1920 x 1080 at 30 fps, with H.264 video and stereo AAC audio.
+Generated media stays in ignored `exports/promo/`; it is not included in Git.
+[Production notes and reproduction commands](tools/promo/README.md) explain
+isolated capture, prepared upgrade builds, artwork provenance and verification.
+
 ## Merchants
 
 Merchant Invitations adds two distinct hat-and-purse NPCs near the market after Meadow Invitations. Each needs 9 conviction and gives 12 donations. Fair Bargain and Trusted Patron each add 1.5 merchant-only conviction per phrase; Generous Purses adds 6 donations per merchant. The helper uses the higher threshold with its own unchanged stats. The original village route is unchanged. See [first-map scope](docs/FIRST_MAP.md).
