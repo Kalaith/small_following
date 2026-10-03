@@ -14,7 +14,8 @@ input/feedback in the design proposal. The current baseline is:
 | Phase | Decision and primary action | Dominant focus | Supporting information | Deferred information |
 | --- | --- | --- | --- | --- |
 | Active round | Choose a gathering; move into speaking range | Village routes, cultist and listeners | Time, donations, recruitment count and local phrase progress | Upgrade details appear between rounds |
-| Ritual | Compare the selected next rank and buy if useful, or start another round | Connected purple node circle | Wallet, rank, current-to-next effect, cost and prerequisite | Other node details appear on selection |
+| Ritual overview | Find a branch or major unlock, then inspect it | Ordered purple sectors and main progression paths | Branch identity, purchase-state cues and visible navigation | Focus/zoom reveals more labels; selection opens full details |
+| Ritual selection | Compare the next rank and buy if useful, or start another round | Selected node, prerequisite ancestry and stationary details | Wallet, rank, current-to-next effect, cost and missing requirements | Unrelated cross-branch paths appear only when relevant |
 | Village between rounds | Walk and inspect, return to ritual or start next round | Visible village with earning stopped | Round-complete state and Tab/Enter guidance | Ritual details return with the ritual |
 
 There is no implemented title screen, settings screen or town selector.
@@ -53,13 +54,28 @@ following the cultist.
 
 ## 4. Ritual geometry and rank states
 
-The visible node circles and prerequisite connections form the occult seal.
-Use rings, intersecting lines and restrained rune-like marks to support that
-network. Preserve the purple/violet/lilac direction and the original nine-node
-core. The expanded catalog adds seven single-rank nodes across five rings.
-The original tier-III nodes retain two ranks. At fitted overview zoom, short
-node captions and rank pips keep glyphs clear; selected details always show
-full names, ranks, effects and prices. Zooming in reveals full graph labels.
+The visible nodes and progression paths form the occult seal. Keep Words at
+the top, Running at the left, Creed at the right, and village invitations and
+followers in the lower sectors. Advance tiers outward within their branch;
+do not make the eye zigzag across the circle to follow a sequence. The
+sixteen-node catalog spans five rings and retains two ranks on the original
+tier-III nodes. The [approved readability brief](RITUAL_READABILITY.md)
+describes the scope; layout must not change catalog rules.
+
+Retain violet/lilac rings, runes and the central sigil at a lower contrast than
+purchase state and real progression paths. Decorative lines must not compete
+with prerequisite edges. Show same-branch progress by default. On hover or
+selection, expose the relevant recursive prerequisite path, including
+cross-branch edges, and dim unrelated paths. Hover previews a path without
+replacing the selected details; leaving the graph returns to the selection.
+Missing requirements stay explicit in the right-hand panel.
+
+At a distant overview, prioritize branch identity, state cues and major
+unlocks over a wall of captions. Reveal individual labels as the player
+focuses or zooms in. Nodes whose captions are reduced must remain reachable
+through visible navigation, and full names, ranks, effects and prices must
+remain available in the selected details. Check label collisions against the
+actual drawing transform, including selected and hovered labels.
 
 Current colors in `scripts/ritual_screen.gd` provide a starting palette:
 
@@ -76,16 +92,18 @@ Current colors in `scripts/ritual_screen.gd` provide a starting palette:
 These are existing implementation values, not measured contrast guarantees.
 Judge readability in rendered frames at the actual display size.
 
-| Node state | Required information |
+| Node state | Required visual cue and information |
 | --- | --- |
-| Locked | Missing prerequisite and current rank |
-| Unaffordable | Exact next cost and available donations |
-| Available | Next rank, cost and effect |
-| Partly ranked | Current/maximum rank and the remaining purchase |
-| Maximum rank | Clear completion label; purchase unavailable |
-| Selected | Visible focus and matching stationary details |
+| Locked | Dim diamond and central bar; missing prerequisite and current rank in details |
+| Unaffordable | Hollow circle distinct from locked; exact next cost and donation shortfall |
+| Affordable | Bright circle and plus mark; next rank, cost and effect |
+| Partly ranked | Inner progress arc, with earned/open rank pips in detail views; current/maximum rank and next purchase |
+| Maximum rank | Filled circle and check mark with a clear completion label; purchase unavailable |
+| Selected | Extra focus ring and corner marks with matching stationary details |
 
-Rank pips and text must remain readable over decoration. Keep selected details
+Use a visible legend to explain state marks. Color alone must not distinguish
+affordable, unaffordable, locked and complete nodes. Rank pips and text must
+remain readable over decoration. Keep selected details
 outside the moving graph, including current-to-next stats and maximum-rank
 messaging. A rectangular details area is useful support; the upgrade network
 itself remains a circle of connected nodes.
@@ -101,6 +119,24 @@ Graph selection currently uses the mouse. Drag empty space with the left
 button, or use the middle button, to pan; wheel zoom anchors at the pointer.
 Recenter must recover a useful view. Verify that dragging does not accidentally
 select/buy, and that drawing and hit testing agree after transforms.
+
+The Words, Running, Creed, Village and Followers buttons above the graph focus
+a branch. They show owned nodes/total nodes and a `+` when a rank is affordable;
+their tooltips give the exact ready count. With more than six branches, a
+dropdown provides branch names and owned/ready counts. The node list below
+the graph exposes every upgrade in the selected branch, with its full title,
+rank and purchase state, including locked entries. Choosing an entry selects
+and centers it at a readable scale. **Focus selected** recovers the current
+node after panning; **Recenter** fits the graph while retaining the selection.
+**Overview** clears selection/hover and fits the complete branch view. With
+no selection, the right panel invites a choice and purchasing is disabled.
+These controls provide a visible route to nodes whose graph captions are
+reduced at distance.
+
+Main progress lines are solid. Contextual cross-branch requirements use dashed
+lines and arrowheads so they remain distinguishable from decoration and main
+paths. Hover changes the path preview; selection controls the stationary
+details and purchase request. Verify mouse exit clears the temporary preview.
 
 Show the reason an action is unavailable. Required information must be
 available on selection rather than hover alone. Keep teaching short and name
@@ -146,6 +182,10 @@ to the existing evidence:
 | Full village conversion | `verification/village-full-clear.png` |
 | Next round | `verification/starter-next-round.png` |
 | Large fixture and distant selection | `verification/ritual-144-fixture.png`, `verification/ritual-fixture-focus.png` |
+| Readable branch overview | `verification/ritual-readability-overview.png` |
+| Selected and hovered prerequisite paths | `verification/ritual-readability-east.png`, `verification/ritual-readability-hover.png` |
+| Mixed purchase states | `verification/ritual-readability-states.png` |
+| Large-fixture branch navigation | `verification/ritual-fixture-branch.png` |
 
 Also exercise locked/unaffordable states, save-error notices, Tab return,
 movement with the ritual open, pan/zoom and selection. The capture sequence
@@ -156,6 +196,9 @@ content, not a promise of more than 100 implemented upgrades.
 - [ ] Each persistent fact helps the current phase and has one clear home.
 - [ ] Text, rank marks, costs and selected details are readable.
 - [ ] Locked, available, partial and maximum states have cues beyond color.
+- [ ] Branch tiers advance outward, decoration recedes and real paths are distinguishable.
+- [ ] Hover/selection reveals required crosslinks without changing the selected purchase details.
+- [ ] Distant nodes remain reachable through visible navigation when overview labels are reduced.
 - [ ] Motion, sorting and collision look consistent; robe movement settles at rest.
 - [ ] Direct movement and round/village/ritual transitions remain usable.
 - [ ] Pan, zoom, recenter and transformed selection work on both graph sizes.

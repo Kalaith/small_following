@@ -66,15 +66,19 @@ func _capture() -> void:
 	await capture_full_clear(scene)
 	scene.advance_round(100.0)
 	await capture_expansion(scene)
+	await capture_readability(scene)
 	var fake = load("res://scripts/progression.gd").new()
 	fake.save_enabled = false
 	fake.catalog = Fixture.build()
 	fake.coins = 1000
 	scene.ritual_screen.configure(fake.catalog, fake)
+	scene.ritual_screen.overview_button.pressed.emit()
 	scene.ritual_screen._title_label.text = "144-node validation fixture"
 	scene.ritual_screen._subtitle_label.text = "TEST DATA ONLY / NOT PLAYABLE UPGRADE CONTENT"
-	scene.ritual_screen.reset_view()
 	await save_frame("ritual-144-fixture.png")
+	scene.ritual_screen.focus_branch("test_11")
+	scene.ritual_screen._subtitle_label.text = "TEST DATA ONLY / NOT PLAYABLE UPGRADE CONTENT"
+	await save_frame("ritual-fixture-branch.png")
 	scene.ritual_screen.focus_node("fixture_12_11")
 	scene.ritual_screen._subtitle_label.text = "TEST DATA ONLY / NOT PLAYABLE UPGRADE CONTENT"
 	await save_frame("ritual-fixture-focus.png")
@@ -135,3 +139,43 @@ func capture_expansion(scene) -> void:
 	scene.advance_round(100.0)
 	scene.ritual_screen.select_node("helper_1")
 	await save_frame("ritual-helper.png")
+
+
+func capture_readability(scene) -> void:
+	# Independent in-memory visual states keep gameplay captures and player saves intact.
+	var screen = scene.ritual_screen
+	var fixture = load("res://scripts/progression.gd").new()
+	fixture.save_enabled = false
+	if not fixture.load_catalog():
+		failed = true
+		push_error("Readability capture catalog failed: " + fixture.last_error)
+		return
+	fixture.coins = 9
+	screen.configure(fixture.catalog, fixture)
+	screen.overview_button.pressed.emit()
+	await save_frame("ritual-readability-overview.png")
+	# One purchased node, one open-but-unaffordable node, affordable roots and locked tiers.
+	fixture.try_purchase("talk_1")
+	fixture.coins = 6
+	screen.select_node("talk_2")
+	await save_frame("ritual-readability-states.png")
+	fixture.coins = 1000
+	for item in fixture.catalog.slice(0, 9):
+		if fixture.rank(item.id) == 0:
+			fixture.try_purchase(item.id)
+	fixture.try_purchase("meadow_1")
+	fixture.coins = 33
+	screen.select_node("east_1")
+	screen.reset_view()
+	await save_frame("ritual-readability-missing.png")
+	var hover := InputEventMouseMotion.new()
+	hover.position = screen.world_to_screen(screen.node_positions["talk_5"]) - screen.graph.global_position
+	screen.graph._gui_input(hover)
+	await save_frame("ritual-readability-hover.png")
+	screen.graph.mouse_exited.emit()
+	fixture.coins = 1000
+	fixture.try_purchase("talk_4")
+	fixture.coins = 33
+	screen.select_node("east_1")
+	await save_frame("ritual-readability-east.png")
+	screen.configure(scene.progression.catalog, scene.progression)

@@ -18,6 +18,7 @@ const FIRST_RING: float = 112.0
 const NODE_RADIUS: float = 26.0
 const MIN_ZOOM: float = 0.025
 const MAX_ZOOM: float = 2.4
+const Layout = preload("res://scripts/ritual_layout.gd")
 
 class GraphCanvas extends Control:
 	var screen: Control
@@ -37,6 +38,16 @@ var purchase_button: Button
 var next_button: Button
 var village_button: Button
 var recenter_button: Button
+var focus_button: Button
+var overview_button: Button
+var branch_picker: OptionButton
+var node_picker: OptionButton
+var _branch_bar: HBoxContainer
+var _branch_buttons: Dictionary = {}
+var _branch_order: Array[String] = []
+var _browse_ids: Array[String] = []
+var _label_rects: Dictionary = {}
+var _label_model: Array[Dictionary] = []
 var _catalog: Array = []
 var _by_id: Dictionary = {}
 var _progression: RefCounted
@@ -72,14 +83,16 @@ func _ready() -> void:
 	visibility_changed.connect(_on_visibility_changed)
 	_layout()
 	_built = true
+	_rebuild_branch_navigation()
 	update_state()
 
 
 func configure(catalog: Array, progression: RefCounted) -> void:
+	_hovered_id = ""
 	_catalog = catalog
 	_progression = progression
 	_by_id.clear()
-	node_positions.clear()
+	node_positions = Layout.build(catalog)
 	_max_radius = FIRST_RING
 	for value in _catalog:
 		var item: Dictionary = value
@@ -89,12 +102,11 @@ func configure(catalog: Array, progression: RefCounted) -> void:
 		_by_id[id] = item
 		var ring: int = maxi(1, int(item.get("ring", 1)))
 		var radius: float = FIRST_RING + (ring - 1) * RING_STEP
-		var angle: float = deg_to_rad(float(item.get("angle_degrees", -90.0)))
-		node_positions[id] = Vector2.from_angle(angle) * radius
 		_max_radius = maxf(radius, _max_radius)
 	if not _by_id.has(selected_id):
 		selected_id = str(_catalog[0].get("id", "")) if not _catalog.is_empty() else ""
 	if _built:
+		_rebuild_branch_navigation()
 		reset_view()
 		update_state()
 
@@ -110,6 +122,8 @@ func update_state(round_recruits: int = 0) -> void:
 	_error_label.text = "SAVE NOTICE: " + save_error if not save_error.is_empty() else ""
 	_error_label.tooltip_text = save_error
 	var item: Dictionary = _by_id.get(selected_id, {})
+	_branch_label.visible = not item.is_empty()
+	_rank_label.visible = not item.is_empty()
 	var state: String = _state(selected_id)
 	_displayed_rank = _rank(selected_id)
 	var rank_limit: int = _max_rank(selected_id)
@@ -145,6 +159,7 @@ func update_state(round_recruits: int = 0) -> void:
 			purchase_button.text = "Choose an inscription"
 	purchase_button.disabled = state != "affordable"
 	_status_label.add_theme_color_override("font_color", LILAC if state == "affordable" or state == "purchased" else MUTED)
+	_update_branch_navigation()
 	graph.queue_redraw()
 	queue_redraw()
 
@@ -154,6 +169,93 @@ func select_node(id: String) -> void:
 		return
 	selected_id = id
 	update_state(_round_recruits)
+
+
+func clear_selection() -> void:
+	selected_id = ""
+	_hovered_id = ""
+	update_state(_round_recruits)
+
+
+func get_focus_path() -> Dictionary:
+	var result: Dictionary = {}
+	var target: String = _hovered_id if not _hovered_id.is_empty() else selected_id
+	var pending: Array[String] = [target]
+	while not pending.is_empty():
+		var id: String = pending.pop_back()
+		if not _by_id.has(id) or result.has(id):
+			continue
+		result[id] = true
+		for required in _by_id[id].get("requires", []):
+			pending.append(str(required))
+	return result
+
+
+func get_visible_edges() -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	var path: Dictionary = get_focus_path()
+	for item in _catalog:
+		var id: String = str(item.get("id", ""))
+		for required in item.get("requires", []):
+			var from: String = str(required)
+			if not _by_id.has(from):
+				continue
+			var cross: bool = str(item.get("branch", "")) != str(_by_id[from].get("branch", ""))
+			var relevant: bool = path.has(id) and path.has(from)
+			if cross and not relevant:
+				continue
+			var alpha: float = 0.9 if relevant else 0.21 if not path.is_empty() else 0.54
+			result.append({"from": from, "to": id, "kind": "cross" if cross else "main", "relevant": relevant, "alpha": alpha, "focused": relevant, "cross_branch": cross})
+	return result
+
+
+func get_label_rects() -> Dictionary:
+	_prepare_labels()
+	return _label_rects.duplicate()
+
+
+func label_bounds() -> Dictionary:
+	return get_label_rects()
+
+
+func get_branch_summaries() -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	var order: Array[String] = ["talk", "run", "persuade", "gather", "helper"]
+	for item in _catalog:
+		var branch: String = str(item.get("branch", ""))
+		if not order.has(branch):
+			order.append(branch)
+	for branch in order:
+		var ids: Array[String] = []
+		var owned: int = 0
+		var available: int = 0
+		for item in _catalog:
+			if str(item.get("branch", "")) != branch:
+				continue
+			var id: String = str(item.get("id", ""))
+			ids.append(id)
+			owned += 1 if _rank(id) > 0 else 0
+			available += 1 if _state(id) == "affordable" else 0
+		if not ids.is_empty():
+			ids.sort_custom(func(a: String, b: String) -> bool: return int(_by_id[a].get("ring", 1)) < int(_by_id[b].get("ring", 1)))
+			result.append({"id": branch, "title": Layout.branch_title(branch), "count": ids.size(), "owned": owned, "available": available, "ids": ids})
+	return result
+
+
+func focus_branch(branch: String) -> void:
+	for summary in get_branch_summaries():
+		if str(summary.id) != branch:
+			continue
+		var target: String = str(summary.ids[0])
+		for id in summary.ids:
+			if _state(id) == "affordable":
+				target = str(id)
+				break
+			if _state(id) == "unaffordable":
+				target = str(id)
+		_hovered_id = ""
+		focus_node(target)
+		return
 
 
 func get_selected_rank() -> int:
@@ -178,7 +280,7 @@ func hit_test(screen_point: Vector2) -> String:
 		return ""
 	var world_point: Vector2 = screen_to_world(screen_point)
 	var closest: String = ""
-	var distance: float = NODE_RADIUS + 6.0
+	var distance: float = maxf(NODE_RADIUS + 6.0, 7.0 / zoom)
 	for id in node_positions:
 		var candidate: Vector2 = node_positions[id]
 		var candidate_distance: float = candidate.distance_to(world_point)
@@ -205,12 +307,14 @@ func reset_view() -> void:
 		return
 	zoom = clampf(minf(graph.size.x, graph.size.y) / ((_max_radius + 54.0) * 2.0), MIN_ZOOM, 1.0)
 	pan = Vector2.ZERO
+	_hovered_id = ""
 	graph.queue_redraw()
 
 
 func focus_node(id: String) -> void:
 	if not node_positions.has(id):
 		return
+	_hovered_id = ""
 	select_node(id)
 	zoom = maxf(0.8, zoom)
 	pan = -Vector2(node_positions[id]) * zoom
@@ -270,6 +374,10 @@ func _build_controls() -> void:
 	graph.screen = self
 	graph.clip_contents = true
 	graph.mouse_filter = Control.MOUSE_FILTER_STOP
+	graph.mouse_exited.connect(func() -> void:
+		_hovered_id = ""
+		graph.queue_redraw()
+	)
 	add_child(graph)
 	_title_label = _label("The circle grows.", 34, WHITE)
 	_subtitle_label = _label("ROUND COMPLETE", 12, MUTED)
@@ -284,7 +392,7 @@ func _build_controls() -> void:
 	_status_label = _label("", 14, MUTED)
 	_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_hint_label = _label("Tab: village  /  Enter: next round\nWASD still moves your cultist.", 12, MUTED)
-	_legend_label = _label("Drag to explore  /  Scroll to zoom     |     Open pips: unbought    Filled pips: ranks", 12, MUTED)
+	_legend_label = _label("Diamond: locked   /   Hollow: needs donations   /   +: ready   /   Check: complete\nDrag to explore · Scroll to zoom · Hover or select to trace requirements", 11, MUTED)
 	_error_label = _label("", 11, LILAC)
 	_error_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_error_label.max_lines_visible = 3
@@ -298,6 +406,95 @@ func _build_controls() -> void:
 	village_button.pressed.connect(func() -> void: return_to_village_requested.emit())
 	recenter_button = _button("Recenter", false)
 	recenter_button.pressed.connect(reset_view)
+	focus_button = _button("Focus selected", false)
+	focus_button.pressed.connect(func() -> void: focus_node(selected_id))
+	overview_button = _button("Overview", false)
+	overview_button.pressed.connect(func() -> void:
+		reset_view()
+		clear_selection()
+	)
+	_branch_bar = HBoxContainer.new()
+	_branch_bar.add_theme_constant_override("separation", 6)
+	add_child(_branch_bar)
+	branch_picker = OptionButton.new()
+	branch_picker.focus_mode = Control.FOCUS_NONE
+	branch_picker.add_theme_font_size_override("font_size", 13)
+	branch_picker.item_selected.connect(func(index: int) -> void:
+		if index >= 0 and index < _branch_order.size():
+			focus_branch(_branch_order[index])
+	)
+	add_child(branch_picker)
+	node_picker = OptionButton.new()
+	node_picker.focus_mode = Control.FOCUS_NONE
+	node_picker.add_theme_font_size_override("font_size", 12)
+	node_picker.item_selected.connect(func(index: int) -> void:
+		if index >= 0 and index < _browse_ids.size():
+			focus_node(_browse_ids[index])
+	)
+	add_child(node_picker)
+
+
+func _rebuild_branch_navigation() -> void:
+	for child in _branch_bar.get_children():
+		_branch_bar.remove_child(child)
+		child.queue_free()
+	_branch_buttons.clear()
+	_branch_order.clear()
+	branch_picker.clear()
+	var summaries: Array[Dictionary] = get_branch_summaries()
+	for summary in summaries:
+		var branch: String = str(summary.id)
+		_branch_order.append(branch)
+		branch_picker.add_item(str(summary.title))
+		branch_picker.set_item_metadata(branch_picker.item_count - 1, branch)
+		if summaries.size() <= 6:
+			var button: Button = _button(str(summary.title), false)
+			remove_child(button)
+			_branch_bar.add_child(button)
+			button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			button.add_theme_font_size_override("font_size", 12)
+			button.pressed.connect(focus_branch.bind(branch))
+			_branch_buttons[branch] = button
+	_branch_bar.visible = summaries.size() <= 6
+	branch_picker.visible = summaries.size() > 6
+	_update_branch_navigation()
+
+
+func _update_branch_navigation() -> void:
+	if not is_instance_valid(node_picker):
+		return
+	var selected_branch: String = str(_by_id.get(selected_id, {}).get("branch", ""))
+	for summary in get_branch_summaries():
+		var text: String = "%s  %d/%d" % [summary.title, summary.owned, summary.count]
+		var tooltip: String = "%s: %d of %d nodes owned; %d ready to buy. Click to focus this branch." % [summary.title, summary.owned, summary.count, summary.available]
+		if _branch_buttons.has(summary.id):
+			var button: Button = _branch_buttons[summary.id]
+			button.text = text + (" +" if int(summary.available) > 0 else "")
+			button.tooltip_text = tooltip
+			button.add_theme_color_override("font_color", WHITE if str(summary.id) == selected_branch else MUTED)
+		var index: int = _branch_order.find(str(summary.id))
+		if index >= 0:
+			branch_picker.set_item_text(index, "%s · %d ready" % [text, summary.available])
+			if str(summary.id) == selected_branch:
+				branch_picker.select(index)
+	_browse_ids.clear()
+	node_picker.clear()
+	for summary in get_branch_summaries():
+		if str(summary.id) != selected_branch:
+			continue
+		for id in summary.ids:
+			_browse_ids.append(str(id))
+			var state: String = _state(id)
+			var state_text: String = {"locked": "locked", "affordable": "ready", "unaffordable": "needs donations", "purchased": "complete"}.get(state, state)
+			node_picker.add_item("%s · %d/%d · %s" % [_by_id[id].get("title", id), _rank(id), _max_rank(id), state_text])
+			node_picker.set_item_metadata(node_picker.item_count - 1, str(id))
+			if str(id) == selected_id:
+				node_picker.select(_browse_ids.size() - 1)
+	node_picker.disabled = _browse_ids.is_empty()
+	if _browse_ids.is_empty():
+		node_picker.add_item("Choose a branch above to browse its nodes")
+	node_picker.tooltip_text = "Browse every node in the selected branch, including locked nodes. Choosing one centers it at a readable scale."
+	focus_button.disabled = selected_id.is_empty()
 
 
 func _label(value: String, font_size: int, color: Color) -> Label:
@@ -342,8 +539,14 @@ func _layout() -> void:
 	var margin: float = 40.0
 	var detail_width: float = clampf(size.x * 0.245, 255.0, 330.0)
 	_detail_x = size.x - detail_width - margin
-	graph.position = Vector2(24, 118)
-	graph.size = Vector2(maxf(280.0, _detail_x - 51.0), maxf(280.0, size.y - 197.0))
+	graph.position = Vector2(24, 159)
+	graph.size = Vector2(maxf(280.0, _detail_x - 51.0), maxf(280.0, size.y - 268.0))
+	_branch_bar.position = Vector2(margin, 120)
+	_branch_bar.size = Vector2(_detail_x - margin - 36, 30)
+	branch_picker.position = _branch_bar.position
+	branch_picker.size = Vector2(minf(430, _branch_bar.size.x), 30)
+	node_picker.position = Vector2(margin, size.y - 103)
+	node_picker.size = Vector2(minf(440, _detail_x - margin - 36), 30)
 	_title_label.position = Vector2(margin, 43)
 	_subtitle_label.position = Vector2(margin + 2.0, 23)
 	_coins_label.position = Vector2(_detail_x, 49)
@@ -369,9 +572,13 @@ func _layout() -> void:
 	_hint_label.position = Vector2(_detail_x, size.y - 65)
 	_hint_label.size = Vector2(detail_width, 43)
 	_legend_label.position = Vector2(margin, size.y - 53)
-	_legend_label.size = Vector2(_detail_x - margin - 22, 28)
+	_legend_label.size = Vector2(_detail_x - margin - 22, 38)
 	recenter_button.position = Vector2(_detail_x - 118, 82)
 	recenter_button.size = Vector2(91, 30)
+	focus_button.position = Vector2(_detail_x - 265, 82)
+	focus_button.size = Vector2(138, 30)
+	overview_button.position = Vector2(_detail_x - 366, 82)
+	overview_button.size = Vector2(92, 30)
 	reset_view()
 	queue_redraw()
 
@@ -442,49 +649,51 @@ func _point(world: Vector2) -> Vector2:
 
 func _draw_graph(canvas: Control) -> void:
 	var center: Vector2 = _point(Vector2.ZERO)
-	# Sparse violet dust anchors the seal to a dark, tactile field.
-	for index in range(65):
-		var at := Vector2(fmod(index * 157.37 + 27.0, canvas.size.x), fmod(index * 93.17 + 51.0, canvas.size.y))
-		canvas.draw_circle(at, 0.65, Color(0.55, 0.39, 0.7, 0.18))
 	var rings: Dictionary = {}
 	for item in _catalog:
-		var ring: int = int(item.get("ring", 1))
-		if not rings.has(ring):
-			rings[ring] = []
-		rings[ring].append(str(item.get("id", "")))
+		rings[int(item.get("ring", 1))] = true
+	# Rings give depth and orientation; only real progress edges form the graph.
 	for key in rings:
-		var radius: float = FIRST_RING + (int(key) - 1) * RING_STEP
-		_arc(canvas, center, radius, Color(0.58, 0.37, 0.78, 0.36), 1.0)
-		_arc(canvas, center, radius + 7.0, Color(0.47, 0.30, 0.64, 0.23), 1.0)
-		var ids: Array = rings[key]
-		# Every connecting polygon is anchored to real upgrade nodes.
-		if ids.size() >= 3:
-			for index in range(ids.size()):
-				var a: Vector2 = node_positions.get(str(ids[index]), Vector2.ZERO)
-				var b: Vector2 = node_positions.get(str(ids[(index + 1) % ids.size()]), Vector2.ZERO)
-				canvas.draw_line(_point(a), _point(b), Color(0.56, 0.35, 0.75, 0.27), 1.0, true)
+		_arc(canvas, center, FIRST_RING + (int(key) - 1) * RING_STEP, Color(0.52, 0.36, 0.68, 0.14), 1.0)
 	var outer: float = _max_radius + 31.0
-	_arc(canvas, center, outer, Color(0.70, 0.47, 0.89, 0.56), 1.2)
-	_arc(canvas, center, outer + 14.0, Color(0.58, 0.35, 0.78, 0.37), 1.0)
-	_draw_runes(canvas, outer + 7.0)
-	# Paths between an inscription and its prerequisites are the upgrade branches.
-	for value in _catalog:
-		var item: Dictionary = value
-		var id: String = str(item.get("id", ""))
-		if not node_positions.has(id):
-			continue
-		var requirements: Array = item.get("requires", [])
-		var to: Vector2 = node_positions[id]
-		var has_rank: bool = _rank(id) > 0
-		var path_color: Color = Color(0.71, 0.49, 0.91, 0.77) if has_rank else Color(0.54, 0.34, 0.73, 0.52)
-		if requirements.is_empty():
-			canvas.draw_line(_point(to.normalized() * 53.0), _point(to), path_color, 1.5, true)
-		for required in requirements:
-			if node_positions.has(str(required)):
-				canvas.draw_line(_point(node_positions[str(required)]), _point(to), path_color, 2.0 if has_rank else 1.2, true)
+	_arc(canvas, center, outer, Color(0.60, 0.43, 0.78, 0.25), 1.0)
+	_draw_runes(canvas, outer + 8.0)
+	var path: Dictionary = get_focus_path()
+	for edge in get_visible_edges():
+		var from: Vector2 = _point(node_positions[edge.from])
+		var to: Vector2 = _point(node_positions[edge.to])
+		var direction: Vector2 = from.direction_to(to)
+		var radius: float = _node_radius()
+		from += direction * (radius + 3.0)
+		to -= direction * (radius + 3.0)
+		var color := Color(LILAC if edge.relevant else VIOLET, float(edge.alpha))
+		if edge.cross_branch:
+			# A dashed cross-branch link differs from the permanent branch spine.
+			canvas.draw_dashed_line(from, to, color, 1.5, 7.0, true)
+		else:
+			canvas.draw_line(from, to, color, 2.2 if edge.relevant else 1.5, true)
+		if edge.relevant and from.distance_to(to) > 20.0:
+			var tip: Vector2 = to - direction * 6.0
+			canvas.draw_polyline(PackedVector2Array([tip - direction.rotated(-0.55) * 7.0, tip, tip - direction.rotated(0.55) * 7.0]), color, 1.2, true)
+	for item in _catalog:
+		if item.get("requires", []).is_empty():
+			var at: Vector2 = node_positions[str(item.id)]
+			var alpha: float = 0.46 if path.has(str(item.id)) or path.is_empty() else 0.14
+			canvas.draw_line(_point(at.normalized() * 47.0), _point(at - at.normalized() * NODE_RADIUS), Color(VIOLET, alpha), 1.0, true)
 	_draw_core(canvas)
-	for value in _catalog:
-		_draw_node(canvas, value)
+	for item in _catalog:
+		_draw_node(canvas, item)
+	_prepare_labels()
+	for label in _label_model:
+		var bounds: Rect2 = label.rect
+		canvas.draw_rect(bounds, Color(INK, 0.96))
+		canvas.draw_string(_font, bounds.position + Vector2(4, label.font_size + 1), label.text, HORIZONTAL_ALIGNMENT_LEFT, -1, label.font_size, label.color)
+		if not str(label.rank_text).is_empty():
+			canvas.draw_string(_font, bounds.position + Vector2(4, label.font_size + 16), label.rank_text, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, MUTED)
+
+
+func _node_radius() -> float:
+	return maxf(4.0, NODE_RADIUS * zoom)
 
 
 func _arc(canvas: Control, center: Vector2, radius: float, color: Color, width: float) -> void:
@@ -498,7 +707,7 @@ func _draw_runes(canvas: Control, radius: float) -> void:
 		var radial: Vector2 = Vector2.from_angle(angle)
 		var tangent: Vector2 = radial.orthogonal()
 		var at: Vector2 = radial * radius
-		var color := Color(0.70, 0.47, 0.9, 0.60 if index % 3 == 0 else 0.35)
+		var color := Color(0.70, 0.47, 0.9, 0.23 if index % 3 == 0 else 0.12)
 		canvas.draw_line(_point(at - radial * 3.7), _point(at + radial * 3.7), color, 1.0, true)
 		if index % 3 == 0:
 			canvas.draw_line(_point(at + radial * 2.5), _point(at + tangent * 3.0), color, 1.0, true)
@@ -508,19 +717,14 @@ func _draw_runes(canvas: Control, radius: float) -> void:
 
 func _draw_core(canvas: Control) -> void:
 	var center: Vector2 = _point(Vector2.ZERO)
-	canvas.draw_circle(center, 51.0 * zoom, Color("1e142c"))
-	_arc(canvas, center, 48.0, LINE, 1.0)
-	_arc(canvas, center, 42.0, Color(0.68, 0.43, 0.88, 0.45), 1.0)
-	# Thorned, inverted star: a fictional seal made from our own geometry.
+	canvas.draw_circle(center, 42.0 * zoom, Color("17101f"))
+	_arc(canvas, center, 42.0, Color(VIOLET, 0.18), 1.0)
+	# A small fictional seal; lower contrast than every upgrade state.
 	var star := PackedVector2Array()
 	for index in range(6):
 		var angle: float = PI * 0.5 + TAU * ((index * 2) % 5) / 5.0
-		star.append(_point(Vector2.from_angle(angle) * 31.0))
-	canvas.draw_polyline(star, LILAC, 1.6, true)
-	canvas.draw_line(_point(Vector2(0, -36)), _point(Vector2(0, 33)), VIOLET, 1.1, true)
-	for side in [-1.0, 1.0]:
-		canvas.draw_polyline(PackedVector2Array([_point(Vector2(side * 24, -18)), _point(Vector2(side * 35, -28)), _point(Vector2(side * 31, -7))]), VIOLET, 1.1, true)
-	canvas.draw_circle(center, 3.0 * zoom, WHITE)
+		star.append(_point(Vector2.from_angle(angle) * 27.0))
+	canvas.draw_polyline(star, Color(VIOLET, 0.25), 1.0, true)
 
 
 func _draw_node(canvas: Control, item: Dictionary) -> void:
@@ -528,79 +732,119 @@ func _draw_node(canvas: Control, item: Dictionary) -> void:
 	if not node_positions.has(id):
 		return
 	var point: Vector2 = _point(node_positions[id])
-	var radius: float = NODE_RADIUS * zoom
+	var radius: float = _node_radius()
 	var state: String = _state(id)
 	var current_rank: int = _rank(id)
 	var rank_limit: int = _max_rank(id)
-	var complete: bool = current_rank >= rank_limit and rank_limit > 0
+	var complete: bool = state == "purchased"
 	var selected: bool = id == selected_id
 	var hovered: bool = id == _hovered_id
-	var color: Color = LILAC if state == "affordable" or current_rank > 0 else Color("77618e")
-	if selected:
-		canvas.draw_circle(point, radius + 11.0, Color(0.65, 0.39, 0.9, 0.09))
-		canvas.draw_arc(point, radius + 7.0, 0.0, TAU, 48, LILAC, 1.7, true)
-		for index in range(4):
-			var direction: Vector2 = Vector2.from_angle(PI * 0.25 + index * PI * 0.5)
-			canvas.draw_line(point + direction * (radius + 11.0), point + direction * (radius + 16.0), LILAC, 1.5, true)
-	elif hovered:
-		canvas.draw_arc(point, radius + 6.0, 0.0, TAU, 48, LILAC, 1.0, true)
+	var color: Color = LILAC if state == "affordable" or current_rank > 0 else Color("a18daf") if state == "unaffordable" else Color("706078")
+	if selected or hovered:
+		canvas.draw_arc(point, radius + 5.0, 0, TAU, 48, WHITE if selected else LILAC, 1.5, true)
+		if selected:
+			for index in range(4):
+				var direction: Vector2 = Vector2.from_angle(PI * 0.25 + index * PI * 0.5)
+				canvas.draw_line(point + direction * (radius + 8.0), point + direction * (radius + 11.0), LILAC, 1.0, true)
 	canvas.draw_circle(point, radius + 2.0, INK)
-	var fill: Color = Color("422759") if complete else Color("2b1b3d") if current_rank > 0 else Color("21162e")
-	canvas.draw_circle(point, radius, fill)
-	canvas.draw_arc(point, radius, 0.0, TAU, 48, color, 2.0 if complete else 1.3, true)
-	canvas.draw_arc(point, maxf(2.0, radius - 4.0), 0.0, TAU, 48, Color(color, 0.25), 1.0, true)
-	if current_rank > 0 and not complete:
-		canvas.draw_arc(point, radius - 4.0, -PI * 0.5, -PI * 0.5 + TAU * current_rank / float(rank_limit), 48, LILAC, 2.1, true)
-	_draw_glyph(canvas, point, str(item.get("branch", "talk")), color)
-	# Pips show ranks independently of affordability and ring numbering.
-	if zoom >= 0.5:
+	if state == "locked":
+		var diamond := PackedVector2Array([point + Vector2(0, -radius), point + Vector2(radius, 0), point + Vector2(0, radius), point + Vector2(-radius, 0), point + Vector2(0, -radius)])
+		canvas.draw_colored_polygon(diamond, Color("19121f"))
+		canvas.draw_polyline(diamond, color, 1.2, true)
+		# The bar and diamond survive at overview scale; details name missing ranks.
+		canvas.draw_line(point + Vector2(-radius * 0.28, 0), point + Vector2(radius * 0.28, 0), color, 1.5, true)
+	else:
+		var fill: Color = Color("644582") if complete else Color("39214e") if state == "affordable" else Color("19121f")
+		canvas.draw_circle(point, radius, fill)
+		canvas.draw_arc(point, radius, 0, TAU, 48, color, 2.0 if state == "affordable" or complete else 1.1, true)
+		if radius >= 10.0:
+			_draw_glyph(canvas, point, str(item.get("branch", "")), color)
+		if current_rank > 0 and not complete:
+			canvas.draw_arc(point, maxf(2, radius - 4), -PI * 0.5, -PI * 0.5 + TAU * current_rank / float(rank_limit), 40, WHITE, 2.2, true)
+		if complete:
+			var check_at: Vector2 = point + Vector2(radius * 0.70, -radius * 0.68) if radius >= 10 else point
+			canvas.draw_circle(check_at, 5.0 if radius >= 10 else 3.0, INK)
+			canvas.draw_polyline(PackedVector2Array([check_at + Vector2(-3, 0), check_at + Vector2(-0.5, 2.2), check_at + Vector2(3.5, -2.5)]), WHITE, 1.5, true)
+		elif state == "affordable":
+			var plus_at: Vector2 = point + Vector2(0, -radius - 2) if radius >= 10 else point
+			canvas.draw_circle(plus_at, 4.0, INK)
+			canvas.draw_line(plus_at + Vector2(-3, 0), plus_at + Vector2(3, 0), WHITE, 1.4, true)
+			canvas.draw_line(plus_at + Vector2(0, -3), plus_at + Vector2(0, 3), WHITE, 1.4, true)
+	if zoom >= 0.65 and rank_limit > 1:
 		for index in range(rank_limit):
-			var pip_at: Vector2 = point + Vector2((index - (rank_limit - 1) * 0.5) * 9.0, 19.0) * zoom
-			var pip_radius: float = maxf(1.5, 2.2 * zoom)
+			var pip_at: Vector2 = point + Vector2((index - (rank_limit - 1) * 0.5) * 8.0, radius * 0.64)
 			if index < current_rank:
-				canvas.draw_circle(pip_at, pip_radius, WHITE)
+				canvas.draw_circle(pip_at, 2.0, WHITE)
 			else:
-				canvas.draw_arc(pip_at, pip_radius, 0.0, TAU, 12, MUTED, 1.0, true)
-	if complete:
-		canvas.draw_circle(point + Vector2(radius * 0.74, -radius * 0.74), maxf(2.0, 3.5 * zoom), WHITE)
-	elif state == "affordable":
-		var diamond: Vector2 = point + Vector2(0, -radius - 4.0)
-		canvas.draw_colored_polygon(PackedVector2Array([diamond + Vector2(0, -3), diamond + Vector2(3, 0), diamond + Vector2(0, 3), diamond + Vector2(-3, 0)]), LILAC)
-	if zoom >= 0.50:
-		var title: String = str(item.get("title", id))
-		if zoom < 0.8:
-			# A fitted overview keeps every glyph visible; full titles/ranks remain in details.
-			title = title.replace("Quickened Words", "Words").replace("Compelling Creed", "Creed").replace("Fleet Footsteps", "Run").replace(" Invitations", "")
-			var compact_width: float = _font.get_string_size(title, HORIZONTAL_ALIGNMENT_LEFT, -1, 12).x
-			var compact_at: Vector2 = point + Vector2(-compact_width * 0.5, radius + 17.0)
-			canvas.draw_rect(Rect2(compact_at + Vector2(-3, -12), Vector2(compact_width + 6, 16)), INK)
-			canvas.draw_string(_font, compact_at, title, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, color)
-			return
-		var text_size: int = 13 if zoom < 1.15 else 15
-		var title_width: float = _font.get_string_size(title, HORIZONTAL_ALIGNMENT_LEFT, -1, text_size).x
-		var tier: String = "%s  /  RANK %d/%d" % [_roman(int(item.get("ring", 1))), current_rank, rank_limit]
-		var tier_width: float = _font.get_string_size(tier, HORIZONTAL_ALIGNMENT_LEFT, -1, 11).x
-		var label_offset: float = 0.0
-		var tier_bounds := Rect2(point + Vector2(-tier_width * 0.5, radius + 27.0), Vector2(tier_width, 15.0))
-		# Neighboring rings can put a rank row at the height of another node's title.
-		# Nudge only the text block horizontally; the ritual geometry and hit areas stay fixed.
-		for neighbor in _catalog:
-			var neighbor_id: String = str(neighbor.get("id", ""))
-			if neighbor_id == id or not node_positions.has(neighbor_id):
+				canvas.draw_arc(pip_at, 2.0, 0, TAU, 12, MUTED, 1.0, true)
+
+
+func _compact_title(item: Dictionary) -> String:
+	return str(item.get("title", item.get("id", ""))).replace("Quickened Words", "Words").replace("Compelling Creed", "Creed").replace("Fleet Footsteps", "Run").replace(" Invitations", "")
+
+
+func _prepare_labels() -> void:
+	_label_rects.clear()
+	_label_model.clear()
+	if not is_instance_valid(graph) or not is_instance_valid(_font):
+		return
+	var candidates: Array = _catalog.duplicate()
+	candidates.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return _label_priority(a) > _label_priority(b))
+	var visible_bounds := Rect2(Vector2(4, 4), graph.size - Vector2(8, 8))
+	var radius: float = _node_radius()
+	for item in candidates:
+		var id: String = str(item.get("id", ""))
+		var selected: bool = id == selected_id or id == _hovered_id
+		var major: bool = str(item.get("branch", "")) in ["gather", "helper"]
+		# At distant scale reveal major unlocks and focus; every other node remains
+		# visible/pickable and listed by branch in the stationary browser.
+		if zoom < 0.45 and not selected and not major:
+			continue
+		var point: Vector2 = _point(node_positions[id])
+		if not visible_bounds.has_point(point):
+			continue
+		var text: String = str(item.get("title", id)) if zoom >= 1.15 else _compact_title(item)
+		var font_size: int = 14 if zoom >= 1.15 else 12
+		var rank_text: String = "RANK %d/%d" % [_rank(id), _max_rank(id)] if zoom >= 0.8 else ""
+		var width: float = _font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x + 8.0
+		if not rank_text.is_empty():
+			width = maxf(width, _font.get_string_size(rank_text, HORIZONTAL_ALIGNMENT_LEFT, -1, 10).x + 8.0)
+		var height: float = font_size + 6.0 + (15.0 if not rank_text.is_empty() else 0.0)
+		var offsets: Array[Vector2] = [Vector2(radius + 10, -height * 0.5), Vector2(-width * 0.5, -radius - height - 8), Vector2(-width * 0.5, radius + 8), Vector2(-radius - width - 10, -height * 0.5)]
+		if str(item.get("branch", "")) in ["run", "persuade"]:
+			offsets = [offsets[1], offsets[2], offsets[0], offsets[3]]
+		for offset in offsets:
+			var bounds := Rect2(point + offset, Vector2(width, height))
+			if not visible_bounds.encloses(bounds) or _label_collides(bounds, id, radius):
 				continue
-			var neighbor_point: Vector2 = _point(node_positions[neighbor_id])
-			var neighbor_width: float = _font.get_string_size(str(neighbor.get("title", neighbor_id)), HORIZONTAL_ALIGNMENT_LEFT, -1, text_size).x
-			var neighbor_bounds := Rect2(neighbor_point + Vector2(-neighbor_width * 0.5 - 4.0, radius + 22.0 - text_size), Vector2(neighbor_width + 8.0, text_size + 5.0))
-			if tier_bounds.intersects(neighbor_bounds):
-				var shift: float = neighbor_bounds.position.x - 8.0 - tier_bounds.end.x if point.x < neighbor_point.x else neighbor_bounds.end.x + 8.0 - tier_bounds.position.x
-				label_offset += shift
-				tier_bounds.position.x += shift
-		var label_position := point + Vector2(-title_width * 0.5 + label_offset, radius + 22.0)
-		canvas.draw_rect(Rect2(label_position + Vector2(-4, -text_size), Vector2(title_width + 8, text_size + 5)), INK)
-		canvas.draw_string(_font, label_position, title, HORIZONTAL_ALIGNMENT_LEFT, -1, text_size, LILAC if selected else color)
-		var tier_position: Vector2 = point + Vector2(-tier_width * 0.5 + label_offset, radius + 38)
-		canvas.draw_rect(Rect2(tier_position + Vector2(-3, -11), Vector2(tier_width + 6, 15)), INK)
-		canvas.draw_string(_font, tier_position, tier, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, LILAC if current_rank > 0 else MUTED)
+			var color: Color = WHITE if selected else LILAC if _rank(id) > 0 or _state(id) == "affordable" else MUTED
+			_label_model.append({"id": id, "rect": bounds, "text": text, "rank_text": rank_text, "font_size": font_size, "color": color})
+			_label_rects[id] = Rect2(bounds.position + graph.global_position, bounds.size)
+			break
+
+
+func _label_priority(item: Dictionary) -> int:
+	var id: String = str(item.get("id", ""))
+	if id == _hovered_id:
+		return 1000
+	if id == selected_id:
+		return 900
+	if str(item.get("branch", "")) in ["gather", "helper"]:
+		return 500 - int(item.get("ring", 1))
+	return 100 - int(item.get("ring", 1))
+
+
+func _label_collides(bounds: Rect2, own_id: String, radius: float) -> bool:
+	for label in _label_model:
+		if bounds.grow(3.0).intersects(label.rect):
+			return true
+	for id in node_positions:
+		if str(id) == own_id:
+			continue
+		var at: Vector2 = _point(node_positions[id])
+		if bounds.grow(3.0).intersects(Rect2(at - Vector2.ONE * (radius + 3.0), Vector2.ONE * (radius + 3.0) * 2.0)):
+			return true
+	return false
 
 
 func _draw_glyph(canvas: Control, at: Vector2, branch: String, color: Color) -> void:

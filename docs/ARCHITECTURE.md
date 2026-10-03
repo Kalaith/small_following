@@ -13,6 +13,7 @@ The project targets Godot 4.2.2, GDScript and Compatibility rendering. It has no
 | `scripts/gathering.gd` | Five listeners, phrase timing, conviction, local feedback and recruitment signal |
 | `scripts/progression.gd` | Catalog validation, authoritative purchase checks, stat calculations and versioned local progression |
 | `scripts/ritual_screen.gd` | Procedural ritual geometry, pan/zoom, selection, readable details and action signals |
+| `scripts/ritual_layout.gd` | Presentation-only sector placement from existing branch/ring metadata |
 | `data/upgrades.json` | Sixteen real upgrade definitions with stable IDs, per-rank effects/prices, rank limits, prerequisites and graph coordinates |
 | `scripts/village.gd` | Deterministic ground/props and collision footprints |
 | `tests/` | Isolated economy/save checks, scene integration, route simulation and rendered captures |
@@ -49,9 +50,45 @@ The original catalog core retains three branches with three nodes each. The six 
 
 `try_purchase(id, expected_rank = -1)` validates the requested node and next rank. UI requests include the selected current rank; a stale request after a previous purchase is rejected. One input buys one rank, a maximum-rank request spends nothing, and a failed candidate save grants nothing. The optional expected rank supports programmatic purchases without weakening the maximum-rank, prerequisite or affordability checks. Stats sum effects only through each saved purchased rank.
 
-The ritual computes node positions from ring radius and angle, draws the node network as the seal, and keeps selection details in stationary UI. Rank pips and labels distinguish partial and maximum ranks; details show the next price and current-to-next stat effect. Pan and zoom affect drawing and hit testing through the same coordinate conversion. The mouse wheel anchors zoom at the cursor; dragging changes pan. Recenter restores a fitted view. Do not couple node count to fixed UI slots.
+`ritual_layout.gd` maps known branches to stable presentation sectors: Words
+above, Running left, Creed right, Village lower right and Followers lower
+left. Ring metadata controls outward distance. Siblings in one branch/ring
+receive separate lanes within the sector; unfamiliar fixture branches use
+their initial catalog angle without rotating each successive tier. The view
+does not mutate catalog coordinates, effects, prices or prerequisites.
 
-A separate 144-node test fixture stresses placement, navigation and transformed selection without entering the production catalog or save. Large-scale test success does not prove that hundreds of authored upgrades will be readable or balanced. New content still needs sensible angular spacing, meaningful effects and human navigation review. Keyboard/gamepad graph traversal, filtering and search are future work.
+`ritual_screen.gd` draws this node network above quiet decorative rings and
+keeps selection details in stationary UI. The edge model distinguishes
+same-branch progress from cross-branch requirements. Main edges remain
+visible; hovering or selecting a node exposes its recursive prerequisite
+ancestry, including crosslinks, and dims unrelated main paths. Hover is a
+transient path preview and does not replace the selected purchase or details.
+The right panel still names missing prerequisites and shows the next price,
+current-to-next effect, rank and purchase state.
+
+State drawings combine brightness, fill, outline/marks and rank pips rather
+than color alone. Overview labels reduce with zoom; selected details and
+visible navigation retain access to every node. Branch summaries drive five
+buttons for production data and a dropdown when a catalog has more than six
+branches. They report owned-node and affordable-purchase counts. A separate
+node picker lists every entry in the selected branch, including locked nodes,
+and focuses the chosen node. `focus_node` centers selection at a readable zoom;
+`focus_branch` chooses a useful starting node in that branch. These operations
+do not purchase or persist anything. Pan and zoom affect drawing,
+label placement and hit testing through the same coordinate conversion. The
+mouse wheel anchors zoom at the cursor; dragging changes pan. Recenter restores
+a fitted view while preserving selection; Overview also clears selection and
+hover, leaving purchase disabled until a node is selected. Do not couple node
+count to fixed UI slots. See
+[the presentation brief](RITUAL_READABILITY.md) and
+[UI controls and review](UI_STYLE.md).
+
+A separate 144-node test fixture stresses placement, overview/detail
+navigation and transformed selection without entering the production catalog
+or save. Large-scale test success does not prove that hundreds of authored
+upgrades will be readable or balanced. New content still needs sensible
+spacing, meaningful effects and human navigation review. Keyboard/gamepad
+graph traversal, filtering and search are future work.
 
 ## Helper ownership and shared conversions
 
@@ -115,4 +152,10 @@ Run headless editor import and inspect logs, then the progression, scene and pac
 
 Route simulation drives the actual player motion/collision and round/conversation code. It can establish a timing budget and demonstrate upgraded yields; it cannot establish human reaction time or enjoyment. Rendered captures verify composition and readability, not input feel. Inspect village and ritual frames, then human-test walking, cloth at upgraded speed, graph dragging/zooming, node selection, village return and next-round controls at supported window sizes.
 
-Use the 144-node fixture for graph coverage, without saving fixture IDs into ordinary progression. Export checks become relevant once a platform and templates are selected. Record exact engine, commands, results and known environment failures in [VERIFICATION.md](VERIFICATION.md).
+Use `tests/test_ritual_readability.gd` for sector placement, contextual edges,
+hover/selection separation, label bounds and transformed navigation. Exercise
+branch and node controls on the 144-node fixture without saving its IDs into
+ordinary progression. Inspect rendered states separately from the graph-model
+checks. Export checks become relevant once a platform and templates are
+selected. Record exact engine, commands, results and known environment
+failures in [VERIFICATION.md](VERIFICATION.md).
