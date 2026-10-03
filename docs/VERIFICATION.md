@@ -801,3 +801,19 @@ The numbers 3, 18, 120 and 1250 are readable; listener popups disappear, while
 recruited-state checks remain. The 1250 payout is a capture-only fixture and
 does not change production rewards. Human play feel and alternate resolutions
 were not verified. No publishing or tool installation occurred.
+
+## 2026-10-03 - Correct horizontal arrow movement
+
+The serialized Left/Right bindings incorrectly used Right/End. They now use
+Godot's Left/Right codes. `test_key_mapping.gd` sends physical key events and
+checks actual player travel for all arrows and WASD in village, ritual and
+settings, plus End producing no movement: 25 checks, 0 failures.
+
+The installed 4.2.2 Mono engine ran all headless suites at fixed 60 fps:
+smoke 92, progression 113, pacing 59, helper 34, encounters 210, readability 73,
+demo completion 46, audio 27 and settings 27 checks, all with 0 failures.
+Merchants and the actual exit-button test also passed. Every runtime suite
+exited 0 with no diagnostic warnings/errors. Headless import still exits 1
+with the existing `_EDITOR_GET` error and cursor/Blender-path warnings.
+Test saves were isolated; no rendered or human playtest claim for this fix.
+The requested mapping tab is the next implementation slice.
