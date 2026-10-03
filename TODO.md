@@ -14,7 +14,7 @@
 - [ ] Decide further minion tasks, magic scope and whether previous towns or offline time earn income.
 - [ ] Choose production art treatment, source remaining licensed assets and replace procedural placeholders.
 - [ ] Listen to the background score, footsteps and provisional nonsense speech during opening/full-rank play; tune mix, voice character and loop transition.
-- [ ] Add volume sliders, saved audio preferences and appropriate accessibility settings beyond the session M/V toggles.
+- [ ] Add further accessibility settings and keyboard/gamepad navigation for settings; verify saved preferences and fullscreen in browser/Windows exports.
 - [ ] Complete a fresh-save playthrough in the browser and Windows exports; verify browser purchases, restart and storage recovery on each host.
 
 Use [milestones](docs/MILESTONES.md) for sequence and exit criteria. Keep this list outstanding-only; record delivered behavior and checks in the README and verification record.

@@ -17,7 +17,8 @@ The project targets Godot 4.2.2, GDScript and Compatibility rendering. It has no
 | `scripts/ritual_layout.gd` | Presentation-only sector placement from existing branch/ring metadata |
 | `data/upgrades.json` | 32 real upgrade definitions with stable IDs, per-rank effects/prices, rank limits, prerequisites and graph coordinates |
 | `scripts/village.gd` | Deterministic ground/props and collision footprints |
-| `scripts/game_audio.gd` | Promo music loop, distance-based footsteps, throttled phrase cues and session mute controls; no gameplay authority |
+| `scripts/game_audio.gd` | Promo music loop, distance-based footsteps, throttled phrase cues and per-channel sound controls; no gameplay authority |
+| `scripts/settings_screen.gd`, `scripts/settings_store.gd` | Sound/display page and independently validated preference storage; see [settings contract](SETTINGS.md) |
 | `tests/` | Isolated economy/save checks, scene integration, route simulation and rendered captures |
 | `assets/` | Project icon and original music/footstep/synthetic speech assets with provenance |
 | `docs/reference/` | Reference provenance and transfer status; never a runtime background source |

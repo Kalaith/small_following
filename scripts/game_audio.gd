@@ -1,4 +1,5 @@
 extends Node
+signal preferences_changed
 ## Presentation only: never advances speech, movement, currency or progression.
 const MUSIC = preload("res://assets/audio/village-score.ogg")
 const STEPS: Array[AudioStream] = [
@@ -25,6 +26,7 @@ var voice := AudioStreamPlayer.new()
 var output_enabled: bool = DisplayServer.get_name() != "headless"
 var muted: bool = false
 var voice_muted: bool = false
+var volumes: Dictionary = {"master": 1.0, "music": 1.0, "footsteps": 1.0, "speech": 1.0}
 var step_distance: float = 0.0
 var step_cooldown: float = 0.0
 var voice_cooldown: float = 0.0
@@ -98,6 +100,7 @@ func toggle_mute() -> void:
 	if muted:
 		footsteps.stop()
 		voice.stop()
+	preferences_changed.emit()
 
 
 func toggle_voice() -> void:
@@ -105,12 +108,34 @@ func toggle_voice() -> void:
 	_apply_levels()
 	if voice_muted:
 		voice.stop()
+	preferences_changed.emit()
+
+
+func set_volume(channel: String, value: float) -> void:
+	if not volumes.has(channel) or not is_finite(value):
+		return
+	volumes[channel] = clampf(value, 0.0, 1.0)
+	_apply_levels()
+	preferences_changed.emit()
+
+
+func apply_preferences(values: Dictionary) -> void:
+	for channel in volumes:
+		volumes[channel] = float(values[channel])
+	muted = values.muted
+	voice_muted = values.voice_muted
+	_apply_levels()
 
 
 func _apply_levels() -> void:
-	music.volume_db = -80.0 if muted else MUSIC_DB
-	footsteps.volume_db = -80.0 if muted else STEP_DB
-	voice.volume_db = -80.0 if muted or voice_muted else VOICE_DB
+	music.volume_db = _level("music", MUSIC_DB, muted)
+	footsteps.volume_db = _level("footsteps", STEP_DB, muted)
+	voice.volume_db = _level("speech", VOICE_DB, muted or voice_muted)
+
+
+func _level(channel: String, base_db: float, silent: bool) -> float:
+	var gain: float = volumes.master * volumes[channel]
+	return -80.0 if silent or gain <= 0.0 else maxf(-80.0, base_db + linear_to_db(gain))
 
 
 func _play(output: AudioStreamPlayer) -> void:

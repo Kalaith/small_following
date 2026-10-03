@@ -29,6 +29,8 @@ From the project folder, `.\Run.ps1` also launches the game; pass `-GodotExe '<i
 | Start next round | Enter / next-round button / gamepad A (bottom face button) |
 | Mute / unmute all audio | M |
 | Mute / unmute nonsense speech | V |
+| Open / close settings | Settings button / Esc |
+| Toggle fullscreen | Settings switch / F11 |
 
 Movement remains active during the ritual; Tab reveals the village between rounds. A new round returns the cultist to the starting entrance. Gamepad movement/action mappings exist but were not physically tested; graph selection and navigation currently require a mouse.
 
@@ -63,8 +65,13 @@ Short original synthetic nonsense syllables accompany completed player phrases,
 including merchant and opponent conversations. One voice and a minimum gap keep
 faster talking upgrades from stacking chatter or speeding up the samples.
 
-**M** toggles all sound and **V** toggles speech alone. These are session controls;
-volume sliders and saved preferences remain future work. Speech timbre and mix
+**M** toggles all sound and **V** toggles speech alone. **Settings / Esc** opens
+master, music, footsteps and speech volume sliders plus mute and fullscreen
+switches. **F11** also toggles fullscreen. Preferences save automatically in
+`user://settings.json`, separately from progression. Closing the page returns
+to the village or ritual; movement and the round timer continue while open.
+Between rounds, Tab closes settings and reveals the village. [Settings behavior
+and storage](docs/SETTINGS.md). Speech timbre and mix
 are provisional and need a human listening pass. [Asset provenance and rebuild
 instructions](assets/audio/README.md). Run `tests/test_audio.gd` for isolated
 audio behavior checks; a display run also checks real music playback/looping.

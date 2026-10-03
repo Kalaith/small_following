@@ -34,6 +34,15 @@ func _capture() -> void:
 	for i in range(8):
 		await process_frame
 	await save_frame("starter-runtime.png")
+	scene.set_settings_visible(true)
+	await save_frame("settings-village.png")
+	var original_size: Vector2i = root.size
+	root.size = Vector2i(1024, 768)
+	for i in range(4):
+		await process_frame
+	await save_frame("settings-compact.png")
+	root.size = original_size
+	scene.set_settings_visible(false)
 	Input.action_press("move_right")
 	for i in range(14):
 		await physics_frame
@@ -44,6 +53,9 @@ func _capture() -> void:
 	scene._update_hud()
 	scene.ritual_screen.reset_view()
 	await save_frame("starter-summary.png")
+	scene.set_settings_visible(true)
+	await save_frame("settings-ritual.png")
+	scene.set_settings_visible(false)
 	scene.ritual_screen.select_node("talk_1")
 	scene.ritual_screen.purchase_button.pressed.emit()
 	await save_frame("ritual-purchased.png")

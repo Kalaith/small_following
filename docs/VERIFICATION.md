@@ -521,3 +521,47 @@ The source Ogg fully decodes with FFmpeg. Playback state and loop behavior are
 verified, but subjective sound quality, mix and human route feel are not.
 No screen layout changed, so no new pixel captures were required. No exports,
 publishing, installation or normal-player-save writes were performed.
+
+## 2026-10-03 - Settings page and fullscreen
+
+Added the requested sound/display page, four volume sliders, two mute switches,
+fullscreen and visible Settings/Back controls. Preferences use their own
+validated, staged `user://settings.json` with backup recovery. See
+[SETTINGS](SETTINGS.md) for the screen brief, input and storage contract.
+
+Verified with the installed Godot 4.2.2 Mono / Compatibility executable:
+
+| Check | Result |
+| --- | --- |
+| Headless editor import | Exit 1, existing `_EDITOR_GET` error plus cursor/Blender-path warnings; runtime scripts load successfully |
+| `tests/test_settings.gd` headless, fixed 60 fps | 27 checks, 0 failures, exit 0 |
+| `tests/test_settings.gd` with rendering display | 29 checks, 0 failures, exit 0; actual fullscreen switch and physical F11 mapping restore windowed mode |
+| `tests/test_audio.gd` headless, fixed 60 fps | 27 checks, 0 failures, exit 0 |
+| Smoke / progression | 92 / 113 checks, 0 failures, exit 0 |
+| Pacing / helper | 59 / 34 checks, 0 failures, exit 0 |
+| Merchants / encounters | 0 failures / 206 checks with 0 failures, exit 0 |
+| Ritual readability including large fixture | 67 checks, 0 failures, exit 0 |
+| `tests/capture_starter.gd` with rendering display, fixed 60 fps | Exit 0; refreshed actual village, ritual and settings PNGs |
+
+Runtime and capture logs were inspected and contain no warnings or errors.
+Settings tests cover staged replacement, backup recovery, preserved damaged
+and future files, range/type validation, failed-save notice, independent gains,
+zero volume, switches and physical-key shortcuts. They also exercise direct
+movement, continuing round time, expiry beneath settings, Esc and Tab returns,
+blocked hidden next-round input and blocked clicks on an affordable ritual
+purchase. Test preferences use a dedicated fixture; the normal progression and
+preferences files are never loaded or written by these checks.
+
+Inspected actual [village settings](verification/settings-village.png),
+[ritual settings](verification/settings-ritual.png),
+[compact settings](verification/settings-compact.png), village HUD and ritual
+entry-button PNGs. The page has readable labels and percentage values, and its
+Back action remains outside the scrolling content. Base captures are 1280 x
+800; the compact output is 1024 x 640 after the window's aspect constraints,
+not 1024 x 768 as requested by the fixture. Further aspect ratios remain
+unverified. Existing stable captures now include the Settings entry button.
+
+Pacing remains unchanged: the practical original-core route converts all 15
+at 10.517 seconds, leaving 0.483 seconds. This is automated route evidence,
+not a human playtest. No browser/export fullscreen, storage, gamepad or
+subjective audio acceptance is claimed. No publishing or installation occurred.

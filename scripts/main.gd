@@ -6,6 +6,8 @@ const RitualScreen = preload("res://scripts/ritual_screen.gd")
 const Encounter = preload("res://scripts/encounter.gd")
 const Helper = preload("res://scripts/helper.gd")
 const GameAudio = preload("res://scripts/game_audio.gd")
+const SettingsStore = preload("res://scripts/settings_store.gd")
+const SettingsScreen = preload("res://scripts/settings_screen.gd")
 const ROUND_SECONDS: float = 11.0
 const START_POSITION := Vector2(780, 680)
 const BASE_RUN_SPEED: float = 180.0
@@ -15,6 +17,11 @@ var save_path_override: String = ""
 var catalog_ready: bool = false
 var progression = Progression.new()
 var game_audio = GameAudio.new()
+var settings = SettingsStore.new()
+var settings_path_override: String = ""
+var settings_screen: Control
+var settings_button: Button
+var settings_timer: Timer
 var groups: Array[Node2D] = []
 var added_gatherings: Dictionary = {}
 var encounter: Node2D = null
@@ -43,8 +50,15 @@ var ritual_screen: Control
 
 
 func _ready() -> void:
+	# Existing isolated scene tests must also avoid the normal preferences file.
+	settings.save_enabled = persistence_enabled and (save_path_override.is_empty() or not settings_path_override.is_empty())
+	if not settings_path_override.is_empty():
+		settings.path = settings_path_override
+	settings.load_settings()
+	game_audio.apply_preferences(settings.values)
 	game_audio.name = "GameAudio"
 	add_child(game_audio)
+	game_audio.preferences_changed.connect(_audio_preferences_changed)
 	player.moved.connect(game_audio.on_motion)
 	progression.save_enabled = persistence_enabled
 	if not save_path_override.is_empty():
@@ -61,6 +75,9 @@ func _ready() -> void:
 	_add_gathering("Garden club", Vector2(850, 850))
 	_build_hud()
 	_build_ritual()
+	_build_settings()
+	if settings.values.fullscreen and not OS.has_feature("web"):
+		set_fullscreen(true)
 	apply_upgrades()
 	_reset_encounter()
 	_update_hud()
@@ -87,21 +104,129 @@ func _add_gathering(title: String, at: Vector2, merchant: bool = false) -> void:
 func _process(delta: float) -> void:
 	advance_round(delta)
 	_update_hud()
+	if DisplayServer.get_name() != "headless" and settings.values.fullscreen != is_fullscreen():
+		settings.values.fullscreen = is_fullscreen()
+		_queue_settings_save()
+	if settings_screen.visible:
+		_refresh_settings()
+
+
+func _input(event: InputEvent) -> void:
+	if event.is_echo():
+		return
+	if event.is_action_pressed("toggle_settings"):
+		set_settings_visible(not settings_screen.visible)
+		get_viewport().set_input_as_handled()
+	elif event.is_action_pressed("toggle_fullscreen"):
+		set_fullscreen(not is_fullscreen())
+		get_viewport().set_input_as_handled()
+	elif settings_screen.visible and event.is_action_pressed("toggle_ritual") and not round_active:
+		set_settings_visible(false)
+		set_ritual_visible(false)
+		get_viewport().set_input_as_handled()
 
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_echo():
 		return
-	if event.is_action_pressed("next_round"):
+	if event.is_action_pressed("toggle_audio"):
+		game_audio.toggle_mute()
+	elif event.is_action_pressed("toggle_voice"):
+		game_audio.toggle_voice()
+	elif settings_screen.visible:
+		return
+	elif event.is_action_pressed("next_round"):
 		start_next_round()
 	elif event.is_action_pressed("buy_upgrade") and ritual_screen.visible:
 		purchase_upgrade(ritual_screen.selected_id, ritual_screen.get_selected_rank())
 	elif event.is_action_pressed("toggle_ritual") and not round_active:
 		set_ritual_visible(not ritual_screen.visible)
-	elif event.is_action_pressed("toggle_audio"):
-		game_audio.toggle_mute()
-	elif event.is_action_pressed("toggle_voice"):
-		game_audio.toggle_voice()
+
+
+func is_fullscreen() -> bool:
+	return get_window().mode in [Window.MODE_FULLSCREEN, Window.MODE_EXCLUSIVE_FULLSCREEN]
+
+
+func set_fullscreen(enabled: bool) -> void:
+	if DisplayServer.get_name() == "headless":
+		return
+	get_window().mode = Window.MODE_FULLSCREEN if enabled else Window.MODE_WINDOWED
+	settings.values.fullscreen = is_fullscreen()
+	_queue_settings_save()
+
+
+func set_settings_visible(value: bool) -> void:
+	settings_screen.visible = value
+	settings_button.visible = not value
+	if value:
+		var focused := get_viewport().gui_get_focus_owner()
+		if focused != null:
+			focused.release_focus()
+		_refresh_settings()
+	elif not settings_timer.is_stopped():
+		_save_settings()
+
+
+func _audio_preferences_changed() -> void:
+	for channel in game_audio.volumes:
+		settings.values[channel] = game_audio.volumes[channel]
+	settings.values.muted = game_audio.muted
+	settings.values.voice_muted = game_audio.voice_muted
+	_queue_settings_save()
+
+
+func _queue_settings_save() -> void:
+	settings_timer.start()
+	_refresh_settings()
+
+
+func _save_settings() -> void:
+	settings_timer.stop()
+	settings.save_settings()
+	_refresh_settings()
+
+
+func _refresh_settings() -> void:
+	var message: String = settings.last_error
+	if message.is_empty():
+		message = "Saving preferences..." if not settings_timer.is_stopped() else "Preferences saved automatically."
+	settings_screen.refresh(game_audio, is_fullscreen(), message)
+
+
+func _exit_tree() -> void:
+	if is_instance_valid(settings_timer) and not settings_timer.is_stopped():
+		settings.save_settings()
+
+
+func _build_settings() -> void:
+	settings_timer = Timer.new()
+	settings_timer.one_shot = true
+	settings_timer.wait_time = 0.4
+	settings_timer.timeout.connect(_save_settings)
+	add_child(settings_timer)
+	var canvas := CanvasLayer.new()
+	canvas.name = "Settings"
+	canvas.layer = 10
+	add_child(canvas)
+	settings_button = Button.new()
+	settings_button.text = "Settings  ·  Esc"
+	settings_button.focus_mode = Control.FOCUS_NONE
+	canvas.add_child(settings_button)
+	settings_button.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
+	settings_button.offset_left = -176
+	settings_button.offset_right = -26
+	settings_button.offset_top = 98
+	settings_button.offset_bottom = 136
+	settings_button.pressed.connect(set_settings_visible.bind(true))
+	settings_screen = SettingsScreen.new()
+	canvas.add_child(settings_screen)
+	for state in ["normal", "hover", "pressed"]:
+		settings_button.add_theme_stylebox_override(state, settings_screen.close_button.get_theme_stylebox(state))
+	settings_screen.close_requested.connect(set_settings_visible.bind(false))
+	settings_screen.volume_changed.connect(game_audio.set_volume)
+	settings_screen.mute_requested.connect(game_audio.toggle_mute)
+	settings_screen.voice_mute_requested.connect(game_audio.toggle_voice)
+	settings_screen.fullscreen_requested.connect(set_fullscreen)
 
 
 func advance_round(delta: float) -> void:

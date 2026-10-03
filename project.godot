@@ -58,3 +58,11 @@ toggle_voice={
 "deadzone": 0.2,
 "events": [Object(InputEventKey,"physical_keycode":86)]
 }
+toggle_settings={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"physical_keycode":4194305)]
+}
+toggle_fullscreen={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"physical_keycode":4194342)]
+}

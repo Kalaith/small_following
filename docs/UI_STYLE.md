@@ -17,8 +17,10 @@ input/feedback in the design proposal. The current baseline is:
 | Ritual overview | Find a branch or major unlock, then inspect it | Ordered purple sectors and main progression paths | Branch identity, purchase-state cues and visible navigation | Focus/zoom reveals more labels; selection opens full details |
 | Ritual selection | Compare the next rank and buy if useful, or start another round | Selected node, prerequisite ancestry and stationary details | Wallet, rank, current-to-next effect, cost and missing requirements | Unrelated cross-branch paths appear only when relevant |
 | Village between rounds | Walk and inspect, return to ritual or start next round | Visible village with earning stopped | Round-complete state and Tab/Enter guidance | Ritual details return with the ritual |
+| Settings | Adjust sound/fullscreen, then return | Centered violet utility panel | Percentages, switches, save status and continuing-timer reminder | Game/upgrade details remain behind the dimmed backdrop |
 
-There is no implemented title screen, settings screen or town selector.
+The settings screen brief and transitions are documented in [SETTINGS](SETTINGS.md).
+There is no implemented title screen or town selector.
 Describe new screens as proposals until built and verified.
 
 ## 2. Composition and information hierarchy

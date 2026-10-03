@@ -122,7 +122,11 @@ helper remains silent. One voice, unchanged sample pitch and a 0.65-second
 minimum onset gap drop excess cues without changing any gameplay phrases.
 Music fades at the end of its full 72-second piece before repeating. Mix, timbre,
 40-pixel footstep spacing and the 0.14-second step limit remain provisional.
-M toggles all audio; V toggles speech alone, for the current session.
+M toggles all audio; V toggles speech alone. The requested settings page
+(2026-10-03) now provides separate master/music/footsteps/speech sliders,
+mute switches and fullscreen. Esc opens/closes the page; F11 toggles fullscreen.
+Preferences persist separately from progression. Movement and the timer remain
+active, with this behavior explained on the page. [Scope and screen brief](SETTINGS.md).
 
 ## First-map finale
 
