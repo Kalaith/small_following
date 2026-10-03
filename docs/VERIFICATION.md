@@ -862,3 +862,37 @@ updated movement/shortcut hints.
 
 Human movement feel, physical gamepads, keyboard layouts and exported browser
 storage/input remain unverified. No publishing or tool installation occurred.
+
+## 2026-10-03 - Publish audio, settings and ritual update
+
+Published source commit `f8dcb75` as version `2026.10.03-f8dcb75`, including
+the background score, footsteps, speech, saved sound/display settings, keyboard
+mapping and composed ritual diagram. Release artifacts are retained under
+ignored `builds/publish/8962f0edeedc49c9bae139842fa22208`.
+
+- Web and Windows exports completed successfully with standard Godot 4.2.2.
+  Export logs contain only the existing cursor/unused Blender warnings.
+- Published through `publish.ps1 -SkipBuild -FTP` to local production and
+  the existing WebHatchery game directory. The live page returns HTTP 200 with
+  both isolation headers. Its downloaded `index.pck` matches the release
+  SHA-256 `7321A5DA5C353909200E7203EADC5D1638FE08525A0EBC423AD7998E6A22F68A`.
+  The Windows download returns HTTP 200, 27,316,147 bytes. An outer command
+  wrapper incorrectly reported failure from an unset native exit code after
+  the FTP script succeeded; the live file comparison confirms deployment.
+- Butler confirms processing complete for HTML5 build **2057540** and Windows
+  build **2057542**, both version `2026.10.03-f8dcb75`. Existing itch uploads
+  and page settings were retained.
+- All twelve existing headless runtime suites passed with no error/warning
+  diagnostics. Publisher fixtures passed 22 checks. Standalone Mono import
+  retains its documented exit-1 `_EDITOR_GET` error.
+- Display checks passed: audio 28, settings 29 and key mapping 73 checks.
+  The capture script exited 0; actual ritual, sound settings and key mapping
+  PNGs were inspected. The practical original-core route still completed 15
+  conversions in 10.517 seconds, leaving 0.483 seconds. These repeat captures
+  were not retained as new release artwork. The exported Windows progression
+  suite passed 113 checks using isolated fixtures.
+
+The user requested fewer unnecessary/display checks during publication. After
+that correction, verification was limited to live delivery and Butler status;
+no additional gameplay tests ran. No new live browser playthrough or subjective
+audio acceptance is claimed. No tools, shared catalogs or Git remotes changed.
