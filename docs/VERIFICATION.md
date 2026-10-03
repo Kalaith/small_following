@@ -455,3 +455,24 @@ No service startup, package installation, publishing or game export occurred.
   blocking warnings; no missing-script/resource error was observed.
 - Human feel, a complete exported playthrough and browser storage recovery
   remain outstanding. No gameplay or screen code changed in this slice.
+
+## First live deployment, 2026-10-03
+
+- Published the verified build to the configured WSL preview folder and
+  `F:/WebHatchery/games/small_following`, then uploaded this game's files to
+  `/public_html/games/small_following` through the existing FTP account.
+- Live browser game: https://webhatchery.au/games/small_following/ . HTTP 200;
+  both isolation headers are present. WASM is `application/wasm`, HTTP 200.
+  Windows ZIP is HTTP 200, 26,627,450 bytes. Chrome renders the actual village.
+- Butler uploaded version `2026.10.03`: HTML5 build 2056421 / upload 19534645,
+  Windows build 2056422 / upload 19534649. Both report processing complete.
+- https://kalaith.itch.io/small-following is public (unauthenticated HTTP 200).
+  Configured HTML kind, playable HTML5 channel, 1280 x 800 embed, fullscreen
+  button and SharedArrayBuffer support. Windows remains a separate download.
+  Recorded AI-generated code in itch's disclosure. Existing description,
+  donation pricing and release-status setting were preserved.
+- Inspected actual itch gameplay and round-complete ritual rendering; clicking
+  Begin next round returns to an active village round. Proof:
+  [published itch page](verification/published-itch.jpg).
+- No shared WebHatchery catalog, Git remote or other game was modified.
+  Full exported playthrough and browser storage recovery remain outstanding.
