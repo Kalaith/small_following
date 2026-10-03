@@ -151,6 +151,10 @@ For visual changes, run with a rendering display and inspect the PNGs:
 The capture script disables progression persistence and writes actual viewport
 frames. Store evidence directly in `docs/verification/`, reusing the stable
 filename for the same state. Wait for capture completion before inspecting it.
+For changes confined to the ritual, append `--ritual-only` after `--` to capture
+the 15 seal, purchase, completion, prerequisite and fixture states without
+replaying the unrelated village sequence. The full sequence remains available
+for village or broader interaction changes.
 If launching a background helper through `Start-Process`, use a hidden window
 unless the user needs an interactive one.
 

@@ -45,7 +45,7 @@ The branch selector shows owned nodes/total nodes and ready purchase counts for 
 - A directly movable purple cultist with normalized diagonal speed, world bounds and visibly trailing cloth.
 - Three initial nonblocking gatherings of five listeners each, plus two purchasable gatherings, with local speech feedback and recruitment/donation events.
 - **Provisional 11-second rounds**, tuned toward roughly three opening conversions through travel and conversation time. There is no three-recruit cap; [pacing evidence and assumptions](docs/PACING.md) explain the limit and upgraded comparisons.
-- A large purple occult upgrade circle: 32 nodes across six rings, retaining second ranks on the three original tier-III nodes. Eight evenly spaced branch sectors fill the circle through gentle outward fans: Words above, Running left, Creed right, Merchants upper left, Trials upper right, and Village, Followers and Faith below. Quiet decoration, contextual prerequisite paths and shape/fill state cues support the existing rank details.
+- A large purple occult upgrade circle with 32 nodes across six catalog tiers, retaining second ranks on the three original tier-III nodes. Eight authored branch constellations give Words a crescent, Running a broad left hook, Merchants a compact loop, Trials a diagonal fork, Creed a right curl, Faith a lower fork, Village a diagonal pair and Followers a small satellite. Contextual prerequisite paths and shape/fill state cues retain readable rank details.
 - Three distinct upgrade effects: initial talking ranks each add 20% of base phrase frequency, persuasion ranks add 0.5 conviction per phrase, and running ranks add 15% of base movement speed. The outer talking node's second rank adds 30% of base frequency. Initial node prices remain 6, 9 and 12 donations per branch; each outer node's second rank costs 18.
 - Full ranks on the original nine nodes produce 1.9 phrases/second, 3 conviction/phrase and 288 pixels/second movement. The balance target is all 15 listeners across the three groups with a small positive margin on a competent route inside the unchanged 11-second round; [route evidence](docs/PACING.md) records actual timings and limitations.
 - Versioned local progression retaining currency, purchased ranks, the recruitment-event total and round number. Existing single-purchase saves keep each old purchase as rank 1.
@@ -67,13 +67,15 @@ independent of convincing the Priest. A future update will use this centre to
 reach a new area's separate circle; no second area is implemented here.
 [Completion scope and controls](docs/RITUAL_COMPLETION.md).
 
-The outward spacing pass is an interim layout, not the accepted final art
-direction. The requested redesign is a composed purple magical ritual seal:
-coherent concentric rings, sigils and interlocking geometric motifs with the
-existing upgrade nodes integrated into the composition. Decoration must stay
-quiet and interactions and prerequisite paths clear. Redesign is pending
-actual pixel inspection of the three new references; supported Windows
-Library materialization remains blocked. The completed centre remains implemented.
+The seal now uses authored branch constellations in place of the interim
+even-spacing layout, with nested inscription bands, a ticked rim, broken
+arcs, offset satellite motifs and a central pentagram medallion. Ornament stays
+below real paths and state cues; the centre's strong illumination still requires
+every rank. The parent agent inspected all three new references and
+supplied the visual brief; their originals remain unavailable on this Windows
+executor. Local verification uses rendered application captures. This is an
+independently drawn interpretation, with human art-direction acceptance still
+outstanding. The completed centre and all progression rules are preserved.
 
 ## Audio
 
@@ -130,7 +132,7 @@ These captures come from the running scene with deterministic test setup; they a
 
 ![Actual village viewport with procedural placeholder art](docs/verification/starter-runtime.png)
 
-![Actual purple ritual upgrade screen](docs/verification/starter-summary.png)
+![Actual composed purple ritual seal](docs/verification/ritual-seal-entry.png)
 
 Expansion evidence: [five gatherings](docs/verification/village-expanded.png), [helper speaking](docs/verification/helper-speaking.png), [helper inscription](docs/verification/ritual-helper.png) and [locked final tier](docs/verification/ritual-expansion-locked.png).
 
@@ -170,7 +172,12 @@ $godotExe = 'C:\Program Files\Godot\Godot_v4.2.2-stable_mono_win64_console.exe'
 & $godotExe --fixed-fps 60 --path . --script res://tests/capture_starter.gd -- "--capture-dir=$PWD\docs\verification"
 ```
 
-The tests cover movement/cloth/collision, speech timing, round transitions, distinct rank effects, purchase guards, old-save migration and local-save validation/recovery. The readability suite exercises branch sectors, prerequisite ancestry, hover versus selection, navigation and transformed graph picking; rendered inspection checks the actual layout. The completion suite covers catalog-derived readiness, final-rank purchase, saved-rank reload, centre activation and dismissal independently of priest victory. Route tests drive the real scene at a fixed simulated timestep and count complete individual conversions, including full-rank completion time and remaining margin. Captures require a rendering display; headless tests cannot verify pixels. Human movement feel, pacing and large-graph navigation still need playtesting.
+For a ritual-only visual change, append `--ritual-only` after the capture
+command's `--`. It produces the 15 targeted seal, completion, prerequisite and
+large-fixture frames without replaying unrelated village captures. Run it with
+a rendering display; use a hidden window for unattended capture.
+
+The tests cover movement/cloth/collision, speech timing, round transitions, distinct rank effects, purchase guards, old-save migration and local-save validation/recovery. The readability suite exercises authored constellations and generic fixture placement, prerequisite ancestry, hover versus selection, navigation and transformed graph picking; rendered inspection checks the actual layout. The completion suite covers catalog-derived readiness, final-rank purchase, saved-rank reload, centre activation and dismissal independently of priest victory. Route tests drive the real scene at a fixed simulated timestep and count complete individual conversions, including full-rank completion time and remaining margin. Captures require a rendering display; headless tests cannot verify pixels. Human movement feel, pacing and large-graph navigation still need playtesting.
 
 Exact latest check counts, rendered inspection results and commands are recorded in [VERIFICATION.md](docs/VERIFICATION.md). The installed Mono build previously returned an `_EDITOR_GET` / `EditorSettings` error during headless editor import and exit 1 during automatic shutdown without a runtime diagnostic. Keep those environment results separate from successful script/runtime tests; do not describe import as clean unless a new run establishes that.
 

@@ -18,7 +18,8 @@ const FIRST_RING: float = 112.0
 const NODE_RADIUS: float = 26.0
 const MIN_ZOOM: float = 0.025
 const MAX_ZOOM: float = 2.4
-const CORE_RADIUS: float = 42.0
+const CORE_RADIUS: float = 66.0
+const CORE_ORNAMENT_RADIUS: float = 82.0
 const Layout = preload("res://scripts/ritual_layout.gd")
 
 class GraphCanvas extends Control:
@@ -108,9 +109,8 @@ func configure(catalog: Array, progression: RefCounted) -> void:
 		if id.is_empty():
 			continue
 		_by_id[id] = item
-		var ring: int = maxi(1, int(item.get("ring", 1)))
-		var radius: float = FIRST_RING + (ring - 1) * RING_STEP
-		_max_radius = maxf(radius, _max_radius)
+		# Authored constellations need not share the catalog's nominal ring radius.
+		_max_radius = maxf(node_positions.get(id, Vector2.ZERO).length(), _max_radius)
 	if not _by_id.has(selected_id):
 		selected_id = str(_catalog[0].get("id", "")) if not _catalog.is_empty() else ""
 	if _built:
@@ -144,7 +144,7 @@ func update_state(round_recruits: int = 0) -> void:
 	var cost: int = _next_cost(selected_id)
 	var branch: String = str(item.get("branch", ""))
 	var branch_name: String = {"talk": "THE VOICE", "persuade": "THE CONVICTION", "run": "THE PILGRIM", "gather": "THE VILLAGE", "helper": "THE COMPANION", "merchant": "THE MERCHANT", "trial": "THE TRIALS", "faith": "THE FAITH"}.get(branch, "THE CIRCLE")
-	_branch_label.text = "%s  /  RING %s" % [branch_name, _roman(int(item.get("ring", 1)))]
+	_branch_label.text = "%s  /  TIER %s" % [branch_name, _roman(int(item.get("ring", 1)))]
 	_node_title.text = str(item.get("title", "Choose an inscription"))
 	_rank_label.text = "RANK %d / %d  %s" % [_displayed_rank, rank_limit, "- COMPLETE" if state == "purchased" else ""]
 	_effect_label.text = _effect_text(selected_id, branch, state == "purchased")
@@ -224,7 +224,7 @@ func get_visible_edges() -> Array[Dictionary]:
 			var relevant: bool = path.has(id) and path.has(from)
 			if cross and not relevant:
 				continue
-			var alpha: float = 0.9 if relevant else 0.21 if not path.is_empty() else 0.54
+			var alpha: float = 0.9 if relevant else 0.21 if not path.is_empty() else 0.64
 			result.append({"from": from, "to": id, "kind": "cross" if cross else "main", "relevant": relevant, "alpha": alpha, "focused": relevant, "cross_branch": cross})
 	return result
 
@@ -353,7 +353,8 @@ func pan_by(delta: Vector2) -> void:
 func reset_view() -> void:
 	if not is_instance_valid(graph):
 		return
-	zoom = clampf(minf(graph.size.x, graph.size.y) / ((_max_radius + 54.0) * 2.0), MIN_ZOOM, 1.0)
+	# Reserve the inscription rim, outward ticks and a little breathing room.
+	zoom = clampf(minf(graph.size.x, graph.size.y) / ((_max_radius + 64.0) * 2.0), MIN_ZOOM, 1.0)
 	pan = Vector2.ZERO
 	_hovered_id = ""
 	graph.queue_redraw()
@@ -767,38 +768,35 @@ func _point(world: Vector2) -> Vector2:
 
 
 func _draw_graph(canvas: Control) -> void:
-	var center: Vector2 = _point(Vector2.ZERO)
-	var rings: Dictionary = {}
-	for item in _catalog:
-		rings[int(item.get("ring", 1))] = true
-	# Rings give depth and orientation; only real progress edges form the graph.
-	for key in rings:
-		_arc(canvas, center, FIRST_RING + (int(key) - 1) * RING_STEP, Color(0.52, 0.36, 0.68, 0.14), 1.0)
-	var outer: float = _max_radius + 31.0
-	_arc(canvas, center, outer, Color(0.60, 0.43, 0.78, 0.25), 1.0)
-	_draw_runes(canvas, outer + 8.0)
+	_draw_seal_backdrop(canvas)
 	var path: Dictionary = get_focus_path()
 	for edge in get_visible_edges():
-		var from: Vector2 = _point(node_positions[edge.from])
-		var to: Vector2 = _point(node_positions[edge.to])
-		var direction: Vector2 = from.direction_to(to)
+		# Authored bends keep real requirements from implying links through other nodes.
+		var route: PackedVector2Array = Layout.edge_path(edge.from, edge.to, node_positions)
+		for index in range(route.size()):
+			route[index] = _point(route[index])
+		if route.size() < 2:
+			continue
 		var radius: float = _node_radius()
-		from += direction * (radius + 3.0)
-		to -= direction * (radius + 3.0)
+		route[0] += route[0].direction_to(route[1]) * (radius + 3.0)
+		var last: int = route.size() - 1
+		var direction: Vector2 = route[last - 1].direction_to(route[last])
+		route[last] -= direction * (radius + 3.0)
 		var color := Color(LILAC if edge.relevant else VIOLET, float(edge.alpha))
 		if edge.cross_branch:
 			# A dashed cross-branch link differs from the permanent branch spine.
-			canvas.draw_dashed_line(from, to, color, 1.5, 7.0, true)
+			for index in range(last):
+				canvas.draw_dashed_line(route[index], route[index + 1], color, 1.5, 7.0, true)
 		else:
-			canvas.draw_line(from, to, color, 2.2 if edge.relevant else 1.5, true)
-		if edge.relevant and from.distance_to(to) > 20.0:
-			var tip: Vector2 = to - direction * 6.0
+			canvas.draw_polyline(route, color, 2.2 if edge.relevant else 1.5, true)
+		if edge.relevant and route[last - 1].distance_to(route[last]) > 20.0:
+			var tip: Vector2 = route[last] - direction * 6.0
 			canvas.draw_polyline(PackedVector2Array([tip - direction.rotated(-0.55) * 7.0, tip, tip - direction.rotated(0.55) * 7.0]), color, 1.2, true)
 	for item in _catalog:
 		if item.get("requires", []).is_empty():
 			var at: Vector2 = node_positions[str(item.id)]
 			var alpha: float = 0.46 if path.has(str(item.id)) or path.is_empty() else 0.14
-			canvas.draw_line(_point(at.normalized() * 47.0), _point(at - at.normalized() * NODE_RADIUS), Color(VIOLET, alpha), 1.0, true)
+			canvas.draw_line(_point(at.normalized() * (CORE_ORNAMENT_RADIUS + 6.0)), _point(at - at.normalized() * NODE_RADIUS), Color(VIOLET, alpha), 1.0, true)
 	_draw_core(canvas)
 	for item in _catalog:
 		_draw_node(canvas, item)
@@ -819,15 +817,71 @@ func _arc(canvas: Control, center: Vector2, radius: float, color: Color, width: 
 	canvas.draw_arc(center, radius * zoom, 0.0, TAU, 180, color, width, true)
 
 
+func _draw_seal_backdrop(canvas: Control) -> void:
+	# These bands and satellites are ornament, never extra upgrade connections.
+	# Their contrast stays below the solid/dashed catalog edges drawn afterward.
+	var center: Vector2 = _point(Vector2.ZERO)
+	var outer: float = _max_radius + 31.0
+	_arc(canvas, center, outer, Color(LILAC, 0.32), 1.0)
+	_arc(canvas, center, outer - 12.0, Color(VIOLET, 0.20), 1.0)
+	_arc(canvas, center, outer - 27.0, Color(VIOLET, 0.15), 1.0)
+	_draw_runes(canvas, outer - 19.0)
+	for index in range(96):
+		var angle: float = TAU * index / 96.0
+		var radial: Vector2 = Vector2.from_angle(angle)
+		var major: bool = index % 8 == 0
+		canvas.draw_line(_point(radial * (outer + 3.0)), _point(radial * (outer + (12.0 if major else 7.0))), Color(LILAC, 0.31 if major else 0.14), 1.0, true)
+	# Broken inner bands leave deliberate breathing room around the constellations.
+	for index in range(3):
+		var radius: float = outer * [0.40, 0.62, 0.80][index]
+		var phase: float = [-0.20, 0.12, -0.08][index]
+		for segment in range(4):
+			var start: float = phase + segment * PI * 0.5
+			canvas.draw_arc(center, radius * zoom, start, start + PI * 0.32, 45, Color(VIOLET, 0.10), 1.0, true)
+			canvas.draw_arc(center, (radius + 6.0) * zoom, start + 0.07, start + PI * 0.26, 40, Color(VIOLET, 0.055), 1.0, true)
+	for seal in Layout.satellite_seals(_catalog):
+		_draw_satellite(canvas, seal)
+
+
+func _draw_satellite(canvas: Control, seal: Dictionary) -> void:
+	var origin: Vector2 = seal.center
+	var center: Vector2 = _point(origin)
+	var radius: float = float(seal.radius)
+	var motif: String = str(seal.get("motif", "rings"))
+	_arc(canvas, center, radius, Color(VIOLET, 0.24), 1.0)
+	_arc(canvas, center, radius - 8.0, Color(LILAC, 0.10), 1.0)
+	if motif == "spiral":
+		var spiral := PackedVector2Array()
+		for index in range(81):
+			var fraction: float = index / 80.0
+			var angle: float = -0.5 + fraction * TAU * 1.45
+			spiral.append(_point(origin + Vector2.from_angle(angle) * lerpf(radius * 0.16, radius * 0.84, fraction)))
+		canvas.draw_polyline(spiral, Color(VIOLET, 0.11), 1.0, true)
+	elif motif == "petals":
+		for index in range(4):
+			var petal: Vector2 = origin + Vector2.from_angle(index * PI * 0.5) * radius * 0.20
+			_arc(canvas, _point(petal), radius * 0.49, Color(VIOLET, 0.15), 1.0)
+	else:
+		_arc(canvas, center, radius * 0.57, Color(VIOLET, 0.11), 1.0)
+		var diamond := PackedVector2Array()
+		for index in range(5):
+			diamond.append(_point(origin + Vector2.from_angle(PI * 0.25 + index * PI * 0.5) * radius * 0.77))
+		canvas.draw_polyline(diamond, Color(VIOLET, 0.12), 1.0, true)
+	for index in range(8):
+		var radial: Vector2 = Vector2.from_angle(index * PI * 0.25)
+		canvas.draw_line(_point(origin + radial * (radius + 2.0)), _point(origin + radial * (radius + 6.0)), Color(LILAC, 0.20), 1.0, true)
+
+
 func _draw_runes(canvas: Control, radius: float) -> void:
-	var count: int = mini(192, maxi(48, int(radius / 5.0)))
+	# A repeated invented inscription alphabet, deliberately regular rather than noise.
+	var count: int = 32
 	for index in range(count):
 		var angle: float = TAU * index / float(count)
 		var radial: Vector2 = Vector2.from_angle(angle)
 		var tangent: Vector2 = radial.orthogonal()
 		var at: Vector2 = radial * radius
-		var color := Color(0.70, 0.47, 0.9, 0.23 if index % 3 == 0 else 0.12)
-		canvas.draw_line(_point(at - radial * 3.7), _point(at + radial * 3.7), color, 1.0, true)
+		var color := Color(LILAC, 0.25)
+		canvas.draw_line(_point(at - radial * 4.0), _point(at + radial * 4.0), color, 1.0, true)
 		if index % 3 == 0:
 			canvas.draw_line(_point(at + radial * 2.5), _point(at + tangent * 3.0), color, 1.0, true)
 		elif index % 3 == 1:
@@ -838,17 +892,29 @@ func _draw_core(canvas: Control) -> void:
 	var center: Vector2 = _point(Vector2.ZERO)
 	var complete: bool = is_circle_complete()
 	var radius: float = maxf(CORE_RADIUS * zoom, 18.0) if complete else CORE_RADIUS * zoom
+	# The medallion masks decorative lines; bright illumination is completion-only.
+	canvas.draw_circle(center, maxf(CORE_ORNAMENT_RADIUS * zoom, radius + 4.0), INK)
 	if complete:
-		for index in range(4, 0, -1):
+		for index in range(5, 0, -1):
 			canvas.draw_circle(center, radius + index * 3.0, Color(VIOLET, 0.045))
-	canvas.draw_circle(center, radius, Color("674196") if complete else Color("17101f"))
-	canvas.draw_arc(center, radius, 0.0, TAU, 64, Color(WHITE if _core_hovered else LILAC, 1.0) if complete else Color(VIOLET, 0.18), 2.0 if complete else 1.0, true)
-	# Quiet while incomplete; the same seal becomes a bright, clickable demo gate.
+	canvas.draw_circle(center, radius, Color("593b7c") if complete else Color("1d1429"))
+	var edge: Color = WHITE if complete and _core_hovered else LILAC if complete else Color(LILAC, 0.47)
+	canvas.draw_arc(center, radius, 0.0, TAU, 96, edge, 1.8 if complete else 1.0, true)
+	canvas.draw_arc(center, radius * 0.82, 0.0, TAU, 96, Color(LILAC, 0.60 if complete else 0.21), 1.0, true)
+	_arc(canvas, center, CORE_ORNAMENT_RADIUS, Color(LILAC, 0.78 if complete else 0.22), 1.0)
+	_arc(canvas, center, CORE_ORNAMENT_RADIUS - 5.0, Color(VIOLET, 0.50 if complete else 0.15), 1.0)
+	for index in range(20):
+		var radial: Vector2 = Vector2.from_angle(-PI * 0.5 + index * TAU / 20.0)
+		canvas.draw_line(_point(radial * (CORE_RADIUS + 4.0)), _point(radial * (CORE_ORNAMENT_RADIUS - (6.0 if index % 4 == 0 else 10.0))), Color(LILAC, 0.80 if complete else 0.30), 1.0, true)
+	# A crisp pentagram and five small rim marks make the central source legible.
 	var star := PackedVector2Array()
 	for index in range(6):
-		var angle: float = PI * 0.5 + TAU * ((index * 2) % 5) / 5.0
-		star.append(center + Vector2.from_angle(angle) * radius * 0.64)
-	canvas.draw_polyline(star, WHITE if complete else Color(VIOLET, 0.25), 1.6 if complete else 1.0, true)
+		var angle: float = -PI * 0.5 + TAU * ((index * 2) % 5) / 5.0
+		star.append(center + Vector2.from_angle(angle) * radius * 0.66)
+	canvas.draw_polyline(star, WHITE if complete else Color(LILAC, 0.48), 1.7 if complete else 1.1, true)
+	for index in range(5):
+		var radial: Vector2 = Vector2.from_angle(-PI * 0.5 + index * TAU / 5.0)
+		canvas.draw_circle(center + radial * radius * 0.90, 1.8 if complete else 1.2, edge)
 
 
 func _draw_node(canvas: Control, item: Dictionary) -> void:
@@ -959,6 +1025,9 @@ func _label_priority(item: Dictionary) -> int:
 
 
 func _label_collides(bounds: Rect2, own_id: String, radius: float) -> bool:
+	var core_radius: float = CORE_ORNAMENT_RADIUS * zoom + 4.0
+	if bounds.intersects(Rect2(_point(Vector2.ZERO) - Vector2.ONE * core_radius, Vector2.ONE * core_radius * 2.0)):
+		return true
 	for label in _label_model:
 		if bounds.grow(3.0).intersects(label.rect):
 			return true

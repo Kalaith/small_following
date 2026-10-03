@@ -14,7 +14,7 @@ The project targets Godot 4.2.2, GDScript and Compatibility rendering. It has no
 | `scripts/encounter.gd` | Opponent arrival, objections, conviction decay and one victory signal |
 | `scripts/progression.gd` | Catalog validation, authoritative purchase checks, stat calculations and versioned local progression |
 | `scripts/ritual_screen.gd` | Procedural ritual geometry, pan/zoom, selection, readable details and action signals |
-| `scripts/ritual_layout.gd` | Presentation-only sector placement from existing branch/ring metadata |
+| `scripts/ritual_layout.gd` | Authored production-node positions and satellite envelopes; generic branch/ring placement for other content |
 | `data/upgrades.json` | 32 real upgrade definitions with stable IDs, per-rank effects/prices, rank limits, prerequisites and graph coordinates |
 | `scripts/village.gd` | Deterministic ground/props and collision footprints |
 | `scripts/game_audio.gd` | Promo music loop, distance-based footsteps, throttled phrase cues and per-channel sound controls; no gameplay authority |
@@ -53,14 +53,20 @@ The original catalog core retains three branches with three nodes each. The six 
 
 `try_purchase(id, expected_rank = -1)` validates the requested node and next rank. UI requests include the selected current rank; a stale request after a previous purchase is rejected. One input buys one rank, a maximum-rank request spends nothing, and a failed candidate save grants nothing. The optional expected rank supports programmatic purchases without weakening the maximum-rank, prerequisite or affordability checks. Stats sum effects only through each saved purchased rank.
 
-`ritual_layout.gd` maps the eight known branches to evenly spaced presentation
-sectors: Words above, Running left, Creed right, Village lower right and
-Followers lower left. Merchants and Trials fill the upper diagonals; Faith
-occupies the lower centre. Ring metadata controls outward distance. Successive
-tiers sweep gently from one side of their own sector to the other; siblings
-in one branch/ring receive separate lanes. Unknown fixture branches retain
-their initial sector and narrow their fan to respect neighbouring sectors.
-The view does not mutate catalog coordinates, effects, prices or prerequisites.
+`ritual_layout.gd` stores presentation-only positions for the current 32 stable
+IDs in `VILLAGE_POSITIONS`. The eight branches have unequal silhouettes:
+Words crescent, Running left hook, Merchants compact loop, Trials diagonal
+fork, Creed right curl, Faith lower fork, Village diagonal pair and Followers
+satellite. Catalog rings still describe upgrade tiers; a local loop need not
+increase its radius on every step. Placement changes no catalog coordinates,
+effects, prices or prerequisites.
+
+Other content uses the generic branch/ring fallback: known branch directions,
+or the first authored angle for an unknown branch, with tier fans and sibling
+lanes limited by neighbouring sectors. The 144-node fixture uses this fallback
+and receives no production satellites. `satellite_seals(catalog)` supplies three
+decorative envelopes around existing content, without adding nodes or edges.
+Graph fit uses actual node extents so authored positions remain navigable.
 
 `ritual_screen.gd` draws this node network above quiet decorative rings and
 keeps selection details in stationary UI. The edge model distinguishes
@@ -70,6 +76,21 @@ ancestry, including crosslinks, and dims unrelated main paths. Hover is a
 transient path preview and does not replace the selected purchase or details.
 The right panel still names missing prerequisites and shows the next price,
 current-to-next effect, rank and purchase state.
+
+`Layout.edge_path(from_id, to_id, node_positions)` adds presentation-only
+waypoints to links that would cross another node. The renderer shares the
+normal pan/zoom transform, clips each end at its node rim and keeps solid main
+paths, dashed contextual crosslinks and direction arrows. The catalog and
+prerequisite model remain unchanged.
+
+The backdrop contains a thin concentric inscription rim with regular invented
+glyphs/ticks, broken inner arcs and the layout's three offset satellites
+(ring/diamond, spiral and petals). These shapes never enter the edge model.
+Real edges draw above ornament; node fills and label backgrounds mask strokes.
+The centre uses a double-annulus pentagram medallion with muted incomplete
+styling and completion-only strong fill/glow. Fit uses actual authored node
+extents plus padding. The detail panel calls catalog depth **Tier**, since a
+node's drawing radius need not match its catalog ring.
 
 State drawings combine brightness, fill, outline/marks and rank pips rather
 than color alone. Overview labels reduce with zoom; selected details and
@@ -188,7 +209,7 @@ Run headless editor import and inspect logs, then the progression, scene and pac
 
 Route simulation drives the actual player motion/collision and round/conversation code. It can establish a timing budget and demonstrate upgraded yields; it cannot establish human reaction time or enjoyment. Rendered captures verify composition and readability, not input feel. Inspect village and ritual frames, then human-test walking, cloth at upgraded speed, graph dragging/zooming, node selection, village return and next-round controls at supported window sizes.
 
-Use `tests/test_ritual_readability.gd` for sector placement, contextual edges,
+Use `tests/test_ritual_readability.gd` for authored/fallback placement, contextual edges,
 hover/selection separation, label bounds and transformed navigation. Exercise
 branch and node controls on the 144-node fixture without saving its IDs into
 ordinary progression. `tests/test_demo_completion.gd` exercises catalog-driven

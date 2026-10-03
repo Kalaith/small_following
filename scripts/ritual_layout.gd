@@ -1,11 +1,87 @@
 extends RefCounted
-## Presentation only: branch sectors and outward tiers never alter catalog prerequisites.
+## Presentation only: authored constellations never alter catalog prerequisites.
 
 const FIRST_RING: float = 112.0
 const RING_STEP: float = 86.0
 const SECTOR_ANGLES: Dictionary = {"talk": -90.0, "run": 180.0, "persuade": 0.0, "gather": 45.0, "helper": 135.0, "merchant": -135.0, "trial": -45.0, "faith": 90.0}
 const BRANCH_TITLES: Dictionary = {"talk": "Words", "run": "Running", "persuade": "Creed", "gather": "Village", "helper": "Followers", "merchant": "Merchants", "trial": "Trials", "faith": "Faith"}
 const FAN_HALF_ANGLE: float = 15.0
+
+# The current village has deliberately unequal silhouettes, rather than eight
+# copies of one radial formula. Stable IDs anchor art; catalog ring values still
+# describe upgrade tiers. Unrecognized content uses the scalable layout below.
+const VILLAGE_POSITIONS: Dictionary = {
+	"talk_1": Vector2(-65, -150),
+	"talk_2": Vector2(-125, -240),
+	"talk_3": Vector2(-130, -350),
+	"talk_4": Vector2(-50, -440),
+	"talk_5": Vector2(75, -470),
+	"talk_6": Vector2(195, -425),
+	"run_1": Vector2(-150, 45),
+	"run_2": Vector2(-245, 10),
+	"run_3": Vector2(-360, 35),
+	"run_4": Vector2(-450, 125),
+	"run_5": Vector2(-450, 235),
+	"run_6": Vector2(-360, 300),
+	"persuade_1": Vector2(165, 25),
+	"persuade_2": Vector2(280, 0),
+	"persuade_3": Vector2(385, 60),
+	"persuade_4": Vector2(460, 170),
+	"persuade_5": Vector2(360, 245),
+	"merchant_1": Vector2(-250, -220),
+	"merchant_2": Vector2(-310, -330),
+	"merchant_3": Vector2(-420, -280),
+	"merchant_4": Vector2(-380, -170),
+	"debate_1": Vector2(210, -180),
+	"skeptic_1": Vector2(285, -265),
+	"guard_1": Vector2(270, -385),
+	"zealot_1": Vector2(420, -290),
+	"resolve_1": Vector2(-110, 280),
+	"priest_1": Vector2(100, 285),
+	"sermon_1": Vector2(0, 425),
+	"priest_2": Vector2(-80, 505),
+	"meadow_1": Vector2(220, 350),
+	"east_1": Vector2(320, 430),
+	"helper_1": Vector2(-265, 385),
+}
+
+# Cross-branch requirements remain the same directed edges. These sparse bends
+# keep their visible paths off unrelated upgrade icons and the central seal.
+const EDGE_WAYPOINTS: Dictionary = {
+	"meadow_1:run_4": [Vector2(-140, 320)],
+	"talk_4:east_1": [Vector2(140, 80)],
+	"meadow_1:merchant_1": [Vector2(80, 340)],
+	"guard_1:resolve_1": [Vector2(-100, -40)],
+	"zealot_1:resolve_1": [Vector2(180, -60)],
+	"guard_1:priest_1": [Vector2(120, -100)],
+	"zealot_1:priest_1": [Vector2(240, -20)],
+	"debate_1:persuade_4": [Vector2(420, 20)],
+	"debate_1:run_6": [Vector2(80, 80)],
+}
+
+
+static func edge_path(from_id: String, to_id: String, positions: Dictionary) -> PackedVector2Array:
+	if not positions.has(from_id) or not positions.has(to_id):
+		return PackedVector2Array()
+	var points := PackedVector2Array([positions[from_id]])
+	for waypoint in EDGE_WAYPOINTS.get(from_id + ":" + to_id, []):
+		points.append(waypoint)
+	points.append(positions[to_id])
+	return points
+
+
+static func satellite_seals(catalog: Array) -> Array[Dictionary]:
+	var ids: Dictionary = {}
+	for item in catalog:
+		ids[str(item.get("id", ""))] = true
+	var result: Array[Dictionary] = []
+	if ids.has("merchant_1") and ids.has("merchant_4"):
+		result.append({"center": Vector2(-335, -255), "radius": 112.0, "motif": "rings"})
+	if ids.has("run_1") and ids.has("run_6"):
+		result.append({"center": Vector2(-325, 150), "radius": 174.0, "motif": "spiral"})
+	if ids.has("helper_1"):
+		result.append({"center": Vector2(-265, 385), "radius": 66.0, "motif": "petals"})
+	return result
 
 
 static func branch_title(branch: String) -> String:
@@ -53,6 +129,9 @@ static func build(catalog: Array) -> Dictionary:
 				angle += lerpf(-lane_half_width, lane_half_width, float(index) / float(row.size() - 1))
 			var radius: float = FIRST_RING + (ring - 1) * RING_STEP
 			positions[str(item.get("id", ""))] = Vector2.from_angle(deg_to_rad(angle)) * radius
+	for id in positions:
+		if VILLAGE_POSITIONS.has(id):
+			positions[id] = VILLAGE_POSITIONS[id]
 	return positions
 
 

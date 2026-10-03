@@ -44,9 +44,29 @@ paths. The required metadata operation still lacks Windows support
 No original was installed locally and none of these pixels were inspected.
 Captions and reported dimensions are not visual evidence.
 
-The reference-dependent art pass is pending accessible originals or supported
-pixel access. No guessed redesign has been substituted. The independently
-implemented all-ranks centre and dismissible demo message remain intact.
+The parent research environment subsequently materialized and inspected all
+three originals and explicitly authorized implementation from its
+image-grounded brief. This supplies the visual understanding needed for the
+art pass; the Windows executor has still not viewed the original pixels.
+No further transfer retry is needed for this change.
+
+The parent inspection identified these compositional properties:
+
+- First reference: a large circular constellation around a luminous central
+  medallion, with varied loops, diamonds, arcs and flower-like local clusters.
+- Second reference: offset satellite circles of unequal size, internal rings
+  and spirals, narrow connecting routes and purple emphasis over quiet grey.
+- Third reference: near-black violet, nested thin guides, a ticked rim and
+  central pentagram, unequal curved spokes, diagonal chains and lilac nodes.
+
+The authorized adaptation uses the current upgrade nodes in authored
+constellations, restrained inscription bands and satellite motifs, and a
+layered central sigil. Real unlock paths remain clearer than decoration.
+Procedural artwork is original code, not copied image pixels or a mockup
+background. Local rendered captures are reviewed against this explicit
+inspected-reference brief; exact pixel matching to the originals is not
+claimed. The all-ranks centre and dismissible message remain independent of
+these presentation changes.
 
 ### Fuller-circle reference, 2026-10-03
 

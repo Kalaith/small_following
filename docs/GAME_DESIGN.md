@@ -74,16 +74,18 @@ One purchase action buys one rank. Nodes show current/maximum ranks, and selecte
 
 The graph is authored in `data/upgrades.json`, with stable IDs, ring/branch placement, rank limits, rank costs, prerequisites and supported stat effects. Its nodes and connections form the ritual geometry. Dragging pans the graph; the mouse wheel zooms; selection opens readable details outside the moving graph. A separate large validation fixture exercises more than 100 nodes without presenting unfinished upgrades as purchasable content.
 
-Eight evenly spaced semantic sectors spread the current content around the
-seal. Tiers move outward in gentle fans, retaining readable main paths and
-contextual cross-branch requirements. This presentation changes no catalog
-definition, price, prerequisite or effect.
+The current seal uses eight authored constellations with distinct crescents,
+curls, forks, a compact loop and a satellite. These replace the interim equal
+sector fans. The overall composition expands around the centre; a branch's
+local loop can turn inward while real prerequisite paths retain its sequence.
+Catalog rings remain upgrade tiers rather than mandatory drawing radii.
+This presentation changes no catalog definition, price, prerequisite or effect.
 
-This spacing pass is an interim implementation, not accepted final art
-direction. The composed-seal redesign is pending actual pixel inspection of
-all three newly supplied references. Their supported Windows Library transfer
-remains blocked, so no reference-based composition has been implemented or
-claimed. The completed-centre behavior stays in place.
+The parent agent inspected all three newly supplied references and provided
+the visual brief. Original pixels remain unavailable on this Windows executor;
+fresh local application captures verify the implementation. Human acceptance
+of the composed-seal art direction remains outstanding. The completed-centre
+behavior is preserved.
 
 Adding a definition is appropriate only when its effect is implemented and tested. A large graph is a content capacity, not a promise that hundreds of upgrades are already designed or fun.
 

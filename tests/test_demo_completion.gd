@@ -125,7 +125,8 @@ func _test_screen() -> void:
 		screen.zoom_at(screen.world_to_screen(Vector2.ZERO), target_zoom / screen.zoom)
 		screen.pan_by(Vector2(47, -31))
 		var centre: Vector2 = screen.world_to_screen(Vector2.ZERO)
-		check(screen.completion_hit_test(centre) and not screen.completion_hit_test(centre + Vector2(100, 0)), "centre hit area follows pan and zoom %.2f" % target_zoom)
+		var beyond_rim: float = maxf(screen.CORE_RADIUS * screen.zoom, 18.0) + 12.0
+		check(screen.completion_hit_test(centre) and not screen.completion_hit_test(centre + Vector2(beyond_rim, 0)), "centre hit area follows pan and zoom %.2f" % target_zoom)
 		var hover := InputEventMouseMotion.new()
 		hover.position = centre - screen.graph.global_position
 		screen.graph._gui_input(hover)

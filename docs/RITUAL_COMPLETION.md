@@ -9,9 +9,10 @@ the demo**. The player can dismiss it and keep playing. In the future this
 centre will lead to a new area's separate ritual circle; that area is outside
 this change.
 
-Implemented: the existing eight branch sectors now use gentle outward fans,
-and a fully ranked catalog lights the clickable centre. The completion message
-is dismissible and repeatable. Recorded checks and actual captures belong in
+Implemented: eight authored constellations integrate the existing upgrades
+into a composed purple seal, and a fully ranked catalog lights the clickable
+centre. The completion message is dismissible and repeatable. Recorded checks
+and actual captures belong in
 [VERIFICATION](VERIFICATION.md); human usability and alternate-size acceptance
 remain outstanding.
 
@@ -19,31 +20,47 @@ The user clarified that even spacing is insufficient: the intended visual
 result is a composed purple magical seal with coherent concentric rings,
 sigils, interlocking geometric motifs and integrated upgrade nodes. Keep
 decoration quiet and real interactions and prerequisite paths clear, without
-arbitrary visual noise. The current fan layout is an interim mechanical pass,
-not accepted final art direction. Redesign awaits actual pixel inspection of
-all three new references; supported Windows Library materialization remains
-blocked. No new composition is implemented or inferred from unseen references.
-The completed-centre interaction remains delivered and must be preserved.
+arbitrary visual noise. The authored composition replaces the interim fan
+layout. The parent agent materialized and inspected all three new reference
+images and provided an image-grounded brief for this authorized redesign.
+Original pixels remain unavailable on this Windows
+executor because supported Library materialization failed, but local transfer
+is no longer a design blocker and no further retries are needed. This executor
+uses fresh rendered application captures for verification. The completed-centre
+interaction remains delivered and must be preserved.
 
 The current production catalog remains 32 nodes and 35 ranks costing 1014
 donations. Preserve every ID, price, rank, prerequisite, effect and save field.
 The priest objective and its saved **Bramblewick complete** state remain
 independent of buying every inscription.
 
-## Current interim layout and screen brief
+## Current composition and screen brief
 
 The purple node network remains the focal area, with useful selection details
-in the stationary right panel. Eight evenly spaced semantic sectors retain
-Words above, Running left, Creed right, Merchants and Trials on the upper
-diagonals, and Followers, Faith and Village below. Successive tiers sweep
-gently through their own sector as they move outward. Same-tier siblings use
-separate lanes. This fills the seal without adding nodes or inventing edges.
+in the stationary right panel. Words forms a crescent above the centre,
+Running a broad left hook, Merchants a compact upper-left loop and Trials an
+upper-right fork. Creed curls to the right; Faith forks below, Village forms
+a diagonal pair and Followers sits within a small lower-left satellite.
+These are authored positions for the existing stable IDs, not new content.
 
-Ring metadata still controls radial depth. Unknown fixture branches keep
-their authored sector, narrowing the fan when neighbouring sectors are close.
-Decoration stays quiet; main branch edges remain visible and cross-branch
-requirements appear on hover or selection. Preserve the branch/node pickers,
-overview, recenter, pan, zoom and the existing state shapes.
+Thin nested inscription bands and a ticked outer rim contain the composition.
+Broken interior arcs leave space for branches; offset satellites use a
+ring/diamond, a spiral and four petals. The central source is a pentagram
+medallion whose strong fill and glow appear only after all ranks are purchased.
+Ornament is quiet beneath actual edges, node fills and label backgrounds.
+
+The parent's reference brief identified three complementary ideas: varied
+radial clusters around a luminous medallion; offset circles of unequal sizes
+linked by narrow routes; and a near-black violet seal with nested guides,
+rim ticks, a central pentagram and unequal curved/diagonal paths. The current
+procedural geometry is an interpretation of those inspected references,
+not a pixel copy or a claim of final human acceptance.
+
+Catalog rings remain upgrade tiers; local loops may turn inward. Unknown
+fixture content retains the scalable sector/ring fallback and receives no
+production satellites. Main prerequisite edges stay visible and cross-branch
+requirements appear on hover or selection. Branch/node pickers, overview,
+recenter, pan, zoom and state shapes remain available.
 
 | State | Decision/action | Feedback and retained access |
 | --- | --- | --- |
@@ -88,10 +105,10 @@ Actual baseline 1280 x 800 captures show [incomplete ranks](verification/ritual-
 [the lit centre](verification/ritual-demo-ready.png),
 [the exact message](verification/ritual-demo-message.png) and
 [the circle after dismissal](verification/ritual-demo-dismissed.png).
-Human navigation and alternate-size review remain separate from automated
-assertions. The supplied screenshot could not be
-materialized through the supported Windows Library helper; local visual
-decisions use fresh application captures. See [reference status](reference/README.md).
+Human art-direction acceptance, navigation and alternate-size review remain
+separate from automated assertions. The originals were inspected by the parent;
+supported Windows Library materialization remains unavailable here. Local
+verification uses fresh application captures. See [reference status](reference/README.md).
 
 Future area names, unlock rules, travel, separate catalogs and persistence need
 a later scoped design. This change only establishes the centre's eventual role.

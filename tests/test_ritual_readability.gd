@@ -2,6 +2,7 @@ extends SceneTree
 ## Readability and navigation checks use the same graph model and inputs as drawing.
 ## All progression is in memory; this suite never opens the player's save.
 const Fixture = preload("res://tests/fixtures/ritual_fixture.gd")
+const Layout = preload("res://scripts/ritual_layout.gd")
 var checks: int = 0
 var failures: int = 0
 
@@ -29,7 +30,8 @@ func _run() -> void:
 	var original_catalog: String = JSON.stringify(scene.progression.catalog)
 	var original_purchases: Dictionary = scene.progression.purchased.duplicate(true)
 	var original_coins: int = scene.coins
-	_test_sectors(screen, scene.progression.catalog)
+	_test_constellations(screen, scene.progression.catalog)
+	_test_prerequisite_routes(screen, scene.progression.catalog)
 	_test_paths_and_hover(screen)
 	_test_navigation_controls(screen)
 	_test_overview_control(screen)
@@ -46,7 +48,7 @@ func _run() -> void:
 	quit(0 if failures == 0 else 1)
 
 
-func _test_sectors(screen, catalog: Array) -> void:
+func _test_constellations(screen, catalog: Array) -> void:
 	var directions: Dictionary = {
 		"talk": Vector2.UP, "run": Vector2.LEFT, "persuade": Vector2.RIGHT,
 		"gather": Vector2.from_angle(deg_to_rad(45.0)),
@@ -57,9 +59,13 @@ func _test_sectors(screen, catalog: Array) -> void:
 	}
 	var angles: Array[float] = []
 	var minimum_spacing: float = INF
+	var center_clearance: float = INF
+	var outer_extent: float = 0.0
 	for id in screen.node_positions:
 		var point: Vector2 = screen.node_positions[id]
 		angles.append(fposmod(point.angle(), TAU))
+		center_clearance = minf(center_clearance, point.length())
+		outer_extent = maxf(outer_extent, point.length())
 		for other in screen.node_positions:
 			if id != other:
 				minimum_spacing = minf(minimum_spacing, point.distance_to(screen.node_positions[other]))
@@ -67,33 +73,80 @@ func _test_sectors(screen, catalog: Array) -> void:
 	var widest_gap: float = 0.0
 	for index in range(angles.size()):
 		widest_gap = maxf(widest_gap, fposmod(angles[(index + 1) % angles.size()] - angles[index], TAU))
-	check(rad_to_deg(widest_gap) <= 31.0, "existing nodes fill the circle with no angular gap larger than one fan")
-	check(minimum_spacing > 70.0, "production nodes retain clear silhouette and hit-target separation")
+	check(rad_to_deg(widest_gap) <= 40.0, "authored constellations occupy the complete circle rather than one crowded arc")
+	check(minimum_spacing >= 80.0, "production nodes retain clear silhouette and hit-target separation")
+	check(center_clearance >= 140.0, "real upgrade nodes leave room around the central medallion")
+	check(outer_extent <= 560.0, "all production upgrades fit within the composed seal")
 	for branch in directions:
-		var previous_radius: float = 0.0
-		var previous_angle: float = -INF
-		var first_angle: float = INF
-		var count: int = 0
 		var coherent: bool = true
-		var outward: bool = true
-		var continuous: bool = true
 		for item in catalog:
 			if item.branch != branch:
 				continue
 			var point: Vector2 = screen.node_positions[item.id]
-			coherent = coherent and point.normalized().dot(directions[branch]) > 0.94
-			outward = outward and point.length() > previous_radius
-			var angle: float = directions[branch].angle_to(point)
-			continuous = continuous and angle >= previous_angle - 0.001
-			first_angle = minf(first_angle, angle)
-			previous_angle = angle
-			previous_radius = point.length()
-			count += 1
-		check(coherent, "branch keeps a consistent sector: " + branch)
-		check(outward, "successive tiers progress outward: " + branch)
-		check(continuous, "branch follows a continuous sweep without zigzags: " + branch)
-		if count > 1:
-			check(rad_to_deg(previous_angle - first_angle) >= 29.0, "branch uses its angular space instead of a single spoke: " + branch)
+			coherent = coherent and point.normalized().dot(directions[branch]) > 0.70
+		check(coherent, "constellation retains its broad branch direction: " + branch)
+	screen.clear_selection()
+	var edges: Array = screen.get_visible_edges()
+	var paths_clear: bool = true
+	for edge in edges:
+		var start: Vector2 = screen.node_positions[edge.from]
+		var end: Vector2 = screen.node_positions[edge.to]
+		for id in screen.node_positions:
+			if id == edge.from or id == edge.to:
+				continue
+			var point: Vector2 = screen.node_positions[id]
+			var closest: Vector2 = Geometry2D.get_closest_point_to_segment(point, start, end)
+			paths_clear = paths_clear and closest.distance_to(point) >= 36.0
+	check(paths_clear, "main prerequisite paths do not run through unrelated upgrade silhouettes")
+	for factor in [0.7, 1.0, 1.7]:
+		var reachable: bool = true
+		for id in screen.node_positions:
+			screen.focus_node(id)
+			var point: Vector2 = screen.world_to_screen(screen.node_positions[id])
+			screen.zoom_at(point, factor)
+			screen.pan_by(Vector2(27, -19))
+			point = screen.world_to_screen(screen.node_positions[id])
+			reachable = reachable and screen.hit_test(point) == id
+		check(reachable, "every authored node remains pickable after focus, zoom and pan %.1f" % factor)
+
+
+func _test_prerequisite_routes(screen, catalog: Array) -> void:
+	var topology_preserved: bool = true
+	var nodes_clear: bool = true
+	var core_clear: bool = true
+	var tips_clear: bool = true
+	var simple_paths: bool = true
+	for item in catalog:
+		var target: String = str(item.id)
+		for required in item.get("requires", []):
+			var source: String = str(required)
+			var points: PackedVector2Array = Layout.edge_path(source, target, screen.node_positions)
+			topology_preserved = topology_preserved and points.size() >= 2 and points[0] == screen.node_positions[source] and points[-1] == screen.node_positions[target]
+			simple_paths = simple_paths and points.size() <= 4
+			tips_clear = tips_clear and points[0].distance_to(points[1]) > 40.0 and points[-1].distance_to(points[-2]) > 40.0
+			for segment in range(points.size() - 1):
+				var start: Vector2 = points[segment]
+				var end: Vector2 = points[segment + 1]
+				core_clear = core_clear and Geometry2D.get_closest_point_to_segment(Vector2.ZERO, start, end).length() >= 90.0
+				for id in screen.node_positions:
+					if id == source or id == target:
+						continue
+					var point: Vector2 = screen.node_positions[id]
+					var closest: Vector2 = Geometry2D.get_closest_point_to_segment(point, start, end)
+					nodes_clear = nodes_clear and closest.distance_to(point) >= 36.0
+	check(topology_preserved, "every routed prerequisite keeps its actual source and target")
+	check(nodes_clear, "all prerequisite routes, including crosslinks, clear unrelated upgrade icons")
+	check(core_clear, "prerequisite routes leave the central medallion unobstructed")
+	check(tips_clear, "routed link ends leave room for node rims and direction arrows")
+	check(simple_paths, "authored prerequisite routes use at most two purposeful bends")
+	var fixture: Array = Fixture.build()
+	var fixture_positions: Dictionary = Layout.build(fixture)
+	var direct_fallback: bool = true
+	for item in fixture:
+		for required in item.get("requires", []):
+			var points: PackedVector2Array = Layout.edge_path(str(required), str(item.id), fixture_positions)
+			direct_fallback = direct_fallback and points.size() == 2 and points[0] == fixture_positions[required] and points[-1] == fixture_positions[item.id]
+	check(direct_fallback, "unknown fixture prerequisites retain their direct source-to-target routes")
 
 
 func _test_paths_and_hover(screen) -> void:

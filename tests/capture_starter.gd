@@ -3,6 +3,7 @@ extends SceneTree
 const Fixture = preload("res://tests/fixtures/ritual_fixture.gd")
 var destination: String = "user://verification"
 var failed: bool = false
+var ritual_only: bool = false
 
 
 func _initialize() -> void:
@@ -22,6 +23,8 @@ func _capture() -> void:
 	for argument in OS.get_cmdline_user_args():
 		if argument.begins_with("--capture-dir="):
 			destination = argument.trim_prefix("--capture-dir=")
+		elif argument == "--ritual-only":
+			ritual_only = true
 	DirAccess.make_dir_recursive_absolute(destination)
 	var scene = load("res://scenes/main.tscn").instantiate()
 	scene.persistence_enabled = false
@@ -30,6 +33,18 @@ func _capture() -> void:
 	scene.game_audio.output_enabled = false
 	root.add_child(scene)
 	scene.set_process(false)
+	if ritual_only:
+		# Recheck changed ritual pixels without replaying unrelated village/audio fixtures.
+		scene.advance_round(100.0)
+		for frame in range(4):
+			await process_frame
+		scene.ritual_screen.overview_button.pressed.emit()
+		await save_frame("ritual-seal-entry.png")
+		await capture_demo_completion(scene)
+		await capture_readability(scene)
+		await capture_graph_fixture(scene)
+		await finish_capture(scene)
+		return
 	scene.player.position = Vector2(645, 562)
 	scene.player.get_node("Camera2D").reset_smoothing()
 	scene.advance_round(1.5)
@@ -107,6 +122,11 @@ func _capture() -> void:
 	await capture_encounters(scene)
 	await capture_demo_completion(scene)
 	await capture_readability(scene)
+	await capture_graph_fixture(scene)
+	await finish_capture(scene)
+
+
+func capture_graph_fixture(scene) -> void:
 	var fake = load("res://scripts/progression.gd").new()
 	fake.save_enabled = false
 	fake.catalog = Fixture.build()
@@ -122,6 +142,9 @@ func _capture() -> void:
 	scene.ritual_screen.focus_node("fixture_12_11")
 	scene.ritual_screen._subtitle_label.text = "TEST DATA ONLY / NOT PLAYABLE UPGRADE CONTENT"
 	await save_frame("ritual-fixture-focus.png")
+
+
+func finish_capture(scene) -> void:
 	print("RENDER CAPTURE: " + destination)
 	# Complete scene teardown and deferred cleanup before shutting down servers.
 	scene.queue_free()
@@ -222,6 +245,12 @@ func capture_readability(scene) -> void:
 	fixture.coins = 33
 	screen.select_node("east_1")
 	await save_frame("ritual-readability-east.png")
+	if ritual_only:
+		# These late requirements exercise the long, routed contextual connections.
+		screen.select_node("priest_2")
+		await save_frame("ritual-seal-priest-paths.png")
+		screen.select_node("persuade_4")
+		await save_frame("ritual-seal-creed-paths.png")
 	screen.configure(scene.progression.catalog, scene.progression)
 
 

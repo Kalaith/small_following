@@ -14,7 +14,7 @@ input/feedback in the design proposal. The current baseline is:
 | Phase | Decision and primary action | Dominant focus | Supporting information | Deferred information |
 | --- | --- | --- | --- | --- |
 | Active round | Choose a gathering; move into speaking range | Village routes, cultist and listeners | Time, donations, recruitment count and local phrase progress | Upgrade details appear between rounds |
-| Ritual overview | Find a branch or major unlock, then inspect it | Ordered purple sectors and main progression paths | Branch identity, purchase-state cues and visible navigation | Focus/zoom reveals more labels; selection opens full details |
+| Ritual overview | Find a branch or major unlock, then inspect it | Composed purple seal, distinct branch constellations and main paths | Branch identity, purchase-state cues and visible navigation | Focus/zoom reveals more labels; selection opens full details |
 | Ritual selection | Compare the next rank and buy if useful, or start another round | Selected node, prerequisite ancestry and stationary details | Wallet, rank, current-to-next effect, cost and missing requirements | Unrelated cross-branch paths appear only when relevant |
 | Completed ritual | Inspect the lit centre or keep playing | Filled violet/lilac centre with a visible Open control | Completion means every current catalog rank is bought | Exact demo message appears on activation |
 | Demo message | Dismiss and continue | Exact text: This is the end of the demo | Keep playing button and Esc/Tab/Enter hints | The next area's separate circle remains future work |
@@ -58,24 +58,37 @@ following the cultist.
 
 ## 4. Ritual geometry and rank states
 
-The visible nodes and progression paths form the occult seal. Eight evenly
-spaced branch sectors keep Words at the top, Running at the left, Creed at
-the right, Merchants and Trials on the upper diagonals, and Followers, Faith
-and Village below. Advance tiers outward in a gentle fan within each sector;
-do not make the eye zigzag across the circle to follow a sequence. Same-tier
-siblings use separate lanes. The 32-node catalog spans six rings and retains
-two ranks on the original tier-III nodes. Layout spreads existing content
-around the seal without changing catalog rules. See the
+The visible nodes and progression paths form a composed occult seal. The
+current eight branch constellations have different silhouettes: Words crescent,
+Running broad left hook, Merchants compact loop, Trials diagonal fork, Creed
+right curl, Faith lower fork, Village diagonal pair and Followers satellite.
+Keep the sequence readable through actual prerequisite paths; a deliberate
+local loop can bend inward. Catalog tiers are not mandatory drawing radii.
+The 32-node catalog spans six tiers and retains two ranks on the original
+tier-III nodes. Layout changes no catalog rules. See the
 [readability brief](RITUAL_READABILITY.md) and
 [full-circle scope](RITUAL_COMPLETION.md).
 
-Retain violet/lilac rings, runes and the central sigil at a lower contrast than
-purchase state and real progression paths. Decorative lines must not compete
-with prerequisite edges. Show same-branch progress by default. On hover or
+Use coherent concentric rim bands, regular invented inscriptions and ticks,
+broken interior arcs and quiet offset satellite seals to unite the branches.
+The current satellites use a ring/diamond, spiral and four-petal motif. Avoid
+arbitrary strokes or repeated identical spokes. Draw ornament below real
+paths, nodes and opaque label backgrounds. The central pentagram medallion
+is muted until all ranks are bought; only completion earns its strong fill
+and glow. These motifs decorate existing content and never imply extra
+purchasable nodes or prerequisites.
+
+Decorative lines must not compete with prerequisite edges. Show same-branch
+progress by default. On hover or
 selection, expose the relevant recursive prerequisite path, including
 cross-branch edges, and dim unrelated paths. Hover previews a path without
 replacing the selected details; leaving the graph returns to the selection.
 Missing requirements stay explicit in the right-hand panel.
+
+Route long links around intervening node silhouettes so they do not imply a
+connection to a node they merely pass. Authored detours preserve the real
+endpoints, dashed crosslink treatment and direction arrows; they add no
+prerequisites.
 
 At a distant overview, prioritize branch identity, state cues and major
 unlocks over a wall of captions. Reveal individual labels as the player
@@ -199,7 +212,8 @@ to the existing evidence:
 | --- | --- |
 | Village and local speech | `verification/starter-runtime.png` |
 | Moving robe | `verification/starter-moving.png` |
-| Ritual after round end | `verification/starter-summary.png` |
+| Earlier round-end layout | `verification/starter-summary.png` |
+| Current composed seal at entry | `verification/ritual-seal-entry.png` |
 | First purchase | `verification/ritual-purchased.png` |
 | Available second rank | `verification/ritual-rank-available.png` |
 | Maximum rank | `verification/ritual-rank-max.png` |
@@ -208,6 +222,7 @@ to the existing evidence:
 | Large fixture and distant selection | `verification/ritual-144-fixture.png`, `verification/ritual-fixture-focus.png` |
 | Readable branch overview | `verification/ritual-readability-overview.png` |
 | Selected and hovered prerequisite paths | `verification/ritual-readability-east.png`, `verification/ritual-readability-hover.png` |
+| Dense Priest and Creed prerequisite paths | `verification/ritual-seal-priest-paths.png`, `verification/ritual-seal-creed-paths.png` |
 | Mixed purchase states | `verification/ritual-readability-states.png` |
 | Large-fixture branch navigation | `verification/ritual-fixture-branch.png` |
 | Full circle with ranks missing | `verification/ritual-demo-incomplete.png` |
@@ -224,7 +239,7 @@ content, not a promise of more than 100 implemented upgrades.
 - [ ] Each persistent fact helps the current phase and has one clear home.
 - [ ] Text, rank marks, costs and selected details are readable.
 - [ ] Locked, available, partial and maximum states have cues beyond color.
-- [ ] Branch tiers advance outward, decoration recedes and real paths are distinguishable.
+- [ ] Branch constellations form a coherent seal, local loops retain a readable order, decoration recedes and real paths are distinguishable.
 - [ ] Hover/selection reveals required crosslinks without changing the selected purchase details.
 - [ ] Distant nodes remain reachable through visible navigation when overview labels are reduced.
 - [ ] Motion, sorting and collision look consistent; robe movement settles at rest.

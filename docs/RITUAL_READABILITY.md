@@ -1,5 +1,11 @@
 # Small Following - ritual readability pass
 
+This records the earlier sixteen-node readability scope. The current
+32-node authored magical-seal composition and completion centre are documented
+in [RITUAL_COMPLETION](RITUAL_COMPLETION.md); its presentation supersedes the
+uniform outward-sector placement below while retaining these navigation and
+prerequisite-feedback principles.
+
 ## 0. Scope and decision status
 
 **Date:** 2026-10-03. The user approved this presentation pass after reviewing

@@ -1,6 +1,69 @@
 # Verification record - ranked progression, 2026-10-02
 
+## 2026-10-03 - Authored magical seal
+
+The parent research environment materialized and inspected the three new
+references, then authorized the image-grounded composition brief. The Windows
+executor did not view their original pixels and did not retry that transfer.
+See [provenance and observed reference features](reference/README.md).
+
+The current 32 nodes now form distinct constellations: a Words crescent,
+Running hook, Merchant loop, Trials diagonal fork, Creed curl, Faith fork,
+Village pair and Followers satellite. Thin inscription bands, broken arcs,
+regular rim ticks and three offset satellite motifs frame a larger pentagram
+medallion. Its strong illumination remains exclusive to all-ranks completion.
+The data catalog is byte-identical: 35 ranks, 1014 total donations and all
+effects/prerequisites unchanged. No save, gameplay or area-transition changes.
+
+Initial pixel review found that some selected crosslinks passed behind
+unrelated icons. Nine links now use one authored bend each; their actual
+prerequisites remain unchanged. All 40 production prerequisite routes clear
+unrelated node centres by at least 36 world pixels and the medallion by 90.
+Node separation is at least 85 pixels, with 156.6 pixels of central clearance.
+Opaque node/label backgrounds protect their contents from ornament.
+
+Applied-project checks use Godot **4.2.2.stable.mono.official.15073afe3**,
+isolated APPDATA/fixture saves, Dummy audio and fixed 60 fps:
+
+| Check | Result |
+| --- | --- |
+| Five changed GDScript files | `--check-only`: all exit 0 |
+| Ritual readability / demo completion | 73 / 46 checks, zero failures, exit 0 |
+| Smoke / progression / pacing | 92 / 113 / 59 checks, zero failures, exit 0 |
+| Hidden `capture_starter.gd --ritual-only` | 15 PNGs, exit 0, no runtime diagnostics |
+| Headless editor import | Existing exit 1 `_EDITOR_GET` error and cursor/Blender-path warnings |
+
+The five suites total **383 passing checks**. All runtime and parse logs are
+clean. [Recorded output](verification/ritual-seal-checks.txt) retains the import
+failure separately. Pacing still measures three opening conversions and the
+original-core 15-listener clear at 10.517 seconds with 0.483 seconds remaining;
+incomplete and nonoptimal comparisons pass. Unchanged audio/settings/exit
+suites and the full village capture sequence were not repeated in this visual
+slice; their earlier completion-slice results remain recorded below.
+
+Actual 1280 x 800 Compatibility/OpenGL captures on the NVIDIA GeForce RTX
+4080 SUPER were compared to the parent's explicit inspected-reference brief:
+[before](verification/ritual-seal-before.png),
+[entry](verification/ritual-seal-entry.png),
+[completed medallion](verification/ritual-demo-ready.png),
+[message](verification/ritual-demo-message.png),
+[East Lane paths](verification/ritual-readability-east.png),
+[Priest ancestry](verification/ritual-seal-priest-paths.png) and
+[Creed paths](verification/ritual-seal-creed-paths.png).
+Varied local geometry and offset satellites now form the composition; the
+central sigil and rim unify it. Real paths remain stronger than the ornament.
+The message is readable and dismissal preserves the lit centre. The separate
+144-node fixture remains navigable and explicitly labelled test content.
+
+These are local render and behavior checks, not original-image pixel matching
+or human art-direction acceptance. Alternate sizes, physical gamepad use and
+human navigation/feel remain unverified. No publishing, exports, tool changes
+or ordinary player-save writes occurred.
+
 ## 2026-10-03 - Requested magical-seal art correction: blocked on references
+
+This earlier checkpoint was superseded by the parent inspection and authored
+seal slice above; it records the Windows transfer limitation at that time.
 
 The even-sector layout was a mechanical readability/coverage pass. The user
 has clarified that it does not yet deliver the intended magical-circle art
