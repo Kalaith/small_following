@@ -17,8 +17,9 @@ The project targets Godot 4.2.2, GDScript and Compatibility rendering. It has no
 | `scripts/ritual_layout.gd` | Presentation-only sector placement from existing branch/ring metadata |
 | `data/upgrades.json` | 32 real upgrade definitions with stable IDs, per-rank effects/prices, rank limits, prerequisites and graph coordinates |
 | `scripts/village.gd` | Deterministic ground/props and collision footprints |
+| `scripts/game_audio.gd` | Promo music loop, distance-based footsteps, throttled phrase cues and session mute controls; no gameplay authority |
 | `tests/` | Isolated economy/save checks, scene integration, route simulation and rendered captures |
-| `assets/` | Project icon; reserve future subfolders for licensed production assets |
+| `assets/` | Project icon and original music/footstep/synthetic speech assets with provenance |
 | `docs/reference/` | Reference provenance and transfer status; never a runtime background source |
 
 The map is 1560 x 1100 world pixels, with a 1280 x 800 base viewport. These are top-down coordinates, not an isometric grid. Feet are the actor origin and sorting anchor; actors and props share Y sorting. Collision layer 1 is the player, layer 2 is world obstacles. Listeners do not block movement. Cloth is purely visual.

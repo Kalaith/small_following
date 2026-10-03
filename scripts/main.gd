@@ -5,6 +5,7 @@ const Progression = preload("res://scripts/progression.gd")
 const RitualScreen = preload("res://scripts/ritual_screen.gd")
 const Encounter = preload("res://scripts/encounter.gd")
 const Helper = preload("res://scripts/helper.gd")
+const GameAudio = preload("res://scripts/game_audio.gd")
 const ROUND_SECONDS: float = 11.0
 const START_POSITION := Vector2(780, 680)
 const BASE_RUN_SPEED: float = 180.0
@@ -13,6 +14,7 @@ var persistence_enabled: bool = true
 var save_path_override: String = ""
 var catalog_ready: bool = false
 var progression = Progression.new()
+var game_audio = GameAudio.new()
 var groups: Array[Node2D] = []
 var added_gatherings: Dictionary = {}
 var encounter: Node2D = null
@@ -41,6 +43,9 @@ var ritual_screen: Control
 
 
 func _ready() -> void:
+	game_audio.name = "GameAudio"
+	add_child(game_audio)
+	player.moved.connect(game_audio.on_motion)
 	progression.save_enabled = persistence_enabled
 	if not save_path_override.is_empty():
 		progression.save_path = save_path_override
@@ -74,6 +79,7 @@ func _add_gathering(title: String, at: Vector2, merchant: bool = false) -> void:
 		gathering.conviction_required = Gathering.MERCHANT_CONVICTION
 		gathering.donation = progression.merchant_donation()
 	gathering.recruited.connect(_on_recruited)
+	gathering.phrase_spoken.connect(game_audio.on_phrase)
 	$Actors.add_child(gathering)
 	groups.append(gathering)
 
@@ -92,9 +98,14 @@ func _unhandled_input(event: InputEvent) -> void:
 		purchase_upgrade(ritual_screen.selected_id, ritual_screen.get_selected_rank())
 	elif event.is_action_pressed("toggle_ritual") and not round_active:
 		set_ritual_visible(not ritual_screen.visible)
+	elif event.is_action_pressed("toggle_audio"):
+		game_audio.toggle_mute()
+	elif event.is_action_pressed("toggle_voice"):
+		game_audio.toggle_voice()
 
 
 func advance_round(delta: float) -> void:
+	game_audio.advance_time(delta)
 	nearest_group = null
 	var closest_distance: float = player.speaking_radius
 	for group in groups:
@@ -104,6 +115,7 @@ func advance_round(delta: float) -> void:
 			nearest_group = group
 		group.set_listening(false)
 	if not round_active:
+		game_audio.stop_speech()
 		return
 	var usable_delta: float = minf(maxf(delta, 0.0), seconds_left)
 	var speaking_to_opponent: bool = false
@@ -116,12 +128,15 @@ func advance_round(delta: float) -> void:
 	if is_instance_valid(nearest_group):
 		nearest_group.set_listening(true)
 		nearest_group.tick_persuasion(usable_delta, progression.speech_interval(), progression.conviction_for(nearest_group.npc_type))
+	elif not speaking_to_opponent:
+		game_audio.stop_speech()
 	if is_instance_valid(helper):
 		helper.set_active(true)
 		helper.advance(usable_delta, groups)
 	seconds_left = maxf(0.0, seconds_left - usable_delta)
 	if seconds_left <= 0.0:
 		round_active = false
+		game_audio.stop_speech()
 		if is_instance_valid(helper):
 			helper.set_active(false)
 		for group in groups:
@@ -140,6 +155,7 @@ func _reset_encounter() -> void:
 	encounter = Encounter.new()
 	encounter.stage = progression.encounter_stage
 	encounter.convinced.connect(_on_encounter_convinced)
+	encounter.phrase_spoken.connect(game_audio.on_phrase)
 	$Actors.add_child(encounter)
 
 
@@ -206,6 +222,8 @@ func start_next_round() -> void:
 		group.reset_round()
 	# Every round uses the same entrance; walking in menus does not grant a head start.
 	player.position = START_POSITION
+	game_audio.reset_motion()
+	game_audio.stop_speech()
 	if is_instance_valid(helper):
 		helper.reset_round(START_POSITION)
 	_reset_encounter()

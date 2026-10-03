@@ -27,6 +27,8 @@ From the project folder, `.\Run.ps1` also launches the game; pass `-GodotExe '<i
 | Buy selected upgrade | U / Inscribe button / gamepad X (left face button) |
 | Return to village / reopen ritual | Tab between rounds, or the ritual's village button |
 | Start next round | Enter / next-round button / gamepad A (bottom face button) |
+| Mute / unmute all audio | M |
+| Mute / unmute nonsense speech | V |
 
 Movement remains active during the ritual; Tab reveals the village between rounds. A new round returns the cultist to the starting entrance. Gamepad movement/action mappings exist but were not physically tested; graph selection and navigation currently require a mouse.
 
@@ -49,7 +51,23 @@ The original six inner nodes each have one rank and the original tier-III nodes 
 
 All audiences reset each round. The cumulative recruited total counts **recruitment events**, including the same villagers on later rounds; it is not a population of unique permanent followers. Restarting preserves progression but begins a fresh timer and audience state. No offline rewards or partial-round continuation are implemented.
 
-The complete first-map catalog has 32 nodes and 35 ranks costing 1014 donations. The real catalog is `data/upgrades.json`. A separate **144-node validation fixture** exercises graph capacity and navigation; it is not additional purchasable game content. A second town, magic, audio and production assets remain future work. Browser and Windows exports use the [publishing workflow](docs/PUBLISHING.md).
+The complete first-map catalog has 32 nodes and 35 ranks costing 1014 donations. The real catalog is `data/upgrades.json`. A separate **144-node validation fixture** exercises graph capacity and navigation; it is not additional purchasable game content. A second town, magic and production art remain future work. Browser and Windows exports use the [publishing workflow](docs/PUBLISHING.md).
+
+## Audio
+
+The promo's original instrumental score now plays quietly in the background,
+continuing across rounds and ritual visits. Soft pitter-patter follows the
+cultist's actual travel, including between rounds; standing still or pushing
+into a wall is silent. Faster running increases footsteps within a cadence cap.
+Short original synthetic nonsense syllables accompany completed player phrases,
+including merchant and opponent conversations. One voice and a minimum gap keep
+faster talking upgrades from stacking chatter or speeding up the samples.
+
+**M** toggles all sound and **V** toggles speech alone. These are session controls;
+volume sliders and saved preferences remain future work. Speech timbre and mix
+are provisional and need a human listening pass. [Asset provenance and rebuild
+instructions](assets/audio/README.md). Run `tests/test_audio.gd` for isolated
+audio behavior checks; a display run also checks real music playback/looping.
 
 ## Village expansion
 

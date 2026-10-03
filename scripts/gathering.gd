@@ -1,6 +1,7 @@
 extends Node2D
 ## Session-only typed gathering. Audiences reset each round.
 signal recruited(donation: int)
+signal phrase_spoken
 
 const LISTENER_COUNT: int = 5
 const CONVICTION_REQUIRED: float = 3.0
@@ -76,6 +77,7 @@ func tick_persuasion(delta: float, phrase_interval: float, conviction: float) ->
 	phrase_elapsed += maxf(delta, 0.0)
 	while phrase_elapsed + 0.000001 >= last_phrase_interval and recruits < listener_count:
 		phrase_elapsed = maxf(0.0, phrase_elapsed - last_phrase_interval)
+		phrase_spoken.emit()
 		progress += maxf(0.0, conviction)
 		while progress + 0.000001 >= conviction_required and recruits < listener_count:
 			progress = maxf(0.0, progress - conviction_required)

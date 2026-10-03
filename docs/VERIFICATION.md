@@ -476,3 +476,48 @@ No service startup, package installation, publishing or game export occurred.
   [published itch page](verification/published-itch.jpg).
 - No shared WebHatchery catalog, Git remote or other game was modified.
   Full exported playthrough and browser storage recovery remain outstanding.
+
+## 2026-10-03 - Background score, footsteps and provisional speech
+
+Reused the promo's original source WAV as a quiet 72-second Ogg music loop.
+Added original synthesized footsteps and optional nonsense vowel syllables,
+with provenance and reproduction in `assets/audio/README.md`. Original promo
+files are unchanged. Movement emits actual travel after collision/bounds;
+phrase signals are presentation-only. Music continues across ritual/rounds.
+M toggles all sound; V toggles speech. Preferences currently last one session.
+
+Using the installed **Godot 4.2.2 Mono / Compatibility** executable:
+
+| Check | Result |
+| --- | --- |
+| Headless editor `--import` | Exit 1: existing `_EDITOR_GET` / EditorSettings error, plus cursor and missing Blender-path warnings; audio resources import and load in runtime checks |
+| `tests/test_audio.gd`, headless at fixed 60 fps | 27 checks, 0 failures, exit 0 |
+| `tests/test_audio.gd`, rendering display at real time | 28 checks, 0 failures, exit 0; includes actual playback and seeking near the score end to verify mixer wrap |
+| `tests/smoke_test.gd` | 92 checks, 0 failures, exit 0 |
+| `tests/test_progression.gd` | 113 checks, 0 failures, exit 0 |
+| `tests/test_pacing.gd` | 59 checks, 0 failures, exit 0 |
+| `tests/test_helper.gd` | 34 checks, 0 failures, exit 0 |
+| `tests/test_merchants.gd` | 0 failures, exit 0 |
+| `tests/test_encounters.gd` | 206 checks, 0 failures, exit 0 |
+| `tests/test_ritual_readability.gd` | 67 checks, 0 failures, exit 0 |
+
+All headless suites used `--headless --fixed-fps 60 --path . --script
+res://tests/<suite>.gd`; the display run omitted `--headless --fixed-fps 60`.
+Latest runtime logs contain no errors or warnings. Initial headless playback
+created unconsumed voices in Godot 4.2's Dummy driver and reported resource
+leaks at exit. The controller now suppresses playback creation on a headless
+display while retaining cue scheduling for tests; the display suite exercises
+real AudioStreamPlayers. Outputs are stopped/released when the scene exits.
+
+Audio coverage includes idle, running cadence, blocked movement, intermission
+movement, phrase completion, leaving range, dropped burst cues, constant voice
+pitch, both mute actions, opponent objections and round entrance reset. All
+tests disable progression persistence or use existing isolated save fixtures.
+Opening practical routes still recruit three. The original-core practical
+full-rank route `[2, 0, 1]` still converts 15 at 10.517 seconds, leaving 0.483
+seconds; incomplete/nonoptimal comparisons continue passing.
+
+The source Ogg fully decodes with FFmpeg. Playback state and loop behavior are
+verified, but subjective sound quality, mix and human route feel are not.
+No screen layout changed, so no new pixel captures were required. No exports,
+publishing, installation or normal-player-save writes were performed.

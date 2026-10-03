@@ -1,6 +1,7 @@
 extends Node2D
 ## One visiting opponent. Main supplies only time remaining in the active round.
 signal convinced(stage: int)
+signal phrase_spoken
 
 const CENTER := Vector2(790, 570)
 const ENTRANCE := Vector2(1470, 630)
@@ -55,6 +56,7 @@ func advance_speech(delta: float, in_range: bool, interval: float, conviction: f
 		phrase_elapsed += maxf(0.0, delta)
 		while phrase_elapsed + 0.000001 >= interval and not defeated:
 			phrase_elapsed = maxf(0.0, phrase_elapsed - interval)
+			phrase_spoken.emit()
 			if rebuttals_left > 0:
 				rebuttals_left -= 1
 			else:

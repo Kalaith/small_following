@@ -59,7 +59,8 @@ bass, with no samples or borrowed melody. There is no narration.
 Final: `exports/promo/Small_Following_Promo.mp4`. Editable timing is in
 `render_promo.py`; the render writes `timeline.json`, a source WAV, separate
 encoded shots, FFmpeg logs, stream metadata and a full decode check. The
-source art and original score are promo assets, not installed game content.
+source art remains promo-only. The game now uses a derived Ogg copy of the
+original score; see `assets/audio/README.md`. The original WAV is preserved.
 
 ## Review
 

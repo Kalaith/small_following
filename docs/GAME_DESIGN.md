@@ -95,6 +95,9 @@ During upgrade selection, the ritual itself is the main composition: concentric 
 
 ## Open decisions
 
+- How quiet should the promo score and footsteps sit, and does the prototype
+  nonsense-syllable voice suit the cultist at both opening and full talking ranks?
+
 - Does human play support the unchanged 11-second round, roughly three opening conversions and a close full-rank clear of all 15 listeners? How much steering/reaction allowance feels fair?
 - Should later rounds restore the starting position or keep the cultist's position?
 - Should villagers recruit once, recover interest, or reset each round? What does a permanent following represent?
@@ -104,6 +107,22 @@ During upgrade selection, the ritual itself is the main composition: concentric 
 - What unlocks a town, how are previous towns revisited, and what automation stays interesting?
 
 Resolve these through short playable tests before expanding content. See [milestones](MILESTONES.md) and the [outstanding task list](../TODO.md).
+
+## Audio direction and provisional implementation
+
+Requested 2026-10-03: reuse the promo audio in the game's background and add
+small pitter-patter footsteps. Sim-style nonsense language was suggested as a
+possible speech treatment, especially as talking becomes faster; the precise
+voice treatment is not a confirmed final design.
+
+Implemented prototype: the original promo score loops across play/intermission,
+footsteps follow actual player travel, and six original synthetic vowel phrases
+provide optional speech feedback. Player phrase completion drives speech; the
+helper remains silent. One voice, unchanged sample pitch and a 0.65-second
+minimum onset gap drop excess cues without changing any gameplay phrases.
+Music fades at the end of its full 72-second piece before repeating. Mix, timbre,
+40-pixel footstep spacing and the 0.14-second step limit remain provisional.
+M toggles all audio; V toggles speech alone, for the current session.
 
 ## First-map finale
 
