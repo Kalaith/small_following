@@ -66,6 +66,16 @@ func _capture() -> void:
 	await capture_full_clear(scene)
 	scene.advance_round(100.0)
 	await capture_expansion(scene)
+	scene.progression.coins = 200
+	for id in ["merchant_1", "merchant_2", "merchant_3", "merchant_4"]:
+		scene.purchase_upgrade(id)
+	scene.start_next_round()
+	scene.player.position = Vector2(960, 675)
+	scene.player.get_node("Camera2D").reset_smoothing()
+	scene.advance_round(0.5)
+	scene._update_hud()
+	await save_frame("village-merchants.png")
+	scene.advance_round(100.0)
 	await capture_readability(scene)
 	var fake = load("res://scripts/progression.gd").new()
 	fake.save_enabled = false
@@ -122,7 +132,7 @@ func capture_expansion(scene) -> void:
 	scene.ritual_screen.select_node("run_5")
 	await save_frame("ritual-expansion-locked.png")
 	scene.progression.coins = 500
-	for item in scene.progression.catalog.slice(9):
+	for item in scene.progression.catalog.slice(9, 16):
 		scene.purchase_upgrade(item.id)
 	scene.ritual_screen.select_node("east_1")
 	scene.ritual_screen.reset_view()

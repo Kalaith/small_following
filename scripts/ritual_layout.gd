@@ -3,8 +3,8 @@ extends RefCounted
 
 const FIRST_RING: float = 112.0
 const RING_STEP: float = 86.0
-const SECTOR_ANGLES: Dictionary = {"talk": -90.0, "run": 180.0, "persuade": 0.0, "gather": 65.0, "helper": 120.0}
-const BRANCH_TITLES: Dictionary = {"talk": "Words", "run": "Running", "persuade": "Creed", "gather": "Village", "helper": "Followers"}
+const SECTOR_ANGLES: Dictionary = {"talk": -90.0, "run": 180.0, "persuade": 0.0, "gather": 65.0, "helper": 120.0, "merchant": -135.0}
+const BRANCH_TITLES: Dictionary = {"talk": "Words", "run": "Running", "persuade": "Creed", "gather": "Village", "helper": "Followers", "merchant": "Merchants"}
 
 
 static func branch_title(branch: String) -> String:

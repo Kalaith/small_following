@@ -351,6 +351,11 @@ func _effect_text(id: String, branch: String, complete: bool) -> String:
 	var preview: Dictionary = _progression.call("effect_preview", id)
 	var current: Dictionary = preview.get("current", {})
 	var next: Dictionary = preview.get("next", {})
+	if branch == "merchant":
+		var item: Dictionary = _by_id[id]
+		var key: String = str(item.effect.keys()[0])
+		var label: String = {"merchant_unlock": "MERCHANT PAIR", "merchant_conviction_add": "MERCHANT CONVICTION", "merchant_donation_add": "GOLD PER MERCHANT"}[key]
+		return "%s\n%.1f%s" % [label, current[key], "" if complete else " -> %.1f" % next[key]]
 	var stat_key: String = {"talk": "speech_frequency", "persuade": "conviction", "run": "run_multiplier", "gather": "gatherings", "helper": "helpers"}.get(branch, "")
 	var heading: String = {"talk": "TALKING FREQUENCY", "persuade": "CONVICTION PER PHRASE", "run": "RUNNING SPEED", "gather": "VILLAGE GATHERINGS", "helper": "HELPERS"}.get(branch, "")
 	var units: String = {"talk": "phrases/s", "persuade": "conviction", "run": "x base", "gather": "groups of five", "helper": "helpers"}.get(branch, "")

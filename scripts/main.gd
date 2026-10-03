@@ -61,10 +61,15 @@ func _ready() -> void:
 	print("Small Following: starter scene ready.")
 
 
-func _add_gathering(title: String, at: Vector2) -> void:
+func _add_gathering(title: String, at: Vector2, merchant: bool = false) -> void:
 	var gathering := Gathering.new()
 	gathering.group_name = title
 	gathering.position = at
+	if merchant:
+		gathering.npc_type = "merchant"
+		gathering.listener_count = 2
+		gathering.conviction_required = 9.0
+		gathering.donation = progression.merchant_donation()
 	gathering.recruited.connect(_on_recruited)
 	$Actors.add_child(gathering)
 	groups.append(gathering)
@@ -91,7 +96,7 @@ func advance_round(delta: float) -> void:
 	var closest_distance: float = player.speaking_radius
 	for group in groups:
 		var distance: float = player.global_position.distance_to(group.global_position)
-		if distance <= closest_distance and group.recruits < Gathering.LISTENER_COUNT:
+		if distance <= closest_distance and group.recruits < group.listener_count:
 			closest_distance = distance
 			nearest_group = group
 		group.set_listening(false)
@@ -100,7 +105,7 @@ func advance_round(delta: float) -> void:
 	var usable_delta: float = minf(maxf(delta, 0.0), seconds_left)
 	if is_instance_valid(nearest_group):
 		nearest_group.set_listening(true)
-		nearest_group.tick_persuasion(usable_delta, progression.speech_interval(), progression.conviction_per_phrase())
+		nearest_group.tick_persuasion(usable_delta, progression.speech_interval(), progression.conviction_for(nearest_group.npc_type))
 	if is_instance_valid(helper):
 		helper.set_active(true)
 		helper.advance(usable_delta, groups)
@@ -140,6 +145,12 @@ func apply_upgrades() -> void:
 		if progression.has_unlock(entry.key) and not added_gatherings.has(entry.key):
 			_add_gathering(entry.title, entry.at)
 			added_gatherings[entry.key] = true
+	if progression.has_unlock("merchant_unlock") and not added_gatherings.has("merchant_unlock"):
+		_add_gathering("Travelling merchants", Vector2(1020, 650), true)
+		added_gatherings["merchant_unlock"] = true
+	for group in groups:
+		if group.npc_type == "merchant":
+			group.donation = progression.merchant_donation()
 	if progression.has_unlock("helper_unlock") and not is_instance_valid(helper):
 		helper = Helper.new()
 		$Actors.add_child(helper)

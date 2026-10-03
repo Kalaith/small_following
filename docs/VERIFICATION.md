@@ -302,3 +302,14 @@ alternate viewport sizes and a genuinely authored 100+ node tree remain
 unverified. The fixture demonstrates access and transform behavior rather
 than a finished large upgrade economy. No installation, export, remote,
 push or publishing change was made.
+
+## 2026-10-03 — merchant slice
+
+Added two optional merchant listeners and four working inscriptions. The isolated
+merchant suite passed (0 failures), smoke 92/92, progression 113/113, pacing 59/59,
+helper 34/34 and ritual readability 60/60. Logs were inspected. Headless import
+still reports the existing `_EDITOR_GET` error and exits 1; runtime suites exit 0.
+Rendered `capture_starter.gd` completed with exit 0 on Compatibility/NVIDIA.
+Inspected `village-merchants.png`: distinct hats/purses, local speech feedback,
+visible cultist and compact HUD. Original practical full-clear capture remains
+15 conversions in 10.517 seconds, with 0.483 seconds left. Human play is unverified.

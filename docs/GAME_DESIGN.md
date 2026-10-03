@@ -21,6 +21,8 @@ This project is a bounded prototype of movement, a short earning round and a wor
 - During village play, the playable space dominates and the HUD remains minimal and contextual.
 - The tone is cute. The title is **Small Following**.
 
+- Add merchants, three persuadable enemy types, a town-center priest boss, related ritual upgrades and a persistent first-map finish (requested 2026-10-03). Later maps are future work.
+
 ## Provisional rules in this build
 
 These are current implementation defaults, not previously confirmed balance decisions.
@@ -102,3 +104,7 @@ During upgrade selection, the ritual itself is the main composition: concentric 
 - What unlocks a town, how are previous towns revisited, and what automation stays interesting?
 
 Resolve these through short playable tests before expanding content. See [milestones](MILESTONES.md) and the [outstanding task list](../TODO.md).
+
+## First-map finale
+
+See [FIRST_MAP](FIRST_MAP.md) for the scoped design and provisional encounter rules. The merchant slice is implemented: two optional merchants, higher conviction and rewards, and four merchant inscriptions. Enemy progression and completion follow in the next slice.

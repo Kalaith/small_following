@@ -104,7 +104,7 @@ func _advance_step(delta: float, groups: Array[Node2D]) -> void:
 	if phrase_elapsed + 0.000001 >= PHRASE_SECONDS:
 		phrase_elapsed = maxf(0.0, phrase_elapsed - PHRASE_SECONDS)
 		conviction += CONVICTION_PER_PHRASE
-		if conviction >= target_group.CONVICTION_REQUIRED:
+		if conviction >= target_group.conviction_required:
 			if target_group.recruit_listener(target_index):
 				completed_recruits += 1
 			_clear_target()
@@ -164,7 +164,7 @@ func _draw() -> void:
 	if speaking and is_instance_valid(target_group):
 		var target: Vector2 = to_local(target_group.listeners[target_index].global_position)
 		draw_arc(target, 14, 0, TAU, 24, Color("e5d3f5"), 1.5, true)
-		caption = "Helper / %d of 3" % int(conviction)
+		caption = "Helper / %d of %d" % [int(conviction), int(target_group.conviction_required)]
 		draw_line(Vector2(-13, 9), Vector2(13, 9), Color("416b61"), 3)
 		draw_line(Vector2(-13, 9), Vector2(-13 + 26 * phrase_elapsed / PHRASE_SECONDS, 9), Color("dac5ee"), 3)
 	var font := ThemeDB.fallback_font

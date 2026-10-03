@@ -4,8 +4,8 @@ extends RefCounted
 
 const SAVE_VERSION: int = 2
 const MAX_COUNTER: int = 1000000000
-const EFFECT_KEYS: Array[String] = ["speech_speed_add", "conviction_add", "run_speed_add", "meadow_unlock", "east_unlock", "helper_unlock"]
-const UNLOCK_KEYS: Array[String] = ["meadow_unlock", "east_unlock", "helper_unlock"]
+const EFFECT_KEYS: Array[String] = ["merchant_conviction_add", "merchant_donation_add", "speech_speed_add", "conviction_add", "run_speed_add", "meadow_unlock", "east_unlock", "helper_unlock", "merchant_unlock"]
+const UNLOCK_KEYS: Array[String] = ["meadow_unlock", "east_unlock", "helper_unlock", "merchant_unlock"]
 
 var coins: int = 0
 var total_recruits: int = 0
@@ -187,6 +187,14 @@ func has_unlock(key: String) -> bool:
 	return key in UNLOCK_KEYS and _sum_effect(key) >= 1.0
 
 
+func conviction_for(npc_type: String) -> float:
+	return conviction_per_phrase() + (_sum_effect("merchant_conviction_add") if npc_type == "merchant" else 0.0)
+
+
+func merchant_donation() -> int:
+	return 12 + int(_sum_effect("merchant_donation_add"))
+
+
 func gathering_count() -> int:
 	return 3 + int(has_unlock("meadow_unlock")) + int(has_unlock("east_unlock"))
 
@@ -197,6 +205,9 @@ func effect_preview(id: String) -> Dictionary:
 		"conviction": conviction_per_phrase(),
 		"run_multiplier": run_multiplier(),
 		"gatherings": gathering_count(),
+		"merchant_unlock": int(has_unlock("merchant_unlock")),
+		"merchant_conviction_add": conviction_for("merchant"),
+		"merchant_donation_add": merchant_donation(),
 		"helpers": int(has_unlock("helper_unlock")),
 	}
 	var result: Dictionary = {"current": current, "next": {}}
@@ -209,6 +220,8 @@ func effect_preview(id: String) -> Dictionary:
 	result.next.conviction += float(effect.get("conviction_add", 0.0))
 	result.next.run_multiplier += float(effect.get("run_speed_add", 0.0))
 	result.next.gatherings += int(effect.get("meadow_unlock", 0)) + int(effect.get("east_unlock", 0))
+	for key in ["merchant_unlock", "merchant_conviction_add", "merchant_donation_add"]:
+		result.next[key] += float(effect.get(key, 0.0))
 	result.next.helpers += int(effect.get("helper_unlock", 0))
 	return result
 

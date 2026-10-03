@@ -1,6 +1,6 @@
 # Small Following
 
-A small Godot prototype for a cute incremental game where **you are the robed cultist**: walk between village gatherings, speak, recruit and earn donations. Short rounds lead into a purple ritual-circle upgrade screen with sixteen working nodes, nineteen purchasable ranks and local progression saves. Art is procedural placeholder geometry; this is not a finished game.
+A small Godot prototype for a cute incremental game where **you are the robed cultist**: walk between village gatherings, speak, recruit and earn donations. Short rounds lead into a purple ritual-circle upgrade screen with twenty working nodes, twenty-three purchasable ranks and local progression saves. Art is procedural placeholder geometry; this is not a finished game.
 
 ## Run
 
@@ -121,3 +121,7 @@ The tests cover movement/cloth/collision, speech timing, round transitions, dist
 Exact latest check counts, rendered inspection results and commands are recorded in [VERIFICATION.md](docs/VERIFICATION.md). The installed Mono build previously returned an `_EDITOR_GET` / `EditorSettings` error during headless editor import and exit 1 during automatic shutdown without a runtime diagnostic. Keep those environment results separate from successful script/runtime tests; do not describe import as clean unless a new run establishes that.
 
 No Git remote was created and no push, publishing, installation or export-platform change was performed.
+
+## Merchants
+
+Merchant Invitations adds two distinct hat-and-purse NPCs near the market after Meadow Invitations. Each needs 9 conviction and gives 12 donations. Fair Bargain and Trusted Patron each add 1.5 merchant-only conviction per phrase; Generous Purses adds 6 donations per merchant. The helper uses the higher threshold with its own unchanged stats. The original village route is unchanged. See [first-map scope](docs/FIRST_MAP.md).
