@@ -5,6 +5,7 @@ extends Control
 signal purchase_requested(id: String, expected_rank: int)
 signal next_round_requested
 signal return_to_village_requested
+signal travel_requested(area_id: String)
 
 const INK := Color("110d1c")
 const PANEL := Color("191124")
@@ -13,6 +14,7 @@ const LILAC := Color("d7b9ff")
 const VIOLET := Color("a873eb")
 const MUTED := Color("9786af")
 const WHITE := Color("f1e5ff")
+const GOLD := Color("dbb879")
 const RING_STEP: float = 86.0
 const FIRST_RING: float = 112.0
 const NODE_RADIUS: float = 26.0
@@ -53,6 +55,8 @@ var node_picker: OptionButton
 var completion_button: Button
 var demo_message_label: Label
 var demo_continue_button: Button
+var destination_button: Button
+var return_area_button: Button
 var _demo_overlay: Control
 var _demo_panel: PanelContainer
 var _core_hovered: bool = false
@@ -94,6 +98,10 @@ var _error_label: Label
 var _detail_x: float = 0.0
 var _built: bool = false
 var _displayed_rank: int = 0
+var _market_circle: bool = false
+var _destination_id: String = ""
+var _destination_title: String = ""
+var _demo_description: Label
 
 
 func _ready() -> void:
@@ -114,6 +122,7 @@ func configure(catalog: Array, progression: RefCounted) -> void:
 	dismiss_demo_message()
 	_hovered_id = ""
 	_catalog = catalog
+	_market_circle = not catalog.is_empty() and str(catalog[0].get("id", "")).begins_with("market_")
 	_progression = progression
 	_by_id.clear()
 	node_positions = Layout.build(catalog)
@@ -134,14 +143,27 @@ func configure(catalog: Array, progression: RefCounted) -> void:
 		update_state()
 
 
+func configure_destination(area_id: String = "", destination_title: String = "") -> void:
+	_destination_id = area_id
+	_destination_title = destination_title
+	dismiss_demo_message()
+	if _built:
+		update_state(_round_recruits)
+
+
 func update_state(round_recruits: int = 0) -> void:
 	_round_recruits = round_recruits
 	if not _built:
 		return
-	_hint_label.text = "Village / next round: buttons above\nKeyboard: Tab / %s. Movement stays active." % Keys.hint("next_round")
+	_hint_label.text = "Tab: %s / %s: next round\nMovement stays active." % ["market" if _market_circle else "village", Keys.hint("next_round")]
 	_demo_hint.text = "Esc: dismiss / Tab: village / %s: next round" % Keys.hint("next_round")
 	_subtitle_label.text = "ROUND COMPLETE  /  %d NEW FOLLOWERS" % _round_recruits
-	if is_instance_valid(_progression) and _progression.has_method("map_complete"):
+	_title_label.text = "Bellmarket's circle." if _market_circle else "The circle grows."
+	return_area_button.visible = _market_circle
+	village_button.text = "Return to the market" if _market_circle else "Return to the village"
+	if _market_circle:
+		_subtitle_label.text = "BELLMARKET  /  %d NEW FOLLOWERS  /  FIVE PATHS, YOUR CHOICE" % _round_recruits
+	elif is_instance_valid(_progression) and _progression.has_method("map_complete"):
 		if _progression.map_complete():
 			_subtitle_label.text = "BRAMBLEWICK COMPLETE / Priest convinced / %s: play again" % Keys.hint("next_round")
 		elif _progression.has_unlock("encounter_unlock"):
@@ -165,7 +187,7 @@ func update_state(round_recruits: int = 0) -> void:
 	var price: String = "%d donations" % cost
 	price += " + %d recruit%s" % [recruit_cost, "" if recruit_cost == 1 else "s"] if recruit_cost > 0 else " / gold only"
 	var branch: String = str(item.get("branch", ""))
-	var branch_name: String = {"talk": "THE VOICE", "persuade": "THE CONVICTION", "run": "THE PILGRIM", "gather": "THE VILLAGE", "helper": "THE COMPANION", "merchant": "THE MERCHANT", "trial": "THE TRIALS", "faith": "THE FAITH"}.get(branch, "THE CIRCLE")
+	var branch_name: String = {"talk": "THE VOICE", "persuade": "THE CONVICTION", "run": "THE PILGRIM", "gather": "THE VILLAGE", "helper": "THE COMPANION", "merchant": "THE MERCHANT", "trial": "THE TRIALS", "faith": "THE FAITH", "market_run": "THE MARKET ROUTES", "market_talk": "THE MARKET VOICE", "market_persuade": "THE COMMON CAUSE", "market_guild": "THE GUILD", "market_patron": "THE PATRONS"}.get(branch, "THE CIRCLE")
 	_branch_label.text = "%s  /  TIER %s" % [branch_name, _roman(int(item.get("ring", 1)))]
 	_node_title.text = str(item.get("title", "Choose an inscription"))
 	_rank_label.text = "RANK %d / %d  %s" % [_displayed_rank, rank_limit, "- COMPLETE" if state == "purchased" else ""]
@@ -201,10 +223,18 @@ func update_state(round_recruits: int = 0) -> void:
 	completion_button.disabled = not complete
 	completion_button.text = "Inner circle lit / Open" if complete else "Inner circle / Earn every rank"
 	completion_button.tooltip_text = "All ranks are yours. Open the lit centre." if complete else "Purchase every rank in this circle to light its centre."
+	if not _destination_id.is_empty() and complete:
+		completion_button.text = "Circle complete / Travel"
+		completion_button.tooltip_text = "Open the route to " + _destination_title + "."
+	demo_message_label.text = "The road to %s is open" % _destination_title if not _destination_id.is_empty() else "Bellmarket's circle is complete" if _market_circle else "This is the end of the demo"
+	_demo_description.text = "Visit its separate circle and new listeners. Your progress in both towns is kept." if not _destination_id.is_empty() else "Every inscription is yours. Keep exploring the market or return to Bramblewick." if _market_circle else "Every inscription is yours. You can keep playing in this village."
+	destination_button.visible = not _destination_id.is_empty()
+	destination_button.text = "Travel to " + _destination_title
 	if not complete:
 		dismiss_demo_message()
 	_status_label.add_theme_color_override("font_color", LILAC if state == "affordable" or state == "purchased" else MUTED)
 	_update_branch_navigation()
+	_layout_footer()
 	graph.queue_redraw()
 	queue_redraw()
 
@@ -431,6 +461,21 @@ func _effect_text(id: String, branch: String, complete: bool) -> String:
 	var preview: Dictionary = _progression.call("effect_preview", id)
 	var current: Dictionary = preview.get("current", {})
 	var next: Dictionary = preview.get("next", {})
+	if branch.begins_with("market_"):
+		var market_item: Dictionary = _by_id[id]
+		var lines: PackedStringArray = []
+		var labels: Dictionary = {"speech_frequency": "Phrases / second", "conviction": "Conviction / phrase", "run_multiplier": "Running / base speed", "market_guild_unlock": "GUILD TRADERS", "market_guild_donation_add": "Extra donations / guild trader", "market_patron_unlock": "WEALTHY PATRONS", "market_patron_donation_add": "Extra donations / patron"}
+		var keys: Dictionary = {"speech_speed_add": "speech_frequency", "conviction_add": "conviction", "run_speed_add": "run_multiplier"}
+		for effect_key in market_item.get("effect", {}):
+			var key: String = str(keys.get(effect_key, effect_key))
+			if not current.has(key):
+				continue
+			var label: String = str(labels.get(key, key.replace("_", " ").capitalize()))
+			if key.ends_with("_unlock"):
+				lines.append(label + ("\nReady to listen" if complete else "\nSealed → ready to listen"))
+				continue
+			lines.append("%s\n%.2f%s" % [label, float(current[key]), "" if complete or not next.has(key) else " → %.2f" % float(next[key])])
+		return "\n".join(lines)
 	if branch in ["merchant", "trial", "faith"]:
 		var item: Dictionary = _by_id[id]
 		var key: String = str(item.effect.keys()[0])
@@ -533,6 +578,10 @@ func _build_controls() -> void:
 	completion_button = _button("Inner circle / Earn every rank", false)
 	completion_button.add_theme_font_size_override("font_size", 12)
 	completion_button.pressed.connect(open_demo_message)
+	return_area_button = _button("Return to Bramblewick", false)
+	return_area_button.add_theme_font_size_override("font_size", 13)
+	return_area_button.pressed.connect(func() -> void: travel_requested.emit("bramblewick"))
+	return_area_button.hide()
 	_build_demo_message()
 
 
@@ -547,8 +596,11 @@ func _build_demo_message() -> void:
 	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_demo_overlay.add_child(shade)
+	var centering := CenterContainer.new()
+	centering.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_demo_overlay.add_child(centering)
 	_demo_panel = PanelContainer.new()
-	_demo_overlay.add_child(_demo_panel)
+	centering.add_child(_demo_panel)
 	var style := StyleBoxFlat.new()
 	style.bg_color = PANEL
 	style.border_color = VIOLET
@@ -570,6 +622,17 @@ func _build_demo_message() -> void:
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		if entry[1] == 30:
 			demo_message_label = label
+		elif entry[1] == 17:
+			_demo_description = label
+	destination_button = _button("Travel", true)
+	remove_child(destination_button)
+	body.add_child(destination_button)
+	destination_button.custom_minimum_size.y = 46
+	destination_button.pressed.connect(func() -> void:
+		if is_circle_complete() and not _destination_id.is_empty():
+			travel_requested.emit(_destination_id)
+	)
+	destination_button.hide()
 	demo_continue_button = _button("Keep playing", true)
 	remove_child(demo_continue_button)
 	body.add_child(demo_continue_button)
@@ -705,8 +768,6 @@ func _layout() -> void:
 	node_picker.size = Vector2(minf(440, _detail_x - margin - 275), 56)
 	completion_button.position = Vector2(_detail_x - 253, size.y - 111)
 	completion_button.size = Vector2(226, 56)
-	_demo_panel.position = (size - Vector2(minf(600, size.x - 80), 332)) * 0.5
-	_demo_panel.size = Vector2(minf(600, size.x - 80), 332)
 	_title_label.position = Vector2(margin, 43)
 	_subtitle_label.position = Vector2(margin + 2.0, 23)
 	_coins_label.position = Vector2(_detail_x, 41)
@@ -735,6 +796,7 @@ func _layout() -> void:
 	_hint_label.size = Vector2(detail_width, 43)
 	_legend_label.position = Vector2(margin, size.y - 49)
 	_legend_label.size = Vector2(_detail_x - margin - 22, 38)
+	_layout_footer()
 	recenter_button.position = Vector2(_detail_x - 118, 56)
 	recenter_button.size = Vector2(91, 56)
 	focus_button.position = Vector2(_detail_x - 265, 56)
@@ -743,6 +805,23 @@ func _layout() -> void:
 	overview_button.size = Vector2(92, 56)
 	reset_view()
 	queue_redraw()
+
+
+func _layout_footer() -> void:
+	if not is_instance_valid(return_area_button):
+		return
+	return_area_button.position = Vector2(40, size.y - 50)
+	return_area_button.size = Vector2(200, 44)
+	if _market_circle:
+		_legend_label.text = "Diamond: locked  /  Hollow: needs resources\n+: ready  /  Check: complete  ·  Drag to pan, + / - to zoom"
+		_legend_label.position.x = 258
+		_legend_label.size.x = _detail_x - 286
+	else:
+		_legend_label.text = "Diamond: locked   /   Hollow: needs resources   /   +: ready   /   Check: complete\nTap a node · Drag to explore · + / - or scroll to zoom"
+		_legend_label.position.x = 40
+		_legend_label.size.x = _detail_x - 62
+	var message_height: float = 390 if not _destination_id.is_empty() else 332
+	_demo_panel.custom_minimum_size = Vector2(minf(600, size.x - 80), message_height)
 
 
 func _purchase_selected() -> void:
@@ -949,6 +1028,9 @@ func _arc(canvas: Control, center: Vector2, radius: float, color: Color, width: 
 
 
 func _draw_seal_backdrop(canvas: Control) -> void:
+	if _market_circle:
+		_draw_market_seal(canvas)
+		return
 	# These bands and satellites are ornament, never extra upgrade connections.
 	# Their contrast stays below the solid/dashed catalog edges drawn afterward.
 	var center: Vector2 = _point(Vector2.ZERO)
@@ -972,6 +1054,37 @@ func _draw_seal_backdrop(canvas: Control) -> void:
 			canvas.draw_arc(center, (radius + 6.0) * zoom, start + 0.07, start + PI * 0.26, 40, Color(VIOLET, 0.055), 1.0, true)
 	for seal in Layout.satellite_seals(_catalog):
 		_draw_satellite(canvas, seal)
+
+
+func _draw_market_seal(canvas: Control) -> void:
+	# Five woven petals echo market awnings and coins. Real equal-weight branches
+	# sit over this quiet ornament and remain the only actionable connections.
+	var center: Vector2 = _point(Vector2.ZERO)
+	for radius in [413.0, 425.0, 439.0]:
+		_arc(canvas, center, radius, Color(GOLD if radius == 425 else LILAC, 0.22), 1)
+	_draw_runes(canvas, 432.0)
+	var pentagon := PackedVector2Array()
+	for index in range(6):
+		pentagon.append(_point(Vector2.from_angle(-PI / 2 + index * TAU / 5) * 405.0))
+	canvas.draw_polyline(pentagon, Color(GOLD, 0.19), 1.0, true)
+	for index in range(5):
+		var angle: float = -PI / 2 + index * TAU / 5
+		var radial := Vector2.from_angle(angle)
+		var tangent := radial.orthogonal()
+		var petal := PackedVector2Array()
+		var inner_petal := PackedVector2Array()
+		for point_index in range(81):
+			var phase: float = point_index * TAU / 80.0
+			petal.append(_point(radial * (238.0 + cos(phase) * 153.0) + tangent * sin(phase) * 94.0))
+			inner_petal.append(_point(radial * (238.0 + cos(phase) * 143.0) + tangent * sin(phase) * 84.0))
+		canvas.draw_polyline(petal, Color(VIOLET, 0.25), 1.2, true)
+		canvas.draw_polyline(inner_petal, Color(GOLD, 0.10), 1, true)
+		var coin: Vector2 = radial.rotated(PI / 5) * 358.0
+		_arc(canvas, _point(coin), 18.0, Color(GOLD, 0.26), 1)
+		canvas.draw_line(_point(coin - radial * 8), _point(coin + radial * 8), Color(GOLD, 0.20), 1, true)
+	for index in range(60):
+		var radial := Vector2.from_angle(index * TAU / 60)
+		canvas.draw_line(_point(radial * 444), _point(radial * (455 if index % 6 == 0 else 449)), Color(GOLD, 0.30 if index % 6 == 0 else 0.15), 1, true)
 
 
 func _draw_satellite(canvas: Control, seal: Dictionary) -> void:
@@ -1037,6 +1150,13 @@ func _draw_core(canvas: Control) -> void:
 	for index in range(20):
 		var radial: Vector2 = Vector2.from_angle(-PI * 0.5 + index * TAU / 20.0)
 		canvas.draw_line(_point(radial * (CORE_RADIUS + 4.0)), _point(radial * (CORE_ORNAMENT_RADIUS - (6.0 if index % 4 == 0 else 10.0))), Color(LILAC, 0.80 if complete else 0.30), 1.0, true)
+	if _market_circle:
+		# Bellmarket's centre is a five-petalled coin, distinct from the village star.
+		for index in range(5):
+			var petal_at: Vector2 = center + Vector2.from_angle(-PI / 2 + index * TAU / 5) * radius * 0.24
+			canvas.draw_arc(petal_at, radius * 0.32, 0, TAU, 32, GOLD if complete else Color(GOLD, 0.50), 1.2, true)
+		canvas.draw_circle(center, radius * 0.12, GOLD if complete else Color(GOLD, 0.45))
+		return
 	# A crisp pentagram and five small rim marks make the central source legible.
 	var star := PackedVector2Array()
 	for index in range(6):
@@ -1174,11 +1294,11 @@ func _label_collides(bounds: Rect2, own_id: String, radius: float) -> bool:
 func _draw_glyph(canvas: Control, at: Vector2, branch: String, color: Color) -> void:
 	var scale: float = zoom
 	match branch:
-		"talk":
+		"talk", "market_talk":
 			canvas.draw_line(at + Vector2(-5, -10) * scale, at + Vector2(-5, 10) * scale, color, 1.7, true)
 			canvas.draw_arc(at + Vector2(-6, 0) * scale, 9 * scale, -PI * 0.42, PI * 0.42, 18, color, 1.3, true)
 			canvas.draw_arc(at + Vector2(-6, 0) * scale, 15 * scale, -PI * 0.35, PI * 0.35, 18, color, 1.3, true)
-		"persuade":
+		"persuade", "market_persuade":
 			canvas.draw_polyline(PackedVector2Array([at + Vector2(0, -12) * scale, at + Vector2(9, 0) * scale, at + Vector2(0, 12) * scale, at + Vector2(-9, 0) * scale, at + Vector2(0, -12) * scale]), color, 1.6, true)
 			canvas.draw_line(at + Vector2(0, -6) * scale, at + Vector2(0, 6) * scale, color, 1.2, true)
 		"helper":
@@ -1197,7 +1317,14 @@ func _draw_glyph(canvas: Control, at: Vector2, branch: String, color: Color) -> 
 			canvas.draw_line(at + Vector2(0, -12) * scale, at + Vector2(0, 12) * scale, color, 2, true)
 			canvas.draw_line(at + Vector2(-8, -4) * scale, at + Vector2(8, -4) * scale, color, 2, true)
 			canvas.draw_arc(at, 15 * scale, 0, TAU, 24, color, 1, true)
-		"run":
+		"market_guild":
+			canvas.draw_polyline(PackedVector2Array([at + Vector2(-12, 1) * scale, at + Vector2(-10, -9) * scale, at + Vector2(10, -9) * scale, at + Vector2(12, 1) * scale, at + Vector2(-12, 1) * scale]), color, 1.5, true)
+			canvas.draw_line(at + Vector2(-8, 1) * scale, at + Vector2(-8, 10) * scale, color, 1.5, true)
+			canvas.draw_line(at + Vector2(8, 1) * scale, at + Vector2(8, 10) * scale, color, 1.5, true)
+			canvas.draw_line(at + Vector2(-10, 10) * scale, at + Vector2(10, 10) * scale, color, 1.5, true)
+		"market_patron":
+			canvas.draw_polyline(PackedVector2Array([at + Vector2(-11, -7) * scale, at + Vector2(-8, 8) * scale, at + Vector2(8, 8) * scale, at + Vector2(11, -7) * scale, at + Vector2(4, -2) * scale, at + Vector2(0, -11) * scale, at + Vector2(-4, -2) * scale, at + Vector2(-11, -7) * scale]), color, 1.5, true)
+		"run", "market_run":
 			for x in [-5, 4]:
 				canvas.draw_polyline(PackedVector2Array([at + Vector2(x - 4, -10) * scale, at + Vector2(x + 3, 0) * scale, at + Vector2(x - 4, 10) * scale]), color, 1.7, true)
 		_:

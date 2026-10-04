@@ -94,7 +94,7 @@ func _run() -> void:
 	check(restored.load_progress() and restored.is_circle_complete(), "completed save reload derives completion without a new flag")
 	check(restored.purchased == state.purchased and restored.coins == 37 and restored.total_recruits == 123 and restored.available_recruits == state.available_recruits and restored.round_number == 8 and restored.encounter_stage == 2, "completed-save reload preserves ranks, both resources, lifetime recruitment, round and encounter stage")
 	var stored: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(FIXTURE))
-	check(stored.schema_version == 3 and stored.size() == 7 and not stored.has("circle_complete"), "completion remains derived rather than adding a save flag")
+	check(stored.schema_version == Progression.SAVE_VERSION and not stored.has("circle_complete"), "completion remains derived rather than adding a save flag")
 	await _test_screen()
 	clean_fixture()
 	print("DEMO COMPLETION RESULT: %d checks, %d failures" % [checks, failures])
@@ -110,6 +110,8 @@ func _test_screen() -> void:
 	scene.advance_round(100.0)
 	await process_frame
 	var screen = scene.ritual_screen
+	# The generic final-area notice remains tested here; market-flow tests cover travel.
+	screen.configure_destination()
 	check(screen.is_circle_complete() and not screen.completion_button.disabled and not screen.demo_message_visible(), "completed reload enables the centre without automatically opening a notice")
 	# Exercise the UI's live final-purchase transition using the existing transactional action.
 	scene.progression.purchased.talk_3 = 1

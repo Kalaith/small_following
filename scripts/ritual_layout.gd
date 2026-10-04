@@ -6,6 +6,8 @@ const RING_STEP: float = 86.0
 const SECTOR_ANGLES: Dictionary = {"talk": -90.0, "run": 180.0, "persuade": 0.0, "gather": 45.0, "helper": 135.0, "merchant": -135.0, "trial": -45.0, "faith": 90.0}
 const BRANCH_TITLES: Dictionary = {"talk": "Words", "run": "Running", "persuade": "Creed", "gather": "Village", "helper": "Followers", "merchant": "Merchants", "trial": "Trials", "faith": "Faith"}
 const FAN_HALF_ANGLE: float = 15.0
+const MARKET_BRANCHES: Array[String] = ["market_run", "market_talk", "market_persuade", "market_guild", "market_patron"]
+const MARKET_TITLES: Dictionary = {"market_run": "Routes", "market_talk": "Voice", "market_persuade": "Creed", "market_guild": "Guild", "market_patron": "Patrons"}
 
 # The current village has deliberately unequal silhouettes, rather than eight
 # copies of one radial formula. Stable IDs anchor art; catalog ring values still
@@ -85,7 +87,7 @@ static func satellite_seals(catalog: Array) -> Array[Dictionary]:
 
 
 static func branch_title(branch: String) -> String:
-	return str(BRANCH_TITLES.get(branch, branch.replace("_", " ").capitalize()))
+	return str(MARKET_TITLES.get(branch, BRANCH_TITLES.get(branch, branch.replace("_", " ").capitalize())))
 
 
 static func build(catalog: Array) -> Dictionary:
@@ -132,6 +134,13 @@ static func build(catalog: Array) -> Dictionary:
 	for id in positions:
 		if VILLAGE_POSITIONS.has(id):
 			positions[id] = VILLAGE_POSITIONS[id]
+		else:
+			for branch_index in range(MARKET_BRANCHES.size()):
+				for tier in range(1, 4):
+					if id == "%s_%d" % [MARKET_BRANCHES[branch_index], tier]:
+						# Five equally weighted paths sweep through a woven pentagonal seal.
+						var angle: float = -90.0 + branch_index * 72.0 + [-13.0, 15.0, 0.0][tier - 1]
+						positions[id] = Vector2.from_angle(deg_to_rad(angle)) * [155.0, 265.0, 385.0][tier - 1]
 	return positions
 
 

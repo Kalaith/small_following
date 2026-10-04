@@ -2,6 +2,7 @@ extends Control
 ## A focused utility page over the current village or ritual; never pauses play.
 signal close_requested
 signal exit_requested
+signal title_requested
 signal volume_changed(channel: String, value: float)
 signal mute_requested
 signal voice_mute_requested
@@ -132,6 +133,12 @@ func _ready() -> void:
 	body.add_child(actions)
 	close_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	actions.add_child(close_button)
+	var title_button := Button.new()
+	title_button.text = "Title screen"
+	title_button.custom_minimum_size = Vector2(130, 56)
+	title_button.focus_mode = Control.FOCUS_NONE
+	title_button.pressed.connect(func() -> void: title_requested.emit())
+	actions.add_child(title_button)
 	exit_button = Button.new()
 	exit_button.text = "Exit Game"
 	exit_button.custom_minimum_size = Vector2(140, 56)

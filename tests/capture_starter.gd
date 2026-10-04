@@ -7,6 +7,7 @@ var ritual_only: bool = false
 var settings_only: bool = false
 var economy_only: bool = false
 var touch_only: bool = false
+var market_only: bool = false
 
 
 func _initialize() -> void:
@@ -36,6 +37,8 @@ func _capture() -> void:
 			economy_only = true
 		elif argument == "--touch-only":
 			touch_only = true
+		elif argument == "--market-only":
+			market_only = true
 	DirAccess.make_dir_recursive_absolute(destination)
 	var scene = load("res://scenes/main.tscn").instantiate()
 	scene.persistence_enabled = false
@@ -44,6 +47,10 @@ func _capture() -> void:
 	scene.game_audio.output_enabled = false
 	root.add_child(scene)
 	scene.set_process(false)
+	if market_only:
+		await capture_market(scene)
+		await finish_capture(scene)
+		return
 	if touch_only:
 		await capture_touch_controls(scene)
 		await finish_capture(scene)
@@ -151,6 +158,63 @@ func _capture() -> void:
 	await capture_readability(scene)
 	await capture_graph_fixture(scene)
 	await finish_capture(scene)
+
+
+func capture_market(scene) -> void:
+	scene.show_title()
+	await save_frame("title-screen.png")
+	scene.title_screen.submit_password("PLZKTKS")
+	await save_frame("title-level-select.png")
+	var original_size: Vector2i = root.size
+	root.size = Vector2i(1024, 768)
+	for frame in range(4):
+		await process_frame
+	await save_frame("title-compact.png")
+	root.size = original_size
+	scene.title_screen.level_two_button.pressed.emit()
+	scene.player.set_physics_process(false)
+	scene.player.get_node("Camera2D").reset_smoothing()
+	for frame in range(4):
+		await process_frame
+	await save_frame("market-overview.png")
+	scene.player.position = Vector2(1020, 720)
+	scene.player.get_node("Camera2D").reset_smoothing()
+	scene.advance_round(0.5)
+	scene._update_hud()
+	await save_frame("market-mixed-listeners.png")
+	scene.advance_round(100.0)
+	scene.progression.coins = 12
+	scene.ritual_screen.update_state()
+	scene.ritual_screen.overview_button.pressed.emit()
+	await save_frame("market-ritual.png")
+	scene.ritual_screen.select_node("market_patron_1")
+	await save_frame("market-patron-upgrade.png")
+	root.size = Vector2i(1024, 768)
+	for frame in range(4):
+		await process_frame
+	await save_frame("market-ritual-compact.png")
+	root.size = original_size
+	scene.progression.coins = 1000
+	scene.progression.total_recruits = 1000
+	scene.progression.available_recruits = 1000
+	for entry in scene.progression.catalog:
+		scene.purchase_upgrade(entry.id)
+	scene.ritual_screen.overview_button.pressed.emit()
+	await save_frame("market-complete-circle.png")
+	scene.start_next_round()
+	scene.player.position = Vector2(1030, 425)
+	scene.player.get_node("Camera2D").reset_smoothing()
+	scene.advance_round(1.0)
+	scene._update_hud()
+	await save_frame("market-patrons.png")
+	scene.advance_round(100.0)
+	scene.travel_to("bramblewick")
+	for entry in scene.progression.catalog:
+		scene.progression.purchased[entry.id] = entry.max_rank
+	scene.apply_upgrades()
+	scene.ritual_screen.update_state()
+	scene.ritual_screen.open_demo_message()
+	await save_frame("village-market-destination.png")
 
 
 func capture_recruit_economy(scene) -> void:

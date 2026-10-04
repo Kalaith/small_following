@@ -9,10 +9,17 @@ const GameAudio = preload("res://scripts/game_audio.gd")
 const SettingsStore = preload("res://scripts/settings_store.gd")
 const SettingsScreen = preload("res://scripts/settings_screen.gd")
 const Keys = preload("res://scripts/key_bindings.gd")
+const Market = preload("res://scripts/market.gd")
+const Village = preload("res://scripts/village.gd")
+const TitleScreen = preload("res://scripts/title_screen.gd")
 const ROUND_SECONDS: float = 11.0
 const START_POSITION := Vector2(780, 680)
 const BASE_RUN_SPEED: float = 180.0
 
+@export var show_title_on_start: bool = false
+var title_screen: Control
+var title_active: bool = false
+var area_label: Label
 var persistence_enabled: bool = true
 var save_path_override: String = ""
 var catalog_ready: bool = false
@@ -75,13 +82,11 @@ func _ready() -> void:
 	if not catalog_ready:
 		progression.save_enabled = false
 		round_active = false
-	$Village.build_props($Actors)
-	_add_gathering("Wellside neighbours", Vector2(560, 540))
-	_add_gathering("Market regulars", Vector2(1050, 480))
-	_add_gathering("Garden club", Vector2(850, 850))
+	_rebuild_area()
 	_build_hud()
 	_build_ritual()
 	_build_settings()
+	_build_title()
 	village_input = preload("res://scripts/village_input.gd").new()
 	add_child(village_input)
 	if settings.values.fullscreen and not OS.has_feature("web"):
@@ -91,7 +96,150 @@ func _ready() -> void:
 	_update_hud()
 	if not catalog_ready:
 		set_ritual_visible(true)
+	if show_title_on_start:
+		show_title()
 	print("Small Following: starter scene ready.")
+
+
+func _rebuild_area() -> void:
+	nearest_group = null
+	groups.clear()
+	added_gatherings.clear()
+	for actor in $Actors.get_children():
+		if actor != player:
+			$Actors.remove_child(actor)
+			actor.queue_free()
+	encounter = null
+	helper = null
+	var previous: Node = $Village
+	remove_child(previous)
+	previous.queue_free()
+	var world: Node2D = Market.new() if progression.active_area == "bellmarket" else Village.new()
+	world.name = "Village"
+	add_child(world)
+	move_child(world, 0)
+	world.build_props($Actors)
+	if progression.active_area == "bellmarket":
+		for entry in Market.GROUP_LAYOUT:
+			var gathering := Gathering.new()
+			gathering.group_name = entry.title
+			gathering.position = entry.position
+			gathering.listener_profiles.assign(entry.profiles)
+			gathering.configure_market(progression)
+			gathering.recruited.connect(_on_recruited)
+			gathering.phrase_spoken.connect(game_audio.on_phrase)
+			$Actors.add_child(gathering)
+			groups.append(gathering)
+	else:
+		_add_gathering("Wellside neighbours", Vector2(560, 540))
+		_add_gathering("Market regulars", Vector2(1050, 480))
+		_add_gathering("Garden club", Vector2(850, 850))
+	player.clear_walk_target()
+	player.position = area_start_position()
+	player.get_node("Camera2D").reset_smoothing()
+
+
+func area_start_position() -> Vector2:
+	return Market.START_POSITION if progression.active_area == "bellmarket" else START_POSITION
+
+
+func travel_to(area_id: String, bypass_unlock: bool = false) -> bool:
+	if round_active or not catalog_ready:
+		return false
+	if area_id == "bellmarket":
+		for entry in Market.GROUP_LAYOUT:
+			var probe := Gathering.new()
+			probe.listener_profiles.assign(entry.profiles)
+			var error: String = probe.validate_profiles()
+			probe.free()
+			if not error.is_empty():
+				progression.last_error = error
+				return false
+	if not progression.try_travel(area_id, bypass_unlock):
+		ritual_screen.update_state(round_recruits)
+		_update_hud()
+		return false
+	_rebuild_area()
+	seconds_left = ROUND_SECONDS
+	round_recruits = 0
+	apply_upgrades()
+	_reset_encounter()
+	game_audio.reset_motion()
+	game_audio.stop_speech()
+	ritual_screen.configure(progression.catalog, progression)
+	_configure_destination()
+	set_ritual_visible(true)
+	_update_hud()
+	return true
+
+
+func _configure_destination() -> void:
+	if progression.active_area == "bramblewick":
+		ritual_screen.configure_destination("bellmarket", "Bellmarket")
+	else:
+		ritual_screen.configure_destination()
+
+
+func _build_title() -> void:
+	var canvas := CanvasLayer.new()
+	canvas.name = "Title"
+	canvas.layer = 8
+	add_child(canvas)
+	title_screen = TitleScreen.new()
+	canvas.add_child(title_screen)
+	title_screen.continue_requested.connect(continue_from_title)
+	title_screen.level_requested.connect(_start_selected_level)
+	title_screen.settings_requested.connect(set_settings_visible.bind(true))
+	title_screen.hide()
+
+
+func show_title() -> void:
+	set_settings_visible(false)
+	progression.save_progress()
+	round_active = false
+	if is_instance_valid(helper):
+		helper.set_active(false)
+	game_audio.stop_speech()
+	player.clear_walk_target()
+	player.set_physics_process(false)
+	title_active = true
+	set_ritual_visible(false)
+	hud_layout.hide()
+	settings_button.hide()
+	title_screen.unlocked = title_screen.unlocked or progression.level_select_unlocked
+	title_screen.configure(progression.active_area, progression.is_area_unlocked("bellmarket"))
+	title_screen.show()
+	if not progression.last_error.is_empty():
+		title_screen.show_error(progression.last_error)
+
+
+func _leave_title() -> void:
+	title_active = false
+	title_screen.hide()
+	var focused := get_viewport().gui_get_focus_owner()
+	if focused != null:
+		focused.release_focus()
+	player.set_physics_process(true)
+	settings_button.show()
+	hud_layout.show()
+
+
+func continue_from_title() -> void:
+	if not catalog_ready:
+		title_screen.show_error(progression.last_error)
+		return
+	_leave_title()
+	_begin_round(false)
+
+
+func _start_selected_level(area_id: String) -> void:
+	if not title_active:
+		return
+	if not travel_to(area_id, title_screen.unlocked):
+		title_screen.show_error(progression.last_error)
+		return
+	_leave_title()
+	_begin_round(false)
 
 
 func _add_gathering(title: String, at: Vector2, merchant: bool = false) -> void:
@@ -125,6 +273,9 @@ func _input(event: InputEvent) -> void:
 		return
 	if event.is_echo():
 		return
+	if title_active and not settings_screen.visible:
+		# The LineEdit owns typed characters, including remapped game shortcuts.
+		return
 	if event.is_action_pressed("toggle_settings"):
 		if ritual_screen.demo_message_visible():
 			ritual_screen.dismiss_demo_message()
@@ -141,6 +292,8 @@ func _input(event: InputEvent) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if title_active:
+		return
 	if event.is_echo():
 		return
 	if event.is_action_pressed("toggle_audio"):
@@ -177,7 +330,7 @@ func set_settings_visible(value: bool) -> void:
 	if value:
 		ritual_screen.dismiss_demo_message()
 	settings_screen.visible = value
-	settings_button.visible = not value
+	settings_button.visible = not value and not title_active
 	if value:
 		var focused := get_viewport().gui_get_focus_owner()
 		if focused != null:
@@ -253,6 +406,7 @@ func _build_settings() -> void:
 		settings_button.add_theme_stylebox_override(state, settings_screen.close_button.get_theme_stylebox(state))
 	settings_screen.close_requested.connect(set_settings_visible.bind(false))
 	settings_screen.exit_requested.connect(exit_game)
+	settings_screen.title_requested.connect(show_title)
 	settings_screen.volume_changed.connect(game_audio.set_volume)
 	settings_screen.mute_requested.connect(game_audio.toggle_mute)
 	settings_screen.voice_mute_requested.connect(game_audio.toggle_voice)
@@ -286,14 +440,24 @@ func _keys_changed() -> void:
 
 func advance_round(delta: float) -> void:
 	game_audio.advance_time(delta)
+	if title_active:
+		return
 	nearest_group = null
 	var closest_distance: float = player.speaking_radius
+	var nearby_group: Node2D = null
+	var nearby_distance: float = player.speaking_radius + 30.0
 	for group in groups:
 		var distance: float = player.global_position.distance_to(group.global_position)
-		if distance <= closest_distance and group.recruits < group.listener_count:
+		if distance <= nearby_distance:
+			nearby_distance = distance
+			nearby_group = group
+		if distance <= closest_distance and group.first_unconverted() >= 0:
 			closest_distance = distance
 			nearest_group = group
 		group.set_listening(false)
+		group.set_nearby(false)
+	if is_instance_valid(nearby_group):
+		nearby_group.set_nearby(true)
 	if not round_active:
 		game_audio.stop_speech()
 		return
@@ -330,7 +494,7 @@ func _reset_encounter() -> void:
 		encounter.get_parent().remove_child(encounter)
 		encounter.queue_free()
 	encounter = null
-	if not progression.has_unlock("encounter_unlock") or progression.map_complete():
+	if progression.active_area != "bramblewick" or not progression.has_unlock("encounter_unlock") or progression.map_complete():
 		return
 	encounter = Encounter.new()
 	encounter.stage = progression.encounter_stage
@@ -366,6 +530,11 @@ func purchase_upgrade(id: String, expected_rank: int = -1) -> bool:
 
 func apply_upgrades() -> void:
 	player.movement_speed = BASE_RUN_SPEED * progression.run_multiplier()
+	if progression.active_area == "bellmarket":
+		for group in groups:
+			group.configure_market(progression)
+		_apply_helper()
+		return
 	for entry in [
 		{"key": "meadow_unlock", "title": "Meadow neighbours", "at": Vector2(470, 800)},
 		{"key": "east_unlock", "title": "East lane visitors", "at": Vector2(1250, 580)},
@@ -379,26 +548,35 @@ func apply_upgrades() -> void:
 	for group in groups:
 		if group.npc_type == "merchant":
 			group.donation = progression.merchant_donation()
+	_apply_helper()
+
+
+func _apply_helper() -> void:
 	if progression.has_unlock("helper_unlock") and not is_instance_valid(helper):
 		helper = Helper.new()
 		$Actors.add_child(helper)
 		helper.configure_navigation($Actors)
-		helper.reset_round(START_POSITION)
+		helper.reset_round(area_start_position())
 
 
 func set_ritual_visible(value: bool) -> void:
 	if is_instance_valid(village_input):
 		village_input.cancel_gesture()
-	ritual_screen.visible = value and not round_active
-	hud_layout.visible = not ritual_screen.visible
+	ritual_screen.visible = value and not round_active and not title_active
+	hud_layout.visible = not ritual_screen.visible and not title_active
 	if ritual_screen.visible:
 		ritual_screen.update_state(round_recruits)
 
 
 func start_next_round() -> void:
-	if round_active or not catalog_ready:
+	if round_active or not catalog_ready or title_active:
 		return
-	progression.round_number += 1
+	_begin_round(true)
+
+
+func _begin_round(increment: bool) -> void:
+	if increment:
+		progression.round_number += 1
 	progression.save_progress()
 	seconds_left = ROUND_SECONDS
 	round_recruits = 0
@@ -408,11 +586,11 @@ func start_next_round() -> void:
 		group.reset_round()
 	# Every round uses the same entrance; walking in menus does not grant a head start.
 	player.clear_walk_target()
-	player.position = START_POSITION
+	player.position = area_start_position()
 	game_audio.reset_motion()
 	game_audio.stop_speech()
 	if is_instance_valid(helper):
-		helper.reset_round(START_POSITION)
+		helper.reset_round(area_start_position())
 	_reset_encounter()
 	player.get_node("Camera2D").reset_smoothing()
 	set_ritual_visible(false)
@@ -428,6 +606,8 @@ func _build_ritual() -> void:
 	canvas.add_child(ritual_screen)
 	ritual_screen.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	ritual_screen.configure(progression.catalog, progression)
+	_configure_destination()
+	ritual_screen.travel_requested.connect(travel_to)
 	ritual_screen.purchase_requested.connect(purchase_upgrade)
 	ritual_screen.next_round_requested.connect(start_next_round)
 	ritual_screen.return_to_village_requested.connect(set_ritual_visible.bind(false))
@@ -451,7 +631,8 @@ func _build_hud() -> void:
 	title.add_theme_constant_override("shadow_offset_x", 2)
 	title.add_theme_constant_override("shadow_offset_y", 2)
 	heading.add_child(title)
-	heading.add_child(_label("BRAMBLEWICK / a small beginning", 13, Color("#f5ebd0")))
+	area_label = _label("", 13, Color("#f5ebd0"))
+	heading.add_child(area_label)
 	var status := _panel()
 	_village_blockers.append(status)
 	hud_layout.add_child(status)
@@ -511,7 +692,7 @@ func _village_button(caption: String, left: float, right: float) -> Button:
 
 
 func village_tap_available(at: Vector2) -> bool:
-	if ritual_screen.visible or settings_screen.visible:
+	if title_active or ritual_screen.visible or settings_screen.visible:
 		return false
 	if settings_button.is_visible_in_tree() and settings_button.get_global_rect().has_point(at):
 		return false
@@ -545,15 +726,18 @@ func _label(value: String, font_size: int, color: Color = Color("#fff1d0")) -> L
 
 
 func _update_hud() -> void:
+	area_label.text = "BELLMARKET / a gathering of fortunes" if progression.active_area == "bellmarket" else "BRAMBLEWICK / a small beginning"
 	ritual_button.visible = not round_active
 	next_round_button.visible = not round_active
 	stats_label.text = "%d donations / %d recruits available" % [coins, progression.available_recruits]
 	round_label.text = "Round %d   /   %.1fs remaining" % [round_number, seconds_left]
 	save_label.text = "Progress notice: see the ritual screen." if not progression.last_error.is_empty() else ""
-	if progression.map_complete():
+	if progression.active_area == "bellmarket" and progression.is_circle_complete():
+		context_label.text = "Bellmarket circle complete!  Keep exploring or return to Bramblewick."
+	elif progression.active_area == "bramblewick" and progression.map_complete():
 		context_label.text = "Bramblewick complete!" + ("  Choose Ritual circle or Next round." if not round_active else "  Enjoy the village.")
 	elif not round_active:
-		context_label.text = "Round complete - Ritual circle / Next round"
+		context_label.text = "Round complete - Tab: ritual / %s: next round" % Keys.hint("next_round")
 	elif is_instance_valid(encounter) and not encounter.defeated:
 		context_label.text = "Convince %s in the town center" % Encounter.PROFILES[encounter.stage].title
 	elif is_instance_valid(nearest_group):
