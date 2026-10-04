@@ -140,6 +140,7 @@ See [save fields and recovery rules](docs/ARCHITECTURE.md#local-progression-and-
 - [Design proposal template](docs/GDD_TEMPLATE.md)
 - [Commit message style](docs/COMMIT_STYLE.md)
 - [Confirmed direction and provisional rules](docs/GAME_DESIGN.md)
+- [Future levels and mixed NPC groups - proposal](docs/FUTURE_LEVELS.md)
 - [Opening-round timing and route evidence](docs/PACING.md)
 - [Visual direction and future asset needs](docs/VISUAL_DIRECTION.md)
 - [Staged milestones](docs/MILESTONES.md)

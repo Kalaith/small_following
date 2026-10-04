@@ -1157,3 +1157,34 @@ were performed. The touch update is now live on WebHatchery. Small-phone
 legibility/targets and real iOS Safari/physical-device acceptance remain the
 limits already recorded above; this was Chromium touch emulation, not a
 physical-device playtest.
+
+## 2026-10-04 - Future-level and mixed-audience planning
+
+Added [FUTURE_LEVELS](FUTURE_LEVELS.md), a scoped proposal following the GDD
+template. It covers six candidate settings, a five-listener example with two
+independent audience requirements, eligibility/overflow/helper rules, proposed
+area travel and save ownership, and bounded future implementation slices.
+Names, order, unlocks, economy and carry-over remain provisional. The original
+three-group pacing benchmark is retained; no new area or unlock is shipped.
+
+Checked the implemented baseline against `scripts/gathering.gd`, `main.gd`,
+`helper.gd` and `progression.gd`: audience type/threshold/reward are currently
+shared by each group, save schema is 3, and circle completion currently checks
+the single catalog independently of Priest victory. These are documented as
+extension points rather than existing mixed-audience or travel features.
+
+Documentation review checked local Markdown link destinations, balanced code
+fences, final newlines, and consistency with current progression and movement
+invariants. `git diff --check` passed; Git emitted its existing LF-to-CRLF
+working-copy notices. README and the development map link to the proposal;
+GAME_DESIGN records the planning request under open decisions. TODO remains
+outstanding-only and milestone completion status is unchanged.
+
+An independent read-only design review identified two ambiguities, now clarified:
+portable stat/helper benefits are separate from area-specific group/encounter
+unlocks, and destination setup precedes the durable travel commit, with explicit
+recovery required for any remaining activation failure.
+
+This is documentation-only work. Godot import, runtime suites, rendered
+captures, exports and human playtests were not rerun. No numerical route,
+pixel, play-feel or new-platform result is claimed.

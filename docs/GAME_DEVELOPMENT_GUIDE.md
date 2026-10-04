@@ -21,6 +21,7 @@ source for confirmed direction and provisional rules.
 | [PACING](PACING.md) | Balance assumptions, measured conversions and route limits |
 | [VISUAL_DIRECTION](VISUAL_DIRECTION.md) | Art direction and asset requirements |
 | [First-map finale](FIRST_MAP.md) | Merchant and town opponent scope |
+| [Future levels and mixed audiences](FUTURE_LEVELS.md) | Proposed area ideas, individual NPC requirements and staged prototypes |
 | [MILESTONES](MILESTONES.md) | Bounded stages and their exit checks |
 | [VERIFICATION](VERIFICATION.md) | Dated results, evidence and known limitations |
 | [PUBLISHING](PUBLISHING.md) | Web/Windows exports, preview/production flags and itch.io |

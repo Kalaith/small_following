@@ -8,7 +8,9 @@
 - [ ] Resolve the installed editor's `_EDITOR_GET` import-check error and unexplained automatic-shutdown exit status; keep those limitations separate from runtime check results.
 - [ ] Check movement feel, robe readability, gathering selection and HUD legibility in a human playtest.
 - [ ] Decide quit/restart behavior beyond the current fresh-round policy; verify schema-1/2 migration and schema-3 save recovery in the eventual export.
-- [ ] After first-map playtesting, design the next area and its separate ritual circle reached from the completed centre; define transition, return travel and save rules before implementing it.
+- [ ] Review the [future-level and mixed-audience proposal](docs/FUTURE_LEVELS.md): choose the first setting, audience requirements, area travel/carry-over and save rules. Larger town and noble gathering are candidates alongside four other settings.
+- [ ] Prototype an isolated mixed five-person group with three approachable listeners and two unlock requirements; verify readable locks, eligible targeting, overflow, helper behavior and repeatable funding without changing the original 15-listener route.
+- [ ] After first-map playtesting and those design choices, implement the next area and its separate ritual circle reached from the completed centre, including return travel and validated save migration.
 - [ ] Human-playtest the two gathering unlocks, later speaking/running tiers and helper value. Compare leaving the garden to the helper with overtaking its targets; tune prices and effort from actual play.
 - [ ] Human-playtest merchant value, opponent arrival/objections/decay, the Priest difficulty and total time to finish Bramblewick; tune provisional costs and inspect the eight-branch circle at alternate sizes.
 - [ ] Decide further minion tasks, magic scope and whether previous towns or offline time earn income.

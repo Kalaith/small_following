@@ -135,6 +135,14 @@ During upgrade selection, the ritual itself is the main composition: concentric 
 
 ## Open decisions
 
+Planning requested 2026-10-04: explore more than two future levels, including a
+larger town and possibly a noble gathering, and mixed NPC groups where some
+listeners require additional unlocks. [Future levels and mixed audiences](FUTURE_LEVELS.md)
+proposes six settings, an example 3-open/2-locked group and staged prototypes.
+The settings, unlock rules and carry-over choices remain proposals; no new
+area or mixed-audience mechanic is implemented. Preserve the original opening
+route and full-core 15-listener benchmark while evaluating them.
+
 - How quiet should the promo score and footsteps sit, and does the prototype
   nonsense-syllable voice suit the cultist at both opening and full talking ranks?
 
