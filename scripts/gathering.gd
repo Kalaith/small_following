@@ -297,8 +297,8 @@ func _draw_market_details() -> void:
 			roles.append(listener_profiles[index]["role"])
 			locked_roles[key] = roles
 	for requirement in locked_roles:
-		var introduction: String = "Guild Introduction" if requirement == "market_guild_unlock" else "Patron Introduction"
-		lines.append("%s need %s" % [", ".join(locked_roles[requirement]), introduction])
+		var introduction: String = "Guild Introduction" if requirement == "market_guild_unlock" else "Patron's Introduction"
+		lines.append("%s: %s required" % [", ".join(locked_roles[requirement]), introduction])
 	var font := ThemeDB.fallback_font
 	var width: float = 0.0
 	for line in lines:

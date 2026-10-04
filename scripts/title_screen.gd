@@ -1,5 +1,5 @@
 extends Control
-## A title and session-only level shortcut. Progression and travel belong to main.
+## Title and level shortcut presentation. Main owns saved access and travel.
 
 signal continue_requested
 signal level_requested(area_id: String)
