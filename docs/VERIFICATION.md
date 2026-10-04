@@ -1043,8 +1043,9 @@ graph without page scrolling. Final exported-build/alternate-size evidence is
 recorded below. Real iOS Safari, physical touch
 devices, subjective finger comfort and fresh-save completion remain unverified.
 
-The run did not install tools, push, deploy, change external trackers or touch
-ordinary player saves. The published copy still requires separate deployment.
+The initial implementation phase did not install tools, push, deploy, change
+external trackers or touch ordinary player saves. Publication followed the
+user's later explicit WebHatchery authorization, recorded below.
 
 ### Final local Web build and tablet review
 
@@ -1099,3 +1100,60 @@ iOS Safari and human play feel remain unverified.
 
 The task's browser and localhost server were stopped after review. The temporary
 self-contained editor marker and generated publishing Python cache were removed.
+
+## 2026-10-04 - Publish the touch update to WebHatchery
+
+After the touch update was complete, the user explicitly authorized publishing
+Small Following to WebHatchery. The release source is commit `9a2b702`, including
+the main touch slice `f57fcfc` and browser-discovered dropdown release fix.
+The inspected `publish.ps1 -FTP -DryRun` selected only
+`F:/WebHatchery/games/small_following` and
+`/public_html/games/small_following`. The existing workflow overwrites known
+game files, performs no recursive deletion and uploads `index.html` last.
+Existing authorized credentials were used without displaying them.
+
+`publish.ps1 -BuildOnly` generated manifest-validated release
+`3acac494ee334faf848f5f4990b68914`. Both Web and Windows exports exited 0 with
+no error/script-error diagnostics; only the existing headless cursor and unused
+Blender warnings remain. This standard-editor run used the normal approved
+execution environment and avoided the restricted sandbox certificate-store
+error from the earlier direct local export. Earlier passed gameplay/pacing
+validation was reused. The existing workflow includes the Windows download
+beside the Web game; no itch.io publication was performed.
+
+`publish.ps1 -SkipBuild -FTP` then completed with exit 0. Public game:
+[Small Following](https://webhatchery.au/games/small_following/).
+Direct HTTP verification returned 200 for the launcher, JavaScript, game pack,
+WASM and Windows ZIP. SHA-256 comparisons match the release manifest for
+`index.html`, `index.js` and `index.pck`; the latter is 984,944 bytes with hash
+`dc04e9642af2e08000cacf24d07841e668f834f161f177b2d1e2aa5f2fffda9f`.
+WASM is served as `application/wasm`; the ZIP is 27,320,112 bytes. The launcher
+returns `Cross-Origin-Opener-Policy: same-origin`,
+`Cross-Origin-Embedder-Policy: require-corp` and cache-revalidation directives.
+The web crawler tool could not open this game URL; the direct HTTP comparisons
+and actual browser run are the verification authorities here.
+
+Brief **live** touch review used a new isolated headless Chrome 154.0.8037.93
+profile at emulated 1024 x 768 with five touch points. The restricted launch
+was denied network access before loading the site; the authorized hidden
+browser succeeded without firewall, TLS or network configuration changes.
+The cold WASM load exceeded the initial 30-second observation window; the
+same page finished loading normally. Initial resumed screenshots were already
+in the ritual and were not counted as movement evidence.
+
+Actual public-game touch selected Running I, zoomed with +, panned with a
+finger, recentered and began the next round. A fresh next-round tap followed
+immediately by a Garden-ground tap then moved the cultist from the entrance:
+the [inspected live frame](verification/touch-live.png) shows Round 3,
+9.5 seconds remaining and **Speaking with Garden club**. No live save fixture
+was injected. Browser state confirmed `crossOriginIsolated=true`, canvas
+`touch-action: none`, zero page scroll, viewport scale 1 and no fullscreen.
+There were no game script errors; normal audio-autoplay, 44,100-Hz mix-rate
+fallback and Emscripten main-thread warnings were observed. The browser was
+stopped after this bounded smoke check.
+
+No push, itch.io upload, unrelated-site changes or external tracker writes
+were performed. The touch update is now live on WebHatchery. Small-phone
+legibility/targets and real iOS Safari/physical-device acceptance remain the
+limits already recorded above; this was Chromium touch emulation, not a
+physical-device playtest.
