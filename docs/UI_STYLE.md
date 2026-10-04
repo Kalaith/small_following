@@ -13,17 +13,21 @@ input/feedback in the design proposal. The current baseline is:
 
 | Phase | Decision and primary action | Dominant focus | Supporting information | Deferred information |
 | --- | --- | --- | --- | --- |
+| Title | Play / Continue, or enter a level password | Game title and cultist/seal artwork | Saved destination; exact password reveals the two implemented levels | Area gameplay begins after selection |
 | Active round | Choose a gathering; move into speaking range | Village routes, cultist and listeners | Time, donations, available recruits and local phrase progress | Upgrade details and lifetime recruitment history appear between rounds |
 | Ritual overview | Find a branch or major unlock, then inspect it | Composed purple seal, distinct branch constellations and main paths | Branch identity, purchase-state cues and visible navigation | Focus/zoom reveals more labels; selection opens full details |
 | Ritual selection | Compare the next rank and buy if useful, or start another round | Selected node, prerequisite ancestry and stationary details | Donations, available recruits, lifetime total, rank-specific costs, effect and missing requirements | Unrelated cross-branch paths appear only when relevant |
-| Completed ritual | Inspect the lit centre or keep playing | Filled violet/lilac centre with a visible Open control | Completion means every current catalog rank is bought | Exact demo message appears on activation |
-| Demo message | Dismiss and continue | Exact text: This is the end of the demo | Keep playing button and Esc/Tab/Enter hints | The next area's separate circle remains future work |
+| Completed ritual | Inspect the lit centre or keep playing | Filled violet/lilac centre with a visible Open control | Completion means every rank in this area's catalog | Village offers Bellmarket; market reports local completion |
+| Completion message | Travel if offered, or dismiss and continue | Destination/completion text and deliberate action | Keep playing and Esc/Tab/Enter hints | No automatic travel or reward |
 | Village between rounds | Walk and inspect, return to ritual or start next round | Visible village with earning stopped | Round-complete state and Tab/Enter guidance | Ritual details return with the ritual |
 | Settings | Adjust sound/fullscreen or key bindings, then return | Centered violet panel with Sound & display and Key mapping tabs | Percentages, bindings, conflicts, save status and continuing-timer reminder | Game/upgrade details remain behind the dimmed backdrop |
 
 The settings screen brief and transitions are documented in [SETTINGS](SETTINGS.md).
-There is no implemented title screen or town selector.
-Describe new screens as proposals until built and verified.
+The implemented title and market screen brief is in [MARKET_LEVEL](MARKET_LEVEL.md).
+`PLZKTKS` reveals Bramblewick and Bellmarket selection. Incorrect input has
+visible feedback; typing cannot trigger gameplay shortcuts. Password entry
+alone affects the session; successful level travel persists access. Market
+ritual controls offer return to Bramblewick without requiring market completion.
 
 ## 2. Composition and information hierarchy
 
@@ -67,10 +71,18 @@ Running broad left hook, Merchants compact loop, Trials diagonal fork, Creed
 right curl, Faith lower fork, Village diagonal pair and Followers satellite.
 Keep the sequence readable through actual prerequisite paths; a deliberate
 local loop can bend inward. Catalog tiers are not mandatory drawing radii.
-The 32-node catalog spans six tiers and retains two ranks on the original
+The village's 32-node catalog spans six tiers and retains two ranks on the original
 tier-III nodes. Layout changes no catalog rules. See the
 [readability brief](RITUAL_READABILITY.md) and
 [full-circle scope](RITUAL_COMPLETION.md).
+
+Bellmarket uses its own five-part, fifteen-node purple circle. Woven petals
+and a coin-like centre distinguish it from Bramblewick's star and constellations.
+Five equal-access branch roots express Routes, Voice, Creed, Guild and Patrons.
+The actual nodes/prerequisite connections form the geometry; no card menu
+replaces the circle. Branch buttons, fixed details, pan/zoom and transformed
+picking remain available. Nearby market roles show both text and lock shapes;
+introductory requirements must be understandable without hover or color alone.
 
 Use coherent concentric rim bands, regular invented inscriptions and ticks,
 broken interior arcs and quiet offset satellite seals to unite the branches.
@@ -176,13 +188,14 @@ no selection, the right panel invites a choice and purchasing is disabled.
 These controls provide a visible route to nodes whose graph captions are
 reduced at distance.
 
-Clicking the completed centre or its fixed button shows **This is the end of
-the demo** with a **Keep playing** action. Esc dismisses this message before
+Clicking the completed village centre or its fixed button offers Bellmarket
+travel; the market centre reports its local completion. Both retain a
+**Keep playing** action. Esc dismisses this message before
 opening settings; Tab returns to the village and Enter starts another round.
 The settings button still works and closes the notice. Hiding or reconfiguring
 the ritual clears the transient message. Reopening the centre is harmless and
-does not grant a reward, save a flag or load another area. Movement remains
-independent of the message. The future separate-circle transition is documented
+does not grant a reward or load another area until travel is explicitly chosen.
+Movement remains independent of the message. The separate-circle transition is documented
 in [the completion brief](RITUAL_COMPLETION.md).
 
 Main progress lines are solid. Contextual cross-branch requirements use dashed

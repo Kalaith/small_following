@@ -82,8 +82,14 @@ requests. Disabled controls only explain these rules.
 ## 5. Catalog and content validation
 
 Author upgrades in `data/upgrades.json`, whose catalog schema is currently 1.
-The save schema is independently versioned at 3. Preserve stable IDs and the
+The save schema is independently versioned at 4. Preserve stable IDs and the
 original nine-node core with one rank on inner nodes and two on tier-III nodes; the requested village expansion adds implemented nodes.
+
+Area membership defaults to Bramblewick; Bellmarket definitions explicitly name
+their area. Validate supported areas and keep prerequisites within each circle.
+Keep all definitions available for save validation while exposing only the active
+catalog to the graph. Inactive-area purchase requests must fail in progression.
+Village effects carry forward; market effects remain local to Bellmarket.
 
 Validate definitions before making them available: nonempty unique IDs,
 supported positive finite effects, valid coordinates, rank bounds, one price
@@ -104,9 +110,13 @@ must remain visible and prevent unsafe progression writes.
 
 ## 6. Save contract and errors
 
-Use `user://` and Godot file APIs for runtime persistence. Schema 3 stores
+Use `user://` and Godot file APIs for runtime persistence. Schema 4 stores
 `coins`, integer `purchased` ranks, `total_recruits`, `available_recruits`, `round_number` and optional
-`encounter_stage` (integer 0–4, default zero for older saves).
+`encounter_stage` (integer 0–4, default zero for older saves), `active_area` and
+boolean `level_select_unlocked`. Validate area membership and access against
+all saved ranks; market activity/purchases need completed village ranks or the
+explicit bypass flag. A successful password travel may set that flag without
+inventing purchases, earnings or completion.
 Unpurchased entries are absent; stored ranks begin at 1. Validate types, finite
 numbers, bounds, IDs and prerequisites before applying a snapshot.
 
@@ -124,12 +134,16 @@ Preserve these transaction and compatibility rules:
    prior valid save as backup and promote the candidate.
 3. Apply the purchase to memory only after saving succeeds. Failure grants
    nothing and spends nothing.
-4. Load valid schema-1 boolean purchases as rank 1 and schema-2 integer ranks
+4. Load valid schema-1 boolean purchases as rank 1 and schema-2/3 integer ranks
    unchanged. Preserve donations, event total, round and encounter progress;
-   initialize available recruits to the old total without retroactive charges.
-   Keep migration tests isolated.
+   initialize schema-1/2 available recruits to the old total without retroactive
+   charges, retaining schema-3 availability. Default older schemas to Bramblewick
+   with no bypass access. Keep migration tests isolated.
 5. Preserve unsupported future saves and damaged originals. Follow existing
    backup/`.corrupt` rules rather than deleting files to suppress a notice.
+6. Prepare area content before requesting transactional travel. Persist the
+   candidate active area before activation; failed preparation or saving must
+   preserve the current world, wallets, ranks and access flag with visible feedback.
 
 Staged replacement supports recovery but does not guarantee survival of every
 filesystem failure. Earned donations and recruits have a different failure policy: they
@@ -151,7 +165,7 @@ Test shared runtime methods instead of rewriting game formulas in a test.
 | --- | --- |
 | Movement/rounds | Collision, diagonals, cloth, earning boundary, transitions and between-round control |
 | Purchases | Both-resource affordability and atomicity, lifetime preservation, cost totals/running exclusions, prerequisites, distinct effects, rank limits, stale requests and failed writes |
-| Saves | Both recruit counters round trip, schema-1/2 migration, malformed/future versions and backup recovery |
+| Saves/areas | Both recruit counters and areas round trip, schema-1/2/3 migration, access validation, failed travel, malformed/future versions and backup recovery |
 | Pacing | Real motion and conversation, each completed conversion, full-clear margin and comparison routes |
 | Graph | Selection after pan/zoom/recenter, actual input path and the separate large fixture |
 | Visuals | Rendered PNG inspection and relevant interactive checks |

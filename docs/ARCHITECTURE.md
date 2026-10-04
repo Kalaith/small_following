@@ -6,18 +6,20 @@ The project targets Godot 4.2.2, GDScript and Compatibility rendering. It has no
 
 | File | Responsibility |
 | --- | --- |
+| `scenes/title.tscn`, `scripts/title_screen.gd` | Project entry, Play / Continue and exact-password level-selection intents |
 | `scenes/main.tscn` | Playable scene, ground, sorted actors and player instance |
 | `scripts/main.gd` | Round timing, nearest audience, reward events, progression integration and compact village HUD |
 | `scripts/player.gd`, `scenes/player.tscn` | Direct CharacterBody2D movement, feet collision, camera, drawn cultist and trailing cloth |
 | `scripts/village_input.gd` | Village-only tap/click gestures, UI exclusion and viewport-to-world destination mapping |
 | `scripts/helper.gd` | One autonomous recruiter, grid travel, individual targets and independent phrase effort |
-| `scripts/gathering.gd` | Typed villager/merchant audiences, phrase timing, conviction, local feedback and recruitment signal |
+| `scripts/gathering.gd` | Village and mixed market audiences, per-listener eligibility/threshold/reward, phrase timing, overflow and authoritative recruitment |
 | `scripts/encounter.gd` | Opponent arrival, objections, conviction decay and one victory signal |
 | `scripts/progression.gd` | Catalog validation, authoritative purchase checks, stat calculations and versioned local progression |
 | `scripts/ritual_screen.gd` | Procedural ritual geometry, pan/zoom, selection, readable details and action signals |
 | `scripts/ritual_layout.gd` | Authored production-node positions and satellite envelopes; generic branch/ring placement for other content |
-| `data/upgrades.json` | 32 real upgrade definitions with stable IDs, per-rank effects/prices, rank limits, prerequisites and graph coordinates |
+| `data/upgrades.json` | 47 real definitions split into 32 village nodes/35 ranks and 15 market nodes/ranks, with stable IDs and validated effects/prices |
 | `scripts/village.gd` | Deterministic ground/props and collision footprints |
+| `scripts/market.gd` | Bellmarket ground/props, five authored mixed rosters, role thresholds and base donations |
 | `scripts/game_audio.gd` | Promo music loop, distance-based footsteps, throttled phrase cues and per-channel sound controls; no gameplay authority |
 | `scripts/settings_screen.gd`, `scripts/settings_store.gd`, `scripts/key_bindings.gd` | Sound/display and key mapping tabs, validated preference storage and keyboard Input Map application; see [settings contract](SETTINGS.md) |
 | `tests/` | Isolated economy/save checks, scene integration, route simulation and rendered captures |
@@ -59,11 +61,11 @@ The cumulative `total_recruits` value counts lifetime **recruitment events**, in
 
 ## Upgrade data and graph expansion
 
-Catalog schema 1 contains an `upgrades` array. Each definition supplies `id`, `title`, `description`, `branch`, `ring`, `angle_degrees`, `cost`, `requires` and an `effect` dictionary. Ranked definitions add `max_rank` and `rank_costs`; optional `rank_effects` supplies a different effect dictionary for each rank. Supported effect keys are enumerated in `Progression.EFFECT_KEYS`: frequency, conviction, running, invitations/helper, merchant conviction/donations, debate unlock and general or type-specific opponent conviction. Merchant donation increments must be whole numbers. Unlock effects must have value 1, one rank and one occurrence per catalog. IDs are save references and must remain stable.
+Catalog schema 1 contains an `upgrades` array. Each definition supplies `id`, `title`, `description`, `branch`, `ring`, `angle_degrees`, `cost`, `requires` and an `effect` dictionary. Area membership defaults to `bramblewick`; new market definitions explicitly use `area: bellmarket`. Ranked definitions add `max_rank` and `rank_costs`; optional `rank_effects` supplies a different effect dictionary for each rank. Supported effects include the original stats/unlocks and market guild/patron introductions and donation bonuses. All donation increments are whole numbers. Unlocks have value 1, one rank and one occurrence; prerequisites must stay within their area. Unknown areas, misplaced market effects and cross-area prerequisites are rejected. IDs are save references and must remain stable.
 
 An omitted `max_rank` defaults to 1; valid limits are integers from 1 to 100. `rank_costs` must match the rank count, contain positive bounded integers and begin with the original `cost`. When present, `rank_effects` must match the rank count, contain supported positive effects and begin with the original `effect`; otherwise every rank repeats `effect`. Keeping first-rank values stable preserves the benefit of old purchases. The current catalog uses a distinct second effect only for `talk_3`. Catalog loading also rejects duplicate IDs, invalid coordinates/costs/effects, missing/self/duplicate prerequisites and prerequisite cycles.
 
-`rank_recruit_costs` supplies one nonnegative bounded integer per rank. Omitted arrays default to zero for older catalogs and the large fixture; production definitions explicitly state every rank's recruit cost. Running upgrades must have zero recruit costs, including any rank with a movement effect. Optional `support_description` explains the followers' role in eligible inscriptions without changing their effects. The current total is 250 recruits alongside the unchanged 1014 donations; [PACING](PACING.md#recruit-assignments---2026-10-03) owns the allocation.
+`rank_recruit_costs` supplies one nonnegative bounded integer per rank. Omitted arrays default to zero for older catalogs and the large fixture; production definitions explicitly state every rank's recruit cost. Running upgrades must have zero recruit costs, including any rank with a movement effect. Optional `support_description` explains the followers' role without changing effects. Village totals remain 250 recruits and 1014 donations; Bellmarket adds 37 recruits and 390 donations. [PACING](PACING.md) owns both allocations.
 
 If catalog loading fails, the scene shows its notice and disables rounds/save writes without loading or replacing existing progression. Repair the definitions before resuming.
 
@@ -79,7 +81,9 @@ satellite. Catalog rings still describe upgrade tiers; a local loop need not
 increase its radius on every step. Placement changes no catalog coordinates,
 effects, prices or prerequisites.
 
-Other content uses the generic branch/ring fallback: known branch directions,
+Bellmarket has a separate 15-node five-part layout and woven petal seal with a
+coin-like centre. Its five independent branches retain the same transformed
+selection, pan/zoom and stationary details. Other content uses the generic branch/ring fallback: known branch directions,
 or the first authored angle for an unknown branch, with tier fans and sibling
 lanes limited by neighbouring sectors. The 144-node fixture uses this fallback
 and receives no production satellites. `satellite_seals(catalog)` supplies three
@@ -135,7 +139,7 @@ graph traversal, filtering and search are future work.
 
 ## Ritual completion centre
 
-`Progression.is_circle_complete()` derives completion from a nonempty current
+`Progression.is_circle_complete(area_id = "")` derives completion from a nonempty current
 catalog with every saved rank equal to its validated maximum. It is independent
 of both resource balances and of `map_complete()`, which records Priest victory.
 Do not replace this predicate
@@ -147,17 +151,57 @@ The staged purchase writer still determines whether a last rank is granted.
 seal when ready and enables the fixed **Inner circle lit / Open** button. The
 button remains accessible if the drawn centre is outside the panned view.
 Centre picking shares the graph's world/screen transform. Activation opens a
-single reusable overlay with the exact title **This is the end of the demo**
-and a **Keep playing** button. Repeated activation creates no duplicate UI,
-rewards, saves or new area. Message visibility is transient.
+single reusable overlay: Bramblewick offers deliberate travel to Bellmarket;
+Bellmarket reports its completed circle and permits continued play. A standalone
+circle without a configured destination retains the original demo text.
+Repeated opening creates no duplicate UI or reward. Message visibility is transient.
 
 `main.gd` gives dismissal priority over the usual Esc settings shortcut. Tab
 returns to the village and Enter begins the next round through their existing
 paths. Hiding/reconfiguring the ritual or opening settings dismisses the notice;
 reopening the ritual does not resurrect it. Direct movement and the scene tree
-remain active. A future area may use this centre to open its own separate
-circle, but no such area, transition or save contract is implemented now.
+remain active. Only the destination button requests travel; simply opening or
+dismissing the message leaves progression and the active area unchanged.
 See [the scoped design](RITUAL_COMPLETION.md).
+
+## Area catalogs, travel and title
+
+`Progression.all_catalog` retains all validated definitions; `catalog` exposes
+only the active area's circle. `catalog_for_area(area_id)` supplies explicit
+membership, and all saved ranks remain validated against the complete catalog.
+`purchase_state` rejects purchases from an inactive area. Original village
+effects remain available in Bellmarket, while market effects are summed only
+when the active area is Bellmarket. Main keeps village gathering/opponent
+spawns local; helper and player stat benefits travel with their owner.
+
+`is_area_unlocked` permits Bramblewick and permits Bellmarket when every village
+rank is bought or `level_select_unlocked` is true. `try_travel(area_id,
+bypass_unlock = false)` validates the destination and writes an area candidate
+before applying it, preserving both wallets, ranks, counters, round and encounter
+stage. Bypass sets only the explicit access flag, never ranks or resources.
+Main validates the market roster before requesting travel; a failed write
+preserves the current area. After success, main rebuilds the fixed authored
+destination between rounds with fresh audiences and helper state. No position,
+timer or partial speech travels between areas. General fallible asset loading
+for future areas would need the fuller preparation/activation contract in
+[FUTURE_LEVELS](FUTURE_LEVELS.md).
+
+`scenes/title.tscn` inherits the main scene with `show_title_on_start = true`;
+project F5/run starts there. Main F6 and isolated scene tests can start directly
+in gameplay. The title stops earning and shows Play / Continue plus an exact
+`PLZKTKS` password field. Successful input reveals both implemented levels in
+that title session; the access flag persists only when a selected area's staged
+travel succeeds. Continue starts fresh time in the saved area without awarding
+progress. Gameplay shortcuts cannot fire while typing; ordinary movement remains
+independent of earning and ritual visibility once play begins.
+
+Bellmarket mixed profiles supply role, NPC type, threshold, base donation and
+optional introduction. `first_unconverted` skips locked or recruited slots;
+`recruit_listener` rechecks eligibility and rejects duplicate rewards.
+`market_donation(type, base)` adds only that role's purchased local bonus.
+Helpers use the same eligibility and conversion authority with their own pace.
+General conviction overflow carries to the next eligible listener; no typed
+conviction bonus exists in the market, avoiding bonus leakage across roles.
 
 ## Helper ownership and shared conversions
 
@@ -186,9 +230,9 @@ ordinary purchased ranks; no target or per-round audience data is saved.
 
 ## Local progression and recovery
 
-`user://progression.json` stores schema 3 with `coins`, `purchased` (an ID-to-integer-rank dictionary), `total_recruits`, `available_recruits`, `round_number` and optional `encounter_stage`. Purchased entries must be integers from 1 through that node's `max_rank`; unpurchased IDs are absent, not stored as rank 0. Counters are bounded integers; available recruits must be between zero and the lifetime total, inclusive. Purchased IDs must exist in the catalog and include their prerequisites. Nothing in a save is executable. On ordinary Windows Godot installations, `user://` resolves beneath `%APPDATA%\Godot\app_userdata\Small Following`; use the engine's user-data location when running with custom settings.
+`user://progression.json` stores schema 4 with `coins`, `purchased` (an ID-to-integer-rank dictionary), `total_recruits`, `available_recruits`, `round_number`, optional `encounter_stage`, `active_area` and boolean `level_select_unlocked`. Purchased entries must be integers from 1 through that node's `max_rank`; unpurchased IDs are absent. Counters are bounded integers, with available recruits between zero and lifetime history. IDs must exist across the validated catalogs and include their prerequisites. The active area must exist; Bellmarket activity or purchases require completed village ranks or explicit bypass access. Nothing in a save is executable. On ordinary Windows Godot installations, `user://` resolves beneath `%APPDATA%\Godot\app_userdata\Small Following`.
 
-Schema 1 accepts the earlier ID-to-true purchase dictionary and maps each true value to rank 1; schema 2 retains integer ranks. Both initialize available recruits from the saved lifetime recruitment total. Donations, purchased benefits, recruitment history, round and encounter progress are preserved, with no retroactive recruit charge and no unearned ranks. Loading alone leaves the valid old file untouched. The first successful schema-3 write retains the original file as `.bak` through the ordinary staged writer. Schema-1/2 backups can also be validated and migrated for recovery. Routine tests use isolated fixture saves and do not migrate the player's live save.
+Schema 1 maps earlier ID-to-true purchases to rank 1; schema 2 retains integer ranks. Both initialize available recruits from lifetime recruitment. Schema 3 also preserves its explicit available balance. All three default to Bramblewick with no bypass access while retaining donations, ranks, history, round and encounters, without retroactive charges or free ranks. Loading alone leaves valid old files untouched. The first successful schema-4 write retains the exact original as `.bak`. Older backups can also migrate during recovery. Routine tests use isolated fixtures and never migrate the player's live save.
 
 Donations and both recruit counters are saved as earned; round transitions save progression too. Purchases build and validate a candidate snapshot with both costs deducted, save it, then apply it in memory. If saving fails, the purchase grants nothing and deducts neither resource. Already-earned rewards stay in memory after a write failure, and a save notice appears in the UI; they may be lost if the application closes before a successful write.
 
@@ -203,13 +247,13 @@ Loading follows these rules:
 - Invalid canonical without a valid backup: start fresh in memory and preserve the damaged original as `.corrupt` before replacing it.
 - A newer schema, invalid backup without a canonical file, or an existing conflicting `.corrupt` recovery file is preserved; saving is blocked as appropriate and the UI explains the problem.
 
-Do not delete recovery files automatically to silence a notice. Schemas 1, 2 and 3 are supported for loading; current writes use schema 3. Removing or renaming a purchased catalog ID, lowering a rank cap below saved progress or changing a purchased effect requires a deliberate compatibility/migration plan.
+Do not delete recovery files automatically to silence a notice. Schemas 1, 2, 3 and 4 are supported for loading; current writes use schema 4. Removing or renaming a purchased catalog ID, lowering a rank cap below saved progress or changing a purchased effect requires a deliberate compatibility/migration plan.
 
-Restarting restores donations, available recruits, purchases, lifetime events and saved round number, then begins a fresh timed round from the entrance. It does not resume remaining time, partial speech, player position or per-round recruits. There is no offline earning or quit penalty. This forgiving prototype policy is provisional and can be exploited by restarting for fresh audiences; decide the intended policy before a larger economy.
+Restarting restores progression and active area, then opens the title. Play / Continue begins a fresh timed round from that area's entrance without incrementing the saved round number. It does not resume remaining time, partial speech, position or per-round recruits. There is no offline earning or quit penalty. This forgiving policy is provisional and allows restarting for fresh audiences; decide its role before a larger economy.
 
 ## Boundaries for future work
 
-There is no dialogue system, magic or second town. Audio and independently
+There is no dialogue system, magic or third area. Audio and independently
 saved settings are implemented; Web/Windows export workflows are documented
 in [PUBLISHING](PUBLISHING.md). Window resizing scales the canvas; accessible
 UI scaling and gamepad rebinding remain future work. Keyboard bindings use the
@@ -218,8 +262,9 @@ implement a pause/earnings policy.
 
 Split reusable props, villagers, HUD and town definitions into scenes/resources as content grows. Town definitions should own stable IDs, positions, capacities and unlock rules; mutable town progress belongs in the save. Extend schema only for implemented features. Keep reward ownership centralized so future player speech, minions and spells cannot pay the same event twice.
 
-Unique followers, town unlocks, mid-round state and timestamps are not current
-progression save fields. Settings use their own [preference store](SETTINGS.md).
+Unique followers, mid-round state and timestamps are not current progression
+save fields. Normal area access is derived from ranks; explicit level selection
+uses its own validated flag. Settings use their own [preference store](SETTINGS.md).
 If offline income is adopted, define limits, clock-change handling and one-time
 application before implementation. No cloud or backend architecture is required.
 

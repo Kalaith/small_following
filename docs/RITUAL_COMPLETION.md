@@ -4,10 +4,16 @@
 
 Requested 2026-10-03: spread the existing inscriptions around more of the
 circle, then light its centre when every current upgrade rank is purchased.
-Clicking the completed centre shows the exact message **This is the end of
-the demo**. The player can dismiss it and keep playing. In the future this
-centre will lead to a new area's separate ritual circle; that area is outside
-this change.
+The original completed centre showed **This is the end of the demo**, with
+continued play after dismissal. That historical slice established the centre
+for later area travel.
+
+Updated 2026-10-04: Bramblewick's completed centre now offers deliberate travel
+to Bellmarket and its separate fifteen-node circle. Bellmarket's completed
+centre reports **Bellmarket's circle is complete**, with continued play and
+return to Bramblewick available. No third area is implemented. The original
+generic demo message remains available to standalone circle fixtures without
+a configured destination. [Current market scope](MARKET_LEVEL.md).
 
 Implemented: eight authored constellations integrate the existing upgrades
 into a composed purple seal, and a fully ranked catalog lights the clickable
@@ -29,8 +35,9 @@ is no longer a design blocker and no further retries are needed. This executor
 uses fresh rendered application captures for verification. The completed-centre
 interaction remains delivered and must be preserved.
 
-The current production catalog remains 32 nodes and 35 ranks costing 1014
-donations. Preserve every ID, price, rank, prerequisite, effect and save field.
+Bramblewick's catalog remains 32 nodes and 35 ranks costing 1014 donations
+and 250 recruits; the separate market adds 15 nodes/ranks at 390 and 37.
+Preserve every existing village ID, price, rank, prerequisite and effect.
 The priest objective and its saved **Bramblewick complete** state remain
 independent of buying every inscription.
 
@@ -66,7 +73,8 @@ recenter, pan, zoom and state shapes remain available.
 | --- | --- | --- |
 | Ranks still missing | Inspect inscriptions and buy useful ranks | Centre remains quiet; normal graph and detail controls stay available |
 | Every current rank bought | Inspect the lit centre | A visible completion cue and clickable centre identify the new action |
-| Demo message open | Dismiss and continue | Exact requested message; no purchase, progression reset or area transition |
+| Village destination message open | Travel to Bellmarket or dismiss | Explicit travel only; opening/dismissing grants nothing |
+| Market completion message open | Dismiss and continue or return to Bramblewick | No third destination or automatic reward |
 
 ## Completion contract
 
@@ -77,12 +85,12 @@ substitute priest victory. The final successful rank purchase and an existing
 completed-save reload must both make the centre ready. A failed purchase must
 not light it.
 
-No persistent completion flag or save schema change is needed. Message
+No persistent completion flag is needed. Area travel uses schema 4 separately. Message
 visibility is transient. Reopening it repeats the same harmless information;
 dismissing it preserves purchases, currency, opponents and round state.
 Direct movement remains available, including with the ritual open.
 
-`Progression.is_circle_complete()` owns the predicate. The ritual centre uses
+`Progression.is_circle_complete(area_id = "")` owns the area-scoped predicate. The ritual centre uses
 the same pan/zoom transform as graph picking. The fixed **Inner circle lit /
 Open** button provides access when the centre is outside the view; while
 incomplete it is disabled and says **Inner circle / Earn every rank**.
@@ -101,7 +109,7 @@ purchase failures and independence from priest victory. Centre picking is
 exercised after pan/zoom alongside the existing readability suite and isolated
 purchase/save regressions. Catalog validation stays with the progression suite.
 
-Actual baseline 1280 x 800 captures show [incomplete ranks](verification/ritual-demo-incomplete.png),
+Actual baseline 1280 x 800 standalone-circle captures show [incomplete ranks](verification/ritual-demo-incomplete.png),
 [the lit centre](verification/ritual-demo-ready.png),
 [the exact message](verification/ritual-demo-message.png) and
 [the circle after dismissal](verification/ritual-demo-dismissed.png).
@@ -110,5 +118,5 @@ separate from automated assertions. The originals were inspected by the parent;
 supported Windows Library materialization remains unavailable here. Local
 verification uses fresh application captures. See [reference status](reference/README.md).
 
-Future area names, unlock rules, travel, separate catalogs and persistence need
-a later scoped design. This change only establishes the centre's eventual role.
+The implemented two-area travel/save contract is in [ARCHITECTURE](ARCHITECTURE.md).
+Further destinations remain proposals in [FUTURE_LEVELS](FUTURE_LEVELS.md).

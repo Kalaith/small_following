@@ -21,7 +21,8 @@ source for confirmed direction and provisional rules.
 | [PACING](PACING.md) | Balance assumptions, measured conversions and route limits |
 | [VISUAL_DIRECTION](VISUAL_DIRECTION.md) | Art direction and asset requirements |
 | [First-map finale](FIRST_MAP.md) | Merchant and town opponent scope |
-| [Future levels and mixed audiences](FUTURE_LEVELS.md) | Proposed area ideas, individual NPC requirements and staged prototypes |
+| [Bellmarket and title](MARKET_LEVEL.md) | Implemented market, five upgrade paths, title/password and travel scope |
+| [Future levels and mixed audiences](FUTURE_LEVELS.md) | Bellmarket status and five remaining proposed areas |
 | [MILESTONES](MILESTONES.md) | Bounded stages and their exit checks |
 | [VERIFICATION](VERIFICATION.md) | Dated results, evidence and known limitations |
 | [PUBLISHING](PUBLISHING.md) | Web/Windows exports, preview/production flags and itch.io |
@@ -33,8 +34,9 @@ a feature or mark a milestone complete.
 
 ## 2. Open and run
 
-Open `project.godot` in the installed editor. F5 runs the configured main
-scene, `scenes/main.tscn`; F6 runs the scene currently open in the editor.
+Open `project.godot` in the installed editor. F5 runs the configured title
+scene, `scenes/title.tscn`; F6 runs the currently open scene. Opening
+`scenes/main.tscn` with F6 intentionally starts directly in gameplay for iteration.
 From the project root in PowerShell:
 
 ```powershell
@@ -138,6 +140,12 @@ $godotExe = 'C:\Program Files\Godot\Godot_v4.2.2-stable_mono_win64_console.exe'
 & $godotExe --headless --fixed-fps 60 --path . --script res://tests/test_settings.gd
 & $godotExe --headless --fixed-fps 60 --path . --script res://tests/test_key_mapping.gd
 & $godotExe --headless --fixed-fps 60 --path . --script res://tests/test_exit.gd
+& $godotExe --headless --path . --script res://tests/test_areas.gd
+& $godotExe --headless --path . --script res://tests/test_market_progression.gd
+& $godotExe --headless --fixed-fps 60 --path . --script res://tests/test_market_pacing.gd
+& $godotExe --headless --fixed-fps 60 --path . --script res://tests/test_market_flow.gd
+& $godotExe --headless --fixed-fps 60 --path . --script res://tests/test_title_screen.gd
+& $godotExe --headless --fixed-fps 60 --path . --script res://tests/test_market_ritual.gd
 ```
 
 The installed editor has a recorded `_EDITOR_GET` import failure. Preserve
@@ -161,7 +169,7 @@ If launching a background helper through `Start-Process`, use a hidden window
 unless the user needs an interactive one.
 
 Required behavioral coverage includes round -> ritual -> next round, movement
-between rounds, invalid/stale/max-rank purchases, save round trips, schema-1
+between rounds, invalid/stale/max-rank purchases, save round trips, schema-1/2/3
 migration, recovery and transformed graph selection using the separate fixture.
 For the completion centre, check a missing second rank, the final purchase and
 failed-save rollback, completed-save reload, transformed centre clicks,
@@ -171,6 +179,13 @@ Pacing tests must drive movement and conversation timing, count completed
 conversions, and record full-clear time and remaining time. Compare opening,
 full-rank and incomplete/nonoptimal routes. Human reaction and steering remain
 uncertain until playtested.
+
+For market changes, also exercise independent branch choices, zero-wallet
+password funding, mixed eligibility/helper targeting, carried village stats,
+scoped market bonuses, completed-village travel, return travel and failed-save
+feedback. Title tests cover exact password handling, both implemented levels,
+and input isolation. Current area writes use schema 4. Market pacing must count
+actual converted NPC types and payouts; keep its generous margin explicit.
 
 For documentation-only changes, check links, commands and consistency with the
 implementation. Record that runtime tests were not rerun when that is the case.

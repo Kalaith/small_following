@@ -7,10 +7,10 @@
 - [ ] When a supported Windows Library workflow is available, archive the original village mockups and ritual references locally and verify provenance. The parent inspected the new seal references; further transfer retries are not needed for this redesign. See [reference status](docs/reference/README.md).
 - [ ] Resolve the installed editor's `_EDITOR_GET` import-check error and unexplained automatic-shutdown exit status; keep those limitations separate from runtime check results.
 - [ ] Check movement feel, robe readability, gathering selection and HUD legibility in a human playtest.
-- [ ] Decide quit/restart behavior beyond the current fresh-round policy; verify schema-1/2 migration and schema-3 save recovery in the eventual export.
-- [ ] Review the [future-level and mixed-audience proposal](docs/FUTURE_LEVELS.md): choose the first setting, audience requirements, area travel/carry-over and save rules. Larger town and noble gathering are candidates alongside four other settings.
-- [ ] Prototype an isolated mixed five-person group with three approachable listeners and two unlock requirements; verify readable locks, eligible targeting, overflow, helper behavior and repeatable funding without changing the original 15-listener route.
-- [ ] After first-map playtesting and those design choices, implement the next area and its separate ritual circle reached from the completed centre, including return travel and validated save migration.
+- [ ] Decide quit/restart behavior beyond the current fresh-round policy; verify schema-1/2/3 migration and schema-4 area/save recovery in the eventual exports.
+- [ ] Human-playtest [Bellmarket](docs/MARKET_LEVEL.md): confirm frequent useful three-to-five-way choices, running versus rich-audience routes, readable locks and helper value. Tune the generous full-build 5.55-second margin and shared-wallet economy from actual play; 390 gold/37 recruit costs and specialist payouts remain provisional.
+- [ ] Human-review title/password entry, both level starts, completed-village travel, market return and the distinct fifteen-node circle at alternate sizes; verify persisted access and fresh-area restarts in exports.
+- [ ] Choose the next setting from the remaining five [future-level proposals](docs/FUTURE_LEVELS.md), including the noble gathering; decide its closing objective and whether additional mechanics are warranted.
 - [ ] Human-playtest the two gathering unlocks, later speaking/running tiers and helper value. Compare leaving the garden to the helper with overtaking its targets; tune prices and effort from actual play.
 - [ ] Human-playtest merchant value, opponent arrival/objections/decay, the Priest difficulty and total time to finish Bramblewick; tune provisional costs and inspect the eight-branch circle at alternate sizes.
 - [ ] Decide further minion tasks, magic scope and whether previous towns or offline time earn income.

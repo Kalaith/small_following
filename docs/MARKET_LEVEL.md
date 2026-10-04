@@ -29,6 +29,11 @@ remains gold-only. The catalog has fifteen real market nodes, with no shared
 mandatory prerequisite that forces every play style down one chain. Exhausting
 a path naturally reduces the remaining choices near completion.
 
+The market circle totals 390 gold and 37 assigned recruits. Village totals
+remain 32 nodes, 35 ranks, 1014 gold and 250 recruits. Together the two circles
+contain 47 real nodes and 50 ranks. Exact effects and measured route tradeoffs
+belong in [PACING](PACING.md#bellmarket---2026-10-04).
+
 Earned Bramblewick stats and the helper travel with the cultist. Its local
 audience and opponent unlocks stay in Bramblewick. Market benefits apply only
 in Bellmarket, preserving the original opening and full-core route benchmarks.
@@ -64,6 +69,9 @@ transactional travel. Save schema 4 adds the active area and a validated
 level-selection access flag. Schema 1/2/3 migration preserves existing balances,
 rank semantics, recruitment events and encounter progress, defaulting to
 Bramblewick. The password is a convenience unlock, not a security boundary.
+Typing it reveals level selection for the current title session; only successful
+level travel persists `level_select_unlocked`. A failed travel write grants no
+access flag, ranks or resources and leaves the previous active area intact.
 
 Gatherings own per-listener eligibility, thresholds, overflow and single reward
 emission. Helpers obey the same eligibility and recruitment authority. Locked

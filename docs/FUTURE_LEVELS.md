@@ -1,4 +1,4 @@
-# Future levels and mixed audiences - proposal, 2026-10-04
+# Future levels and mixed audiences - roadmap, 2026-10-04
 
 ## 0. Scope and decision status
 
@@ -6,23 +6,25 @@
 town and possibly a noble gathering; add different NPCs within a group, with
 some groups offering three approachable listeners and two who need unlocks.
 
-**Proposal:** six candidate areas and a reusable mixed-audience system. The
-recommended first playable extension is a larger market town. Names, ordering,
-NPC mixes, unlocks, costs and completion objectives below are suggestions, not
-confirmed content or implemented behavior. The noble gathering remains a
-candidate, as requested. This document follows [GDD_TEMPLATE](GDD_TEMPLATE.md);
-[GAME_DESIGN](GAME_DESIGN.md) remains the current design.
+**Implementation update:** the user subsequently requested Bellmarket and a
+password-enabled title screen. Bellmarket is now the playable second area,
+with five mixed groups, guild/patron introductions, fifteen independent-path
+upgrades in its own circle, safe return travel and schema-4 saves. Its shipped
+scope and deviations from this original proposal are in
+[MARKET_LEVEL](MARKET_LEVEL.md), [GAME_DESIGN](GAME_DESIGN.md) and
+[ARCHITECTURE](ARCHITECTURE.md). The proposed council-speaker objective was
+not added; market completion currently means buying its own circle.
 
-The implemented baseline is Bramblewick, its 32-node/35-rank circle, homogeneous
-ordinary and merchant gatherings, and separate opponents. Individual listeners
-already exist visually, but a gathering currently shares a type, conviction
-threshold and reward. Area travel and individual listener requirements need new
-implementation. See [FIRST_MAP](FIRST_MAP.md) and [ARCHITECTURE](ARCHITECTURE.md).
+The remaining five settings, future ordering and unimplemented mechanics below
+remain proposals. Preserve these examples as design material, not a statement
+of the shipped market's exact roster or effects. The noble gathering remains
+a candidate. This document follows [GDD_TEMPLATE](GDD_TEMPLATE.md).
 
-This planning slice adds no runtime content. Preserve the original three
-five-person groups and their pacing benchmark. Start mechanical audience
-variety in the next area; a later retrofit to optional Bramblewick gatherings
-is a separate choice, not part of this proposal's first implementation.
+Bramblewick retains its 32-node/35-rank circle, original ordinary/merchant
+gatherings and separate opponents. Its three opening groups and full-core
+pacing benchmark are unchanged. Retrofitting mixed roles to Bramblewick is
+still a separate choice. Current market measurements include actual conversions
+and repeatable fresh-save funding; human acceptance remains outstanding.
 
 ## 1. High concept
 
@@ -33,8 +35,9 @@ provide early progress; specialist inscriptions gradually open the whole group.
 
 Keep the cute overhead perspective, short rounds and directly controlled robed
 cultist. Build one useful extension before committing to the whole campaign.
-Godot 4.2.2, GDScript and Compatibility remain the baseline. Existing platform
-evidence belongs in [VERIFICATION](VERIFICATION.md); none verifies these ideas.
+Godot 4.2.2, GDScript and Compatibility remain the baseline. Bellmarket's actual
+evidence belongs in [VERIFICATION](VERIFICATION.md); it does not verify the
+remaining five settings or their proposed mechanics.
 
 ## 2. Design pillars and invariants
 
@@ -69,11 +72,11 @@ used to manufacture that result in the current village.
 | Destination -> another area | Prepare the destination, validate availability and save the candidate active area before activating it | Arrive between rounds with direct control and no earning until Next round |
 | Travel preparation/save failure or cancel -> current area | Keep current area, purchases and wallet | Continue moving and playing; show the reason |
 
-Proposed area access follows the completed circle. Keep Bramblewick's Priest
-victory separate; do not silently add it as another travel requirement. Each
-area would check its own authored circle, so adding a later area's nodes does
-not make an earlier completed circle incomplete. The current demo message
-continues unchanged until area travel is implemented.
+Implemented Bellmarket access follows the completed village circle or explicit
+password access. Priest victory remains separate. Each area checks its own
+authored circle, so adding market nodes does not invalidate village completion.
+The village centre now offers deliberate travel; Bellmarket's completed centre
+allows continued play and return, with no third destination.
 
 ## 4. Player role and verbs
 
@@ -167,7 +170,9 @@ steering allowances; a scripted route alone cannot establish the final pace.
 
 ## 6. Data contracts and validation
 
-These are proposed contracts, not new production files or supported effects.
+The table retains the broader proposed contracts. The shipped two-area system
+uses `market.gd` rosters, area-scoped `data/upgrades.json` and validated schema-4
+snapshots; [ARCHITECTURE](ARCHITECTURE.md) owns exact supported fields/effects.
 
 | Resource | Proposed contents | Validation/owner |
 | --- | --- | --- |
@@ -202,12 +207,12 @@ late-game build must be the second town's tested entry build, not fresh-save
 stats. Shared wallets and returning to easy areas may make farming too strong;
 measure reward per round before deciding rewards, costs or any alternative.
 
-**Save plan:** area support needs a versioned migration from the current schema
-3, not extra unchecked fields. Older schema-1/2 paths must still preserve
-their existing migration results. Old saves default to Bramblewick, retain
-all stable ranks, donations, both recruit counters, round and encounter stage.
-Derive access to the next area from the implemented travel rule. Reserve the
-actual next schema and field names during implementation.
+**Implemented save baseline:** schema 4 adds validated `active_area` and boolean
+`level_select_unlocked`. Schema-1/2/3 migration defaults to Bramblewick while
+retaining all existing ranks, wallets, history, round and encounter progress.
+Normal Bellmarket access derives from the completed village circle; password
+travel persists explicit access without granting ranks. Future schema changes
+must preserve these results rather than adding unchecked fields.
 
 Persist active area, valid unlocked destinations if stored, and per-area
 encounter/objective progress only where implemented. Circle completion remains
@@ -311,10 +316,10 @@ engine version, tools or export platform is needed to prototype this plan.
 | `ritual_screen.gd` | Show local circle, affected audiences and destination intents; never own unlock/save decisions |
 | `village.gd` and area scenes/data | Layout, entry points, props and collision; extract reusable area loading only when needed |
 
-The current `first_unconverted`, shared `npc_type`/threshold and helper target
-selection cannot express these rules as-is. A cosmetic NPC change alone would
-not implement mixed audiences. See current ownership in
-[ARCHITECTURE](ARCHITECTURE.md); update that record when implementation lands.
+Bellmarket now extends `first_unconverted`, per-slot thresholds/rewards and
+helper selection with shared eligibility checks. Homogeneous defaults preserve
+the original village. See [ARCHITECTURE](ARCHITECTURE.md) for current ownership;
+future audience features must extend that authority rather than bypass it.
 
 ## 12. Open decisions and risks
 
@@ -331,8 +336,11 @@ not implement mixed audiences. See current ownership in
 
 ## 13. Delivery slices and acceptance
 
-These are future implementation steps. None is complete or an instruction to
-build all six candidates now. Global milestone status remains in
+These are the original delivery slices. The mixed-audience, area-travel and
+Bellmarket scope has now shipped as the bounded implementation above, with
+automated/local-render evidence and human playtesting still outstanding.
+The proposed closing opponent and later settings remain unimplemented; this
+is no instruction to build all six. Global human exit checks remain in
 [MILESTONES](MILESTONES.md).
 
 | Slice | Reviewable outcome | Required evidence |

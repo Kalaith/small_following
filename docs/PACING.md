@@ -247,3 +247,86 @@ finish. Existing route timing remains relevant to earning capacity, but funded
 test builds do not establish how long players will need to afford the circle.
 The demo centre still depends only on owning every rank, never either wallet
 balance. Current implementation evidence belongs in [VERIFICATION](VERIFICATION.md).
+
+## Bellmarket - 2026-10-04
+
+The second area retains the 11-second boundary. These are provisional values
+and measured scripted routes, not user-approved balance or human acceptance.
+The original village routes and full original-core benchmark remain unchanged;
+market benefits do not apply after returning to Bramblewick.
+
+Bellmarket has five groups of five: Bread Court, Cart Crossing, Guild Row,
+Silk Arcade and Patron Steps. Eighteen ordinary listeners are always eligible;
+four guild traders and three patrons require independent introductions. Each
+listener still needs conversation; unlocking never recruits or awards money.
+
+| Audience | Conviction required | Base gold | Fully specialized gold |
+| --- | ---: | ---: | ---: |
+| Ordinary | 3 | 4 | 4 |
+| Guild trader | 9 | 12 | 22 |
+| Wealthy patron | 12 | 20 | 35 |
+
+The separate market circle contains fifteen single-rank nodes. Every branch
+starts at 12 gold with no recruits, then costs 24 and 42 gold. No branch requires
+another branch. A funded early or middle build therefore has five next-step
+choices; completing paths naturally reduces that to four, three and fewer.
+Later affordability depends on both resources. The cost of every market rank
+is **390 gold plus 37 recruits**; the earlier village cost stays **1014 + 250**.
+
+| Path | Effects across its three purchases | Recruits by purchase |
+| --- | --- | --- |
+| Routes | +0.30 / +0.35 / +0.40 of base movement speed | 0 / 0 / 0 |
+| Voice | +0.50 / +0.60 / +0.70 base phrases per second | 0 / 3 / 6 |
+| Creed | +0.75 / +1.00 / +1.25 conviction per phrase | 0 / 3 / 6 |
+| Guild | Introduction, then +4 and +6 gold per guild trader | 0 / 4 / 5 |
+| Patrons | Introduction, then +6 and +9 gold per patron | 0 / 4 / 6 |
+
+The normal entry build retains full village stats: 432 px/s, 3.5 phrases/s and
+5 conviction/phrase, plus the existing helper. Full market purchases raise
+those to 621 px/s, 5.3 phrases/s and 8 conviction/phrase. Password entry keeps
+the player's actual ranks and wallet; a fresh save has 180 px/s, one phrase/s
+and one conviction/phrase, with no free helper. Every route below starts its
+measured round with zero gold and zero available recruits, after setup purchases
+through the normal API. Saves and audio output are disabled in the fixture.
+
+`tests/test_market_pacing.gd` drives actual movement/collisions and
+`advance_round` at 1/60-second steps. Ordinary routes include a 0.20-second
+initial reaction allowance, 0.10 seconds per group switch and a 95px stop
+distance. The helper remains active when owned. Counts are actual converted
+listeners and include helper conversions, with every payout checked against
+the recruited profile. Visiting a group does not count as conversion.
+
+| Build and route | Ordinary / guild / patron recruits | Gold | Walking time | Last conversion | All eligible clear / remaining time |
+| --- | ---: | ---: | ---: | ---: | --- |
+| Fresh password entry; Bread Court only | 3 / 0 / 0 | 12 | 0.683s | 9.800s | Incomplete; three of eighteen eligible |
+| Full village, no market ranks; Bread -> Guild -> Carts -> Steps -> Silk | 18 / 0 / 0 | 72 | 2.250s | 6.150s | 6.150s / 4.850s |
+| Guild path only; Guild -> Carts -> Bread | 12 / 3 / 0 | 114 | 1.433s | 5.700s | Incomplete; fifteen of twenty-two eligible |
+| Patron path only; Steps -> Silk -> Carts | 13 / 0 / 3 | 157 | 1.433s | 10.800s | Incomplete; sixteen of twenty-one eligible |
+| Running path only; same five-district circuit | 18 / 0 / 0 | 72 | 1.583s | 5.500s | 5.500s / 5.500s |
+| Full market; same five-district circuit | 18 / 4 / 3 | 265 | 1.583s | 5.450s | 5.450s / 5.550s |
+| Full market; hesitant Steps -> Bread -> Silk -> Guild -> Carts | 15 / 3 / 3 | 231 | 2.467s | 10.500s | Incomplete; twenty-one of twenty-five eligible |
+
+Each specialized path costs 78 gold. The guild route includes one helper
+recruit; the patron route includes three; the hesitant full build includes one.
+Other listed routes receive none because the player's route overlaps the
+helper's work. The final route waits 3.20 seconds initially and 0.70 seconds
+at switches; its remaining four people are never auto-completed. All rounds
+still expire at 11 seconds.
+
+The fresh Bread Court route converts at 3.8, 6.8 and 9.8 seconds and funds any
+one of the five roots. Audiences reset, so open people provide repeatable
+funding without either specialist introduction. The carried build also earns
+recruits for later assignments. The same open circuit completes 0.65 seconds
+earlier with running specialization; guild/patron routes trade broad ordinary
+coverage for higher actual payouts.
+
+The **5.55-second full-market margin is generous**, substantially wider than
+the original village's close full-core target. The carried village build can
+already clear all open market listeners in 6.15 seconds. These measurements
+establish functioning routes and funding, not a finished difficulty curve or
+the time a fresh campaign takes to buy everything. Human playtesting should
+check whether 3-5 simultaneous choices remain meaningful, whether rich routes
+dominate too strongly, whether a short circle is satisfying and how farming
+between towns affects shared wallets. Adjust layout, audience work, prices or
+effect sizes only with explicit tuning evidence; do not add hidden completion
+rules to manufacture a close clear.

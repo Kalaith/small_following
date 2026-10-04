@@ -1,12 +1,12 @@
 # Small Following
 
-A small Godot prototype for a cute incremental game where **you are the robed cultist**: walk between village gatherings, speak, recruit and earn donations. Short rounds lead into a purple ritual-circle upgrade screen with 32 working nodes, 35 purchasable ranks and local progression saves. Art is procedural placeholder geometry; this is not a finished game.
+A small Godot prototype for a cute incremental game where **you are the robed cultist**: walk between gatherings, speak, recruit and earn donations. Bramblewick and Bellmarket have separate purple ritual circles: 32 village nodes and 15 market nodes, with 50 purchasable ranks in total and local progression saves. Art is procedural placeholder geometry; this is not a finished game.
 
 ## Run
 
 Tested engine: **Godot 4.2.2.stable.mono.official.15073afe3**, using **GDScript** and **Compatibility** rendering. The Mono editor is installed here; the project contains no C# and requires no package installation.
 
-Import `project.godot` in Godot, open `scenes/main.tscn`, and press **F6** (current scene) or **F5** (project). Or run directly in PowerShell:
+Import `project.godot` in Godot and press **F5** for the title screen (`scenes/title.tscn`). **F6** runs the open scene; `scenes/main.tscn` starts directly in gameplay for local iteration and tests. Or run directly in PowerShell:
 
 ```powershell
 & 'C:\Program Files\Godot\Godot_v4.2.2-stable_mono_win64_console.exe' --path 'D:\WebHatchery\godot\small_following'
@@ -26,8 +26,11 @@ From the project folder, `.\Run.ps1` also launches the game; pass `-GodotExe '<i
 | Pan the ritual | Drag with one finger; mouse left-drag empty space or middle-drag |
 | Zoom / restore view | + / - buttons or mouse wheel; Recenter restores the view |
 | Buy selected upgrade | U / Inscribe button / gamepad X (left face button) |
-| Open the demo message after buying every rank | Click the lit ritual centre / Inner circle lit button |
-| Dismiss the demo message | Keep playing / Esc; Tab returns to village, Enter starts another round |
+| Choose any implemented level | Enter `PLZKTKS` on the title screen, then choose level 1 or 2 |
+| Open the completed circle | Click the lit ritual centre / Inner circle lit button |
+| Travel to Bellmarket | Complete Bramblewick's circle, open its centre, then choose Travel to Bellmarket |
+| Return to Bramblewick | Return to Bramblewick button in the market ritual |
+| Dismiss the completion message | Keep playing / Esc; Tab returns to the area, Enter starts another round |
 | Return to village / reopen ritual | Return to the village / Ritual circle buttons, or Tab between rounds |
 | Start next round | Enter / next-round button / gamepad A (bottom face button) |
 | Mute / unmute all audio | M |
@@ -77,19 +80,43 @@ The original six inner nodes each have one rank and the original tier-III nodes 
 
 All audiences reset each round. Each recruitment event adds one available recruit and one to the lifetime total, including the same villagers on later rounds. Assigning recruits to an inscription spends only the available balance; lifetime recruitment history is retained. These counts are not a population of unique permanent followers. Purchases require both the selected rank's donations and recruits together; an unaffordable or failed-save purchase spends neither. Restarting preserves progression but begins a fresh timer and audience state. No offline rewards or partial-round continuation are implemented.
 
-The complete first-map catalog has 32 nodes and 35 ranks costing 1014 donations plus 250 recruits. The real catalog is `data/upgrades.json`. A separate **144-node validation fixture** exercises graph capacity and navigation; it is not additional purchasable game content. A second town, magic and production art remain future work. Browser and Windows exports use the [publishing workflow](docs/PUBLISHING.md).
+The complete first-map catalog has 32 nodes and 35 ranks costing 1014 donations plus 250 recruits. Bellmarket adds 15 local nodes/ranks costing 390 donations and 37 recruits. The real catalog is `data/upgrades.json`. A separate **144-node validation fixture** exercises graph capacity and navigation; it is not additional purchasable game content. Further towns, magic and production art remain future work. Browser and Windows exports use the [publishing workflow](docs/PUBLISHING.md).
 
-Buying every rank in the current catalog lights the ritual's inner circle.
-Click it, or the **Inner circle lit / Open** control below the graph, to see
-**This is the end of the demo**. **Keep playing** or Esc dismisses the message;
-movement, the village and further rounds remain available. Readiness is derived
-from saved ranks, so a completed save lights the centre after reload. This is
-independent of either resource balance and of convincing the Priest. A future
-update will use this centre to
-reach a new area's separate circle; no second area is implemented here.
+Buying every rank in the active area's catalog lights its ritual centre.
+Bramblewick's centre offers deliberate travel to Bellmarket; the Priest objective
+is separate. Bellmarket's completed circle marks the current content endpoint,
+with continued play and return travel available. **Keep playing** or Esc dismisses
+the message; movement, Tab return and further rounds remain available. Readiness
+is derived from each area's saved ranks, independently of resource balances.
 [Completion scope and controls](docs/RITUAL_COMPLETION.md).
 
-The seal now uses authored branch constellations in place of the interim
+## Bellmarket and the title screen
+
+The title opens with **Play / Continue**. Enter the exact password `PLZKTKS`
+to reveal **Level 1: Bramblewick** and **Level 2: Bellmarket**. Choosing a level
+preserves shared wallets, recruitment history and earned ranks. The shortcut
+grants no upgrades or money. Access is saved only after successful level travel;
+entering the password alone changes the current title session.
+
+Bellmarket's five districts mix ordinary listeners, guild traders and wealthy
+patrons. Ordinary listeners always provide repeatable funding; introductions
+open their matching specialist roles across several groups. Each still needs
+completed conversation before paying. Nearby roles and lock marks explain the
+requirements. The helper follows the same eligibility rules.
+
+Its separate five-petal purple circle offers five independent paths: running,
+phrase frequency, conviction, guild access/donations and patron access/donations.
+All five roots cost 12 gold and no recruits; each path continues at 24 and 42
+gold. There is no shared prerequisite forcing one opening route. Earned village
+stats and the helper carry forward; market bonuses apply only in Bellmarket.
+
+Scripted routes show fresh password entry earning 12 gold from three ordinary
+listeners, a carried village build earning 72, and specialist routes earning
+114 or 157. The full market build clears all 25 in 5.45 seconds, a generous
+5.55-second margin. Human route feel and economy balance remain provisional.
+[Scope](docs/MARKET_LEVEL.md) and [measured pacing](docs/PACING.md#bellmarket---2026-10-04).
+
+Bramblewick's seal uses authored branch constellations in place of the interim
 even-spacing layout, with nested inscription bands, a ticked rim, broken
 arcs, offset satellite motifs and a central pentagram medallion. Ornament stays
 below real paths and state cues; the centre's strong illumination still requires
@@ -126,7 +153,7 @@ Meadow Invitations adds five neighbours after Compelling Creed III. It opens Tal
 
 ## Local saves
 
-Progression is written to Godot's `user://progression.json`, normally beneath `%APPDATA%\Godot\app_userdata\Small Following` on Windows. Schema 3 stores available recruits separately from lifetime recruitment events. Valid schema-1/2 saves keep their donations, recruitment history, round and purchased upgrades; their available recruits start at the lifetime total, with no retroactive charge. Schema-1 purchases still become rank 1. Writes use a verified temporary file and prior-save backup. Invalid saves are validated/recovered with a visible notice; newer unsupported saves are preserved. A failed purchase save grants nothing and spends neither resource. If saving earned donations/recruits fails, they remain in memory but may be lost on exit.
+Progression is written to Godot's `user://progression.json`, normally beneath `%APPDATA%\Godot\app_userdata\Small Following` on Windows. Schema 4 retains both recruit counters and adds `active_area` and validated `level_select_unlocked` access. Valid schema-1/2/3 saves default to Bramblewick and preserve their wallets, ranks, history, round and encounter progress; schema-1/2 available recruits start at the lifetime total without a retroactive charge, and schema-1 purchases become rank 1. Writes use a verified temporary file and prior-save backup. Invalid saves are validated/recovered with a visible notice; newer unsupported saves are preserved. Failed purchase or travel saves change neither the granted progression nor the active area. If saving earned donations/recruits fails, they remain in memory but may be lost on exit.
 
 See [save fields and recovery rules](docs/ARCHITECTURE.md#local-progression-and-recovery) before changing IDs or schema. Test scripts isolate their saves from ordinary player progress. Runtime saves do not belong in this repository.
 
@@ -140,7 +167,8 @@ See [save fields and recovery rules](docs/ARCHITECTURE.md#local-progression-and-
 - [Design proposal template](docs/GDD_TEMPLATE.md)
 - [Commit message style](docs/COMMIT_STYLE.md)
 - [Confirmed direction and provisional rules](docs/GAME_DESIGN.md)
-- [Future levels and mixed NPC groups - proposal](docs/FUTURE_LEVELS.md)
+- [Bellmarket and title screen implementation](docs/MARKET_LEVEL.md)
+- [Future levels and mixed NPC groups - roadmap](docs/FUTURE_LEVELS.md)
 - [Opening-round timing and route evidence](docs/PACING.md)
 - [Visual direction and future asset needs](docs/VISUAL_DIRECTION.md)
 - [Staged milestones](docs/MILESTONES.md)
@@ -186,6 +214,9 @@ $godotExe = 'C:\Program Files\Godot\Godot_v4.2.2-stable_mono_win64_console.exe'
 & $godotExe --headless --path . --import
 & $godotExe --headless --path . --script res://tests/test_progression.gd
 & $godotExe --headless --path . --script res://tests/test_recruit_economy.gd
+& $godotExe --headless --path . --script res://tests/test_areas.gd
+& $godotExe --headless --path . --script res://tests/test_market_progression.gd
+& $godotExe --headless --fixed-fps 60 --path . --script res://tests/test_market_pacing.gd
 & $godotExe --headless --path . --script res://tests/smoke_test.gd
 & $godotExe --headless --fixed-fps 60 --path . --script res://tests/test_touch_movement.gd
 & $godotExe --headless --fixed-fps 60 --path . --script res://tests/test_ritual_touch.gd

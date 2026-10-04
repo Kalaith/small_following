@@ -4,7 +4,7 @@
 
 Small Following is a cute, village-scale incremental game. The player **is the little robed cultist**, walking between groups of villagers, talking, gathering followers and earning donations. Repeated rounds build progression toward larger towns, helpers and magic.
 
-This project is a bounded first-map prototype of movement, short earning rounds, upgrades and a persuadable priest finale. The playable world consists of actual actors, props and collisions. Mock screenshots are references only.
+This project is a bounded two-area prototype of movement, short earning rounds, upgrades, a persuadable village priest and mixed market audiences. Bramblewick and Bellmarket have separate circles. The playable world consists of actual actors, props and collisions. Mock screenshots are references only.
 
 ## Confirmed direction
 
@@ -17,7 +17,8 @@ This project is a bounded first-map prototype of movement, short earning rounds,
 - Selected existing upgrade ranks cost recruits as well as gold, with followers supporting audiences and shared preaching. Running upgrades remain gold-only. Preserve a separate lifetime-recruited statistic and existing purchased upgrades without retroactive charges (requested 2026-10-03).
 - Preserve the original ranked progression. With full ranks on the original nine nodes, a competent practical route should fully convert all three groups inside the round with little time to spare; merely reaching the groups does not meet this target.
 - The upgrade structure must accommodate over 100 future upgrades/layers through data and navigable rings or branches.
-- Spread the existing inscriptions more fully around the circle. When every current upgrade rank is bought, the inner circle lights up and can show **This is the end of the demo**; dismissal allows continued play. The centre will later lead to a new area's separate circle (requested 2026-10-03).
+- Spread the existing inscriptions more fully around the circle. Every local upgrade rank lights the inner circle. The original demo message allowed continued play (requested 2026-10-03); the implemented village centre now leads deliberately to Bellmarket's separate circle.
+- Implement the market level with its own similar but distinct purple circle and frequent choices among three to five upgrades, supporting faster routes and richer NPC specializations. Add a title screen where `PLZKTKS` permits starting any implemented level (requested 2026-10-04).
 - The circle should form a composed purple magical ritual seal: coherent concentric rings, sigils and interlocking geometric motifs with existing upgrade nodes integrated. Even spacing alone is insufficient. Keep decoration quiet and prerequisite paths and interactions clear; avoid arbitrary visual noise (clarified 2026-10-03).
 - Add purchasable NPC groups, further speaking and moving tiers gated by group unlocks, and one helper that travels to individual NPCs to recruit them (requested 2026-10-03).
 - Progression eventually reaches larger, more populated towns. Later minions and magic reduce travel demands while preserving direct control.
@@ -26,11 +27,13 @@ This project is a bounded first-map prototype of movement, short earning rounds,
 - Recruitment briefly shows the numeric coin payout near the recruited character; merchants have no permanent payout label (requested 2026-10-03). Use digits rather than repeated coin symbols for larger rewards.
 - The tone is cute. The title is **Small Following**.
 
-- Add merchants, three persuadable enemy types, a town-center priest boss, related ritual upgrades and a persistent first-map finish (requested 2026-10-03). Later maps are future work.
+- Add merchants, three persuadable enemy types, a town-center priest boss, related ritual upgrades and a persistent first-map finish (requested 2026-10-03). Areas beyond Bellmarket remain future work.
 
 ## Provisional rules in this build
 
 These are current implementation defaults, not previously confirmed balance decisions.
+The table describes Bramblewick; Bellmarket's audience, donation and catalog
+values are documented below and in [PACING](PACING.md#bellmarket---2026-10-04).
 
 | Rule | Prototype value | Reason to revisit |
 | --- | --- | --- |
@@ -42,7 +45,7 @@ These are current implementation defaults, not previously confirmed balance deci
 | Base persuasion | One conviction per phrase; three conviction recruits a listener | Persuasion changes work done per phrase. |
 | Base movement | 180 world pixels per second | Running upgrades change travel time while preserving ordinary direct movement. |
 | Donations | Three per ordinary listener; 12 per merchant before upgrades | A typical opening round can afford an initial six-donation upgrade. |
-| Recruit assignments | 250 recruits across selected existing ranks; running costs zero recruits | Initial target based on the user's roughly 279 lifetime recruits by demo end; exact allocation and progression pace need playtesting. |
+| Recruit assignments | 250 recruits across village ranks and 37 across market ranks; running costs zero recruits | Village target began from the user's roughly 279 lifetime events; both area economies need playtesting. |
 | Ranked progression | Original six inner nodes with one rank, three tier-III nodes with two; 23 additional single-rank nodes | Preserve the original clear and extend progression through populated groups. |
 | Audience lifecycle | Reset all groups each round | The same villagers may be recruited again; the total counts events, not unique followers. |
 | Round boundary | Earning stops and the ritual screen opens; the player starts the next round | Allows unhurried decisions. Movement input stays available. |
@@ -110,20 +113,46 @@ New groups appear on purchase, reset each round and are recreated from saved upg
 
 ## Progression and save scope
 
-Schema-3 local progression keeps donations, available recruits, purchased upgrade ranks, lifetime recruitment events, round number and the number of town opponents convinced. Each ordinary, merchant, helper or opponent recruitment adds one to both recruit counters through its existing reward authority. Purchases subtract only available recruits. Valid schema-1/2 saves initialize available recruits from their preserved lifetime total, without charging old purchases; schema-1 purchases still become rank 1. A restart begins a fresh timed round with the retained values; it does not resume a partial conversation or award offline income. The cumulative total deliberately includes repeat recruitment of the same prototype villagers.
+Schema-4 local progression keeps donations, available recruits, all purchased upgrade ranks, lifetime recruitment events, round number, village encounter progress, active area and explicit level-selection access. Each ordinary, specialist, merchant, helper or opponent recruitment adds one to both recruit counters through its existing reward authority. Purchases subtract only available recruits. Valid schema-1/2/3 saves retain their values and default to Bramblewick; schema-1/2 available recruits initialize from lifetime history, and schema-1 purchases become rank 1. A restart opens the title, then starts fresh audiences and time in the saved area when continued. It does not resume partial conversations or award offline income.
 
-Town unlocks, unique persistent followers, mid-round continuation, cloud saves, prestige and offline accrual are not implemented. Available recruits are an assignment resource; neither recruit counter represents a unique persistent population.
+Bellmarket access derives from the full village circle or the password shortcut. Unique persistent followers, mid-round continuation, cloud saves, prestige and offline accrual are not implemented. Available recruits are an assignment resource; neither recruit counter represents a unique persistent population.
 
-The ritual centre's readiness is derived from all validated current catalog
-ranks being at their maximum, with an empty catalog never complete. Resource
-balances do not determine completion. No extra
-save flag is stored. The final successful purchase lights it immediately;
-existing fully ranked saves recover the same state on reload. This is separate
-from the saved priest victory. Clicking the centre or its visible navigation
-button shows **This is the end of the demo**. Keep playing or Esc dismisses it;
-Tab can return to the village and Enter can begin another round. Repeated
-activation does not change progression or award anything. No next area is
-loaded. See [the full-circle scope](RITUAL_COMPLETION.md).
+The ritual centre's readiness derives from every validated rank in its own
+area being at maximum, with an empty catalog never complete. Neither resources
+nor Priest victory determine completion; no completion flag is stored. The last
+successful purchase lights the centre, and reload derives the same state.
+Bramblewick's centre offers Bellmarket travel; opening the offer grants nothing
+and does not travel until selected. Bellmarket's completed circle permits
+continued play and return travel, with no third destination. Keep playing or
+Esc dismisses the message; Tab reveals the area and Enter starts another round.
+See [the full-circle scope](RITUAL_COMPLETION.md).
+
+## Bellmarket and level selection
+
+Bellmarket is implemented as five stationary mixed gatherings: Bread Court,
+Cart Crossing, Guild Row, Silk Arcade and Patron Steps. Eighteen ordinary
+listeners are always eligible; four guild traders and three patrons require
+their own introductions. Locks skip ineligible slots so they do not obstruct
+the open listeners. Each recruited person pays once through the shared
+gathering authority; the helper respects the same eligibility.
+
+The separate market circle has five independent three-node paths for running,
+phrase frequency, conviction, guild access/donations and patron access/donations.
+All five roots cost 12 gold and no recruits. Each path's later nodes cost 24
+and 42 gold; selected ranks assign recruits, and running stays gold-only.
+Total market cost is 390 gold and 37 recruits. There are five ready branch
+choices when funded, declining naturally as paths finish. Prices, layout,
+effect sizes and audience thresholds are provisional; [PACING](PACING.md#bellmarket---2026-10-04)
+records route rewards and the generous 5.55-second full-market clear margin.
+
+Earned village stats and the helper carry into Bellmarket. Village audience
+and opponent spawns stay local; market bonuses apply only in Bellmarket.
+Travel shares wallets, ranks, history and round number, and arrives between
+rounds. A failed save leaves the current area intact. The title password
+`PLZKTKS` reveals both implemented levels without granting money or ranks.
+Its access flag persists only after successful level selection/travel; typing
+alone is session state. Play / Continue resumes the saved area with fresh time
+and audiences. Full scope is in [MARKET_LEVEL](MARKET_LEVEL.md).
 
 The first helper recruits individual listeners. Later minions may collect donations, attract villagers or preach to assigned audiences. Magic may extend reach or provide temporary gathering effects. Helpers should leave useful movement choices for the player. Earlier towns providing idle income remains an optional hypothesis. Stamina, if introduced, must not disable ordinary walking.
 
@@ -135,13 +164,11 @@ During upgrade selection, the ritual itself is the main composition: concentric 
 
 ## Open decisions
 
-Planning requested 2026-10-04: explore more than two future levels, including a
-larger town and possibly a noble gathering, and mixed NPC groups where some
-listeners require additional unlocks. [Future levels and mixed audiences](FUTURE_LEVELS.md)
-proposes six settings, an example 3-open/2-locked group and staged prototypes.
-The settings, unlock rules and carry-over choices remain proposals; no new
-area or mixed-audience mechanic is implemented. Preserve the original opening
-route and full-core 15-listener benchmark while evaluating them.
+The 2026-10-04 future-level plan proposed six settings and mixed audiences.
+Bellmarket, introductions, area travel and carry-over are now implemented.
+[Future levels and mixed audiences](FUTURE_LEVELS.md) retains five additional
+settings as proposals, including the noble gathering. Preserve the original
+opening route and full-core 15-listener benchmark while evaluating later areas.
 
 - How quiet should the promo score and footsteps sit, and does the prototype
   nonsense-syllable voice suit the cultist at both opening and full talking ranks?
@@ -152,7 +179,8 @@ route and full-core 15-listener benchmark while evaluating them.
 - Are donations tied only to recruitment, periodic, or both?
 - Which costs, effect sizes and branch combinations create worthwhile route choices?
 - How many rings remain understandable before the graph needs search, filtering or branch navigation?
-- How should the completed centre lead into the next area's separate circle, how are previous towns revisited, and what automation stays interesting?
+- Does Bellmarket offer useful three-to-five-way purchase decisions, and should its generous carried-build timing, specialist rewards or costs change after human playtesting?
+- Which area should follow Bellmarket, and what automation stays interesting?
 
 Resolve these through short playable tests before expanding content. See [milestones](MILESTONES.md) and the [outstanding task list](../TODO.md).
 
@@ -189,4 +217,4 @@ implementation choices. [Mapping and persistence rules](SETTINGS.md).
 
 ## First-map finale
 
-See [FIRST_MAP](FIRST_MAP.md) for the scoped design and provisional encounter rules. Implemented: two optional merchants, four merchant inscriptions, three opponents and a priest boss who walk to the center, twelve further inscriptions, and saved first-map completion. The full catalog has 32 nodes and 35 ranks. Town Debate opens the ordered encounters after East Lane Invitations. One opponent is attempted per round; victory persists, while partial conviction resets. The Priest ends the first map's objective. The completed ritual centre is reserved for a separate circle in the next area; that content remains future work. Costs, names, resistances and numerical balance are provisional.
+See [FIRST_MAP](FIRST_MAP.md) for the scoped design and provisional encounter rules. Implemented: two optional merchants, four merchant inscriptions, three opponents and a priest boss who walk to the center, twelve further inscriptions, and saved first-map completion. The village catalog has 32 nodes and 35 ranks. Town Debate opens the ordered encounters after East Lane Invitations. One opponent is attempted per round; victory persists, while partial conviction resets. The Priest ends the first map's objective. Separately, the completed village ritual centre opens Bellmarket and its own circle. Costs, names, resistances and numerical balance are provisional.
