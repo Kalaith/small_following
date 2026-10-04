@@ -1040,8 +1040,62 @@ to the village between rounds, selected graph nodes and bought Words I once.
 The browser's IndexedDB save recorded `talk_1: 1`, 0 donations, 1 available
 recruit and lifetime 2. Touch drag and zoom buttons visibly transformed the
 graph without page scrolling. Final exported-build/alternate-size evidence is
-recorded separately below when complete. Real iOS Safari, physical touch
+recorded below. Real iOS Safari, physical touch
 devices, subjective finger comfort and fresh-save completion remain unverified.
 
 The run did not install tools, push, deploy, change external trackers or touch
 ordinary player saves. The published copy still requires separate deployment.
+
+### Final local Web build and tablet review
+
+The direct release Web export is at `builds/touch-web/export/index.html`.
+It is a local verification artifact, not a deployed build and not the
+publisher's `builds/publish/latest.json` artifact. Serve it with the required
+isolation headers; the temporary local helper is
+`python builds/touch-web/serve_export.py` (localhost port 8064). The installed
+standard Godot 4.2.2 editor and already-installed Web template produced it;
+no tool installation or upgrade was needed. Self-contained editor data inside
+ignored `exports/tooling/` avoided sandbox writes outside the project.
+
+A repeat export initially omitted the transitive player scene and failed in
+the browser. Both existing presets now explicitly include `scenes/player.tscn`
+alongside the main scene. The final export contains both, exits 0 and launches
+successfully. Its log has no script/parse errors, but still reports the sandbox
+root-certificate-store error and headless cursor/Blender warnings; it is not
+claimed as a diagnostic-free export. `index.pck` SHA-256:
+`49a5398b851eb1e4d4deb2a44e9b909ceada373a45ba4e1bc6729d6c1e7e37b2`.
+
+Installed headless Chrome 154.0.8037.93 used CDP `Emulation.setTouchEmulationEnabled`,
+mobile viewport metrics and real browser `Input.dispatchTouchEvent` commands
+against localhost, not GDScript event injection. Desktop-size touch at
+1280 x 800 and tablet landscape at 1024 x 768 exercised village travel and
+recruitment, between-round travel, ritual return/next round, graph selection,
+pan, + / - zoom, recenter, branch/node dropdowns, purchase and demo dismissal.
+An isolated IndexedDB fixture supplied all ranks except Talking III rank 2:
+one touch purchase advanced it from 1 to 2 and spent exactly 18 donations and
+8 recruits (509/503 -> 491/495), retaining lifetime 503. Two extra taps on the
+maximum-rank control spent nothing. Tapping the lit graph centre opened the
+exact demo message; Keep playing dismissed it. No browser scroll or viewport
+zoom occurred during these gestures.
+
+Tablet testing caught a real popup issue missed by synthetic graph tests:
+an upward-opening node list appeared on finger press and selected the row
+beneath the same release. Branch and node OptionButtons now open on release.
+Browser press/release inspection confirms the list stays open after the first
+tap; a separate tap deliberately selects/focuses Words II. After this fix,
+the retained native ritual-touch suite passed 25 checks and readability passed
+73, without diagnostics. Actual popup acceptance comes from the browser run.
+
+Touch settings changed master volume to 36%, toggled mute, scrolled to the
+speech/display controls and returned to the ritual. Fullscreen was not activated.
+Inspected browser evidence: [tablet dropdown](verification/touch-web-tablet.png),
+[settings scroll](verification/touch-web-settings.png) and
+[demo message](verification/touch-web-demo.png). An additional 844 x 390
+landscape-phone frame was inspected locally: the aspect-fitted game is only
+624 pixels wide, making 56-unit controls about 27 CSS pixels tall. Functionality
+does not establish comfortable phone targets or legibility; tablet/larger
+landscape use is preferable. Portrait-phone layout, physical touch devices,
+iOS Safari and human play feel remain unverified.
+
+The task's browser and localhost server were stopped after review. The temporary
+self-contained editor marker and generated publishing Python cache were removed.

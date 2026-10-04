@@ -158,6 +158,8 @@ button, or use the middle button, to pan; wheel zoom anchors at the pointer.
 Visible + / - buttons zoom about the graph centre. Touch selects on release,
 with a movement threshold separating taps from pans. Navigation/selectors use
 larger targets, and dropdown rows provide an alternative to dense overview nodes.
+Open branch/node selectors on release: an upward-opening popup must not select
+the row beneath the finger that opened it.
 Recenter must recover a useful view. Verify that dragging does not accidentally
 select/buy, and that drawing and hit testing agree after transforms.
 

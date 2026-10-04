@@ -511,6 +511,7 @@ func _build_controls() -> void:
 	_branch_bar.add_theme_constant_override("separation", 6)
 	add_child(_branch_bar)
 	branch_picker = OptionButton.new()
+	branch_picker.action_mode = BaseButton.ACTION_MODE_BUTTON_RELEASE
 	branch_picker.focus_mode = Control.FOCUS_NONE
 	branch_picker.add_theme_font_size_override("font_size", 13)
 	branch_picker.get_popup().add_theme_constant_override("v_separation", 40)
@@ -520,6 +521,7 @@ func _build_controls() -> void:
 	)
 	add_child(branch_picker)
 	node_picker = OptionButton.new()
+	node_picker.action_mode = BaseButton.ACTION_MODE_BUTTON_RELEASE
 	node_picker.focus_mode = Control.FOCUS_NONE
 	node_picker.add_theme_font_size_override("font_size", 12)
 	node_picker.get_popup().add_theme_constant_override("v_separation", 40)
