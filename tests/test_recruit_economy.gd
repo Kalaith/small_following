@@ -62,6 +62,8 @@ func _test_catalog() -> void:
 	var explicit_costs: bool = true
 	var running_free: bool = true
 	for entry in definitions.upgrades:
+		if entry.get("area", "bramblewick") != "bramblewick":
+			continue
 		explicit_costs = explicit_costs and entry.has("rank_recruit_costs") and entry.rank_recruit_costs.size() == entry.max_rank
 		for index in range(int(entry.max_rank)):
 			gold_total += int(entry.rank_costs[index])
@@ -71,7 +73,7 @@ func _test_catalog() -> void:
 			if entry.branch == "run" or effect.has("run_speed_add"):
 				running_free = running_free and int(entry.rank_recruit_costs[index]) == 0
 	check(state.catalog.size() == 32 and ranks == 35 and gold_total == 1014, "existing 32 nodes, 35 ranks and 1014 gold are preserved")
-	check(explicit_costs and recruit_total == 250, "every production rank declares its recruit cost and the total is exactly 250")
+	check(explicit_costs and recruit_total == 250, "every village rank declares its recruit cost and the village total remains 250")
 	check(running_free, "every movement rank explicitly costs zero recruits")
 	check(state.next_recruit_cost("talk_1") == 1 and state.next_recruit_cost("persuade_1") == 2, "early support ranks fit ordinary opening recruitment")
 	for invalid in [[], [-1], [1.5], [true], ["1"], [null], [1, 2], [Progression.MAX_COUNTER + 1]]:
@@ -185,7 +187,7 @@ func _test_persistence() -> void:
 		check(migrated.load_progress() and migrated.coins == 54 and migrated.available_recruits == 279 and migrated.total_recruits == 279 and migrated.round_number == 12 and migrated.rank("talk_3") == (1 if version == 1 else 2), "schema %d retains owned ranks and grants old event count without retroactive charges" % version)
 		check(FileAccess.get_file_as_string(FIXTURE) == old_text and migrated.save_progress() and FileAccess.get_file_as_string(FIXTURE + ".bak") == old_text, "schema %d migration preserves old bytes until a backed-up save" % version)
 		var current: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(FIXTURE))
-		check(current.schema_version == 3 and current.available_recruits == 279 and current.total_recruits == 279, "schema %d writes separate available and lifetime counts" % version)
+		check(current.schema_version == Progression.SAVE_VERSION and current.available_recruits == 279 and current.total_recruits == 279, "schema %d writes separate available and lifetime counts" % version)
 		var again = fresh(true)
 		check(again.load_progress() and again.available_recruits == 279 and again.total_recruits == 279 and again.purchased == migrated.purchased, "migration does not duplicate recruits on reload")
 	clean_fixture()
@@ -212,7 +214,7 @@ func _test_persistence() -> void:
 	write_fixture(FIXTURE, JSON.stringify(missing))
 	check(not fresh(true).load_progress(), "schema3 cannot silently recreate a missing available balance")
 	clean_fixture()
-	var future_text: String = '{"schema_version":4,"coins":27,"available_recruits":6}'
+	var future_text: String = '{"schema_version":5,"coins":27,"available_recruits":6}'
 	write_fixture(FIXTURE, future_text)
 	var future = fresh(true)
 	check(not future.load_progress() and not future.save_progress() and FileAccess.get_file_as_string(FIXTURE) == future_text, "unsupported future save is preserved without crashing or overwriting")

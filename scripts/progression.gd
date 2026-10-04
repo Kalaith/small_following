@@ -2,10 +2,11 @@ extends RefCounted
 ## Single owner for upgrade purchases and durable earnings. Definitions contain no code.
 ## Saves only progression: rounds always start fresh after relaunch; no offline accrual.
 
-const SAVE_VERSION: int = 3
+const SAVE_VERSION: int = 4
 const MAX_COUNTER: int = 1000000000
-const EFFECT_KEYS: Array[String] = ["encounter_conviction_add", "skeptic_conviction_add", "guard_conviction_add", "zealot_conviction_add", "priest_conviction_add", "merchant_conviction_add", "merchant_donation_add", "speech_speed_add", "conviction_add", "run_speed_add", "meadow_unlock", "east_unlock", "helper_unlock", "merchant_unlock", "encounter_unlock"]
-const UNLOCK_KEYS: Array[String] = ["meadow_unlock", "east_unlock", "helper_unlock", "merchant_unlock", "encounter_unlock"]
+const AREA_IDS: Array[String] = ["bramblewick", "bellmarket"]
+const EFFECT_KEYS: Array[String] = ["encounter_conviction_add", "skeptic_conviction_add", "guard_conviction_add", "zealot_conviction_add", "priest_conviction_add", "merchant_conviction_add", "merchant_donation_add", "speech_speed_add", "conviction_add", "run_speed_add", "meadow_unlock", "east_unlock", "helper_unlock", "merchant_unlock", "encounter_unlock", "market_guild_unlock", "market_patron_unlock", "market_guild_donation_add", "market_patron_donation_add"]
+const UNLOCK_KEYS: Array[String] = ["meadow_unlock", "east_unlock", "helper_unlock", "merchant_unlock", "encounter_unlock", "market_guild_unlock", "market_patron_unlock"]
 
 const BASE_MERCHANT_DONATION: int = 12
 const ENCOUNTER_REWARDS: Array[int] = [30, 45, 60, 120]
@@ -17,7 +18,12 @@ var total_recruits: int = 0
 var available_recruits: int = 0
 var round_number: int = 1
 var purchased: Dictionary = {}
+# The active circle is exposed to the graph; every rank is validated against all areas.
 var catalog: Array[Dictionary] = []
+var all_catalog: Array[Dictionary] = []
+var active_area: String = "bramblewick"
+# Title-screen access is independent of earned ranks and completion.
+var level_select_unlocked: bool = false
 var save_path: String = "user://progression.json"
 var last_error: String = ""
 var save_enabled: bool = true
@@ -40,6 +46,9 @@ func load_catalog(path: String = "res://data/upgrades.json") -> bool:
 				return _fail("Upgrade entry needs a nonempty " + key + ".")
 		if ids.has(entry.id):
 			return _fail("Duplicate upgrade ID: " + entry.id)
+		var area: Variant = entry.get("area", "bramblewick")
+		if not area is String or not area in AREA_IDS:
+			return _fail("Unknown upgrade area: " + entry.id)
 		if not _integer_between(entry.get("ring"), 1, 10000) or not _finite_number(entry.get("angle_degrees")):
 			return _fail("Invalid ritual coordinate: " + entry.id)
 		if not _integer_between(entry.get("cost"), 1, MAX_COUNTER):
@@ -97,6 +106,7 @@ func load_catalog(path: String = "res://data/upgrades.json") -> bool:
 				if price != 0:
 					return _fail("Running upgrades must remain gold-only: " + entry.id)
 		var normalized: Dictionary = entry.duplicate(true)
+		normalized.area = area
 		normalized.max_rank = int(rank_limit)
 		normalized.rank_costs = prices.duplicate()
 		normalized.rank_recruit_costs = recruit_prices.duplicate()
@@ -107,8 +117,10 @@ func load_catalog(path: String = "res://data/upgrades.json") -> bool:
 	for entry in candidate:
 		for rank_effect in entry.rank_effects:
 			for effect in rank_effect:
-				if effect == "merchant_donation_add" and not _integer_between(rank_effect[effect], 1, 100):
-					return _fail("Merchant donations must be whole numbers: " + entry.id)
+				if effect in ["merchant_donation_add", "market_guild_donation_add", "market_patron_donation_add"] and not _integer_between(rank_effect[effect], 1, 100):
+					return _fail("Donation bonuses must be whole numbers: " + entry.id)
+				if effect.begins_with("market_") and entry.area != "bellmarket":
+					return _fail("Market effects belong to Bellmarket: " + entry.id)
 				if effect in UNLOCK_KEYS:
 					if entry.max_rank != 1 or rank_effect[effect] != 1 or unlocks.has(effect):
 						return _fail("Unlocks must appear once, at one rank and value 1: " + entry.id)
@@ -117,6 +129,8 @@ func load_catalog(path: String = "res://data/upgrades.json") -> bool:
 		for requirement in entry.requires:
 			if not requirement is String or not ids.has(requirement) or requirement == entry.id or seen.has(requirement):
 				return _fail("Invalid prerequisite: " + entry.id)
+			if ids[requirement].area != entry.area:
+				return _fail("Circle prerequisites must stay within their area: " + entry.id)
 			seen[requirement] = true
 	# Iterative topological validation avoids recursion limits for future large catalogs.
 	var resolved: Dictionary = {}
@@ -133,12 +147,25 @@ func load_catalog(path: String = "res://data/upgrades.json") -> bool:
 				resolved[entry.id] = true
 		if resolved.size() == previous_size:
 			return _fail("Upgrade prerequisite cycle detected.")
-	catalog = candidate
+	all_catalog = candidate
+	catalog = catalog_for_area(active_area)
 	return true
+
+
+func catalog_for_area(area_id: String) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	var definitions: Array[Dictionary] = all_catalog if not all_catalog.is_empty() else catalog
+	for entry in definitions:
+		if entry.get("area", "bramblewick") == area_id:
+			result.append(entry)
+	return result
 
 
 func find_upgrade(id: String) -> Dictionary:
 	for entry in catalog:
+		if entry.id == id:
+			return entry
+	for entry in all_catalog:
 		if entry.id == id:
 			return entry
 	return {}
@@ -176,6 +203,10 @@ func purchase_state(id: String) -> Dictionary:
 	}
 	var upgrade: Dictionary = find_upgrade(id)
 	if upgrade.is_empty():
+		return state
+	if upgrade.get("area", "bramblewick") != active_area:
+		state.status = "locked"
+		state.message = "Travel to this inscription's area before purchasing it."
 		return state
 	if rank(id) >= max_rank(id):
 		state.status = "purchased"
@@ -275,19 +306,52 @@ func map_complete() -> bool:
 	return encounter_stage == 4
 
 
-func is_circle_complete() -> bool:
-	# The demo gate follows the current catalog, independently of the Priest objective.
-	# No saved flag: new catalog ranks must be earned, and failed writes grant nothing.
-	if catalog.is_empty():
+func is_circle_complete(area_id: String = "") -> bool:
+	# Completion follows actual local ranks, independently of the Priest objective.
+	# Preserve direct catalog fixtures for the currently displayed circle.
+	var definitions: Array[Dictionary] = catalog if area_id.is_empty() or area_id == active_area else catalog_for_area(area_id)
+	return _ranks_complete(definitions, purchased)
+
+
+func _ranks_complete(definitions: Array[Dictionary], ranks: Dictionary) -> bool:
+	if definitions.is_empty():
 		return false
-	for entry in catalog:
-		if rank(entry.id) != max_rank(entry.id):
+	for entry in definitions:
+		if int(ranks.get(entry.id, 0)) != int(entry.get("max_rank", 1)):
 			return false
+	return true
+
+
+func is_area_unlocked(area_id: String) -> bool:
+	if not area_id in AREA_IDS or catalog_for_area(area_id).is_empty():
+		return false
+	return area_id == "bramblewick" or level_select_unlocked or is_circle_complete("bramblewick")
+
+
+func try_travel(area_id: String, bypass_unlock: bool = false) -> bool:
+	last_error = ""
+	if not area_id in AREA_IDS or catalog_for_area(area_id).is_empty():
+		return _fail("That destination is not implemented.")
+	if not bypass_unlock and not is_area_unlocked(area_id):
+		return _fail("Complete Bramblewick's ritual circle to reach Bellmarket.")
+	var candidate: Dictionary = _snapshot()
+	candidate.active_area = area_id
+	candidate.level_select_unlocked = level_select_unlocked or bypass_unlock
+	# Main prepares the destination before requesting this durable transition.
+	if not _write_snapshot(candidate):
+		return false
+	_apply_snapshot(candidate)
 	return true
 
 
 func merchant_donation() -> int:
 	return BASE_MERCHANT_DONATION + int(_sum_effect("merchant_donation_add"))
+
+
+func market_donation(npc_type: String, base_amount: int) -> int:
+	if npc_type in ["guild", "patron"]:
+		return base_amount + int(_sum_effect("market_" + npc_type + "_donation_add"))
+	return base_amount
 
 
 func gathering_count() -> int:
@@ -309,6 +373,9 @@ func effect_preview(id: String) -> Dictionary:
 	current.encounter_conviction_add = conviction_per_phrase() + _sum_effect("encounter_conviction_add")
 	for kind in ["skeptic", "guard", "zealot", "priest"]:
 		current[kind + "_conviction_add"] = encounter_conviction(kind)
+	for kind in ["guild", "patron"]:
+		current["market_" + kind + "_unlock"] = int(has_unlock("market_" + kind + "_unlock"))
+		current["market_" + kind + "_donation_add"] = _sum_effect("market_" + kind + "_donation_add")
 	var result: Dictionary = {"current": current, "next": {}}
 	var upgrade: Dictionary = find_upgrade(id)
 	if upgrade.is_empty() or rank(id) >= max_rank(id):
@@ -321,6 +388,10 @@ func effect_preview(id: String) -> Dictionary:
 	result.next.gatherings += int(effect.get("meadow_unlock", 0)) + int(effect.get("east_unlock", 0))
 	for key in ["merchant_unlock", "merchant_conviction_add", "merchant_donation_add", "encounter_unlock", "encounter_conviction_add", "skeptic_conviction_add", "guard_conviction_add", "zealot_conviction_add", "priest_conviction_add"]:
 		result.next[key] += float(effect.get(key, 0.0))
+	for kind in ["guild", "patron"]:
+		for suffix in ["_unlock", "_donation_add"]:
+			var key: String = "market_" + kind + suffix
+			result.next[key] += float(effect.get(key, 0.0))
 	result.next.helpers += int(effect.get("helper_unlock", 0))
 	return result
 
@@ -369,10 +440,15 @@ func load_progress() -> bool:
 
 
 func _snapshot() -> Dictionary:
-	return {"schema_version": SAVE_VERSION, "coins": coins, "total_recruits": total_recruits, "available_recruits": available_recruits, "round_number": round_number, "purchased": purchased.duplicate(true), "encounter_stage": encounter_stage}
+	return {"schema_version": SAVE_VERSION, "coins": coins, "total_recruits": total_recruits, "available_recruits": available_recruits, "round_number": round_number, "purchased": purchased.duplicate(true), "encounter_stage": encounter_stage, "active_area": active_area, "level_select_unlocked": level_select_unlocked}
 
 
 func _apply_snapshot(state: Dictionary) -> void:
+	var next_area: String = str(state.get("active_area", "bramblewick"))
+	if next_area != active_area:
+		active_area = next_area
+		catalog = catalog_for_area(active_area)
+	level_select_unlocked = bool(state.get("level_select_unlocked", false))
 	encounter_stage = int(state.get("encounter_stage", 0))
 	coins = int(state.coins)
 	total_recruits = int(state.total_recruits)
@@ -383,7 +459,12 @@ func _apply_snapshot(state: Dictionary) -> void:
 
 func _sum_effect(key: String) -> float:
 	var total: float = 0.0
-	for entry in catalog:
+	var definitions: Array[Dictionary] = all_catalog if not all_catalog.is_empty() else catalog
+	for entry in definitions:
+		# Bramblewick's earned benefits carry into new places. Market tuning is local,
+		# so returning never changes the measured first-map routes.
+		if entry.get("area", "bramblewick") != "bramblewick" and entry.area != active_area:
+			continue
 		for index in range(rank(entry.id)):
 			total += float(_rank_effect(entry, index).get(key, 0.0))
 	return total
@@ -407,16 +488,25 @@ func _validated_snapshot(raw: Variant) -> Dictionary:
 		return {}
 	if int(raw.get("encounter_stage", 0)) > 0 and not raw.purchased.has("debate_1"):
 		return {}
+	if int(raw.schema_version) >= 4:
+		if not raw.get("active_area") is String or not raw.active_area in AREA_IDS:
+			return {}
+		if catalog_for_area(raw.active_area).is_empty() or not raw.get("level_select_unlocked") is bool:
+			return {}
 	var normalized: Dictionary = raw.duplicate(true)
 	# Old saves never spent recruits. Preserve all prior ranks without charging them.
 	normalized.available_recruits = int(raw.available_recruits) if int(raw.schema_version) >= 3 else int(raw.total_recruits)
 	normalized.encounter_stage = int(raw.get("encounter_stage", 0))
+	normalized.active_area = raw.active_area if int(raw.schema_version) >= 4 else "bramblewick"
+	normalized.level_select_unlocked = raw.level_select_unlocked if int(raw.schema_version) >= 4 else false
 	normalized.schema_version = SAVE_VERSION
 	for id in raw.purchased:
 		if not id is String:
 			return {}
 		var definition: Dictionary = find_upgrade(id)
 		if definition.is_empty():
+			return {}
+		if int(raw.schema_version) < 4 and definition.get("area", "bramblewick") != "bramblewick":
 			return {}
 		if int(raw.schema_version) == 1:
 			if not raw.purchased[id] is bool or raw.purchased[id] != true:
@@ -429,6 +519,12 @@ func _validated_snapshot(raw: Variant) -> Dictionary:
 		for requirement in definition.requires:
 			if not raw.purchased.has(requirement):
 				return {}
+	# Neither a saved active area nor off-area purchases may bypass the normal gate.
+	var needs_market_access: bool = normalized.active_area == "bellmarket"
+	for id in normalized.purchased:
+		needs_market_access = needs_market_access or find_upgrade(id).get("area", "bramblewick") == "bellmarket"
+	if needs_market_access and not normalized.level_select_unlocked and not _ranks_complete(catalog_for_area("bramblewick"), normalized.purchased):
+		return {}
 	return normalized
 
 

@@ -148,9 +148,9 @@ func _run() -> void:
 	check(repeat_recovery.load_progress() and not repeat_recovery.save_progress() and FileAccess.get_file_as_string(FIXTURE) == "{broken again", "second corruption is preserved without overwriting first archive")
 
 	clean_fixture()
-	write_fixture(FIXTURE, '{"schema_version":4,"coins":700}')
+	write_fixture(FIXTURE, '{"schema_version":5,"coins":700}')
 	var future = fresh()
-	check(not future.load_progress() and not future.save_progress() and FileAccess.get_file_as_string(FIXTURE) == '{"schema_version":4,"coins":700}', "future schema blocks writes and stays byte-for-byte intact")
+	check(not future.load_progress() and not future.save_progress() and FileAccess.get_file_as_string(FIXTURE) == '{"schema_version":5,"coins":700}', "future schema blocks writes and stays byte-for-byte intact")
 
 	# Migration retains old progress/effects, then rotates original bytes on the first current-schema write.
 	clean_fixture()
@@ -163,7 +163,7 @@ func _run() -> void:
 	check(migrated.try_purchase("talk_3", 1) and migrated.coins == 9 and migrated.rank("talk_3") == 2, "migrated outer seal can buy exactly its next rank")
 	check(FileAccess.get_file_as_string(FIXTURE + ".bak") == old_text and not FileAccess.file_exists(FIXTURE + ".corrupt"), "first current-schema write preserves valid old save as exact backup")
 	var saved: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(FIXTURE))
-	check(saved.schema_version == 3 and saved.purchased.talk_3 == 2 and not saved.purchased.talk_3 is bool, "new save encodes schema3 with numerical ranks")
+	check(saved.schema_version == Progression.SAVE_VERSION and saved.purchased.talk_3 == 2 and not saved.purchased.talk_3 is bool, "new save encodes current schema with numerical ranks")
 	var ranked_reload = fresh()
 	check(ranked_reload.load_progress() and ranked_reload.rank("talk_3") == 2 and ranked_reload.coins == 9 and ranked_reload.total_recruits == 41 and ranked_reload.round_number == 12, "rank2 save round trip retains progression and counters")
 	clean_fixture()
