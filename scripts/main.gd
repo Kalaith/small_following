@@ -48,6 +48,10 @@ var context_label: Label
 var save_label: Label
 var hud_layout: Control
 var ritual_screen: Control
+var village_input: Node
+var ritual_button: Button
+var next_round_button: Button
+var _village_blockers: Array[Control] = []
 
 
 func _ready() -> void:
@@ -78,6 +82,8 @@ func _ready() -> void:
 	_build_hud()
 	_build_ritual()
 	_build_settings()
+	village_input = preload("res://scripts/village_input.gd").new()
+	add_child(village_input)
 	if settings.values.fullscreen and not OS.has_feature("web"):
 		set_fullscreen(true)
 	apply_upgrades()
@@ -164,7 +170,10 @@ func set_fullscreen(enabled: bool) -> void:
 
 
 func set_settings_visible(value: bool) -> void:
+	if is_instance_valid(village_input):
+		village_input.cancel_gesture()
 	settings_screen.cancel_capture()
+	ritual_screen.set_pointer_input_enabled(not value)
 	if value:
 		ritual_screen.dismiss_demo_message()
 	settings_screen.visible = value
@@ -236,7 +245,7 @@ func _build_settings() -> void:
 	settings_button.offset_left = -176
 	settings_button.offset_right = -26
 	settings_button.offset_top = 98
-	settings_button.offset_bottom = 136
+	settings_button.offset_bottom = 154
 	settings_button.pressed.connect(set_settings_visible.bind(true))
 	settings_screen = SettingsScreen.new()
 	canvas.add_child(settings_screen)
@@ -378,6 +387,8 @@ func apply_upgrades() -> void:
 
 
 func set_ritual_visible(value: bool) -> void:
+	if is_instance_valid(village_input):
+		village_input.cancel_gesture()
 	ritual_screen.visible = value and not round_active
 	hud_layout.visible = not ritual_screen.visible
 	if ritual_screen.visible:
@@ -396,6 +407,7 @@ func start_next_round() -> void:
 	for group in groups:
 		group.reset_round()
 	# Every round uses the same entrance; walking in menus does not grant a head start.
+	player.clear_walk_target()
 	player.position = START_POSITION
 	game_audio.reset_motion()
 	game_audio.stop_speech()
@@ -431,6 +443,7 @@ func _build_hud() -> void:
 	hud_layout.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	canvas.add_child(hud_layout)
 	var heading := VBoxContainer.new()
+	_village_blockers.append(heading)
 	heading.position = Vector2(26, 20)
 	hud_layout.add_child(heading)
 	var title := _label("Small Following", 29, Color("#fff3d5"))
@@ -440,6 +453,7 @@ func _build_hud() -> void:
 	heading.add_child(title)
 	heading.add_child(_label("BRAMBLEWICK / a small beginning", 13, Color("#f5ebd0")))
 	var status := _panel()
+	_village_blockers.append(status)
 	hud_layout.add_child(status)
 	status.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
 	status.grow_horizontal = Control.GROW_DIRECTION_BEGIN
@@ -454,6 +468,7 @@ func _build_hud() -> void:
 	status_rows.add_child(stats_label)
 	status_rows.add_child(round_label)
 	var help_panel := _panel()
+	_village_blockers.append(help_panel)
 	hud_layout.add_child(help_panel)
 	help_panel.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
 	help_panel.offset_left = 26
@@ -464,7 +479,11 @@ func _build_hud() -> void:
 	help_panel.add_child(help_rows)
 	context_label = _label("", 17)
 	help_rows.add_child(context_label)
-	help_rows.add_child(_label("Movement keys / left stick - Stand near a gathering to speak", 13, Color("#d9dfc2")))
+	help_rows.add_child(_label("Tap / click to walk; tap yourself to stop. Keys / stick also work.", 13, Color("#d9dfc2")))
+	ritual_button = _village_button("Ritual circle", -422, -226)
+	ritual_button.pressed.connect(set_ritual_visible.bind(true))
+	next_round_button = _village_button("Next round", -214, -26)
+	next_round_button.pressed.connect(start_next_round)
 	save_label = _label("", 13, Color("#ffe4a1"))
 	canvas.add_child(save_label)
 	save_label.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
@@ -473,6 +492,33 @@ func _build_hud() -> void:
 	save_label.offset_top = -28
 	save_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	save_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_village_blockers.append(save_label)
+
+
+func _village_button(caption: String, left: float, right: float) -> Button:
+	var button := Button.new()
+	button.text = caption
+	button.focus_mode = Control.FOCUS_NONE
+	button.add_theme_font_size_override("font_size", 19)
+	hud_layout.add_child(button)
+	button.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
+	button.offset_left = left
+	button.offset_right = right
+	button.offset_top = -94
+	button.offset_bottom = -30
+	_village_blockers.append(button)
+	return button
+
+
+func village_tap_available(at: Vector2) -> bool:
+	if ritual_screen.visible or settings_screen.visible:
+		return false
+	if settings_button.is_visible_in_tree() and settings_button.get_global_rect().has_point(at):
+		return false
+	for control in _village_blockers:
+		if control.is_visible_in_tree() and control.get_global_rect().has_point(at):
+			return false
+	return get_viewport().get_visible_rect().has_point(at)
 
 
 func _panel() -> PanelContainer:
@@ -499,16 +545,18 @@ func _label(value: String, font_size: int, color: Color = Color("#fff1d0")) -> L
 
 
 func _update_hud() -> void:
+	ritual_button.visible = not round_active
+	next_round_button.visible = not round_active
 	stats_label.text = "%d donations / %d recruits available" % [coins, progression.available_recruits]
 	round_label.text = "Round %d   /   %.1fs remaining" % [round_number, seconds_left]
 	save_label.text = "Progress notice: see the ritual screen." if not progression.last_error.is_empty() else ""
 	if progression.map_complete():
-		context_label.text = "Bramblewick complete!" + ("  Tab: ritual / %s: play again" % Keys.hint("next_round") if not round_active else "  Enjoy the village.")
+		context_label.text = "Bramblewick complete!" + ("  Choose Ritual circle or Next round." if not round_active else "  Enjoy the village.")
 	elif not round_active:
-		context_label.text = "Round complete - Tab: ritual / %s: next round" % Keys.hint("next_round")
+		context_label.text = "Round complete - Ritual circle / Next round"
 	elif is_instance_valid(encounter) and not encounter.defeated:
 		context_label.text = "Convince %s in the town center" % Encounter.PROFILES[encounter.stage].title
 	elif is_instance_valid(nearest_group):
 		context_label.text = "Speaking with %s..." % nearest_group.group_name
 	else:
-		context_label.text = "A little time. A few friendly faces."
+		context_label.text = "Walk around props; stand near a gathering to speak."

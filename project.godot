@@ -66,3 +66,6 @@ toggle_fullscreen={
 "deadzone": 0.2,
 "events": [Object(InputEventKey,"physical_keycode":4194342)]
 }
+
+[input_devices]
+pointing/emulate_mouse_from_touch=true

@@ -6,9 +6,12 @@ var failed: bool = false
 var ritual_only: bool = false
 var settings_only: bool = false
 var economy_only: bool = false
+var touch_only: bool = false
 
 
 func _initialize() -> void:
+	if "--touch-only" in OS.get_cmdline_user_args():
+		root.unfocusable = true
 	_capture.call_deferred()
 
 
@@ -31,6 +34,8 @@ func _capture() -> void:
 			settings_only = true
 		elif argument == "--economy-only":
 			economy_only = true
+		elif argument == "--touch-only":
+			touch_only = true
 	DirAccess.make_dir_recursive_absolute(destination)
 	var scene = load("res://scenes/main.tscn").instantiate()
 	scene.persistence_enabled = false
@@ -39,6 +44,10 @@ func _capture() -> void:
 	scene.game_audio.output_enabled = false
 	root.add_child(scene)
 	scene.set_process(false)
+	if touch_only:
+		await capture_touch_controls(scene)
+		await finish_capture(scene)
+		return
 	if economy_only:
 		await capture_recruit_economy(scene)
 		await finish_capture(scene)
@@ -229,6 +238,35 @@ func capture_graph_fixture(scene) -> void:
 	scene.ritual_screen.focus_node("fixture_12_11")
 	scene.ritual_screen._subtitle_label.text = "TEST DATA ONLY / NOT PLAYABLE UPGRADE CONTENT"
 	await save_frame("ritual-fixture-focus.png")
+
+
+func capture_touch_controls(scene) -> void:
+	scene.player.set_physics_process(false)
+	scene.player.set_walk_target(Vector2(630, 620))
+	for frame in range(5):
+		await process_frame
+	await save_frame("touch-village.png")
+	scene.player.clear_walk_target()
+	scene.advance_round(100.0)
+	scene.set_ritual_visible(false)
+	scene._update_hud()
+	await save_frame("touch-between-rounds.png")
+	scene.set_ritual_visible(true)
+	scene.ritual_screen.overview_button.pressed.emit()
+	await save_frame("touch-ritual.png")
+	scene.progression.coins = 100
+	scene.progression.total_recruits = 10
+	scene.progression.available_recruits = 10
+	scene.ritual_screen.focus_node("talk_1")
+	await save_frame("touch-purchase.png")
+	scene.set_settings_visible(true)
+	await save_frame("touch-settings.png")
+	scene.set_settings_visible(false)
+	for item in scene.progression.catalog:
+		scene.progression.purchased[item.id] = scene.progression.max_rank(item.id)
+	scene.ritual_screen.update_state(0)
+	scene.ritual_screen.completion_button.pressed.emit()
+	await save_frame("touch-demo.png")
 
 
 func finish_capture(scene) -> void:

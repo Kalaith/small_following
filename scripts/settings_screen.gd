@@ -58,6 +58,11 @@ func _ready() -> void:
 	tabs = TabContainer.new()
 	tabs.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	tabs.get_tab_bar().focus_mode = Control.FOCUS_NONE
+	for state in ["tab_selected", "tab_unselected", "tab_disabled"]:
+		var tab_style: StyleBox = tabs.get_theme_stylebox(state).duplicate()
+		tab_style.content_margin_top = 17
+		tab_style.content_margin_bottom = 17
+		tabs.add_theme_stylebox_override(state, tab_style)
 	tabs.tab_changed.connect(func(_index: int) -> void: cancel_capture())
 	body.add_child(tabs)
 	var scroll := ScrollContainer.new()
@@ -84,7 +89,7 @@ func _ready() -> void:
 		slider.step = 1
 		slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		slider.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		slider.custom_minimum_size = Vector2(140, 30)
+		slider.custom_minimum_size = Vector2(140, 56)
 		slider.focus_mode = Control.FOCUS_NONE
 		slider.value_changed.connect(func(value: float) -> void: volume_changed.emit(entry[0], value / 100.0))
 		row.add_child(slider)
@@ -112,7 +117,7 @@ func _ready() -> void:
 	body.add_child(notice)
 	close_button = Button.new()
 	close_button.text = "Back to game   ·   Esc"
-	close_button.custom_minimum_size.y = 44
+	close_button.custom_minimum_size.y = 56
 	close_button.focus_mode = Control.FOCUS_NONE
 	close_button.pressed.connect(func() -> void: close_requested.emit())
 	for state in ["normal", "hover", "pressed"]:
@@ -129,7 +134,7 @@ func _ready() -> void:
 	actions.add_child(close_button)
 	exit_button = Button.new()
 	exit_button.text = "Exit Game"
-	exit_button.custom_minimum_size = Vector2(140, 44)
+	exit_button.custom_minimum_size = Vector2(140, 56)
 	exit_button.focus_mode = Control.FOCUS_NONE
 	exit_button.pressed.connect(func() -> void: exit_requested.emit())
 	# A browser owns its tab's lifetime; SceneTree.quit cannot close it.
@@ -230,7 +235,7 @@ func _key_button(title: String) -> Button:
 	var button := Button.new()
 	button.text = title
 	button.focus_mode = Control.FOCUS_NONE
-	button.custom_minimum_size.y = 32
+	button.custom_minimum_size.y = 48
 	button.add_theme_font_size_override("font_size", 15)
 	for state in ["normal", "hover", "pressed"]:
 		var style := StyleBoxFlat.new()
@@ -291,7 +296,7 @@ func _toggle(title: String) -> CheckButton:
 	var button := CheckButton.new()
 	button.text = title
 	button.focus_mode = Control.FOCUS_NONE
-	button.custom_minimum_size.y = 36
+	button.custom_minimum_size.y = 56
 	button.add_theme_font_size_override("font_size", 17)
 	return button
 

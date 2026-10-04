@@ -9,6 +9,7 @@ This project is a bounded first-map prototype of movement, short earning rounds,
 ## Confirmed direction
 
 - The cultist remains directly movable, including between rounds.
+- Make village movement and required menus usable by touch, especially in the web build (requested 2026-10-04). Tap-to-move is the selected implementation; keyboard/mouse play, economy and pacing remain intact.
 - Small villages contain groups of NPCs to visit, talk to, recruit and receive donations from during rounds.
 - An ordinary opening round should allow roughly three conversions and be too short to clear the village. This is a pacing target, not a hard recruitment cap.
 - Round end opens a large occult ritual-circle upgrade screen, using purple, violet and lilac rather than the references' red.
@@ -57,6 +58,14 @@ The timer and travel/conversation costs limit the opening yield; no rule stops r
 5. Press Enter or use the next-round button to begin again with purchased improvements.
 
 The ritual screen is a deliberate full-screen intermission. Tab returns to the visible village between rounds and reopens the circle; earning remains stopped. WASD, arrows and the movement stick continue to steer the cultist while the screen is open. A new round restores the starting position. Do not pause the movement controller to implement menus or future automation.
+
+Village ground accepts tap/click destinations. Travel uses the existing speed
+and collisions, stops on arrival or obstruction, and allows immediate retargeting
+or keyboard/stick takeover. Tapping the cultist stops travel. This is straight-line
+movement, with manual taps around props. Between-round village buttons reopen the
+ritual or begin another round; ritual selection, panning, zoom buttons, purchases
+and demo dismissal are available without a keyboard. Exact target sizes and tap
+tolerance are provisional interface choices, not new balance rules.
 
 ## Bounded upgrade content
 

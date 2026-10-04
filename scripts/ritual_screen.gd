@@ -20,6 +20,9 @@ const MIN_ZOOM: float = 0.025
 const MAX_ZOOM: float = 2.4
 const CORE_RADIUS: float = 66.0
 const CORE_ORNAMENT_RADIUS: float = 82.0
+const TOUCH_DRAG_THRESHOLD: float = 10.0
+const TOUCH_TARGET_RADIUS: float = 28.0
+const EMULATED_MOUSE_DEVICE: int = -1
 const Layout = preload("res://scripts/ritual_layout.gd")
 const Keys = preload("res://scripts/key_bindings.gd")
 
@@ -43,6 +46,8 @@ var village_button: Button
 var recenter_button: Button
 var focus_button: Button
 var overview_button: Button
+var zoom_in_button: Button
+var zoom_out_button: Button
 var branch_picker: OptionButton
 var node_picker: OptionButton
 var completion_button: Button
@@ -64,6 +69,11 @@ var _max_radius: float = FIRST_RING
 var _round_recruits: int = 0
 var _dragging: bool = false
 var _drag_button: int = 0
+var _touch_index: int = -1
+var _touch_start: Vector2 = Vector2.ZERO
+var _touch_last: Vector2 = Vector2.ZERO
+var _touch_dragged: bool = false
+var _pointer_input_enabled: bool = true
 var _hovered_id: String = ""
 var _font: Font
 var _title_label: Label
@@ -100,6 +110,7 @@ func _ready() -> void:
 
 
 func configure(catalog: Array, progression: RefCounted) -> void:
+	_reset_pointer_gesture()
 	dismiss_demo_message()
 	_hovered_id = ""
 	_catalog = catalog
@@ -127,7 +138,7 @@ func update_state(round_recruits: int = 0) -> void:
 	_round_recruits = round_recruits
 	if not _built:
 		return
-	_hint_label.text = "Tab: village  /  %s: next round\nMovement keys still move your cultist." % Keys.hint("next_round")
+	_hint_label.text = "Village / next round: buttons above\nKeyboard: Tab / %s. Movement stays active." % Keys.hint("next_round")
 	_demo_hint.text = "Esc: dismiss / Tab: village / %s: next round" % Keys.hint("next_round")
 	_subtitle_label.text = "ROUND COMPLETE  /  %d NEW FOLLOWERS" % _round_recruits
 	if is_instance_valid(_progression) and _progression.has_method("map_complete"):
@@ -316,7 +327,7 @@ func open_demo_message() -> bool:
 		return false
 	# One reusable in-scene panel; opening it neither rewards nor persists anything.
 	_demo_overlay.show()
-	_dragging = false
+	_reset_pointer_gesture()
 	return true
 
 
@@ -337,12 +348,12 @@ func screen_to_world(point: Vector2) -> Vector2:
 	return (point - graph.global_position - graph.size * 0.5 - pan) / zoom
 
 
-func hit_test(screen_point: Vector2) -> String:
+func hit_test(screen_point: Vector2, target_radius: float = 7.0) -> String:
 	if not graph.get_global_rect().has_point(screen_point):
 		return ""
 	var world_point: Vector2 = screen_to_world(screen_point)
 	var closest: String = ""
-	var distance: float = maxf(NODE_RADIUS + 6.0, 7.0 / zoom)
+	var distance: float = maxf(NODE_RADIUS + 6.0, target_radius / zoom)
 	for id in node_positions:
 		var candidate: Vector2 = node_positions[id]
 		var candidate_distance: float = candidate.distance_to(world_point)
@@ -469,7 +480,7 @@ func _build_controls() -> void:
 	_status_label = _label("", 14, MUTED)
 	_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_hint_label = _label("", 12, MUTED)
-	_legend_label = _label("Diamond: locked   /   Hollow: needs resources   /   +: ready   /   Check: complete\nDrag to explore · Scroll to zoom · Hover or select to trace requirements", 11, MUTED)
+	_legend_label = _label("Diamond: locked   /   Hollow: needs resources   /   +: ready   /   Check: complete\nTap a node · Drag to explore · + / - or scroll to zoom", 11, MUTED)
 	_error_label = _label("", 11, LILAC)
 	_error_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_error_label.max_lines_visible = 3
@@ -490,12 +501,19 @@ func _build_controls() -> void:
 		reset_view()
 		clear_selection()
 	)
+	zoom_out_button = _button("-", false)
+	zoom_out_button.tooltip_text = "Zoom out"
+	zoom_out_button.pressed.connect(func() -> void: zoom_at(graph.get_global_rect().get_center(), 1.0 / 1.25))
+	zoom_in_button = _button("+", false)
+	zoom_in_button.tooltip_text = "Zoom in"
+	zoom_in_button.pressed.connect(func() -> void: zoom_at(graph.get_global_rect().get_center(), 1.25))
 	_branch_bar = HBoxContainer.new()
 	_branch_bar.add_theme_constant_override("separation", 6)
 	add_child(_branch_bar)
 	branch_picker = OptionButton.new()
 	branch_picker.focus_mode = Control.FOCUS_NONE
 	branch_picker.add_theme_font_size_override("font_size", 13)
+	branch_picker.get_popup().add_theme_constant_override("v_separation", 40)
 	branch_picker.item_selected.connect(func(index: int) -> void:
 		if index >= 0 and index < _branch_order.size():
 			focus_branch(_branch_order[index])
@@ -504,6 +522,7 @@ func _build_controls() -> void:
 	node_picker = OptionButton.new()
 	node_picker.focus_mode = Control.FOCUS_NONE
 	node_picker.add_theme_font_size_override("font_size", 12)
+	node_picker.get_popup().add_theme_constant_override("v_separation", 40)
 	node_picker.item_selected.connect(func(index: int) -> void:
 		if index >= 0 and index < _browse_ids.size():
 			focus_node(_browse_ids[index])
@@ -670,16 +689,20 @@ func _layout() -> void:
 	var margin: float = 40.0
 	var detail_width: float = clampf(size.x * 0.245, 255.0, 330.0)
 	_detail_x = size.x - detail_width - margin
-	graph.position = Vector2(24, 159)
-	graph.size = Vector2(maxf(280.0, _detail_x - 51.0), maxf(280.0, size.y - 268.0))
-	_branch_bar.position = Vector2(margin, 120)
-	_branch_bar.size = Vector2(_detail_x - margin - 36, 30)
+	graph.position = Vector2(24, 184)
+	graph.size = Vector2(maxf(280.0, _detail_x - 51.0), maxf(280.0, size.y - 304.0))
+	_branch_bar.position = Vector2(margin, 122)
+	_branch_bar.size = Vector2(_detail_x - margin - 174, 56)
 	branch_picker.position = _branch_bar.position
-	branch_picker.size = Vector2(minf(430, _branch_bar.size.x), 30)
-	node_picker.position = Vector2(margin, size.y - 103)
-	node_picker.size = Vector2(minf(440, _detail_x - margin - 275), 30)
-	completion_button.position = Vector2(_detail_x - 253, size.y - 103)
-	completion_button.size = Vector2(226, 30)
+	branch_picker.size = Vector2(minf(430, _branch_bar.size.x), 56)
+	zoom_out_button.position = Vector2(_detail_x - 154, 122)
+	zoom_out_button.size = Vector2(56, 56)
+	zoom_in_button.position = Vector2(_detail_x - 90, 122)
+	zoom_in_button.size = Vector2(56, 56)
+	node_picker.position = Vector2(margin, size.y - 111)
+	node_picker.size = Vector2(minf(440, _detail_x - margin - 275), 56)
+	completion_button.position = Vector2(_detail_x - 253, size.y - 111)
+	completion_button.size = Vector2(226, 56)
 	_demo_panel.position = (size - Vector2(minf(600, size.x - 80), 332)) * 0.5
 	_demo_panel.size = Vector2(minf(600, size.x - 80), 332)
 	_title_label.position = Vector2(margin, 43)
@@ -705,17 +728,17 @@ func _layout() -> void:
 	next_button.position = Vector2(_detail_x, size.y - 183)
 	next_button.size = Vector2(detail_width, 50)
 	village_button.position = Vector2(_detail_x, size.y - 124)
-	village_button.size = Vector2(detail_width, 39)
+	village_button.size = Vector2(detail_width, 50)
 	_hint_label.position = Vector2(_detail_x, size.y - 65)
 	_hint_label.size = Vector2(detail_width, 43)
-	_legend_label.position = Vector2(margin, size.y - 53)
+	_legend_label.position = Vector2(margin, size.y - 49)
 	_legend_label.size = Vector2(_detail_x - margin - 22, 38)
-	recenter_button.position = Vector2(_detail_x - 118, 82)
-	recenter_button.size = Vector2(91, 30)
-	focus_button.position = Vector2(_detail_x - 265, 82)
-	focus_button.size = Vector2(138, 30)
-	overview_button.position = Vector2(_detail_x - 366, 82)
-	overview_button.size = Vector2(92, 30)
+	recenter_button.position = Vector2(_detail_x - 118, 56)
+	recenter_button.size = Vector2(91, 56)
+	focus_button.position = Vector2(_detail_x - 265, 56)
+	focus_button.size = Vector2(138, 56)
+	overview_button.position = Vector2(_detail_x - 366, 56)
+	overview_button.size = Vector2(92, 56)
 	reset_view()
 	queue_redraw()
 
@@ -727,7 +750,7 @@ func _purchase_selected() -> void:
 
 
 func _on_visibility_changed() -> void:
-	_dragging = false
+	_reset_pointer_gesture()
 	_hovered_id = ""
 	_core_hovered = false
 	if not visible:
@@ -737,7 +760,16 @@ func _on_visibility_changed() -> void:
 
 
 func _graph_input(event: InputEvent) -> void:
-	if demo_message_visible():
+	if not _pointer_input_enabled or demo_message_visible():
+		return
+	if event is InputEventScreenTouch or event is InputEventScreenDrag:
+		_graph_touch_input(event)
+		graph.accept_event()
+		return
+	# Godot also sends an emulated mouse event for a finger; the native touch
+	# path waits for release so panning cannot accidentally select a node.
+	if event.device == EMULATED_MOUSE_DEVICE:
+		graph.accept_event()
 		return
 	if event is InputEventMouseButton:
 		var mouse: InputEventMouseButton = event
@@ -773,6 +805,78 @@ func _graph_input(event: InputEvent) -> void:
 		_core_hovered = completion_hit_test(graph.global_position + mouse.position)
 		graph.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND if _core_hovered or not _hovered_id.is_empty() else Control.CURSOR_DRAG
 		graph.queue_redraw()
+
+
+func _input(event: InputEvent) -> void:
+	# Capture native touches before their emulated mouse events, keeping the
+	# same finger through release outside the graph's clipping rectangle.
+	if not _pointer_input_enabled or not is_visible_in_tree() or demo_message_visible():
+		return
+	if not (event is InputEventScreenTouch or event is InputEventScreenDrag):
+		return
+	if branch_picker.get_popup().visible or node_picker.get_popup().visible:
+		return
+	if _touch_index < 0:
+		if not event is InputEventScreenTouch or not event.pressed or event.canceled:
+			return
+		var local_event: InputEvent = graph.make_input_local(event)
+		if not Rect2(Vector2.ZERO, graph.size).has_point(local_event.position):
+			return
+		_graph_touch_input(local_event)
+		get_viewport().set_input_as_handled()
+	elif event.index == _touch_index:
+		# Keep tracking outside the clip, including release over another control.
+		_graph_touch_input(graph.make_input_local(event))
+		get_viewport().set_input_as_handled()
+
+
+func set_pointer_input_enabled(value: bool) -> void:
+	_pointer_input_enabled = value
+	_reset_pointer_gesture()
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_APPLICATION_FOCUS_OUT:
+		_reset_pointer_gesture()
+
+
+func _reset_pointer_gesture() -> void:
+	_dragging = false
+	_drag_button = 0
+	_touch_index = -1
+	_touch_dragged = false
+
+
+func _graph_touch_input(event: InputEvent) -> void:
+	if event is InputEventScreenTouch:
+		var touch: InputEventScreenTouch = event
+		if touch.pressed and not touch.canceled:
+			if _touch_index >= 0:
+				return
+			_touch_index = touch.index
+			_touch_start = touch.position
+			_touch_last = touch.position
+			_touch_dragged = false
+			_hovered_id = ""
+			_core_hovered = false
+			graph.queue_redraw()
+		elif touch.index == _touch_index:
+			var tapped: bool = not touch.canceled and not _touch_dragged and touch.position.distance_to(_touch_start) < TOUCH_DRAG_THRESHOLD
+			_reset_pointer_gesture()
+			if tapped:
+				var screen_point: Vector2 = graph.global_position + touch.position
+				if completion_hit_test(screen_point):
+					open_demo_message()
+				else:
+					select_node(hit_test(screen_point, TOUCH_TARGET_RADIUS))
+	elif event is InputEventScreenDrag and event.index == _touch_index:
+		var drag: InputEventScreenDrag = event
+		if not _touch_dragged and drag.position.distance_to(_touch_start) >= TOUCH_DRAG_THRESHOLD:
+			_touch_dragged = true
+			pan_by(drag.position - _touch_start)
+		elif _touch_dragged:
+			pan_by(drag.position - _touch_last)
+		_touch_last = drag.position
 
 
 func _draw() -> void:

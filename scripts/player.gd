@@ -12,13 +12,49 @@ var _trail_length: float = 8.0
 var _flutter_amount: float = 0.0
 var _cloth_time: float = 0.0
 var _look_direction: Vector2 = Vector2.DOWN
+var has_walk_target: bool = false
+var walk_target: Vector2 = Vector2.ZERO
+var _blocked_seconds: float = 0.0
+const ARRIVAL_DISTANCE: float = 2.0
+const BLOCKED_SECONDS: float = 0.2
 
 
 func _physics_process(delta: float) -> void:
 	var input_direction: Vector2 = Input.get_vector(
 		"move_left", "move_right", "move_up", "move_down"
 	)
+	if not input_direction.is_zero_approx():
+		clear_walk_target()
+	elif has_walk_target:
+		var remaining: Vector2 = walk_target - global_position
+		if remaining.length() <= ARRIVAL_DISTANCE:
+			clear_walk_target()
+		else:
+			# Shorten the final step instead of oscillating across the destination.
+			input_direction = remaining / maxf(movement_speed * delta, remaining.length())
+	var before: Vector2 = global_position
 	step_motion(input_direction, delta)
+	if has_walk_target:
+		_blocked_seconds = _blocked_seconds + delta if before.distance_to(global_position) < 0.1 else 0.0
+		if _blocked_seconds >= BLOCKED_SECONDS:
+			clear_walk_target()
+
+
+func set_walk_target(at: Vector2) -> void:
+	# Tapping the cultist (hood or feet) is also an explicit stop action.
+	if at.distance_to(global_position) <= 28.0 or at.distance_to(global_position + Vector2(0, -35)) <= 26.0:
+		clear_walk_target()
+		return
+	walk_target = at.clamp(world_bounds.position, world_bounds.end)
+	has_walk_target = true
+	_blocked_seconds = 0.0
+	queue_redraw()
+
+
+func clear_walk_target() -> void:
+	has_walk_target = false
+	_blocked_seconds = 0.0
+	queue_redraw()
 
 
 ## Shared motion entry point lets scene smoke tests drive the same movement path.
@@ -46,6 +82,10 @@ func step_motion(direction: Vector2, delta: float) -> void:
 
 
 func _draw() -> void:
+	if has_walk_target:
+		var marker: Vector2 = to_local(walk_target)
+		draw_arc(marker, 12.0, 0.0, TAU, 32, Color("ead4ff"), 2.0, true)
+		draw_circle(marker, 3.0, Color("ead4ff"))
 	if show_aura:
 		draw_circle(Vector2.ZERO, speaking_radius, Color(0.76, 0.65, 0.95, 0.035))
 		draw_arc(Vector2.ZERO, speaking_radius, 0.0, TAU, 72,

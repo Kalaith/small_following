@@ -9,6 +9,7 @@ The project targets Godot 4.2.2, GDScript and Compatibility rendering. It has no
 | `scenes/main.tscn` | Playable scene, ground, sorted actors and player instance |
 | `scripts/main.gd` | Round timing, nearest audience, reward events, progression integration and compact village HUD |
 | `scripts/player.gd`, `scenes/player.tscn` | Direct CharacterBody2D movement, feet collision, camera, drawn cultist and trailing cloth |
+| `scripts/village_input.gd` | Village-only tap/click gestures, UI exclusion and viewport-to-world destination mapping |
 | `scripts/helper.gd` | One autonomous recruiter, grid travel, individual targets and independent phrase effort |
 | `scripts/gathering.gd` | Typed villager/merchant audiences, phrase timing, conviction, local feedback and recruitment signal |
 | `scripts/encounter.gd` | Opponent arrival, objections, conviction decay and one victory signal |
@@ -28,6 +29,21 @@ The map is 1560 x 1100 world pixels, with a 1280 x 800 base viewport. These are 
 Movement never checks round activity or ritual visibility. Round logic chooses the arrived undefeated opponent when in range, otherwise the nearest unfinished gathering. The ritual emits action requests; it does not award upgrades directly. `main.gd` enforces between-round purchasing, while `progression.gd` validates the next rank, its cost, prerequisites and the request's expected current rank. Disabled buttons are feedback, not the economy's only guard.
 
 ## Round and speech model
+
+`village_input.gd` begins gestures only on unobscured village ground and commits
+a destination on release within its tap tolerance. It captures the inverse
+viewport canvas transform at press time, including camera zoom and smoothing.
+UI regions, overlays, drags and extra fingers cannot create movement destinations;
+emulated mouse events are ignored here while remaining enabled for Godot controls.
+`player.gd` follows the destination through `step_motion`, limits its last step,
+and stops after blocked motion. Keys/stick override it; focus loss and next-round
+reset clear it. It does not change speed, pathfind, teleport or pause round time.
+
+The ritual handles native touches through `_input`, starting within the graph
+and retaining releases outside it. Selection waits for release; a finger drag
+pans instead. Settings disable underlying ritual
+pointer handling. Drawing and picking retain the same graph transform. Standard
+buttons, selectors and sliders keep engine touch-to-mouse emulation.
 
 The provisional round lasts 11 seconds. Each new round returns the cultist to `(780, 680)` and resets each audience. Three initial groups of five listeners provide capacity for 15, growing to 25 through two invitation purchases, but the opening timer permits roughly three baseline conversions on representative direct routes. There is no three-recruit cap. See [timing assumptions and route evidence](PACING.md).
 

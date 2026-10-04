@@ -974,3 +974,74 @@ No visible play window, installation, export, push or publishing was used.
 Human purchase-order/grind balance, alternate viewport sizes and play feel
 remain unverified; 250 is the requested initial spending target, not proven
 balance for a fresh playthrough.
+
+## 2026-10-04 - Touch movement and ritual controls
+
+The inspected starting checkout was clean at `e8cb537`. Tap/click village
+destinations now use the camera's inverse canvas transform and the existing
+physics movement/collision path. Arrival, obstruction, a tap on the cultist,
+keyboard/stick takeover, cancellation and focus loss stop the appropriate
+pending movement. Repeated taps retarget. No pathfinding, speed, art, economy,
+catalog, save schema or round-duration changes were introduced.
+
+Between-round village buttons reopen the ritual and start another round.
+The ritual supports tap-release selection/centre activation, finger panning,
+visible + / - zoom and larger navigation/selectors. Settings retain ordinary
+Godot touch-to-mouse controls, with taller sliders/buttons/dropdown rows.
+Raw graph/village handlers ignore emulated mouse duplicates; UI taps cannot
+set village destinations. The web preset suppresses browser gestures within
+the game canvas. Normal keyboard, mouse and gamepad mappings remain intact.
+
+The installed Mono Godot 4.2.2 ran the following isolated headless suites.
+Logs were inspected for diagnostics, not only exit codes. Restricted-sandbox
+engine startup hung; successful runs used the approved unsandboxed execution
+path and never opened a play window.
+
+| Check | Result |
+| --- | --- |
+| `tests/test_touch_movement.gd` | 27 checks, 0 failures |
+| `tests/test_ritual_touch.gd` | 25 checks, 0 failures |
+| `tests/smoke_test.gd` | 92 checks, 0 failures |
+| `tests/test_progression.gd` | 113 checks, 0 failures |
+| `tests/test_pacing.gd` | 59 checks, 0 failures |
+| `tests/test_ritual_readability.gd` | 73 checks, 0 failures |
+| `tests/test_demo_completion.gd` | 46 checks, 0 failures |
+| `tests/test_settings.gd` | 27 checks, 0 failures |
+| Hidden `tests/capture_starter.gd --touch-only` | 6 PNGs; exit 0, no diagnostics |
+| Headless editor import | Exit 1; existing `_EDITOR_GET` error and cursor/Blender warnings |
+
+The input suites exercise native synthetic touch press/drag/release/cancel,
+multiple fingers, half-size viewport coordinates plus camera zoom, UI guards,
+arrival/collision, keyboard takeover and round resets. Graph coverage includes
+transformed picking, outside release, demo activation and the separate 144-node
+fixture. These are synthetic checks, not real-device acceptance. Existing
+progression tests retain rank/price/stale/max/failed-write guards and migration,
+round-trip and recovery coverage. Pacing remains unchanged: practical opening
+routes yield three recruits, and the core full-rank garden/well/market route
+converts all 15 in **10.517 seconds**, leaving **0.483 seconds**. Human tap-route
+reaction and accuracy remain unmeasured.
+
+Actual 1280 x 800 PNGs were inspected from Compatibility rendering on the
+installed NVIDIA device, with an offscreen hidden unfocusable window and Dummy
+audio: [village destination](verification/touch-village.png),
+[between-round buttons](verification/touch-between-rounds.png),
+[ritual overview](verification/touch-ritual.png),
+[purchase](verification/touch-purchase.png),
+[settings](verification/touch-settings.png) and
+[demo dismissal](verification/touch-demo.png). The settings tab height initially
+overlapped its content; theme tab padding corrected it and fresh captures were
+inspected. Native captures establish layout only. Larger landscape displays
+remain preferable; the existing composition scales text/targets down on phones.
+
+Initial local Web testing used headless installed Chromium and CDP touch
+emulation, with an isolated browser profile and localhost origin. Actual touch
+taps moved the cultist, earned 2 recruits/6 donations, opened settings, returned
+to the village between rounds, selected graph nodes and bought Words I once.
+The browser's IndexedDB save recorded `talk_1: 1`, 0 donations, 1 available
+recruit and lifetime 2. Touch drag and zoom buttons visibly transformed the
+graph without page scrolling. Final exported-build/alternate-size evidence is
+recorded separately below when complete. Real iOS Safari, physical touch
+devices, subjective finger comfort and fresh-save completion remain unverified.
+
+The run did not install tools, push, deploy, change external trackers or touch
+ordinary player saves. The published copy still requires separate deployment.

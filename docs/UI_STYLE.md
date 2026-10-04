@@ -149,8 +149,15 @@ Tab returns to the village between rounds and reopens the ritual. Enter/next
 round and U/Inscribe use the same validated actions as their gamepad bindings.
 The README owns the complete current control table.
 
-Graph selection currently uses the mouse. Drag empty space with the left
+Village ground accepts tap/click destinations with a visible marker; tapping
+the cultist stops. The between-round village has Ritual circle and Next round
+buttons. Menus and HUD regions must not leak taps into movement.
+
+Graph selection uses tap or mouse. Drag with one finger, drag empty space with the left
 button, or use the middle button, to pan; wheel zoom anchors at the pointer.
+Visible + / - buttons zoom about the graph centre. Touch selects on release,
+with a movement threshold separating taps from pans. Navigation/selectors use
+larger targets, and dropdown rows provide an alternative to dense overview nodes.
 Recenter must recover a useful view. Verify that dragging does not accidentally
 select/buy, and that drawing and hit testing agree after transforms.
 
@@ -186,10 +193,12 @@ available on selection rather than hover alone. Keep teaching short and name
 the actual button or gesture. If help is expanded in future, provide a visible
 way to reopen it rather than leaving long instructions across play.
 
-Keyboard/gamepad graph traversal, gamepad rebinding and touch controls are
-outstanding work. Physical gamepad behavior is unverified. A future touch
-target needs visible movement, selection, navigation and dismissal controls;
-the current desktop prototype does not establish touch support.
+Keyboard/gamepad graph traversal and gamepad rebinding are outstanding work.
+Physical gamepad behavior is unverified. Touch navigation, selection and dismissal
+have visible controls; keep synthetic input, browser emulation and real-device
+acceptance distinct in the verification record. Small phone screens still reduce
+target sizes and text in this landscape composition; do not claim universal
+mobile layout acceptance.
 
 Keyboard rebinding is available in Settings → Key mapping; [SETTINGS](SETTINGS.md)
 owns capture, conflicts and reserved navigation rules. Runtime hints should use

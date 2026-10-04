@@ -105,8 +105,10 @@ See [itch HTML5 hosting](https://itch.io/docs/creators/html5).
 
 Browser saves use IndexedDB and belong to each origin. They do not share the
 desktop save or sync between localhost, WebHatchery and itch. Blocking browser
-storage or third-party storage can prevent persistence. Mobile/touch and
-Safari support are not claimed for this release.
+storage or third-party storage can prevent persistence. The touch update adds
+tap movement and visible ritual/menu controls; see [verification](VERIFICATION.md)
+for local browser emulation evidence. Real mobile devices and iOS Safari remain
+unverified. A local touch build does not update the published copy.
 
 ## Checks
 

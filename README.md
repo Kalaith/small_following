@@ -16,18 +16,19 @@ From the project folder, `.\Run.ps1` also launches the game; pass `-GodotExe '<i
 
 | Action | Controls |
 | --- | --- |
-| Move the cultist | WASD / arrows / gamepad left stick |
+| Move the cultist | Tap / click village ground, or WASD / arrows / gamepad left stick |
+| Stop tap movement | Tap the cultist; keys / stick also take over immediately |
 | Speak | Stay within range of a gathering |
-| Select an upgrade | Click its ritual node, or choose it in the node list below the graph |
+| Select an upgrade | Tap / click its ritual node, or choose it in the node list below the graph |
 | Find a branch | Branch selector above the graph (eight named branches) |
 | Enlarge the selected upgrade | Focus selected button |
 | Return to branch overview | Overview button (clears selection) |
-| Pan the ritual | Left-drag empty graph space, or middle-drag |
-| Zoom / restore view | Mouse wheel / Recenter button |
+| Pan the ritual | Drag with one finger; mouse left-drag empty space or middle-drag |
+| Zoom / restore view | + / - buttons or mouse wheel; Recenter restores the view |
 | Buy selected upgrade | U / Inscribe button / gamepad X (left face button) |
 | Open the demo message after buying every rank | Click the lit ritual centre / Inner circle lit button |
 | Dismiss the demo message | Keep playing / Esc; Tab returns to village, Enter starts another round |
-| Return to village / reopen ritual | Tab between rounds, or the ritual's village button |
+| Return to village / reopen ritual | Return to the village / Ritual circle buttons, or Tab between rounds |
 | Start next round | Enter / next-round button / gamepad A (bottom face button) |
 | Mute / unmute all audio | M |
 | Mute / unmute nonsense speech | V |
@@ -41,7 +42,20 @@ alternate keys for movement and gameplay/audio/fullscreen shortcuts, conflict
 messages, and Restore default keys. Bindings save automatically. Esc and Tab
 stay fixed for navigation; gamepad bindings remain available.
 
-Movement remains active during the ritual; Tab reveals the village between rounds. A new round returns the cultist to the starting entrance. Gamepad movement/action mappings exist but were not physically tested; graph selection and navigation currently require a mouse.
+Movement remains active during the ritual; Tab or **Return to the village** reveals the village between rounds. **Ritual circle** reopens upgrades and **Next round** begins again without a keyboard. A new round returns the cultist to the starting entrance. Gamepad movement/action mappings exist but were not physically tested; graph selection and navigation use touch or a mouse.
+
+Tap movement follows a straight line at the current running speed, with a small
+destination ring. Tap again to change direction, tap the cultist to stop, and tap
+around props: collision stops the walk rather than finding a route automatically.
+Dragging the village does not start a walk. Menu/HUD taps cannot set destinations;
+cancelled touches and loss of application focus clear pending input. The ritual
+supports single-finger dragging, tap selection, visible zoom buttons and the same
+validated Inscribe action. No required information depends on hover.
+
+The existing landscape layout is best on tablets or larger displays. Touch
+targets are enlarged, but small phone screens still scale the text and controls
+down. Browser emulation evidence and real-device limits are recorded in
+[VERIFICATION](docs/VERIFICATION.md). Local changes do not update the live copy.
 
 The branch selector shows owned nodes/total nodes and ready purchase counts for all eight branches. Smaller catalogs use branch buttons; the large test fixture also uses the selector. The node list includes every upgrade in the selected branch, including locked nodes, with rank and state; choosing one brings it into view. Overview clears selection and fits the whole graph; Recenter fits it while keeping the selected details. Hover previews prerequisite paths while the right panel keeps the selected upgrade's details.
 
@@ -172,6 +186,8 @@ $godotExe = 'C:\Program Files\Godot\Godot_v4.2.2-stable_mono_win64_console.exe'
 & $godotExe --headless --path . --script res://tests/test_progression.gd
 & $godotExe --headless --path . --script res://tests/test_recruit_economy.gd
 & $godotExe --headless --path . --script res://tests/smoke_test.gd
+& $godotExe --headless --fixed-fps 60 --path . --script res://tests/test_touch_movement.gd
+& $godotExe --headless --fixed-fps 60 --path . --script res://tests/test_ritual_touch.gd
 & $godotExe --headless --path . --script res://tests/test_ritual_readability.gd
 & $godotExe --headless --path . --script res://tests/test_demo_completion.gd
 & $godotExe --headless --fixed-fps 60 --path . --script res://tests/test_key_mapping.gd
@@ -191,6 +207,11 @@ For recruit-cost UI changes, use `--economy-only` instead. It captures only
 the village wallet, ranked costs, missing resources, gold-only running,
 helper details and completed centre. Keep this display run hidden for
 unattended verification.
+
+For touch controls, `--touch-only` captures six affected village, intermission,
+ritual, purchase, settings and demo states. Use a hidden offscreen rendering
+process; this mode also makes the capture window unfocusable. Browser touch
+emulation is separate from these native captures and synthetic input suites.
 
 `tests/test_recruit_economy.gd` covers the recruit-cost allocation, movement
 exclusions, both-resource purchase guards, separate recruit counters and
