@@ -1188,3 +1188,129 @@ recovery required for any remaining activation failure.
 This is documentation-only work. Godot import, runtime suites, rendered
 captures, exports and human playtests were not rerun. No numerical route,
 pixel, play-feel or new-platform result is claimed.
+
+## 2026-10-04 - Bellmarket, separate circle and password title entry
+
+Implemented the requested second level locally. Bellmarket has five gatherings
+with 25 listeners (18 ordinary, four guild traders, three patrons), independent
+introductions and a separate fifteen-node circle. Five equal-price roots lead
+to speed, frequency, conviction and two specialist donation paths. Bramblewick
+retains its original 32 nodes/35 ranks. The new project entry is
+`scenes/title.tscn`; `scenes/main.tscn` remains the direct gameplay scene used by
+isolated fixtures. The exact title password `PLZKTKS` reveals both levels.
+
+Normal travel uses the completed Bramblewick circle; the Priest remains a
+separate objective. Travel and password access save transactionally in schema
+4. Old schema-1/2/3 saves preserve their balances/history/ranks and default to
+Bramblewick. Market purchases remain local, while earlier stats/helper carry
+forward. No normal player save was loaded or altered by verification.
+
+### Behavioral checks
+
+Used the installed Godot 4.2.2 Mono console executable, GDScript and
+Compatibility renderer. Final completed runs below exited zero with no logged
+script/runtime errors. Headless commands used `--headless --fixed-fps 60
+--path . --script res://tests/<suite>.gd` (tests with their own shutdown still
+verify their explicit completion marker).
+
+| Suite | Result |
+| --- | --- |
+| `smoke_test.gd` | 92 checks, 0 failures |
+| `test_progression.gd` | 113 checks, 0 failures |
+| `test_recruit_economy.gd` | 134 checks, 0 failures |
+| `test_pacing.gd` | 59 checks, 0 failures |
+| `test_areas.gd` | 38 checks, 0 failures |
+| `test_market_progression.gd` | 54 checks, 0 failures |
+| `test_mixed_audiences.gd` | 36 checks, 0 failures |
+| `test_market_pacing.gd` | 23 checks, 0 failures |
+| `test_market_flow.gd` | 27 checks, 0 failures |
+| `test_market_ritual.gd` | 50 checks, 0 failures |
+| `test_title_screen.gd` | 15 headless / 17 display checks, 0 failures |
+| `test_helper.gd` | 34 checks, 0 failures |
+| `test_merchants.gd` | Passed, 0 failures |
+| `test_encounters.gd` | 210 checks, 0 failures |
+| `test_ritual_readability.gd` | 73 checks, 0 failures |
+| `test_ritual_touch.gd` | 25 checks, 0 failures |
+| `test_demo_completion.gd` | 46 checks, 0 failures |
+| `test_touch_movement.gd` | 27 checks, 0 failures |
+| `test_audio.gd` | 27 checks, 0 failures |
+| `test_settings.gd` | 27 checks, 0 failures |
+| `test_key_mapping.gd` | 73 checks, 0 failures |
+| `test_exit.gd` | Actual exit button flushed isolated preferences/progression and shut down |
+
+Coverage includes area membership, five affordable roots at 12 donations,
+independent paths, per-role rewards, scope on return, max/stale requests,
+both-resource costs, failed-save rollback, old migrations and recovery.
+Mixed audiences skip locked slots, conserve overflow across different
+thresholds, prevent new banked speech against locks, and share helper
+eligibility. All 25 market helper stand cells are reachable.
+
+The flow test types the password through a real LineEdit with its characters
+remapped to fullscreen/next-round/buy/audio actions. Enter submits without
+starting a hidden round or changing audio. It exercises actual destination and
+return buttons, local-circle replacement, movement during intermission/ritual,
+nearest locked-only group fallback and failed travel retaining current actors.
+Failed destination actions dismiss the modal to expose the existing save-error
+message; this was covered by an additional integration regression.
+The separate 144-node fixture continues to pass transformed selection and
+navigation checks. The generic final-area notice is tested independently of
+Bramblewick's new travel modal.
+
+An initial pacing invocation had a test-runner frame limit that stopped it
+before completion; the full rerun without that limit passed all 59 checks.
+Initial schema-count expectations, remapped shortcut hints, a typed local in
+market drawing and a rendered numeric format were corrected and rerun. Final
+capture and suite logs were inspected, rather than inferring success from exit
+codes alone.
+
+### Route evidence and limits
+
+The original practical garden/well/market core route still converts all 15 at
+10.517 seconds with 0.483 seconds remaining; the unchanged opening earns three
+recruits. Market movement/conversation measurements are recorded in
+[PACING](PACING.md). Fresh password entry earns three ordinary recruits and 12
+donations. Carried-build guild and patron routes earn 114 and 157 donations.
+Full market ranks finish all 25 at 5.45 seconds (5.55 seconds remaining), while
+a deliberately hesitant crossed route finishes 21. This is generous tuning,
+not evidence of a tightly balanced market or human play-feel acceptance.
+
+### Actual rendered review
+
+Ran `tests/capture_starter.gd` with a rendering display, fixed 60 FPS, a hidden
+window and disabled fixture audio, first with the full existing sequence and
+then with `--market-only`. Both final captures exited zero with clean logs on
+the installed NVIDIA OpenGL Compatibility renderer. The full sequence also
+printed 15 conversions at 10.517 seconds with 0.483 seconds remaining.
+
+Inspected actual title, level selection, market overview/mixed feedback, upgrade
+overview/selection/completion, travel modal and compact title/ritual images.
+Also inspected the refreshed compact settings footer and original village full
+clear. Market role locks, threshold/reward text and required introductions are
+visible without hover. The five-petal purple/gold circle differs from the
+village while retaining real node geometry, pan/zoom and fixed details. The
+travel modal now fits entirely in its viewport after correcting its container
+layout. The settings footer provides a return to the title.
+
+- [Title and password selection](verification/title-level-select.png)
+- [Compact title](verification/title-compact.png)
+- [Market square](verification/market-overview.png)
+- [Mixed audience and lock explanations](verification/market-mixed-listeners.png)
+- [Five-path market ritual](verification/market-ritual.png)
+- [Patron introduction details](verification/market-patron-upgrade.png)
+- [Compact market ritual](verification/market-ritual-compact.png)
+- [Complete market circle](verification/market-complete-circle.png)
+- [Patron conversation](verification/market-patrons.png)
+- [Completed village destination](verification/village-market-destination.png)
+- [Visible failed-travel save notice](verification/village-travel-save-error.png)
+
+The captures cover 1280 x 800 and 1024 x 768 windows; they do not establish
+small-phone, real-touch-device or physical-gamepad acceptance. Distant world
+labels can pass beneath the compact HUD while the player moves; nearby
+contextual audience details remain the primary explanation.
+
+The required headless `--import` was rerun. It exits 1 with the previously
+recorded `_EDITOR_GET` condition, plus headless custom-cursor and unconfigured
+Blender-path warnings. This environment limitation remains separate from
+passing runtime checks and rendered pixels. No tools were installed, no export
+or publication was performed, and human balance/art-direction review remains
+outstanding.
