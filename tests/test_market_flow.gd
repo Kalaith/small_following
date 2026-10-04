@@ -118,6 +118,12 @@ func _run() -> void:
 	game.apply_upgrades()
 	game.ritual_screen.update_state()
 	check(game.ritual_screen.open_demo_message(), "completed village centre opens deliberate destination")
+	game.progression.save_enabled = true
+	game.progression.save_path = "user://missing_market_flow_directory/progress.json"
+	game.ritual_screen.destination_button.pressed.emit()
+	check(game.progression.active_area == "bramblewick" and not game.ritual_screen.demo_message_visible() and not game.ritual_screen._error_label.text.is_empty(), "failed destination action reveals its save error instead of covering it with the modal")
+	game.progression.save_enabled = false
+	game.ritual_screen.open_demo_message()
 	game.ritual_screen.destination_button.pressed.emit()
 	check(game.progression.active_area == "bellmarket" and game.groups.size() == 5 and game.encounter == null and is_instance_valid(game.helper), "completed centre travel button carries helper without copying village gatherings/opponents")
 	var stable_world: int = game.groups[0].get_instance_id()

@@ -215,6 +215,14 @@ func capture_market(scene) -> void:
 	scene.ritual_screen.update_state()
 	scene.ritual_screen.open_demo_message()
 	await save_frame("village-market-destination.png")
+	scene.progression.save_enabled = true
+	scene.progression.save_path = "user://missing_market_capture_directory/progress.json"
+	scene.ritual_screen.destination_button.pressed.emit()
+	scene.progression.save_enabled = false
+	if scene.progression.active_area != "bramblewick" or scene.progression.last_error.is_empty():
+		failed = true
+		push_error("Travel failure capture did not retain the current area and error")
+	await save_frame("village-travel-save-error.png")
 
 
 func capture_recruit_economy(scene) -> void:

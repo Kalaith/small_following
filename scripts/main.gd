@@ -156,6 +156,8 @@ func travel_to(area_id: String, bypass_unlock: bool = false) -> bool:
 				progression.last_error = error
 				return false
 	if not progression.try_travel(area_id, bypass_unlock):
+		# Reveal the existing error panel instead of leaving it behind the travel modal.
+		ritual_screen.dismiss_demo_message()
 		ritual_screen.update_state(round_recruits)
 		_update_hud()
 		return false
