@@ -1,5 +1,29 @@
 # Verification record - ranked progression, 2026-10-02
 
+## 2026-10-05 - Project Roost registration
+
+The publisher now records successful WebHatchery preview and production
+deployments using the configured Project Roost API. Godot projects classify as
+games and use `/games/<slug>/` links. Deployment events refresh the shared
+project timestamp used by recent-update listings; the latest-deployment query
+omits archived projects.
+
+Published the backend update through Project Roost's preview and production
+publisher, then republished the existing Small Following build to both
+WebHatchery targets. The preview and production APIs return Small Following as
+a visible `game` with `show_on_homepage=true`, fresh update timestamps and the
+expected preview and production URLs. Both APIs have successful deployment
+records. The production game URL responded HTTP 200. The old `unknown_project`
+profile is archived and hidden, and no longer appears in the production
+project list or latest-deployment panel.
+
+`tests/test_publish.ps1`: 24 checks passed. PHP syntax checks and a direct
+metadata check passed. `composer run test` could not start because the shared
+`vendor/bin/phpunit` executable is absent; no tools were installed. The
+configured Project Roost production API uses `webhatchery.au`; this executor
+could not resolve `webhatchery.com.au`, so the `.com.au` page itself was not
+visually verified.
+
 ## 2026-10-03 - Authored magical seal
 
 The parent research environment materialized and inspected the three new
