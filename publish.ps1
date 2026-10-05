@@ -42,10 +42,17 @@ if ($DryRun) {
     Write-Host "[dry-run] $(if ($SkipBuild) { 'Validate existing build' } else { 'Export Web and Windows Desktop' }) for $($info.Slug)"
     if (-not $BuildOnly) { Write-Host '[dry-run] Copy verified web files, Apache headers and Windows ZIP to the destination.' }
     if ($FTP) { Write-Host '[dry-run] Upload only this game directory; publish index.html last.' }
+    if (-not $BuildOnly) { Write-Host "[dry-run] Record $($info.Slug) deployment in Project Roost for $(if ($Production) { 'production' } else { 'preview' })." }
     return
 }
 if ($SkipBuild) { $build = Read-PublishBuild $info } else { $build = New-PublishBuild $info $GodotExe }
 if ($BuildOnly) { Write-Host "Build ready: $($build.Directory)"; return }
 Copy-PublishWebsite $build $destination $info.Slug
 if ($FTP) { Send-PublishWebsite $build $info.Slug $ftpConfig }
+$environmentName = if ($Production) { 'production' } else { 'preview' }
+$remotePath = if ($Production) { "/public_html/games/$($info.Slug)" } else { "games/$($info.Slug)" }
+$targetType = if ($FTP) { 'ftp' } else { 'filesystem' }
+$publishMode = if ($SkipBuild) { 'reuse-build' } else { 'build' }
+if ($FTP) { $publishMode += '+ftp' }
+Register-PublishProjectRoostDeployment $settings $info $environmentName $targetType $destination $remotePath $publishMode | Out-Null
 Write-Host "Published: $destination"

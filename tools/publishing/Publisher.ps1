@@ -40,6 +40,56 @@ function Get-PublishSetting($Settings, [string]$Name, [string]$Default = '') {
     return $Default
 }
 
+function New-PublishProjectRoostPayload($Info, [string]$EnvironmentName, [string]$TargetType, [string]$Destination, [string]$RemotePath, [string]$PublishMode) {
+    $titleProperty = $Info.Config.PSObject.Properties['display_name']
+    $descriptionProperty = $Info.Config.PSObject.Properties['description']
+    $displayName = if ($titleProperty) { [string]$titleProperty.Value } else { '' }
+    $description = if ($descriptionProperty) { [string]$descriptionProperty.Value } else { '' }
+    if ([string]::IsNullOrWhiteSpace($displayName)) {
+        $displayName = [Globalization.CultureInfo]::InvariantCulture.TextInfo.ToTitleCase(($Info.Slug -replace '[-_]', ' ').ToLowerInvariant())
+    }
+    if ([string]::IsNullOrWhiteSpace($description)) { $description = "$displayName." }
+
+    return [ordered]@{
+        project = $Info.Slug
+        game_title = $displayName
+        game_description = $description
+        environment = $EnvironmentName
+        target_type = $TargetType
+        status = 'success'
+        frontend_deployed = $true
+        backend_deployed = $false
+        destination_path = $Destination
+        remote_path = $RemotePath
+        source_path = $Info.Root
+        publish_mode = $PublishMode
+        actor = if ($env:USERNAME) { $env:USERNAME } else { $env:USER }
+        deployed_at = [DateTime]::UtcNow.ToString('yyyy-MM-dd HH:mm:ss', [Globalization.CultureInfo]::InvariantCulture)
+    }
+}
+
+function Register-PublishProjectRoostDeployment($Settings, $Info, [string]$EnvironmentName, [string]$TargetType, [string]$Destination, [string]$RemotePath, [string]$PublishMode) {
+    $token = Get-PublishSetting $Settings 'PROJECT_ROOST_PUBLISH_TOKEN'
+    $urlKey = if ($EnvironmentName -eq 'production') { 'PROJECT_ROOST_API_URL_PRODUCTION' } else { 'PROJECT_ROOST_API_URL_PREVIEW' }
+    $apiUrl = (Get-PublishSetting $Settings $urlKey).TrimEnd('/')
+    if ([string]::IsNullOrWhiteSpace($token) -or [string]::IsNullOrWhiteSpace($apiUrl)) {
+        Write-Warning "Project Roost tracking skipped: configure PROJECT_ROOST_PUBLISH_TOKEN and $urlKey."
+        return $false
+    }
+
+    $payload = New-PublishProjectRoostPayload $Info $EnvironmentName $TargetType $Destination $RemotePath $PublishMode
+    $headers = @{ 'X-Project-Roost-Publish-Token' = $token }
+    try {
+        $result = Invoke-RestMethod -Uri "$apiUrl/deployments/publish" -Method Post -Body ($payload | ConvertTo-Json -Depth 5) -ContentType 'application/json' -Headers $headers -TimeoutSec 15 -ErrorAction Stop
+        if (-not $result.success) { throw 'Project Roost returned an unsuccessful publish response.' }
+        Write-Host "Project Roost recorded $($Info.Slug) $EnvironmentName deployment."
+        return $true
+    } catch {
+        Write-Warning "Project Roost tracking failed for ${EnvironmentName}: $($_.Exception.Message)"
+        return $false
+    }
+}
+
 function Get-DeployDirectory([string]$Root, $Info) {
     if (-not [IO.Path]::IsPathRooted($Root)) { throw 'DeployRoot must be an absolute path.' }
     $path = [IO.Path]::GetFullPath((Join-Path $Root "games/$($Info.Slug)"))

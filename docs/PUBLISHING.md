@@ -38,8 +38,8 @@ Butler resolution: `-ButlerPath`, `BUTLER_EXE`, PATH, then the existing
 `D:/WebHatchery/RustGames/rust_management/itch-butler/butler.exe`. It uses the
 existing Butler login. Credentials never go in `publish.json` or source.
 
-`publish.json` defines slug `small_following`, engine version, itch target
-`kalaith/small-following` and distinct `html5` / `windows` channels.
+`publish.json` defines slug `small_following`, display metadata, engine version,
+itch target `kalaith/small-following` and distinct `html5` / `windows` channels.
 For another Godot game, copy the entry scripts, `tools/publishing`, presets
 and config; update scene paths, include filters, slug and itch target.
 `-ProjectDir` selects a configured project.
@@ -55,11 +55,16 @@ Process environment variables take precedence:
 | `FTP_REMOTE_ROOT` | Server root; deploy beneath `games/<slug>` |
 | `FTP_USE_SSL` | Explicit TLS, default false to match Rust tooling |
 | `FTP_PASSIVE_MODE` | Passive connection, default true |
+| `PROJECT_ROOST_PUBLISH_TOKEN` | Project Roost publish-event authentication |
+| `PROJECT_ROOST_API_URL_PREVIEW`, `PROJECT_ROOST_API_URL_PRODUCTION` | Project Roost deployment-tracking endpoints |
 
 `-DeployRoot <absolute path>` overrides the local root. Here preview uses
 `\\wsl.localhost\Ubuntu\home\kalai\dev`, production uses `F:\WebHatchery`, and FTP
 uses `/public_html/games/small_following`. The scripts update only this game's
-files. Shared catalogs and Project Roost records remain outside their scope.
+files. A successful WebHatchery deployment also records its slug, display
+metadata, source path and environment in the matching Project Roost instance.
+Missing Project Roost settings skip tracking with a warning. Itch channel
+uploads do not create WebHatchery deployment records.
 
 ## Build and deployment behavior
 

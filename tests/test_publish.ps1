@@ -18,6 +18,9 @@ New-Item -ItemType Directory -Path $fixture -Force | Out-Null
 Copy-Item -LiteralPath "$projectRoot/project.godot", "$projectRoot/publish.json", "$projectRoot/export_presets.cfg" -Destination $fixture
 $info = Get-PublishProject $fixture
 Assert-Publish ($info.Slug -eq 'small_following') 'project metadata selects the configured slug'
+$roostPayload = New-PublishProjectRoostPayload $info 'production' 'ftp' 'F:\WebHatchery\games\small_following' '/public_html/games/small_following' 'reuse-build+ftp'
+Assert-Publish ($roostPayload.project -eq 'small_following' -and $roostPayload.game_title -eq 'Small Following') 'Project Roost payload uses the configured project identity'
+Assert-Publish ($roostPayload.environment -eq 'production' -and $roostPayload.remote_path -eq '/public_html/games/small_following' -and $roostPayload.source_path -eq $fixture) 'Project Roost payload records the correct deployment and source paths'
 Assert-PublishFailure { Read-PublishBuild $info } 'publishing without a completed build fails'
 $id = '0123456789abcdef0123456789abcdef'
 $buildDir = Join-Path $fixture "builds/publish/$id"
