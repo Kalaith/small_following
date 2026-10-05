@@ -19,6 +19,7 @@ This project is a bounded two-area prototype of movement, short earning rounds, 
 - The upgrade structure must accommodate over 100 future upgrades/layers through data and navigable rings or branches.
 - Spread the existing inscriptions more fully around the circle. Every local upgrade rank lights the inner circle. The original demo message allowed continued play (requested 2026-10-03); the implemented village centre now leads deliberately to Bellmarket's separate circle.
 - Implement the market level with its own similar but distinct purple circle and frequent choices among three to five upgrades, supporting faster routes and richer NPC specializations. Add a title screen where `PLZKTKS` permits starting any implemented level (requested 2026-10-04).
+- Double Bellmarket's upgrades to thirty and increase their cost, balancing around a player with all level-1 upgrades. Preserve the circle design the user likes (follow-up 2026-10-04).
 - The circle should form a composed purple magical ritual seal: coherent concentric rings, sigils and interlocking geometric motifs with existing upgrade nodes integrated. Even spacing alone is insufficient. Keep decoration quiet and prerequisite paths and interactions clear; avoid arbitrary visual noise (clarified 2026-10-03).
 - Add purchasable NPC groups, further speaking and moving tiers gated by group unlocks, and one helper that travels to individual NPCs to recruit them (requested 2026-10-03).
 - Progression eventually reaches larger, more populated towns. Later minions and magic reduce travel demands while preserving direct control.
@@ -33,7 +34,7 @@ This project is a bounded two-area prototype of movement, short earning rounds, 
 
 These are current implementation defaults, not previously confirmed balance decisions.
 The table describes Bramblewick; Bellmarket's audience, donation and catalog
-values are documented below and in [PACING](PACING.md#bellmarket---2026-10-04).
+values are documented below and in [PACING](PACING.md#bellmarket-rebalance---2026-10-04).
 
 | Rule | Prototype value | Reason to revisit |
 | --- | --- | --- |
@@ -45,7 +46,7 @@ values are documented below and in [PACING](PACING.md#bellmarket---2026-10-04).
 | Base persuasion | One conviction per phrase; three conviction recruits a listener | Persuasion changes work done per phrase. |
 | Base movement | 180 world pixels per second | Running upgrades change travel time while preserving ordinary direct movement. |
 | Donations | Three per ordinary listener; 12 per merchant before upgrades | A typical opening round can afford an initial six-donation upgrade. |
-| Recruit assignments | 250 recruits across village ranks and 37 across market ranks; running costs zero recruits | Village target began from the user's roughly 279 lifetime events; both area economies need playtesting. |
+| Recruit assignments | 250 recruits across village ranks and 183 across market ranks; running costs zero recruits | Village target began from the user's roughly 279 lifetime events; both area economies need playtesting. |
 | Ranked progression | Original six inner nodes with one rank, three tier-III nodes with two; 23 additional single-rank nodes | Preserve the original clear and extend progression through populated groups. |
 | Audience lifecycle | Reset all groups each round | The same villagers may be recruited again; the total counts events, not unique followers. |
 | Round boundary | Earning stops and the ritual screen opens; the player starts the next round | Allows unhurried decisions. Movement input stays available. |
@@ -136,16 +137,20 @@ their own introductions. Locks skip ineligible slots so they do not obstruct
 the open listeners. Each recruited person pays once through the shared
 gathering authority; the helper respects the same eligibility.
 
-The separate market circle has five independent three-node paths for running,
+The separate market circle has five independent six-node paths for running,
 phrase frequency, conviction, guild access/donations and patron access/donations.
-All five roots cost 12 gold and no recruits. Each path's later nodes cost 24
-and 42 gold; selected ranks assign recruits, and running stays gold-only.
-Total market cost is 390 gold and 37 recruits. There are five ready branch
-choices when funded, declining naturally as paths finish. Prices, layout,
-effect sizes and audience thresholds are provisional; [PACING](PACING.md#bellmarket---2026-10-04)
-records route rewards and the generous 5.55-second full-market clear margin.
+All five roots cost 120 gold and no recruits. Each path continues at 200, 320,
+480, 700 and 1000 gold; selected ranks assign recruits, and running stays
+gold-only. Total market cost is 14,100 gold and 183 recruits. There are five
+next branch choices when funded, declining naturally as paths finish. The
+approved five-petal composition retains the original fifteen node positions.
+Exact costs, effect sizes and audience thresholds remain provisional;
+[PACING](PACING.md#bellmarket-rebalance---2026-10-04) records actual round income
+and repeated-round purchase measurements with all village upgrades.
 
-Earned village stats and the helper carry into Bellmarket. Village audience
+Normal market balance assumes all village stats and the helper carry into
+Bellmarket. Existing purchases keep their benefits at the new prices, with no
+retroactive charge; the added ranks begin unowned. Village audience
 and opponent spawns stay local; market bonuses apply only in Bellmarket.
 Travel shares wallets, ranks, history and round number, and arrives between
 rounds. A failed save leaves the current area intact. The title password
@@ -179,7 +184,7 @@ opening route and full-core 15-listener benchmark while evaluating later areas.
 - Are donations tied only to recruitment, periodic, or both?
 - Which costs, effect sizes and branch combinations create worthwhile route choices?
 - How many rings remain understandable before the graph needs search, filtering or branch navigation?
-- Does Bellmarket offer useful three-to-five-way purchase decisions, and should its generous carried-build timing, specialist rewards or costs change after human playtesting?
+- Does Bellmarket's expanded progression offer useful three-to-five-way purchase decisions without excessive grinding, with all village upgrades and carried savings? Refine its costs, specialist rewards and route challenge from human play.
 - Which area should follow Bellmarket, and what automation stays interesting?
 
 Resolve these through short playable tests before expanding content. See [milestones](MILESTONES.md) and the [outstanding task list](../TODO.md).

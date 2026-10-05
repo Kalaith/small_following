@@ -17,7 +17,7 @@ The project targets Godot 4.2.2, GDScript and Compatibility rendering. It has no
 | `scripts/progression.gd` | Catalog validation, authoritative purchase checks, stat calculations and versioned local progression |
 | `scripts/ritual_screen.gd` | Procedural ritual geometry, pan/zoom, selection, readable details and action signals |
 | `scripts/ritual_layout.gd` | Authored production-node positions and satellite envelopes; generic branch/ring placement for other content |
-| `data/upgrades.json` | 47 real definitions split into 32 village nodes/35 ranks and 15 market nodes/ranks, with stable IDs and validated effects/prices |
+| `data/upgrades.json` | 62 real definitions and 65 ranks split into 32 village nodes/35 ranks and 30 market nodes/ranks, with stable IDs and validated effects/prices |
 | `scripts/village.gd` | Deterministic ground/props and collision footprints |
 | `scripts/market.gd` | Bellmarket ground/props, five authored mixed rosters, role thresholds and base donations |
 | `scripts/game_audio.gd` | Promo music loop, distance-based footsteps, throttled phrase cues and per-channel sound controls; no gameplay authority |
@@ -65,11 +65,11 @@ Catalog schema 1 contains an `upgrades` array. Each definition supplies `id`, `t
 
 An omitted `max_rank` defaults to 1; valid limits are integers from 1 to 100. `rank_costs` must match the rank count, contain positive bounded integers and begin with the original `cost`. When present, `rank_effects` must match the rank count, contain supported positive effects and begin with the original `effect`; otherwise every rank repeats `effect`. Keeping first-rank values stable preserves the benefit of old purchases. The current catalog uses a distinct second effect only for `talk_3`. Catalog loading also rejects duplicate IDs, invalid coordinates/costs/effects, missing/self/duplicate prerequisites and prerequisite cycles.
 
-`rank_recruit_costs` supplies one nonnegative bounded integer per rank. Omitted arrays default to zero for older catalogs and the large fixture; production definitions explicitly state every rank's recruit cost. Running upgrades must have zero recruit costs, including any rank with a movement effect. Optional `support_description` explains the followers' role without changing effects. Village totals remain 250 recruits and 1014 donations; Bellmarket adds 37 recruits and 390 donations. [PACING](PACING.md) owns both allocations.
+`rank_recruit_costs` supplies one nonnegative bounded integer per rank. Omitted arrays default to zero for older catalogs and the large fixture; production definitions explicitly state every rank's recruit cost. Running upgrades must have zero recruit costs, including any rank with a movement effect. Optional `support_description` explains the followers' role without changing effects. Village totals remain 250 recruits and 1014 donations; Bellmarket adds 183 recruits and 14,100 donations across 30 single-rank nodes. [PACING](PACING.md) owns both allocations.
 
 If catalog loading fails, the scene shows its notice and disables rounds/save writes without loading or replacing existing progression. Repair the definitions before resuming.
 
-The original catalog core retains three branches with three nodes each. The six inner nodes have one rank; `talk_3`, `persuade_3` and `run_3` have two. First-rank costs remain 6, 9 and 12 donations by ring; each second rank costs 18. This core is twelve purchases costing 135 donations. Six new single-rank nodes add two gathering unlocks and two stat tiers for talking/running, making eighteen purchases costing 318 donations before the single-rank, 30-donation helper. That earlier village expansion has sixteen nodes, nineteen purchases and costs 348 donations. The first-map finale adds sixteen nodes; the complete catalog has 32 nodes and 35 ranks. `main.apply_upgrades` creates each unlocked gathering exactly once; save reload reconstructs them from the same ranks. A prerequisite requires at least rank 1, not all ranks, of its referenced node.
+The original catalog core retains three branches with three nodes each. The six inner nodes have one rank; `talk_3`, `persuade_3` and `run_3` have two. First-rank costs remain 6, 9 and 12 donations by ring; each second rank costs 18. This core is twelve purchases costing 135 donations. Six new single-rank nodes add two gathering unlocks and two stat tiers for talking/running, making eighteen purchases costing 318 donations before the single-rank, 30-donation helper. That earlier village expansion has sixteen nodes, nineteen purchases and costs 348 donations. The first-map finale adds sixteen nodes; the complete village catalog has 32 nodes and 35 ranks. `main.apply_upgrades` creates each unlocked gathering exactly once; save reload reconstructs them from the same ranks. A prerequisite requires at least rank 1, not all ranks, of its referenced node.
 
 `try_purchase(id, expected_rank = -1)` validates the requested node and next rank, including both that rank's donation and recruit costs. UI requests include the selected current rank; a stale request after a previous purchase is rejected. Missing resources are reported before building a candidate, and neither resource is deducted unless the candidate save succeeds. One input buys one rank, a maximum-rank request spends nothing, and a failed candidate save grants nothing. The optional expected rank supports programmatic purchases without weakening the maximum-rank, prerequisite or affordability checks. Stats sum effects only through each saved purchased rank; lifetime recruits never decrease on purchase.
 
@@ -81,9 +81,12 @@ satellite. Catalog rings still describe upgrade tiers; a local loop need not
 increase its radius on every step. Placement changes no catalog coordinates,
 effects, prices or prerequisites.
 
-Bellmarket has a separate 15-node five-part layout and woven petal seal with a
-coin-like centre. Its five independent branches retain the same transformed
-selection, pan/zoom and stationary details. Other content uses the generic branch/ring fallback: known branch directions,
+Bellmarket has a separate 30-node five-part layout and woven petal seal with a
+coin-like centre. Each independent branch has six sequential single-rank nodes.
+The original fifteen positions are retained; tiers IV–VI curl down the spare
+side of each petal inside the same circular footprint. Its five branches retain
+the same transformed selection, pan/zoom and stationary details. Other content
+uses the generic branch/ring fallback: known branch directions,
 or the first authored angle for an unknown branch, with tier fans and sibling
 lanes limited by neighbouring sectors. The 144-node fixture uses this fallback
 and receives no production satellites. `satellite_seals(catalog)` supplies three
@@ -233,6 +236,13 @@ ordinary purchased ranks; no target or per-round audience data is saved.
 `user://progression.json` stores schema 4 with `coins`, `purchased` (an ID-to-integer-rank dictionary), `total_recruits`, `available_recruits`, `round_number`, optional `encounter_stage`, `active_area` and boolean `level_select_unlocked`. Purchased entries must be integers from 1 through that node's `max_rank`; unpurchased IDs are absent. Counters are bounded integers, with available recruits between zero and lifetime history. IDs must exist across the validated catalogs and include their prerequisites. The active area must exist; Bellmarket activity or purchases require completed village ranks or explicit bypass access. Nothing in a save is executable. On ordinary Windows Godot installations, `user://` resolves beneath `%APPDATA%\Godot\app_userdata\Small Following`.
 
 Schema 1 maps earlier ID-to-true purchases to rank 1; schema 2 retains integer ranks. Both initialize available recruits from lifetime recruitment. Schema 3 also preserves its explicit available balance. All three default to Bramblewick with no bypass access while retaining donations, ranks, history, round and encounters, without retroactive charges or free ranks. Loading alone leaves valid old files untouched. The first successful schema-4 write retains the exact original as `.bak`. Older backups can also migrate during recovery. Routine tests use isolated fixtures and never migrate the player's live save.
+
+The market expansion keeps schema 4 and every existing market ID, prerequisite
+and earned effect. A save containing all original fifteen market purchases
+retains those purchases and its balances without retroactive charges; the
+fifteen new nodes start unowned. Current prices apply only to future purchases.
+Market completion is recalculated against all thirty nodes, so an older full
+market save has further inscriptions available. Village completion is unchanged.
 
 Donations and both recruit counters are saved as earned; round transitions save progression too. Purchases build and validate a candidate snapshot with both costs deducted, save it, then apply it in memory. If saving fails, the purchase grants nothing and deducts neither resource. Already-earned rewards stay in memory after a write failure, and a save notice appears in the UI; they may be lost if the application closes before a successful write.
 

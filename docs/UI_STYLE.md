@@ -76,9 +76,12 @@ tier-III nodes. Layout changes no catalog rules. See the
 [readability brief](RITUAL_READABILITY.md) and
 [full-circle scope](RITUAL_COMPLETION.md).
 
-Bellmarket uses its own five-part, fifteen-node purple circle. Woven petals
+Bellmarket uses its own five-part, thirty-node purple circle. Woven petals
 and a coin-like centre distinguish it from Bramblewick's star and constellations.
-Five equal-access branch roots express Routes, Voice, Creed, Guild and Patrons.
+The user liked this design; its expansion preserves the original fifteen node
+positions, petal ornament and circular footprint. Each branch now has six real
+nodes, with tiers IV–VI curling down the petal's spare side. Five equal-access
+branch roots express Routes, Voice, Creed, Guild and Patrons.
 The actual nodes/prerequisite connections form the geometry; no card menu
 replaces the circle. Branch buttons, fixed details, pan/zoom and transformed
 picking remain available. Nearby market roles show both text and lock shapes;

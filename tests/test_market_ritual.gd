@@ -26,24 +26,33 @@ func _run() -> void:
 	check(state.load_catalog(), "production catalog loads")
 	state.active_area = "bellmarket"
 	state.catalog = state.catalog_for_area("bellmarket")
-	state.coins = 12
+	for item in state.catalog_for_area("bramblewick"):
+		state.purchased[item.id] = state.max_rank(item.id)
+	state.coins = 120
 	var screen := Ritual.new()
 	screen.configure(state.catalog, state)
 	root.add_child(screen)
 	screen.travel_requested.connect(func(area_id: String) -> void: travel_requests.append(area_id))
 	await process_frame
-	check(screen.node_positions.size() == 15 and screen._market_circle, "market uses only its separate fifteen-node circle")
+	check(screen.node_positions.size() == 30 and screen._market_circle, "market uses only its separate thirty-node circle")
 	check(screen.get_branch_summaries().size() == 5, "five branches are independently browsable")
 	for branch in screen.get_branch_summaries():
-		check(branch.available == 1 and branch.count == 3, "each branch offers one affordable root")
+		check(branch.available == 1 and branch.count == 6, "each six-node branch offers one affordable root")
 		for id in branch.ids:
 			screen.focus_node(id)
 			check(screen.selected_id == id and screen.hit_test(screen.world_to_screen(screen.nodes_position(id))) == id, "branch nodes remain selectable: " + id)
 			check(not screen._effect_label.text.is_empty(), "market selection describes its current and next effect: " + id)
-	screen.reset_view()
-	screen.zoom_at(screen.world_to_screen(Vector2.ZERO), 1.5)
-	screen.pan_by(Vector2(33, -21))
-	check(screen.hit_test(screen.world_to_screen(screen.nodes_position("market_run_1"))) == "market_run_1", "market picking follows panning and zooming")
+	var minimum_separation: float = INF
+	for id in screen.node_positions:
+		screen.reset_view()
+		screen.focus_node(id)
+		screen.zoom_at(screen.world_to_screen(screen.nodes_position(id)), 1.5)
+		screen.pan_by(Vector2(33, -21))
+		check(screen.hit_test(screen.world_to_screen(screen.nodes_position(id))) == id, "market picking follows panning and zooming: " + id)
+		for other_id in screen.node_positions:
+			if id != other_id:
+				minimum_separation = minf(minimum_separation, screen.nodes_position(id).distance_to(screen.nodes_position(other_id)))
+	check(minimum_separation > 60.0, "thirty market nodes retain separated silhouettes")
 	check(screen.return_area_button.visible, "market always offers return travel")
 	screen.return_area_button.pressed.emit()
 	check(travel_requests == ["bramblewick"], "return control emits travel intent")
@@ -51,6 +60,7 @@ func _run() -> void:
 	var market_catalog: Array = state.catalog
 	state.active_area = "bramblewick"
 	state.catalog = state.catalog_for_area("bramblewick")
+	state.purchased.erase("talk_6")
 	screen.configure(state.catalog, state)
 	screen.configure_destination("bellmarket", "Bellmarket")
 	screen.destination_button.pressed.emit()

@@ -161,6 +161,11 @@ func _capture() -> void:
 
 
 func capture_market(scene) -> void:
+	# Normal market entry carries the completed village build into the new area.
+	# Assign fixture ranks only; persistence is disabled by the capture harness.
+	for entry in scene.progression.catalog_for_area("bramblewick"):
+		scene.progression.purchased[entry.id] = entry.max_rank
+	scene.apply_upgrades()
 	scene.show_title()
 	await save_frame("title-screen.png")
 	scene.title_screen.submit_password("PLZKTKS")
@@ -183,7 +188,7 @@ func capture_market(scene) -> void:
 	scene._update_hud()
 	await save_frame("market-mixed-listeners.png")
 	scene.advance_round(100.0)
-	scene.progression.coins = 12
+	scene.progression.coins = 120
 	scene.ritual_screen.update_state()
 	scene.ritual_screen.overview_button.pressed.emit()
 	await save_frame("market-ritual.png")
@@ -194,9 +199,9 @@ func capture_market(scene) -> void:
 		await process_frame
 	await save_frame("market-ritual-compact.png")
 	root.size = original_size
-	scene.progression.coins = 1000
-	scene.progression.total_recruits = 1000
-	scene.progression.available_recruits = 1000
+	scene.progression.coins = 100000
+	scene.progression.total_recruits = 10000
+	scene.progression.available_recruits = 10000
 	for entry in scene.progression.catalog:
 		scene.purchase_upgrade(entry.id)
 	scene.ritual_screen.overview_button.pressed.emit()

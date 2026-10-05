@@ -1,6 +1,6 @@
 # Small Following
 
-A small Godot prototype for a cute incremental game where **you are the robed cultist**: walk between gatherings, speak, recruit and earn donations. Bramblewick and Bellmarket have separate purple ritual circles: 32 village nodes and 15 market nodes, with 50 purchasable ranks in total and local progression saves. Art is procedural placeholder geometry; this is not a finished game.
+A small Godot prototype for a cute incremental game where **you are the robed cultist**: walk between gatherings, speak, recruit and earn donations. Bramblewick and Bellmarket have separate purple ritual circles: 32 village nodes and 30 market nodes, with 65 purchasable ranks in total and local progression saves. Art is procedural placeholder geometry; this is not a finished game.
 
 ## Run
 
@@ -71,7 +71,7 @@ The branch selector shows owned nodes/total nodes and ready purchase counts for 
 - A large purple occult upgrade circle with 32 nodes across six catalog tiers, retaining second ranks on the three original tier-III nodes. Eight authored branch constellations give Words a crescent, Running a broad left hook, Merchants a compact loop, Trials a diagonal fork, Creed a right curl, Faith a lower fork, Village a diagonal pair and Followers a small satellite. Contextual prerequisite paths and shape/fill state cues retain readable rank details.
 - Three distinct upgrade effects: initial talking ranks each add 20% of base phrase frequency, persuasion ranks add 0.5 conviction per phrase, and running ranks add 15% of base movement speed. The outer talking node's second rank adds 30% of base frequency. Initial node prices remain 6, 9 and 12 donations per branch; each outer node's second rank costs 18.
 - Full ranks on the original nine nodes produce 1.9 phrases/second, 3 conviction/phrase and 288 pixels/second movement. The balance target is all 15 listeners across the three groups with a small positive margin on a competent route inside the unchanged 11-second round; [route evidence](docs/PACING.md) records actual timings and limitations.
-- Selected inscriptions require recruits alongside donations: followers warm up audiences, spread invitations and support shared preaching. Running upgrades remain gold-only. The full catalog costs 1014 donations and 250 recruits; [rank allocation and provisional balance](docs/PACING.md#recruit-assignments---2026-10-03) explain the split.
+- Selected inscriptions require recruits alongside donations: followers warm up audiences, spread invitations and support shared preaching. Running upgrades remain gold-only. The village catalog costs 1014 donations and 250 recruits; [rank allocation and provisional balance](docs/PACING.md#recruit-assignments---2026-10-03) explain the split.
 - Versioned local progression retaining both available recruits and a separate lifetime recruitment-event total, donations, purchased ranks and round number. Existing purchases keep their benefits without a retroactive recruit charge.
 
 Base movement is 180 pixels/second. Speech within 105 pixels produces one phrase/second; each phrase adds one conviction, and three conviction recruits a listener for three donations. Extra conviction carries toward the next listener. Partial speech stays with its gathering until round end. A typical three-recruit opening earns nine donations, enough for one first-tier upgrade.
@@ -80,7 +80,7 @@ The original six inner nodes each have one rank and the original tier-III nodes 
 
 All audiences reset each round. Each recruitment event adds one available recruit and one to the lifetime total, including the same villagers on later rounds. Assigning recruits to an inscription spends only the available balance; lifetime recruitment history is retained. These counts are not a population of unique permanent followers. Purchases require both the selected rank's donations and recruits together; an unaffordable or failed-save purchase spends neither. Restarting preserves progression but begins a fresh timer and audience state. No offline rewards or partial-round continuation are implemented.
 
-The complete first-map catalog has 32 nodes and 35 ranks costing 1014 donations plus 250 recruits. Bellmarket adds 15 local nodes/ranks costing 390 donations and 37 recruits. The real catalog is `data/upgrades.json`. A separate **144-node validation fixture** exercises graph capacity and navigation; it is not additional purchasable game content. Further towns, magic and production art remain future work. Browser and Windows exports use the [publishing workflow](docs/PUBLISHING.md).
+The complete first-map catalog has 32 nodes and 35 ranks costing 1014 donations plus 250 recruits. Bellmarket adds 30 local nodes/ranks costing 14,100 donations and 183 recruits. The real catalog is `data/upgrades.json`. A separate **144-node validation fixture** exercises graph capacity and navigation; it is not additional purchasable game content. Further towns, magic and production art remain future work. Browser and Windows exports use the [publishing workflow](docs/PUBLISHING.md).
 
 Buying every rank in the active area's catalog lights its ritual centre.
 Bramblewick's centre offers deliberate travel to Bellmarket; the Priest objective
@@ -106,15 +106,19 @@ requirements. The helper follows the same eligibility rules.
 
 Its separate five-petal purple circle offers five independent paths: running,
 phrase frequency, conviction, guild access/donations and patron access/donations.
-All five roots cost 12 gold and no recruits; each path continues at 24 and 42
-gold. There is no shared prerequisite forcing one opening route. Earned village
-stats and the helper carry forward; market bonuses apply only in Bellmarket.
+Each path now has six nodes, priced at 120, 200, 320, 480, 700 and 1000 gold.
+Roots need no recruits and running stays gold-only. The original fifteen node
+positions and petal design are preserved. There is no shared prerequisite
+forcing one opening route. Earned village stats and the helper carry forward;
+market bonuses apply only in Bellmarket. Existing purchases retain their
+benefits and wallets without retroactive charges; the new ranks begin unowned.
 
-Scripted routes show fresh password entry earning 12 gold from three ordinary
-listeners, a carried village build earning 72, and specialist routes earning
-114 or 157. The full market build clears all 25 in 5.45 seconds, a generous
-5.55-second margin. Human route feel and economy balance remain provisional.
-[Scope](docs/MARKET_LEVEL.md) and [measured pacing](docs/PACING.md#bellmarket---2026-10-04).
+Market balance assumes every level-1 upgrade. A practical entry circuit earns
+72 gold; the maximum full-market payout is 469, against 14,100 for its whole
+circle. Repeated-round measurements include carried savings and actual
+movement/conversation. Human route feel and the longer purchase curve remain
+provisional. [Scope](docs/MARKET_LEVEL.md) and
+[measured pacing](docs/PACING.md#bellmarket-rebalance---2026-10-04).
 
 Bramblewick's seal uses authored branch constellations in place of the interim
 even-spacing layout, with nested inscription bands, a ticked rim, broken

@@ -8,6 +8,10 @@ const BRANCH_TITLES: Dictionary = {"talk": "Words", "run": "Running", "persuade"
 const FAN_HALF_ANGLE: float = 15.0
 const MARKET_BRANCHES: Array[String] = ["market_run", "market_talk", "market_persuade", "market_guild", "market_patron"]
 const MARKET_TITLES: Dictionary = {"market_run": "Routes", "market_talk": "Voice", "market_persuade": "Creed", "market_guild": "Guild", "market_patron": "Patrons"}
+# The first three nodes retain their original petal positions. The next three
+# turn down the petal's spare side, keeping six real steps inside the same seal.
+const MARKET_TIER_ANGLES: Array[float] = [-13.0, 15.0, 0.0, -17.0, -24.0, -31.0]
+const MARKET_TIER_RADII: Array[float] = [155.0, 265.0, 385.0, 345.0, 250.0, 195.0]
 
 # The current village has deliberately unequal silhouettes, rather than eight
 # copies of one radial formula. Stable IDs anchor art; catalog ring values still
@@ -136,11 +140,11 @@ static func build(catalog: Array) -> Dictionary:
 			positions[id] = VILLAGE_POSITIONS[id]
 		else:
 			for branch_index in range(MARKET_BRANCHES.size()):
-				for tier in range(1, 4):
+				for tier in range(1, MARKET_TIER_ANGLES.size() + 1):
 					if id == "%s_%d" % [MARKET_BRANCHES[branch_index], tier]:
 						# Five equally weighted paths sweep through a woven pentagonal seal.
-						var angle: float = -90.0 + branch_index * 72.0 + [-13.0, 15.0, 0.0][tier - 1]
-						positions[id] = Vector2.from_angle(deg_to_rad(angle)) * [155.0, 265.0, 385.0][tier - 1]
+						var angle: float = -90.0 + branch_index * 72.0 + MARKET_TIER_ANGLES[tier - 1]
+						positions[id] = Vector2.from_angle(deg_to_rad(angle)) * MARKET_TIER_RADII[tier - 1]
 	return positions
 
 

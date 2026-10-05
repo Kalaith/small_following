@@ -8,9 +8,13 @@ some groups offering three approachable listeners and two who need unlocks.
 
 **Implementation update:** the user subsequently requested Bellmarket and a
 password-enabled title screen. Bellmarket is now the playable second area,
-with five mixed groups, guild/patron introductions, fifteen independent-path
-upgrades in its own circle, safe return travel and schema-4 saves. Its shipped
-scope and deviations from this original proposal are in
+with five mixed groups, guild/patron introductions, thirty upgrades across five
+independent six-node paths in its own circle, safe return travel and schema-4
+saves. The requested expansion doubles its original fifteen upgrades, retains
+the five-petal design and raises the market catalog to 14,100 donations and
+183 recruits. Its balance assumes normal entry with every village rank earned;
+password entry remains a separate shortcut. Existing purchases are preserved.
+Its shipped scope and deviations from this original proposal are in
 [MARKET_LEVEL](MARKET_LEVEL.md), [GAME_DESIGN](GAME_DESIGN.md) and
 [ARCHITECTURE](ARCHITECTURE.md). The proposed council-speaker objective was
 not added; market completion currently means buying its own circle.

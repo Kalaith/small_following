@@ -143,6 +143,7 @@ $godotExe = 'C:\Program Files\Godot\Godot_v4.2.2-stable_mono_win64_console.exe'
 & $godotExe --headless --path . --script res://tests/test_areas.gd
 & $godotExe --headless --path . --script res://tests/test_market_progression.gd
 & $godotExe --headless --fixed-fps 60 --path . --script res://tests/test_market_pacing.gd
+& $godotExe --headless --fixed-fps 60 --path . --script res://tests/test_market_campaign.gd
 & $godotExe --headless --fixed-fps 60 --path . --script res://tests/test_market_flow.gd
 & $godotExe --headless --fixed-fps 60 --path . --script res://tests/test_title_screen.gd
 & $godotExe --headless --fixed-fps 60 --path . --script res://tests/test_market_ritual.gd

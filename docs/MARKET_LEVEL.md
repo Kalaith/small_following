@@ -10,9 +10,10 @@ level. Bramblewick remains level 1. This brief follows the relevant sections
 of [GDD_TEMPLATE](GDD_TEMPLATE.md) and advances the Bellmarket portion of
 [FUTURE_LEVELS](FUTURE_LEVELS.md); the other proposed settings remain future work.
 
-The five paths, names, prices, role thresholds, layout and 11-second market
-round are provisional implementation choices. They are not additional user
-decisions. Human route and economy acceptance remain outstanding.
+Follow-up request: double the market catalog to thirty upgrades, raise costs,
+and balance for a player carrying every level-1 upgrade. Preserve the approved
+circle design. The exact prices, effect sizes, role thresholds and 11-second
+market round remain provisional tuning. Human economy acceptance is outstanding.
 
 ## Play and progression
 
@@ -21,25 +22,26 @@ wealthy patrons. Introductions open their matching role across multiple groups;
 speech must still complete each conversion. Open listeners provide repeatable
 funding even when both specialist roles are locked. Audiences reset each round.
 
-Five independent three-node paths offer running speed, phrase frequency,
+Five independent six-node paths offer running speed, phrase frequency,
 conviction per phrase, guild access/donations and patron access/donations.
-All five first purchases cost 12 donations and no recruits. Each path then
-costs 24 and 42 donations; selected later ranks also assign recruits. Running
-remains gold-only. The catalog has fifteen real market nodes, with no shared
+All five first purchases cost 120 donations and no recruits. Each path then
+costs 200, 320, 480, 700 and 1000 donations; selected later ranks also assign
+recruits. Running remains gold-only. The catalog has thirty real market nodes, with no shared
 mandatory prerequisite that forces every play style down one chain. Exhausting
 a path naturally reduces the remaining choices near completion.
 
-The market circle totals 390 gold and 37 assigned recruits. Village totals
+The market circle totals 14,100 gold and 183 assigned recruits. Village totals
 remain 32 nodes, 35 ranks, 1014 gold and 250 recruits. Together the two circles
-contain 47 real nodes and 50 ranks. Exact effects and measured route tradeoffs
-belong in [PACING](PACING.md#bellmarket---2026-10-04).
+contain 62 real nodes and 65 ranks. Exact effects and measured route tradeoffs
+belong in [PACING](PACING.md#bellmarket-rebalance---2026-10-04).
 
 Earned Bramblewick stats and the helper travel with the cultist. Its local
 audience and opponent unlocks stay in Bramblewick. Market benefits apply only
 in Bellmarket, preserving the original opening and full-core route benchmarks.
-Wallets and recruitment history are shared. Password access skips the travel
-gate, without granting upgrades or currency, so a fresh market start is also
-tested for attainable funding.
+Wallets and recruitment history are shared. Normal market balance assumes
+all village upgrades, including the helper. Password access skips the travel
+gate without granting upgrades or currency; a fresh password start remains a
+separate repeatable-funding diagnostic, not the normal balance target.
 
 Completing every Bramblewick rank opens deliberate travel from its centre to
 Bellmarket. The Priest objective remains separate. The market intermission
@@ -73,6 +75,13 @@ Typing it reveals level selection for the current title session; only successful
 level travel persists `level_select_unlocked`. A failed travel write grants no
 access flag, ranks or resources and leaves the previous active area intact.
 
+The thirty-node expansion keeps schema 4 and every previous upgrade ID/effect.
+Existing purchases and wallets are preserved without retroactive charges.
+The fifteen added ranks begin unowned; an older completed market circle needs
+these new ranks before its centre lights again. The original fifteen node
+positions and five-petal composition remain, with the new ranks curling down
+each petal's other side.
+
 Gatherings own per-listener eligibility, thresholds, overflow and single reward
 emission. Helpers obey the same eligibility and recruitment authority. Locked
 listeners cannot block later eligible slots or accumulate new speech work.
@@ -86,8 +95,9 @@ actors/props with feet origins, Y sorting and world collision on layer 2.
 Validate original pacing, all five market paths, zero-balance funding, mixed
 eligibility and helper behavior, area-scoped completion, stale/max-rank and
 failed-save requests, schema migration/recovery and repeated return travel.
-Measure actual conversions through movement and speech for fresh password,
-carried village, specialist and upgraded market routes. Keep human steering
+Measure actual conversions through movement and speech for full-village entry,
+specialist and upgraded market routes. Compare repeated-round purchases with
+zero and carried donations; keep fresh password funding separate. Keep human steering
 uncertainty explicit in [PACING](PACING.md).
 
 Use isolated saves for all tests. Render title, unlocked level selection,

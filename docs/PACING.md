@@ -330,3 +330,85 @@ dominate too strongly, whether a short circle is satisfying and how farming
 between towns affects shared wallets. Adjust layout, audience work, prices or
 effect sizes only with explicit tuning evidence; do not add hidden completion
 rules to manufacture a close clear.
+
+## Bellmarket rebalance - 2026-10-04
+
+The follow-up expands Bellmarket from fifteen to thirty single-rank nodes,
+retaining the original IDs, five paths and circle design. The previous section
+records the earlier fifteen-node build. These updated measurements use the
+expanded catalog as of 2026-10-05. Prices are provisional: every path costs
+120, 200, 320, 480, 700 and 1000 donations, for 14,100 total; rank recruit
+assignments total 183. Existing market purchases keep their effects and
+balances without retroactive charges. The added ranks begin unowned.
+
+| Path | Rank effects | Recruit assignments by rank |
+| --- | --- | --- |
+| Routes | +0.30 / +0.35 / +0.40 / +0.15 / +0.20 / +0.25 base movement | 0 / 0 / 0 / 0 / 0 / 0 |
+| Voice | +0.50 / +0.60 / +0.70 / +0.25 / +0.30 / +0.35 base phrases per second | 0 / 3 / 6 / 9 / 12 / 16 |
+| Creed | +0.75 / +1.00 / +1.25 / +0.50 / +0.75 / +1.00 conviction per phrase | 0 / 3 / 6 / 9 / 12 / 16 |
+| Guild | Introduction; then +4 / +6 / +6 / +8 / +10 donations per trader | 0 / 4 / 5 / 8 / 12 / 16 |
+| Patrons | Introduction; then +6 / +9 / +9 / +12 / +15 donations per patron | 0 / 4 / 6 / 8 / 12 / 16 |
+
+The effects remain separate: running does not accelerate speech, and phrase
+frequency does not change conviction. Full market ranks add 1.65 base running
+speed, 2.70 base phrases per second and 5.25 conviction per phrase. On normal
+market entry with every Bramblewick rank, this gives 729 px/s, 6.2 phrases/s
+and 10.25 conviction per phrase. Full specialist rewards are 46 donations per
+guild trader and 71 per wealthy patron; ordinary listeners still pay four.
+
+`tests/test_market_pacing.gd` drives actual movement, collisions, conversations
+and helper work in fixed 1/60-second steps. Every entry below carries all
+Bramblewick ranks, starts the measured round with zero donations and available
+recruits, and allows 0.20 seconds to react plus 0.10 seconds at group changes.
+Results count completed people and verify donations and both recruit counters;
+visiting a group does not count as a conversion.
+
+| Build and route | Ordinary / guild / patron | Donations | Walking | Last conversion | Eligible clear / time left |
+| --- | ---: | ---: | ---: | ---: | --- |
+| No market ranks; Bread -> Guild -> Carts -> Steps -> Silk | 18 / 0 / 0 | 72 | 2.250s | 6.150s | 6.150s / 4.850s (18 eligible) |
+| All Guild ranks; Guild -> Carts -> Bread | 12 / 3 / 0 | 186 | 1.433s | 5.700s | Incomplete (15 / 22) |
+| All Patron ranks; Steps -> Silk -> Carts | 13 / 0 / 3 | 265 | 1.433s | 10.800s | Incomplete (16 / 21) |
+| All Routes ranks; five-district circuit | 18 / 0 / 0 | 72 | 1.350s | 5.300s | 5.300s / 5.700s (18 eligible) |
+| All Voice ranks; five-district circuit | 18 / 0 / 0 | 72 | 2.250s | 4.667s | 4.667s / 6.333s (18 eligible) |
+| All Creed ranks; five-district circuit | 18 / 0 / 0 | 72 | 2.250s | 4.733s | 4.733s / 6.267s (18 eligible) |
+| First three ranks in every path; five-district circuit | 18 / 4 / 3 | 265 | 1.583s | 5.450s | 5.450s / 5.550s (25 eligible) |
+| All thirty ranks; five-district circuit | 18 / 4 / 3 | 469 | 1.350s | 4.300s | 4.300s / 6.700s (25 eligible) |
+| All thirty ranks; 4s hesitation and crossed route | 15 / 3 / 3 | 411 | 2.083s | 10.500s | Incomplete (21 / 25) |
+
+The opening full-village route converts all eighteen ordinary listeners and
+earns 72 donations in 6.15 seconds. Running clears the same eligible route
+0.85 seconds earlier; Voice and Creed clear it about 1.4 seconds earlier.
+Buying the first three ranks in all paths costs 3,200 donations and already
+clears the full mixed audience in 5.45 seconds. The full circle's 6.70-second
+margin is generous. A deliberately hesitant route still leaves four listeners
+unconverted, so full ranks do not override movement or conversation work.
+Fresh password entry remains a separate diagnostic: it converts three ordinary
+listeners for 12 donations, but is not the assumed level-two build.
+
+### Repeated-round purchase curve
+
+`tests/test_market_campaign.gd` runs complete eleven-second rounds and buys each
+rank through the normal purchase authority. Both fixtures carry every village
+rank and set Bellmarket's available-recruit wallet to zero; one begins with no
+donations and the other with 1000 carried donations. The balanced strategy
+rotates purchases among branches by tier. The specialist strategy completes
+Patrons, then Guild, Routes, Voice and Creed. Both scripts use the same
+practical five-district route, with no human steering claim.
+
+| Market donations at entry | Purchase order | First purchase | Rounds to all 30 | Donations earned / remaining | Recruits earned / remaining |
+| ---: | --- | ---: | ---: | ---: | ---: |
+| 0 | Balanced by tier | After 2 rounds | 46 | 14,296 / 196 | 1,132 / 949 |
+| 0 | Patrons, then Guild | After 2 rounds | 42 | 14,200 / 100 | 976 / 793 |
+| 1,000 | Balanced by tier | Immediately | 39 | 13,224 / 124 | 835 / 652 |
+| 1,000 | Patrons, then Guild | Immediately | 35 | 13,414 / 314 | 835 / 652 |
+
+Each run spends exactly 14,100 donations and 183 recruits. The specialist
+order finishes four rounds sooner in both cases because it improves rich-crowd
+income earlier; the round-robin order invests across stats and audiences sooner.
+These deterministic runs show five concurrent purchase choices while several
+paths remain unfinished, and three/four choices near completion. Recruit income
+exceeds assignment costs in these routes; it does not gate completion. The
+35-to-46-round curve is a substantial scripted grind, not evidence that the
+prices feel right. Human play should assess route feel, carried savings, the
+value of each branch and whether the late curve is too long before tuning these
+provisional numbers.

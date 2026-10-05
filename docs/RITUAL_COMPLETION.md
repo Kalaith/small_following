@@ -9,7 +9,7 @@ continued play after dismissal. That historical slice established the centre
 for later area travel.
 
 Updated 2026-10-04: Bramblewick's completed centre now offers deliberate travel
-to Bellmarket and its separate fifteen-node circle. Bellmarket's completed
+to Bellmarket and its separate thirty-node circle. Bellmarket's completed
 centre reports **Bellmarket's circle is complete**, with continued play and
 return to Bramblewick available. No third area is implemented. The original
 generic demo message remains available to standalone circle fixtures without
@@ -36,7 +36,7 @@ uses fresh rendered application captures for verification. The completed-centre
 interaction remains delivered and must be preserved.
 
 Bramblewick's catalog remains 32 nodes and 35 ranks costing 1014 donations
-and 250 recruits; the separate market adds 15 nodes/ranks at 390 and 37.
+and 250 recruits; the separate market adds 30 nodes/ranks at 14,100 and 183.
 Preserve every existing village ID, price, rank, prerequisite and effect.
 The priest objective and its saved **Bramblewick complete** state remain
 independent of buying every inscription.

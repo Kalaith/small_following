@@ -63,7 +63,7 @@ func _run() -> void:
 	check(game.progression.active_area == "bellmarket" and game.round_active and not game.title_active, "level two selection starts the implemented market")
 	check(game.progression.purchased.is_empty() and game.coins == 0, "password selection grants no ranks or money")
 	check(game.groups.size() == 5 and game.encounter == null, "market has five local groups and no village opponents")
-	check(game.ritual_screen.node_positions.size() == 15 and not game.ritual_screen.node_positions.has("talk_1"), "market displays its separate 15-node circle")
+	check(game.ritual_screen.node_positions.size() == 30 and not game.ritual_screen.node_positions.has("talk_1"), "market displays its separate thirty-node circle")
 	# A nearest group whose remaining people are locked must not steal speech
 	# from an eligible group in range; its inspection caption remains available.
 	var open_group = game.groups[0]
@@ -93,12 +93,12 @@ func _run() -> void:
 	before = game.player.position
 	game.player.step_motion(Vector2.RIGHT, 1.0 / 60.0)
 	check(game.player.position.distance_to(before) > 0, "movement remains available beneath market ritual")
-	game.progression.coins = 12
+	game.progression.coins = 120
 	var ready: int = 0
 	for entry in game.progression.catalog:
 		if game.progression.status(entry.id) == "affordable":
 			ready += 1
-	check(ready == 5, "first twelve donations allow five different upgrades")
+	check(ready == 5, "120 donations allow five different upgrades")
 	check(game.purchase_upgrade("market_guild_1", 0), "guild introduction purchases through main authority")
 	var eligible: int = 0
 	for group in game.groups:

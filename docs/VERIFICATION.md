@@ -1314,3 +1314,65 @@ Blender-path warnings. This environment limitation remains separate from
 passing runtime checks and rendered pixels. No tools were installed, no export
 or publication was performed, and human balance/art-direction review remains
 outstanding.
+
+## 2026-10-05 - Bellmarket rebalance and expanded circle
+
+Bellmarket now has thirty single-rank nodes across its five existing paths,
+with 14,100 total donation cost and 183 assigned recruits. The original fifteen
+market IDs and their effects remain; their new prices apply only to future
+purchases. The fifteen added ranks start unowned, and schema 4 remains
+unchanged. The market campaign uses every Bramblewick rank, actual eleven-second
+rounds, real movement/conversation, the helper and normal validated purchases.
+Its two fixed purchase orders complete in 35-46 rounds from zero or 1000
+carried donations; exact route and wallet results are in
+[PACING](PACING.md#bellmarket-rebalance---2026-10-04). This is scripted evidence,
+not a human economy or grind assessment.
+
+Installed Godot 4.2.2 Mono, headless fixed 60 fps; saves and shared fixtures are
+isolated and the suites ran sequentially:
+
+| Suite | Result |
+| --- | --- |
+| `smoke_test.gd` | 92 checks, 0 failures |
+| `test_progression.gd` | 113 checks, 0 failures |
+| `test_pacing.gd` | 59 checks, 0 failures |
+| `test_helper.gd` | 34 checks, 0 failures |
+| `test_merchants.gd` | Passed, 0 failures |
+| `test_encounters.gd` | 210 checks, 0 failures |
+| `test_ritual_readability.gd` | 73 checks, 0 failures |
+| `test_demo_completion.gd` | 46 checks, 0 failures |
+| `test_audio.gd` | 27 checks, 0 failures |
+| `test_settings.gd` | 27 checks, 0 failures |
+| `test_key_mapping.gd` | 73 checks, 0 failures |
+| `test_exit.gd` | Actual exit action flushed isolated state and shut down |
+| `test_areas.gd` | 44 checks, 0 failures |
+| `test_market_progression.gd` | 94 checks, 0 failures |
+| `test_market_pacing.gd` | 31 checks, 0 failures |
+| `test_market_campaign.gd` | 26 checks, 0 failures |
+| `test_market_flow.gd` | 27 checks, 0 failures |
+| `test_title_screen.gd` | 15 headless checks, 0 failures |
+| `test_market_ritual.gd` | 110 checks, 0 failures |
+
+The campaign balances both wallets, records lifetime recruitment, verifies
+normal purchase validation and compares independent branch choices. Prior
+schema-4 market saves keep every original rank and balance; the new ranks begin
+unowned. Expanded graph checks cover all thirty nodes, branch focus, pan/zoom
+hit testing and a 60-pixel minimum node separation. Headless suites reported no
+script/runtime errors.
+
+The required editor import exited 1 again with the recorded `_EDITOR_GET`
+condition and the cursor/Blender-path warnings. This is separate from the
+passing runtime results.
+
+Ran `tests/capture_starter.gd --market-only` with a rendering display, fixed
+60 fps and Godot's NVIDIA Compatibility renderer. Inspected the actual title
+level selector, market overview and mixed-audience view, both full and compact
+market circles, the selected patron upgrade, the completed 30-node circle and
+the village-to-market travel panel. The five-petal composition contains all
+thirty real nodes; the selected detail shows its current 120-donation root
+price. These captures verify rendered output at the tested 1280 x 800 and
+1024 x 768 layouts, not small-phone use, human navigation or balance feel.
+
+No tool was installed and no export, publish or remote change was made. Human
+review of market route feel, the 35-46-round purchase curve and possible late
+grinding remains outstanding in [TODO](../TODO.md).
