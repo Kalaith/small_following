@@ -74,7 +74,8 @@ must exit successfully without logged errors before packaging succeeds and
 The separate `--import` verification command retains a known exit-1 shutdown
 limitation; see [VERIFICATION](VERIFICATION.md).
 
-The pack explicitly includes the main and player scenes, scene dependencies, all runtime scripts,
+The pack explicitly includes the configured title startup scene, the main and
+player scenes, scene dependencies, all runtime scripts,
 assets and `data/upgrades.json`. Explicit script inclusion preserves resources
 loaded from GDScript. Tests, docs, promo media and tools are excluded.
 A SHA-256 manifest rejects missing, modified, unexpected or traversal paths
