@@ -1,5 +1,41 @@
 # Verification record - ranked progression, 2026-10-02
 
+## 2026-10-07 - Ritual refresh cost
+
+A full-source review recorded its maintainability findings under TODO's code
+health section and fixed the measured one: refreshing the ritual screen asked
+progression to re-derive every node's state, and each question repeated the
+linear catalog lookup. `purchase_state` now resolves a definition once,
+`status` answers from a shared `_definition_status` without building a player
+message, `effect_preview` composes from a single `_all_effect_totals` pass
+instead of about thirty per-key sweeps, and `_update_branch_navigation`
+summarizes once per refresh instead of twice. `_sum_effect` keeps its
+allocation-free per-key form for the per-frame speech and conviction calls.
+
+Measured `update_state` with a temporary in-tree probe at 1200x800, twenty
+calls per figure, before and after:
+
+| Catalog | Before | After |
+| --- | --- | --- |
+| Production, 32 nodes | 1.75 ms | 0.54 ms |
+| `tests/fixtures` 144 nodes | 11.46 ms | 2.58 ms |
+
+Behavior is unchanged. All twenty-three suites pass with the same check counts
+as before the change: smoke 92, progression 113, pacing 59, helper 34,
+encounters 210, readability 73, demo completion 46, audio 27, settings 27, key
+mapping 73, areas 44, market progression 94, market pacing 31, market campaign
+26, market flow 27, title 15, market ritual 110, mixed audiences 36, recruit
+economy 134, ritual touch 25, touch movement 27, merchants and exit reporting
+no failures. A temporary parity check compared `effect_preview` against the
+untouched per-key helpers for every definition across both areas at no ranks,
+every first rank and every maximum rank: 372 previews, exact float and type
+equality, no mismatches. Both probes were deleted after use.
+
+The recorded `_EDITOR_GET` import error and its exit status 1 persist and are
+unrelated to this change. Rendered captures were not rerun: no drawing,
+layout or catalog data changed, and the four suites that inspect the graph's
+states and labels pass unchanged. Human play feel still needs its own pass.
+
 ## 2026-10-05 - Project Roost registration
 
 The publisher now records successful WebHatchery preview and production

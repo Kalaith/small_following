@@ -73,6 +73,18 @@ The original catalog core retains three branches with three nodes each. The six 
 
 `try_purchase(id, expected_rank = -1)` validates the requested node and next rank, including both that rank's donation and recruit costs. UI requests include the selected current rank; a stale request after a previous purchase is rejected. Missing resources are reported before building a candidate, and neither resource is deducted unless the candidate save succeeds. One input buys one rank, a maximum-rank request spends nothing, and a failed candidate save grants nothing. The optional expected rank supports programmatic purchases without weakening the maximum-rank, prerequisite or affordability checks. Stats sum effects only through each saved purchased rank; lifetime recruits never decrease on purchase.
 
+`_definition_status` is the single implementation of those gates: unknown
+inscription, inactive area, maximum rank, unmet prerequisite, then
+affordability in both resources. `status(id)` answers from it directly for
+views that ask about every node. `purchase_state(id)` layers the player-facing
+message on the same verdict and additionally reports `gold_cost`,
+`recruit_cost`, `missing_gold` and `missing_recruits`; `try_purchase` charges
+the costs that state already priced. Add new purchase rules to
+`_definition_status` so the graph's node states and the detail panel cannot
+disagree. `effect_preview` composes every figure from one `_all_effect_totals`
+pass over the saved ranks; `_sum_effect` keeps the single-key form used by the
+per-frame speech and conviction calls, and both apply the same area rule.
+
 `ritual_layout.gd` stores presentation-only positions for the current 32 stable
 IDs in `VILLAGE_POSITIONS`. The eight branches have unequal silhouettes:
 Words crescent, Running left hook, Merchants compact loop, Trials diagonal

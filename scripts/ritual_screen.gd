@@ -676,7 +676,9 @@ func _update_branch_navigation() -> void:
 	if not is_instance_valid(node_picker):
 		return
 	var selected_branch: String = str(_by_id.get(selected_id, {}).get("branch", ""))
-	for summary in get_branch_summaries():
+	# Summarizing asks progression for every node's state, so gather once per refresh.
+	var summaries: Array[Dictionary] = get_branch_summaries()
+	for summary in summaries:
 		var text: String = "%s  %d/%d" % [summary.title, summary.owned, summary.count]
 		var tooltip: String = "%s: %d of %d nodes owned; %d ready to buy. Click to focus this branch." % [summary.title, summary.owned, summary.count, summary.available]
 		if _branch_buttons.has(summary.id):
@@ -694,7 +696,7 @@ func _update_branch_navigation() -> void:
 		branch_picker.text = "Browse %d ritual branches" % _branch_order.size()
 	_browse_ids.clear()
 	node_picker.clear()
-	for summary in get_branch_summaries():
+	for summary in summaries:
 		if str(summary.id) != selected_branch:
 			continue
 		for id in summary.ids:

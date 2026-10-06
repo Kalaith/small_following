@@ -176,61 +176,94 @@ func rank(id: String) -> int:
 
 
 func max_rank(id: String) -> int:
-	var upgrade: Dictionary = find_upgrade(id)
-	return int(upgrade.get("max_rank", 1)) if not upgrade.is_empty() else 0
+	return _definition_max_rank(find_upgrade(id))
 
 
 func next_cost(id: String) -> int:
-	var upgrade: Dictionary = find_upgrade(id)
-	if upgrade.is_empty() or rank(id) >= max_rank(id):
+	return _definition_next_cost(find_upgrade(id), id)
+
+
+func next_recruit_cost(id: String) -> int:
+	return _definition_next_recruit_cost(find_upgrade(id), id)
+
+
+## The definition-taking forms let one caller resolve an upgrade once. Views ask
+## for every node's state on each refresh, so repeating the catalog lookup five
+## times per question made the cost of a refresh grow with the catalog squared.
+func _definition_max_rank(upgrade: Dictionary) -> int:
+	return int(upgrade.get("max_rank", 1)) if not upgrade.is_empty() else 0
+
+
+func _definition_next_cost(upgrade: Dictionary, id: String) -> int:
+	if upgrade.is_empty() or rank(id) >= _definition_max_rank(upgrade):
 		return 0
 	var prices: Array = upgrade.get("rank_costs", [upgrade.cost])
 	return int(prices[rank(id)])
 
 
-func next_recruit_cost(id: String) -> int:
-	var upgrade: Dictionary = find_upgrade(id)
-	if upgrade.is_empty() or rank(id) >= max_rank(id):
+func _definition_next_recruit_cost(upgrade: Dictionary, id: String) -> int:
+	if upgrade.is_empty() or rank(id) >= _definition_max_rank(upgrade):
 		return 0
 	var prices: Array = upgrade.get("rank_recruit_costs", [])
 	return int(prices[rank(id)]) if not prices.is_empty() else 0
 
 
-func purchase_state(id: String) -> Dictionary:
-	var state: Dictionary = {
-		"status": "unknown", "message": "Unknown inscription.",
-		"missing_gold": 0, "missing_recruits": 0,
-	}
-	var upgrade: Dictionary = find_upgrade(id)
+## The single implementation of the purchase rules. Keep every gate here so the
+## graph's status query and the player-facing panel can never disagree.
+func _definition_status(upgrade: Dictionary, id: String) -> String:
 	if upgrade.is_empty():
-		return state
+		return "unknown"
 	if upgrade.get("area", "bramblewick") != active_area:
-		state.status = "locked"
-		state.message = "Travel to this inscription's area before purchasing it."
-		return state
-	if rank(id) >= max_rank(id):
-		state.status = "purchased"
-		state.message = "This inscription is already at maximum rank."
-		return state
+		return "locked"
+	if rank(id) >= _definition_max_rank(upgrade):
+		return "purchased"
 	for requirement in upgrade.requires:
 		if rank(requirement) < 1:
-			state.status = "locked"
-			state.message = "Requires " + str(find_upgrade(requirement).get("title", requirement)) + "."
-			return state
-	state.missing_gold = maxi(0, next_cost(id) - coins)
-	state.missing_recruits = maxi(0, next_recruit_cost(id) - available_recruits)
+			return "locked"
+	if _definition_next_cost(upgrade, id) > coins or _definition_next_recruit_cost(upgrade, id) > available_recruits:
+		return "unaffordable"
+	return "affordable"
+
+
+## Explains the rules above for the selected inscription only. Views that ask
+## about every node call `status` instead and skip this message building.
+func purchase_state(id: String) -> Dictionary:
+	var upgrade: Dictionary = find_upgrade(id)
+	var state: Dictionary = {
+		"status": _definition_status(upgrade, id), "message": "Unknown inscription.",
+		"missing_gold": 0, "missing_recruits": 0,
+		"gold_cost": 0, "recruit_cost": 0,
+	}
+	if state.status == "unknown":
+		return state
+	if state.status == "locked" and upgrade.get("area", "bramblewick") != active_area:
+		state.message = "Travel to this inscription's area before purchasing it."
+		return state
+	if state.status == "purchased":
+		state.message = "This inscription is already at maximum rank."
+		return state
+	state.gold_cost = _definition_next_cost(upgrade, id)
+	state.recruit_cost = _definition_next_recruit_cost(upgrade, id)
+	if state.status == "locked":
+		state.message = "This inscription is sealed."
+		for requirement in upgrade.requires:
+			if rank(requirement) < 1:
+				state.message = "Requires " + str(find_upgrade(requirement).get("title", requirement)) + "."
+				break
+		return state
+	state.missing_gold = maxi(0, int(state.gold_cost) - coins)
+	state.missing_recruits = maxi(0, int(state.recruit_cost) - available_recruits)
 	var missing: Array[String] = []
 	if state.missing_gold > 0:
 		missing.append("%d more donations" % state.missing_gold)
 	if state.missing_recruits > 0:
 		missing.append("%d more recruit%s" % [state.missing_recruits, "" if state.missing_recruits == 1 else "s"])
-	state.status = "affordable" if missing.is_empty() else "unaffordable"
 	state.message = "Ready to inscribe rank %d." % (rank(id) + 1) if missing.is_empty() else "Need %s for rank %d." % [" and ".join(missing), rank(id) + 1]
 	return state
 
 
 func status(id: String) -> String:
-	return str(purchase_state(id).status)
+	return _definition_status(find_upgrade(id), id)
 
 
 func try_purchase(id: String, expected_rank: int = -1) -> bool:
@@ -242,8 +275,9 @@ func try_purchase(id: String, expected_rank: int = -1) -> bool:
 	if state.status != "affordable":
 		return _fail(state.message)
 	var candidate: Dictionary = _snapshot()
-	candidate.coins -= next_cost(id)
-	candidate.available_recruits -= next_recruit_cost(id)
+	# The affordable state already priced this rank against the same definition.
+	candidate.coins -= int(state.gold_cost)
+	candidate.available_recruits -= int(state.recruit_cost)
 	candidate.purchased[id] = rank(id) + 1
 	# Persist the candidate first: failed writes never charge or grant the upgrade.
 	if not _write_snapshot(candidate):
@@ -359,23 +393,28 @@ func gathering_count() -> int:
 
 
 func effect_preview(id: String) -> Dictionary:
+	# Composed from one catalog pass: the per-key helpers below answer the same
+	# questions, but asking each separately swept every rank thirty times here.
+	var totals: Dictionary = _all_effect_totals()
+	var base_conviction: float = 1.0 + float(totals.conviction_add)
+	var opponent_bonus: float = float(totals.encounter_conviction_add)
 	var current: Dictionary = {
-		"speech_frequency": 1.0 + _sum_effect("speech_speed_add"),
-		"conviction": conviction_per_phrase(),
-		"run_multiplier": run_multiplier(),
-		"gatherings": gathering_count(),
-		"merchant_unlock": int(has_unlock("merchant_unlock")),
-		"merchant_conviction_add": conviction_for("merchant"),
-		"merchant_donation_add": merchant_donation(),
-		"helpers": int(has_unlock("helper_unlock")),
+		"speech_frequency": 1.0 + float(totals.speech_speed_add),
+		"conviction": base_conviction,
+		"run_multiplier": 1.0 + float(totals.run_speed_add),
+		"gatherings": 3 + int(_unlocked(totals, "meadow_unlock")) + int(_unlocked(totals, "east_unlock")),
+		"merchant_unlock": int(_unlocked(totals, "merchant_unlock")),
+		"merchant_conviction_add": base_conviction + float(totals.merchant_conviction_add),
+		"merchant_donation_add": BASE_MERCHANT_DONATION + int(float(totals.merchant_donation_add)),
+		"helpers": int(_unlocked(totals, "helper_unlock")),
 	}
-	current.encounter_unlock = int(has_unlock("encounter_unlock"))
-	current.encounter_conviction_add = conviction_per_phrase() + _sum_effect("encounter_conviction_add")
+	current.encounter_unlock = int(_unlocked(totals, "encounter_unlock"))
+	current.encounter_conviction_add = base_conviction + opponent_bonus
 	for kind in ["skeptic", "guard", "zealot", "priest"]:
-		current[kind + "_conviction_add"] = encounter_conviction(kind)
+		current[kind + "_conviction_add"] = base_conviction + opponent_bonus + float(totals[kind + "_conviction_add"])
 	for kind in ["guild", "patron"]:
-		current["market_" + kind + "_unlock"] = int(has_unlock("market_" + kind + "_unlock"))
-		current["market_" + kind + "_donation_add"] = _sum_effect("market_" + kind + "_donation_add")
+		current["market_" + kind + "_unlock"] = int(_unlocked(totals, "market_" + kind + "_unlock"))
+		current["market_" + kind + "_donation_add"] = float(totals["market_" + kind + "_donation_add"])
 	var result: Dictionary = {"current": current, "next": {}}
 	var upgrade: Dictionary = find_upgrade(id)
 	if upgrade.is_empty() or rank(id) >= max_rank(id):
@@ -457,6 +496,7 @@ func _apply_snapshot(state: Dictionary) -> void:
 	purchased = state.purchased.duplicate(true)
 
 
+## Called every frame for speech and conviction, so this stays allocation-free.
 func _sum_effect(key: String) -> float:
 	var total: float = 0.0
 	var definitions: Array[Dictionary] = all_catalog if not all_catalog.is_empty() else catalog
@@ -468,6 +508,28 @@ func _sum_effect(key: String) -> float:
 		for index in range(rank(entry.id)):
 			total += float(_rank_effect(entry, index).get(key, 0.0))
 	return total
+
+
+## Every supported effect from one pass over the ranks `_sum_effect` reads, using
+## the same area rule and the same catalog and rank order, so the totals match it.
+func _all_effect_totals() -> Dictionary:
+	var totals: Dictionary = {}
+	for key in EFFECT_KEYS:
+		totals[key] = 0.0
+	var definitions: Array[Dictionary] = all_catalog if not all_catalog.is_empty() else catalog
+	for entry in definitions:
+		if entry.get("area", "bramblewick") != "bramblewick" and entry.area != active_area:
+			continue
+		for index in range(rank(entry.id)):
+			var effect: Dictionary = _rank_effect(entry, index)
+			for key in effect:
+				if totals.has(key):
+					totals[key] += float(effect[key])
+	return totals
+
+
+func _unlocked(totals: Dictionary, key: String) -> bool:
+	return key in UNLOCK_KEYS and float(totals.get(key, 0.0)) >= 1.0
 
 
 func _rank_effect(upgrade: Dictionary, index: int) -> Dictionary:
