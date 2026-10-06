@@ -142,7 +142,8 @@ Human use must establish whether branch focus, quiet paths and label density
 remain comfortable on a much larger authored tree. A capacity fixture cannot
 prove that future content is understandable. Review dense labels, long names,
 pointer targets and alternate window sizes before claiming broad support.
-Keep outstanding acceptance and accessibility work in [TODO](../TODO.md).
+Keep outstanding accessibility work in [TODO](../TODO.md) and the human
+acceptance condition in [milestones](MILESTONES.md).
 
 ## 13. Slices and acceptance
 

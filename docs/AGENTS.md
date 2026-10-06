@@ -30,8 +30,9 @@ project.
 - Link to the owner of a fact instead of duplicating detailed tables.
 - Keep examples compatible with this project's actual paths and methods.
 - Review relative links and code fences after editing. Use UTF-8 with a final newline.
-- Leave TODO outstanding-only. Do not mark milestones complete without their
-  required automated, visual and human evidence.
+- Leave TODO outstanding-only and agent-actionable; record human acceptance and
+  open design choices as milestone exit criteria instead. Do not mark milestones
+  complete without their required automated, visual and human evidence.
 - Append dated verification for new work; preserve historical results and
   distinguish checks not rerun from current passes.
 - Store captures directly in `verification/` under stable state filenames.
