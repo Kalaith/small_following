@@ -1400,3 +1400,28 @@ price. These captures verify rendered output at the tested 1280 x 800 and
 No tool was installed and no export, publish or remote change was made. Human
 review of market route feel, the 35-46-round purchase curve and possible late
 grinding remains outstanding in [TODO](../TODO.md).
+
+## 2026-10-06 - Restore the title scene in published exports
+
+The configured startup scene is `res://scenes/title.tscn`, but the Web and
+Windows export presets explicitly listed only `main.tscn` and `player.tscn`.
+That left the exported project without its startup scene and produced only the
+project's green clear color. Both presets now include the title scene.
+
+- `publish.ps1 -BuildOnly` completed build
+  `fd66081ef4994248a365efd6d180f2ff`. Its Web export log contains the compiled
+  title scene and ends at `savepack: end`; only the existing cursor and
+  Blender-path warnings were emitted.
+- `publish.ps1 -SkipBuild -FTP` deployed WebHatchery production and reported
+  that Project Roost recorded the production deployment. A direct HTTP fetch
+  of `https://webhatchery.au/games/small_following/index.pck` returned 200 and
+  its SHA-256 matched this build. The `webhatchery.com.au` hostname did not
+  resolve from this executor during verification.
+- `publish-itch.ps1` uploaded both channels. `publish-itch.ps1 -Status`
+  reported completed HTML5 build 2074386 and Windows build 2074387.
+- The local headless Chrome captures stayed at Godot's asset-loading
+  indicator, so this deployment record does not claim browser pixel
+  verification. The export and live-pack checks confirm the title scene is
+  included and delivered; a normal browser reload remains the visual check.
+
+This was an export-configuration fix; gameplay test suites were not rerun.
