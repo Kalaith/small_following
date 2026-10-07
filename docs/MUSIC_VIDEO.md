@@ -1,9 +1,8 @@
 # Small Following music video - plan
 
-**Status:** proposal, 2026-10-07; revised the same day for the user's beat
-sheet (96 bars, staged set pieces, Gerald), a 3:00 runtime, the
-password spoiler and a future-direction section. Nothing here is implemented
-yet. Lyrics, timings and mix values are provisional until the user accepts them.
+**Status:** accepted, 2026-10-07. The user approved the lyrics, title and
+password gag (slice 1 gate) and settled the open choices below. Timings and
+mix values stay provisional until their own listening gates.
 
 A comedic, sung music video about the cult, in the style of a short
 "song about the product" video: a catchy original song whose lyrics follow the
@@ -26,10 +25,10 @@ music video may read the promo's helpers as reference but forks what it needs.
 | Length | **Confirmed (user):** about 3 minutes: 96 bars at 128.57 BPM (14 frames per beat) = 179.2 s. A 30-second chorus cut is reviewed first. |
 | Password | **Confirmed (user):** `PLZKTKS` is shown on screen as a deliberate joke/spoiler (section 3, bars 61-68). |
 | Future direction | **Confirmed (user):** included. Shown strictly as ideas from [FUTURE_LEVELS](FUTURE_LEVELS.md) and [GAME_DESIGN](GAME_DESIGN.md), marked as not built (section 2.1). |
-| Song title, lyrics | Revised from the user's [beat sheet](../tools/music_video/BEAT_SHEET.md) into `song.json` (2026-10-07); user approval of the fitted lyrics is the first gate. |
-| Aspect | Provisional: 16:9 1920 x 1080, 30 fps. A 9:16 short is a later, optional cut. |
-| Staging labels | Open: how visibly to mark choreographed (non-gameplay) shots. Proposed: small corner tag plus an end-card line. |
-| Distribution | Not authorized. Uploading to YouTube, itch.io or WebHatchery is a separate decision. |
+| Song title, lyrics | **Approved (user, 2026-10-07):** *Just a Small Following*, fitted from the user's [beat sheet](../tools/music_video/BEAT_SHEET.md) into `song.json`. "Talking One" stays as a sung nickname; the real upgrade is Quickened Words I, and captions and notes never call it a real upgrade name. |
+| Aspect | **Confirmed (user, 2026-10-07):** 16:9 1920 x 1080, 30 fps. A 9:16 short is a later, optional cut. |
+| Staging labels | **Confirmed (user, 2026-10-07):** a small corner tag on staged shots plus an end-card line. |
+| Distribution | **Confirmed (user, 2026-10-07):** published on YouTube as a music video. The upload itself is done or confirmed by the user at handoff; other destinations are not authorized. |
 
 ## 1. Constraints carried from the project
 
@@ -109,7 +108,7 @@ village score; chorus 3 goes up a whole tone.
 | --- | --- | --- | --- | --- |
 | 1-4 | Intro | Folding-table HQ, wake-up, **00:11** countdown | `hq_wake` set | Staged set |
 | 5-12 | Verse 1 | Garden club, "three said maybe", nine coins, Gerald's pie | Real opening round (3 recruits, 9 donations), then the `coins_pie` set | Real + staged |
-| 13-16 | Pre-chorus | Wonky circle; "worked on my ritual, now I can't stop talking!" | Real ritual and Talking I purchase; the edit tilts the frame | Real |
+| 13-16 | Pre-chorus | Wonky circle; "Talking One, inscribed, now I can't stop talking!" | Real ritual and Quickened Words I purchase; the edit tilts the frame | Real |
 | 17-24 | Chorus 1 | Four people, tiny fire, one biscuit, "plus one!" | `chorus_hq` set, then a real recruit on the shout | Staged + real |
 | 25-32 | Verse 2 | Merchants' stall; the teal cultist yells "Join us! Join us!"; on "That's enough", cut to the teal worker slumped and dejected, held through the instrumental | `stall_teal` set with the real teal helper | Staged |
 | 33-36 | Pre-chorus 2 | Bigger circle, chairs, "worldwide" map | The real 32-node circle; three-pin map plate | Real + plate |
@@ -147,13 +146,37 @@ distant voice.
 
 ## 4. Lyrics
 
-The singable lyrics are in `tools/music_video/song.json` (61 lines,
-370 syllables, 7 voices: lead, choir, Priest, shout, whisper, solo and teal).
+The singable lyrics are in `tools/music_video/song.json` (64 lines,
+369 syllables, 7 voices: lead, choir, Priest, shout, whisper, solo and teal).
 They follow the beat sheet's wording, with small changes to fit syllables to
 the melody. For example, "nothing alarming, we've got biscuits and a robe" and
 "three of them said maybe" are kept. The verse-1 line "I counted them twice"
 moves the coin gag into the lyric. "Please, okay, thanks" as the reading of
 `PLZKTKS` was confirmed by the user on 2026-10-07.
+
+**Lyric polish (user, 2026-10-07):** dense lines were loosened toward a
+lyric + response shape, so it sings rather than raps:
+- "Nothing alarming, / we've got biscuits and a robe." is split with a full
+  beat of breath. Chorus 2's "please ignore the extra robes" uses the same rhythm.
+- "...so that everyone could fit" becomes "We only moved the tables, / just
+  to squeeze a few more in."
+- Verse 1 opens with "Woke up in Bramblewick, face down on the desk", so the
+  lead's incompetence shows from the first line.
+- The pre-chorus names the upgrade: "Talking One, inscribed, now I can't stop
+  talking!" It sounds like a cursed software install.
+- The final chorus repeats "a perfectly small following" from chorus 3 instead
+  of "a funny little following". The denial escalates over the giant pull-back.
+- "Don't tell the dev" moves half a bar earlier. That leaves three beats of
+  silence after the wrong entry before "...right."
+
+The spoiler stays four bars, and the someday verse gets no extra jokes. Its
+postcards carry the humour, and its sweetness sets up "Or twenty."
+
+**Holds:** give the gags air instead of adding more. The edit holds on
+Gerald's pie, the slumped teal worker, the Priest's "...fine.", the clipboard
+turned face-down, the wrong password and "Or twenty". The crowd reveal is the
+one smash cut. Keep the mix of real gameplay and staged shots; not every
+second needs a designed gag.
 
 `python tools/music_video/song_data.py` validates the song:
 - syllable and note counts match;
