@@ -1699,3 +1699,12 @@ rejected on load and on save; analog movement and keyboard slots are untouched.
 `test_key_mapping.gd` is now 94 checks, 0 failures and `test_settings.gd`
 34 checks, 0 failures, both headless. A physical gamepad was not used: capture
 is exercised with synthetic `InputEventJoypadButton` events only.
+
+## Settings accessibility (2026-10-07)
+
+Settings controls now take focus: opening the page focuses the first control,
+arrow keys or the D-pad move between them, PageUp/PageDown or the bumpers
+switch tabs and gamepad B closes the page (unless B is bound to a game action).
+A saved `reduce_motion` preference stills payout rises and the cloak flutter.
+`test_settings.gd` is 40 checks, 0 failures, headless; real focus rendering and
+gamepad feel were not checked by a human.

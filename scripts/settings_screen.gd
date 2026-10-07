@@ -7,6 +7,7 @@ signal volume_changed(channel: String, value: float)
 signal mute_requested
 signal voice_mute_requested
 signal fullscreen_requested(value: bool)
+signal reduce_motion_requested(value: bool)
 signal binding_requested(action: String, slot: int, code: int)
 signal reset_keys_requested
 signal pad_binding_requested(action: String, button: int)
@@ -21,6 +22,7 @@ var percentages: Dictionary = {}
 var mute_button: CheckButton
 var speech_button: CheckButton
 var fullscreen_button: CheckButton
+var motion_button: CheckButton
 var close_button: Button
 var exit_button: Button
 var notice: Label
@@ -72,7 +74,9 @@ func _ready() -> void:
 		tab_style.content_margin_top = 17
 		tab_style.content_margin_bottom = 17
 		tabs.add_theme_stylebox_override(state, tab_style)
-	tabs.tab_changed.connect(func(_index: int) -> void: cancel_capture())
+	tabs.tab_changed.connect(func(_index: int) -> void:
+		cancel_capture()
+		focus_first.call_deferred())
 	body.add_child(tabs)
 	var scroll := ScrollContainer.new()
 	scroll.name = "Sound & display"
@@ -99,7 +103,7 @@ func _ready() -> void:
 		slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		slider.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		slider.custom_minimum_size = Vector2(140, 56)
-		slider.focus_mode = Control.FOCUS_NONE
+		slider.focus_mode = Control.FOCUS_ALL
 		slider.value_changed.connect(func(value: float) -> void: volume_changed.emit(entry[0], value / 100.0))
 		row.add_child(slider)
 		var percent := _label("100%", 16, Color("d7b9ff"))
@@ -117,6 +121,9 @@ func _ready() -> void:
 	fullscreen_button = _toggle("Fullscreen   ·   F11")
 	fullscreen_button.toggled.connect(func(value: bool) -> void: fullscreen_requested.emit(value))
 	rows.add_child(fullscreen_button)
+	motion_button = _toggle("Reduce motion (still payouts, no cloak flutter)")
+	motion_button.toggled.connect(func(value: bool) -> void: reduce_motion_requested.emit(value))
+	rows.add_child(motion_button)
 	_build_key_mapping()
 	var hint := _label("Movement and the round timer continue, including while choosing a key.", 14, Color("bdaece"))
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -127,7 +134,7 @@ func _ready() -> void:
 	close_button = Button.new()
 	close_button.text = "Back to game   ·   Esc"
 	close_button.custom_minimum_size.y = 56
-	close_button.focus_mode = Control.FOCUS_NONE
+	close_button.focus_mode = Control.FOCUS_ALL
 	close_button.pressed.connect(func() -> void: close_requested.emit())
 	for state in ["normal", "hover", "pressed"]:
 		var style := StyleBoxFlat.new()
@@ -144,13 +151,13 @@ func _ready() -> void:
 	var title_button := Button.new()
 	title_button.text = "Title screen"
 	title_button.custom_minimum_size = Vector2(130, 56)
-	title_button.focus_mode = Control.FOCUS_NONE
+	title_button.focus_mode = Control.FOCUS_ALL
 	title_button.pressed.connect(func() -> void: title_requested.emit())
 	actions.add_child(title_button)
 	exit_button = Button.new()
 	exit_button.text = "Exit Game"
 	exit_button.custom_minimum_size = Vector2(140, 56)
-	exit_button.focus_mode = Control.FOCUS_NONE
+	exit_button.focus_mode = Control.FOCUS_ALL
 	exit_button.pressed.connect(func() -> void: exit_requested.emit())
 	# A browser owns its tab's lifetime; SceneTree.quit cannot close it.
 	exit_button.disabled = OS.has_feature("web")
@@ -163,6 +170,38 @@ func _ready() -> void:
 	hide()
 
 
+## Keyboard and gamepad reach every control through Godot's focus navigation.
+func focus_first() -> void:
+	if not visible:
+		return
+	var target: Control = mute_button if tabs.current_tab == 0 else reset_keys_button
+	if is_instance_valid(target) and target.is_visible_in_tree():
+		target.grab_focus()
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if not visible or not capture_action.is_empty() or event.is_echo():
+		return
+	var step: int = 0
+	if event is InputEventJoypadButton and event.pressed:
+		for action in Pad.ACTIONS:
+			if event.is_action(action):
+				return
+		match event.button_index:
+			JOY_BUTTON_B:
+				close_requested.emit()
+				get_viewport().set_input_as_handled()
+				return
+			JOY_BUTTON_LEFT_SHOULDER: step = -1
+			JOY_BUTTON_RIGHT_SHOULDER: step = 1
+	elif event is InputEventKey and event.pressed:
+		if event.physical_keycode == KEY_PAGEUP: step = -1
+		elif event.physical_keycode == KEY_PAGEDOWN: step = 1
+	if step != 0:
+		tabs.current_tab = posmod(tabs.current_tab + step, tabs.get_tab_count())
+		get_viewport().set_input_as_handled()
+
+
 func _layout() -> void:
 	if panel == null:
 		return
@@ -170,13 +209,14 @@ func _layout() -> void:
 	panel.position = (size - panel.size) * 0.5
 
 
-func refresh(audio: GameAudio, fullscreen: bool, message: String) -> void:
+func refresh(audio: GameAudio, fullscreen: bool, message: String, reduce_motion: bool = false) -> void:
 	for channel in sliders:
 		sliders[channel].set_value_no_signal(audio.volumes[channel] * 100.0)
 		percentages[channel].text = "%d%%" % roundi(audio.volumes[channel] * 100.0)
 	mute_button.set_pressed_no_signal(audio.muted)
 	speech_button.set_pressed_no_signal(audio.voice_muted)
 	fullscreen_button.set_pressed_no_signal(fullscreen)
+	motion_button.set_pressed_no_signal(reduce_motion)
 	mute_button.text = "Mute all sound   ·   " + Keys.hint("toggle_audio")
 	speech_button.text = "Mute nonsense speech   ·   " + Keys.hint("toggle_voice")
 	fullscreen_button.text = "Fullscreen   ·   " + Keys.hint("toggle_fullscreen")
@@ -276,7 +316,7 @@ func _build_key_mapping() -> void:
 func _key_button(title: String) -> Button:
 	var button := Button.new()
 	button.text = title
-	button.focus_mode = Control.FOCUS_NONE
+	button.focus_mode = Control.FOCUS_ALL
 	button.custom_minimum_size.y = 48
 	button.add_theme_font_size_override("font_size", 15)
 	for state in ["normal", "hover", "pressed"]:
@@ -364,7 +404,7 @@ func capture_key(event: InputEvent) -> bool:
 func _toggle(title: String) -> CheckButton:
 	var button := CheckButton.new()
 	button.text = title
-	button.focus_mode = Control.FOCUS_NONE
+	button.focus_mode = Control.FOCUS_ALL
 	button.custom_minimum_size.y = 56
 	button.add_theme_font_size_override("font_size", 17)
 	return button

@@ -10,6 +10,7 @@ const SettingsStore = preload("res://scripts/settings_store.gd")
 const SettingsScreen = preload("res://scripts/settings_screen.gd")
 const Keys = preload("res://scripts/key_bindings.gd")
 const Pad = preload("res://scripts/pad_bindings.gd")
+const DonationPopup = preload("res://scripts/donation_popup.gd")
 const Market = preload("res://scripts/market.gd")
 const Village = preload("res://scripts/village.gd")
 const TitleScreen = preload("res://scripts/title_screen.gd")
@@ -71,6 +72,8 @@ func _ready() -> void:
 	Keys.apply(settings.key_bindings)
 	Pad.apply(settings.pad_bindings)
 	game_audio.apply_preferences(settings.values)
+	DonationPopup.reduce_motion = settings.values.reduce_motion
+	player.reduce_motion = settings.values.reduce_motion
 	game_audio.name = "GameAudio"
 	add_child(game_audio)
 	game_audio.preferences_changed.connect(_audio_preferences_changed)
@@ -329,6 +332,13 @@ func set_fullscreen(enabled: bool) -> void:
 	_queue_settings_save()
 
 
+func set_reduce_motion(enabled: bool) -> void:
+	settings.values.reduce_motion = enabled
+	player.reduce_motion = enabled
+	DonationPopup.reduce_motion = enabled
+	_queue_settings_save()
+
+
 func set_settings_visible(value: bool) -> void:
 	if is_instance_valid(village_input):
 		village_input.cancel_gesture()
@@ -339,10 +349,8 @@ func set_settings_visible(value: bool) -> void:
 	settings_screen.visible = value
 	settings_button.visible = not value and not title_active
 	if value:
-		var focused := get_viewport().gui_get_focus_owner()
-		if focused != null:
-			focused.release_focus()
 		_refresh_settings()
+		settings_screen.focus_first()
 	elif not settings_timer.is_stopped():
 		_save_settings()
 
@@ -370,7 +378,7 @@ func _refresh_settings() -> void:
 	var message: String = settings.last_error
 	if message.is_empty():
 		message = "Saving preferences..." if not settings_timer.is_stopped() else "Preferences saved automatically."
-	settings_screen.refresh(game_audio, is_fullscreen(), message)
+	settings_screen.refresh(game_audio, is_fullscreen(), message, settings.values.reduce_motion)
 	settings_screen.refresh_bindings(settings.key_bindings)
 	settings_screen.refresh_pad(settings.pad_bindings)
 
@@ -419,6 +427,7 @@ func _build_settings() -> void:
 	settings_screen.mute_requested.connect(game_audio.toggle_mute)
 	settings_screen.voice_mute_requested.connect(game_audio.toggle_voice)
 	settings_screen.fullscreen_requested.connect(set_fullscreen)
+	settings_screen.reduce_motion_requested.connect(set_reduce_motion)
 	settings_screen.binding_requested.connect(_rebind_key)
 	settings_screen.reset_keys_requested.connect(_reset_keys)
 	settings_screen.pad_binding_requested.connect(_rebind_pad)

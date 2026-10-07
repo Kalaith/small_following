@@ -3,6 +3,8 @@ extends Label
 const DURATION: float = 0.9
 const RISE: float = 12.0
 
+## Set from the saved preference; payouts then fade in place instead of rising.
+static var reduce_motion: bool = false
 var amount: int = 0
 
 
@@ -16,6 +18,7 @@ func _ready() -> void:
 	z_index = 10
 	position.x -= get_minimum_size().x * 0.5
 	var tween := create_tween().set_parallel(true)
-	tween.tween_property(self, "position:y", position.y - RISE, DURATION)
+	if not reduce_motion:
+		tween.tween_property(self, "position:y", position.y - RISE, DURATION)
 	tween.tween_property(self, "modulate:a", 0.0, DURATION * 0.5).set_delay(DURATION * 0.5)
 	tween.chain().tween_callback(queue_free)

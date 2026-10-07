@@ -8,7 +8,7 @@ const Pad = preload("res://scripts/pad_bindings.gd")
 const CURRENT_SCHEMA: int = 2
 const DEFAULTS: Dictionary = {
 	"master": 1.0, "music": 1.0, "footsteps": 1.0, "speech": 1.0,
-	"muted": false, "voice_muted": false, "fullscreen": false,
+	"muted": false, "voice_muted": false, "fullscreen": false, "reduce_motion": false,
 }
 var values: Dictionary = DEFAULTS.duplicate()
 var key_bindings: Dictionary = Keys.defaults()

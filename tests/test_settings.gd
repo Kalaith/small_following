@@ -1,4 +1,5 @@
 extends SceneTree
+const Payout = preload("res://scripts/donation_popup.gd")
 const Store = preload("res://scripts/settings_store.gd")
 const FIXTURE: String = "user://settings_test_fixture.json"
 var checks: int = 0
@@ -159,6 +160,31 @@ func _run() -> void:
 	scene.settings.path = "user://missing_settings_test_directory/settings.json"
 	scene._save_settings()
 	check(page.notice.text.contains("Could not save"), "failed preference writes are explained on the page")
+	scene.settings.path = FIXTURE
+	scene.settings.save_enabled = true
+	scene.set_settings_visible(true)
+	check(page.get_viewport().gui_get_focus_owner() == page.mute_button, "opening settings focuses the first control for keyboard and gamepad")
+	page.motion_button.button_pressed = true
+	check(scene.settings.values.reduce_motion and scene.player.reduce_motion and Payout.reduce_motion, "reduce motion switch reaches the player and payouts")
+	scene._save_settings()
+	var motion_loaded := Store.new()
+	motion_loaded.path = FIXTURE
+	motion_loaded.load_settings()
+	check(motion_loaded.values.reduce_motion, "reduce motion persists")
+	check(not motion_loaded.valid({"schema": 2, "values": {"reduce_motion": 1}}), "non-boolean reduce motion is rejected")
+	page.tabs.current_tab = 0
+	var bumper := InputEventJoypadButton.new()
+	bumper.button_index = JOY_BUTTON_RIGHT_SHOULDER
+	bumper.pressed = true
+	root.push_input(bumper)
+	check(page.tabs.current_tab == 1, "right bumper moves to the next settings tab")
+	var back := InputEventJoypadButton.new()
+	back.button_index = JOY_BUTTON_B
+	back.pressed = true
+	root.push_input(back)
+	check(not page.visible, "gamepad B closes settings")
+	page.motion_button.button_pressed = false
+	Payout.reduce_motion = false
 	scene.settings.path = FIXTURE
 	if DisplayServer.get_name() != "headless":
 		var original_mode: int = root.mode

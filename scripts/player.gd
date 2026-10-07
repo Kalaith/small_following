@@ -9,6 +9,7 @@ signal moved(distance: float, delta: float)
 
 var _trail_direction: Vector2 = Vector2.DOWN
 var _trail_length: float = 8.0
+var reduce_motion: bool = false
 var _flutter_amount: float = 0.0
 var _cloth_time: float = 0.0
 var _look_direction: Vector2 = Vector2.DOWN
@@ -77,7 +78,7 @@ func step_motion(direction: Vector2, delta: float) -> void:
 		_cloth_time += delta
 	_trail_direction = _trail_direction.lerp(target_trail, cloth_blend)
 	_trail_length = lerpf(_trail_length, 42.0 if is_moving else 8.0, cloth_blend)
-	_flutter_amount = lerpf(_flutter_amount, 5.5 if is_moving else 0.0, cloth_blend)
+	_flutter_amount = lerpf(_flutter_amount, 5.5 if is_moving and not reduce_motion else 0.0, cloth_blend)
 	queue_redraw()
 
 

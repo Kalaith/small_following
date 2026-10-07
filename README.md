@@ -38,6 +38,8 @@ From the project folder, `.\Run.ps1` also launches the game; pass `-GodotExe '<i
 | Open / close settings | Settings button / Esc |
 | Change keyboard controls | Settings → Key mapping; click a binding and press a key |
 | Toggle fullscreen | Settings switch / F11 |
+| Reduce motion | Settings → Sound & display; stills payout rises and cloak flutter |
+| Navigate settings without a mouse | Arrow keys / D-pad move focus, Enter / A activates, PageUp/PageDown or bumpers switch tabs, gamepad B closes |
 | Exit the desktop game | Settings → Exit Game |
 
 The table shows default keys. Settings → Key mapping provides primary and
