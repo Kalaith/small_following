@@ -145,6 +145,7 @@ class MarketBell extends Node2D:
 		body.collision_mask = 1
 		var collision := CollisionShape2D.new()
 		collision.name = "Shape"
+		collision.add_to_group("helper_obstacle_shape")
 		var shape := RectangleShape2D.new()
 		shape.size = Vector2(72, 25)
 		collision.shape = shape

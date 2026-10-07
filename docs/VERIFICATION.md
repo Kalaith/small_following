@@ -1,5 +1,24 @@
 # Verification record - ranked progression, 2026-10-02
 
+## 2026-10-07 - The helper's obstacle contract is a group, not a name
+
+`helper.gd`'s `configure_navigation` found footprint shapes with
+`find_children("Shape", "CollisionShape2D", true, false)`, which only
+worked because `village.gd` and `market.gd` both happened to name their
+footprint's `CollisionShape2D` "Shape" and the player's own shape is named
+`FeetCollision` instead. Three files agreed on a string literal with no
+error if one changed. Both prop scripts now call
+`collision.add_to_group("helper_obstacle_shape")` when building a
+footprint, and `configure_navigation` finds every `CollisionShape2D` in the
+subtree and filters by that group instead of by name, preserving the exact
+same per-shape geometry inflation.
+
+`tests/test_helper.gd` gained two checks built on a minimal, disposable
+actor tree (not the real village/market scenes): a shape named something
+else entirely still blocks pathing once it is in `helper_obstacle_shape`,
+and a shape literally named "Shape" no longer blocks anything once it is
+not in that group. All twenty-three suites pass; helper is now 36 checks.
+
 ## 2026-10-07 - Market presentation follows area, not an ID prefix
 
 `configure` decided `_market_circle` (seal artwork, title, subtitle, legend

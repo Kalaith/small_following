@@ -28,7 +28,13 @@ func configure_navigation(actors: Node2D) -> void:
 	navigation.offset = Vector2(CELL * 0.5, CELL * 0.5)
 	navigation.diagonal_mode = AStarGrid2D.DIAGONAL_MODE_ONLY_IF_NO_OBSTACLES
 	navigation.update()
-	var footprints := actors.find_children("Shape", "CollisionShape2D", true, false)
+	# Obstacle shapes state their contract through the "helper_obstacle_shape"
+	# group rather than a coincidental node name village.gd and market.gd must
+	# both happen to use; the player's own shape is never in that group.
+	var footprints: Array[Node] = []
+	for shape_node in actors.find_children("*", "CollisionShape2D", true, false):
+		if shape_node.is_in_group("helper_obstacle_shape"):
+			footprints.append(shape_node)
 	# Inflate by a cell half-diagonal as well as the helper radius, so edges
 	# between free cell centers cannot cut across a thin prop footprint.
 	var clearance: float = CELL * 0.707107 + BODY_RADIUS

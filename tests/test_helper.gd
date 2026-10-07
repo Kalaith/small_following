@@ -1,6 +1,7 @@
 extends SceneTree
 ## Isolated real-scene helper checks; never touches ordinary progression.
 const STEP: float = 1.0 / 60.0
+const Helper = preload("res://scripts/helper.gd")
 var checks: int = 0
 var failures: int = 0
 
@@ -149,5 +150,39 @@ func _run() -> void:
 	check(helper.target_index == -1 and not helper.speaking, "helper rests without a target when every listener is converted")
 	scene.queue_free()
 	await process_frame
+	await _test_obstacle_group_contract()
 	print("HELPER RESULT: %d checks, %d failures" % [checks, failures])
 	quit(0 if failures == 0 else 1)
+
+
+func _test_obstacle_group_contract() -> void:
+	# Blocking must follow the "helper_obstacle_shape" group, not a shape
+	# node coincidentally named "Shape" (see village.gd/market.gd).
+	var actors := Node2D.new()
+	root.add_child(actors)
+	var grouped_body := StaticBody2D.new()
+	var grouped_shape := CollisionShape2D.new()
+	grouped_shape.name = "AnythingAtAll"
+	grouped_shape.add_to_group("helper_obstacle_shape")
+	var circle := CircleShape2D.new()
+	circle.radius = 20.0
+	grouped_shape.shape = circle
+	grouped_body.add_child(grouped_shape)
+	grouped_body.position = Vector2(300, 300)
+	actors.add_child(grouped_body)
+	var ungrouped_body := StaticBody2D.new()
+	var ungrouped_shape := CollisionShape2D.new()
+	ungrouped_shape.name = "Shape"
+	var other_circle := CircleShape2D.new()
+	other_circle.radius = 20.0
+	ungrouped_shape.shape = other_circle
+	ungrouped_body.add_child(ungrouped_shape)
+	ungrouped_body.position = Vector2(600, 300)
+	actors.add_child(ungrouped_body)
+	var helper := Helper.new()
+	actors.add_child(helper)
+	helper.configure_navigation(actors)
+	check(helper.navigation.is_point_solid(helper._cell(Vector2(300, 300))), "a shape in the obstacle group blocks pathing regardless of its node name")
+	check(not helper.navigation.is_point_solid(helper._cell(Vector2(600, 300))), "a shape named \"Shape\" but outside the obstacle group no longer blocks pathing")
+	actors.queue_free()
+	await process_frame

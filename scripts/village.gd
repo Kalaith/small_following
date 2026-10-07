@@ -163,6 +163,7 @@ class VillageProp:
 		body.collision_mask = 1
 		var collision: CollisionShape2D = CollisionShape2D.new()
 		collision.name = "Shape"
+		collision.add_to_group("helper_obstacle_shape")
 		if kind == "tree" or kind == "well":
 			var circle: CircleShape2D = CircleShape2D.new()
 			circle.radius = 17.0 if kind == "tree" else 43.0
