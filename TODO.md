@@ -5,7 +5,6 @@ and open design decisions are not listed here; their exit conditions live in
 [milestones](docs/MILESTONES.md) and the limits they leave open are stated in
 the [verification record](docs/VERIFICATION.md).
 
-- [ ] Resolve the installed editor's `_EDITOR_GET` import-check error and unexplained automatic-shutdown exit status; keep those limitations separate from runtime check results.
 
 ## Code health
 

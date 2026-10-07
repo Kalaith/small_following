@@ -1708,3 +1708,16 @@ switch tabs and gamepad B closes the page (unless B is bound to a game action).
 A saved `reduce_motion` preference stills payout rises and the cloak flutter.
 `test_settings.gd` is 40 checks, 0 failures, headless; real focus rendering and
 gamepad feel were not checked by a human.
+
+## Editor import error: diagnosed as an engine defect (2026-10-07)
+
+`_EDITOR_GET` (`editor/editor_settings.cpp:1144`) with exit status 1 is not
+caused by this project or by the user's editor settings. With the installed
+Godot 4.2.2 mono console build, `--headless --import` on a one-line empty
+`project.godot` and on a brand-new editor config directory (`APPDATA` pointed
+at an empty folder) reproduces the identical error and exit 1. Disabling
+Blender import in this project removed the unrelated Blender warning but not
+the error, so that change was not kept. Runtime launches (`--headless --quit`)
+and every test suite exit 0, so runtime results stay separate from the import
+check. The only remedy is a different engine build, which is a human decision;
+the item is therefore no longer agent-actionable.

@@ -153,7 +153,8 @@ $godotExe = 'C:\Program Files\Godot\Godot_v4.2.2-stable_mono_win64_console.exe'
 & $godotExe --headless --fixed-fps 60 --path . --script res://tests/test_touch_movement.gd
 ```
 
-The installed editor has a recorded `_EDITOR_GET` import failure. Preserve
+The installed editor has a recorded `_EDITOR_GET` import failure (an engine defect that
+reproduces in an empty project). Preserve
 and report the current result; successful runtime suites do not make import
 clean. See [VERIFICATION](VERIFICATION.md) for the historical evidence.
 
