@@ -1,6 +1,7 @@
 # Small Following music video - plan
 
-**Status:** proposal, 2026-10-07; revised the same day for a 3:00 runtime, the
+**Status:** proposal, 2026-10-07; revised the same day for the user's beat
+sheet (96 bars, staged set pieces, Gerald), a 3:00 runtime, the
 password spoiler and a future-direction section. Nothing here is implemented
 yet. Lyrics, timings and mix values are provisional until the user accepts them.
 
@@ -22,10 +23,10 @@ music video may read the promo's helpers as reference but forks what it needs.
 | Voice approach | **Confirmed (user, 2026-10-07):** on-brand and fully original. A synthesized formant "cult choir" sings vowel-matched nonsense syllables; the real lyrics appear as karaoke captions. No recorded voices, samples, song generators, voice services or model downloads. |
 | Separate project | **Confirmed:** new `tools/music_video/` and ignored `exports/music_video/`. |
 | Game content shown | **Confirmed:** current build, which has changed since the promo (see section 2). |
-| Length | **Confirmed (user):** about 3 minutes, so 90 bars at 120 BPM = 3:00. A 30-second chorus cut is reviewed first. |
-| Password | **Confirmed (user):** `PLZKTKS` is shown on screen as a deliberate joke/spoiler (section 3, bars 61-72). |
+| Length | **Confirmed (user):** about 3 minutes: 96 bars at 128.57 BPM (14 frames per beat) = 179.2 s. A 30-second chorus cut is reviewed first. |
+| Password | **Confirmed (user):** `PLZKTKS` is shown on screen as a deliberate joke/spoiler (section 3, bars 61-68). |
 | Future direction | **Confirmed (user):** included. Shown strictly as ideas from [FUTURE_LEVELS](FUTURE_LEVELS.md) and [GAME_DESIGN](GAME_DESIGN.md), marked as not built (section 2.1). |
-| Song title, lyrics | Open: draft in section 4; user approval is the first gate. |
+| Song title, lyrics | Revised from the user's [beat sheet](../tools/music_video/BEAT_SHEET.md) into `song.json` (2026-10-07); user approval of the fitted lyrics is the first gate. |
 | Aspect | Provisional: 16:9 1920 x 1080, 30 fps. A 9:16 short is a later, optional cut. |
 | Staging labels | Open: how visibly to mark choreographed (non-gameplay) shots. Proposed: small corner tag plus an end-card line. |
 | Distribution | Not authorized. Uploading to YouTube, itch.io or WebHatchery is a separate decision. |
@@ -95,98 +96,91 @@ README.md.
 
 ## 3. Song structure and shot list
 
-The tempo is 120 BPM in 4/4. One beat = 0.5 s = **15 frames**, and one bar =
-2 s = 60 frames, so every cut lands on a whole frame. The key is A minor/C
-major, matching the village score, so the intro can quote its waltz motif.
+The user's [beat sheet](../tools/music_video/BEAT_SHEET.md) (2026-10-07) is
+the creative direction. `tools/music_video/song.json` is the authoritative
+lyrics, melody and shot list derived from it; this section summarizes it.
 
-| Bars | Time | Section | Footage | Real / staged |
+The tempo is **128.57 BPM in 4/4**: one beat = **14 frames** at 30 fps
+(0.4667 s), so every cut and lyric lands on a whole frame. 96 bars =
+5,376 frames = **179.2 s**, about 3:00. The key is A minor/C major, matching the
+village score; chorus 3 goes up a whole tone.
+
+| Bars | Section | Story beat (lyric) | Main footage | Real / staged |
 | --- | --- | --- | --- | --- |
-| 1-4 | 0:00 | Intro: music-box quote of the village score, straightened into 4/4 | Live title screen, slow push in; title card | Real screen |
-| 5-12 | 0:08 | Verse 1: "three little converts" | Fresh Bramblewick round: walk out, Garden club, 3 recruits; `+3` popups aligned to downbeats | Real gameplay |
-| 13-16 | 0:24 | Pre-chorus | Ritual: Talking I selected on beat 1, inscribed on the bar-16 downbeat | Real ritual actions, beat-timed |
-| 17-24 | 0:32 | Chorus 1 | Full-core round, 15 recruits; listeners hop on the beat; cut every bar | Real route + staged hops |
-| 25-32 | 0:48 | Verse 2: "I hired a friend" | Meadow/East Lane groups, merchants and purses, teal helper recruiting | Real gameplay |
-| 33-36 | 1:04 | Pre-chorus 2 | Constellation tour: one branch focused per beat across all eight | Real ritual views, beat-timed |
-| 37-44 | 1:12 | Chorus 2 | Expanded round; recruited listeners form a conga line behind the cultist | Staged choreography |
-| 45-52 | 1:28 | Bridge: half-time call and response | Town Debate: Skeptic, Guard, Zealot cut by bar; the Priest's three objections land on "Objection!" | Real encounter, real victory |
-| 53-60 | 1:44 | Chorus 3, key change up a tone | Lit centre, travel to Bellmarket, guilds and patrons, five-petal circle | Real screens and route |
-| 61-64 | 2:00 | **Spoiler breakdown:** band drops to kick and bass; "SPOILER ALERT" plate | Title screen. Wrong guess `PASSWORD` shows the real "That password did not open the seal. Try again." | Real UI; password field unmasked (staged) |
-| 65-72 | 2:08 | **Password chant:** "P-L-Z-K-T-K-S!" one letter per beat, then "please, okay, thanks!" | Letters typed on beat; big caption stamps per letter; "The seal is open."; both level buttons appear; cut straight into Bellmarket | Real UI and real travel; unmasked field (staged) |
-| 73-84 | 2:24 | **"Someday" verse:** dreamy half-time, music box returns | Six future postcards, 2 bars each (section 2.1), each stamped "IDEA - NOT BUILT YET" | Illustrated plates, not gameplay |
-| 85-88 | 2:48 | Final tag chorus: "...just a small following - for now" | Fast recap montage: one bar per area/screen, ending on the cultist alone at the entrance | Real footage |
-| 89-90 | 2:56 | Button ending | End card: title, "Some of these may happen. None of them are promises." | Title plate |
+| 1-4 | Intro | Folding-table HQ, wake-up, **00:11** countdown | `hq_wake` set | Staged set |
+| 5-12 | Verse 1 | Garden club, "three said maybe", nine coins, Gerald's pie | Real opening round (3 recruits, 9 donations), then the `coins_pie` set | Real + staged |
+| 13-16 | Pre-chorus | Wonky circle, Talking One, fast talking | Real ritual and Talking I purchase; the edit tilts the frame | Real |
+| 17-24 | Chorus 1 | Four people, tiny fire, one biscuit, "plus one!" | `chorus_hq` set, then a real recruit on the shout | Staged + real |
+| 25-32 | Verse 2 | Merchants' stall, teal cultist's solo, "That's enough", VERY sign | `stall_teal` set with the real teal helper | Staged |
+| 33-36 | Pre-chorus 2 | Bigger circle, chairs, "worldwide" map | The real 32-node circle; three-pin map plate | Real + plate |
+| 37-44 | Chorus 2 | Tight framing, NOTHING ALARMING banner, robe racks, square takeover | `crowd` / `crowd_wide` sets | Staged |
+| 45-52 | Bridge | Priest "No." / cult "OBJECTION!" x3 / "...fine." | Real Priest encounter (it really has 3 objections) plus staged lectern and bell | Real + staged |
+| 53-60 | Chorus 3 (key change) | Procession, statue, Bellmarket, clipboard: "stop counting" | Procession set, real Bellmarket, clipboard set | Staged + real |
+| 61-64 | Spoiler | "Psst... don't tell the dev"; wrong entry; "...right. Not that one." | Real title screen and real seal error | Real UI, staged entry |
+| 65-68 | Password chant | P! L! Z! K! T! K! S! / PLEASE! OKAY! THANKS! | Letters typed on beat; the seal opens; "Developer convenience feature" subtitle | Real UI, staged unmasking |
+| 69-80 | Someday | Garden, harbour, fair, stargazers, abbey, helpers and magic | Six future postcards, each stamped **IDEA - NOT BUILT YET** | Plates |
+| 81-84 | "Or twenty" | Enormous daydream, then "Or twenty. Twenty would be nice." | `vision-enormous` plate (labelled DAYDREAM), then `hq_humble` | Plate + staged |
+| 85-92 | Final chorus | The HQ is quietly not humble; golden idol; pull-back; industrial biscuit tin | `hq_final` and `pullback` sets | Staged |
+| 93-96 | Tag | Procession over bridge and hill; distant "...for now."; QUEUE plank sign | `pullback`, then the end-card plate | Staged + plate |
 
-Total: 90 bars, 180 s, 5,400 frames.
+**Password interpretation:** in the game, `PLZKTKS` works on the first try.
+To keep the beat sheet's failed first attempt truthful, the note is held
+upside down and read as `SKTKZLP`. That entry produces the game's real
+"That password did not open the seal. Try again." The lead says
+"...right", turns the paper the right way up, and the chant enters the real
+password.
 
-The choir grows with the story. One lead voice (the cultist) sings verse 1.
-Backing voices are added as the scene's following grows (1, 3, 6, then about
-12 layered voices by chorus 3). The spoiler breakdown drops back to the lead
-voice "whispering" the secret. The final tag ends on a single voice again,
-which is the punchline: still a small following.
+**Real-game rhymes kept deliberately:**
+- The opening round really earns 3 recruits and 9 donations.
+- The teal cultist is the real teal-robed helper.
+- The Priest really raises three objections.
+- "Make the circle bigger" plays over the real circle, which grew to 32 nodes.
 
-## 4. Draft lyrics (provisional, for approval)
+The choir grows with the story: one voice in verse 1, then 3, 6 and 12 by
+chorus 3, the password chant and the final chorus. It drops back to one voice
+for the spoiler, "Or twenty" and the tag, so the final "...for now" is a single
+distant voice.
 
-Working title: **"Just a Small Following"**
+## 4. Lyrics
 
-> **Verse 1**
-> Woke up in Bramblewick, robe on, hood up,
-> eleven seconds on the clock and a heart full of hope.
-> Talked to the garden club, they said "well, maybe" -
-> three little converts and nine little coins.
->
-> **Pre-chorus**
-> Take it to the circle, light a little line,
-> Talking One, inscribed, now I'm talking all the time.
->
-> **Chorus**
-> It's just a small following (small following),
-> nothing to fear, we've got snacks and a robe.
-> It's just a small following (small following),
-> eleven more seconds and we'll ask you again.
->
-> **Verse 2**
-> Bought a new gathering, merchants with purses,
-> hired a friend in teal and he does his own verses.
->
-> **Bridge** (the Priest, low choir voice; the cultist answers)
-> Priest says no - *Objection!*
-> Priest says no - *Objection!*
-> Priest says no - *Objection!*
-> Priest says... *...fine.*
->
-> **Chorus 3** (key change)
-> It's a medium following (medium following),
-> Bellmarket's waiting with feathers and fans...
->
-> **Spoiler breakdown** (whispered lead)
-> Psst. Don't wanna grind the village? Don't tell the dev...
-> *(on screen: PASSWORD - "That password did not open the seal.")*
-> ...not that one.
->
-> **Password chant** (full choir, one letter per beat)
-> P! L! Z! K! T! K! S!
-> Please - okay - thanks!
-> Skip the whole village, straight to the market,
-> your upgrades come with you, the seal says yes.
->
-> **"Someday" verse** (dreamy, half-time)
-> Someday a garden with a toast at the end,
-> a harbour of captains, a fair full of friends,
-> a tower of stargazers, an abbey up high,
-> a few more helpers and a little magic... maybe.
->
-> **Final tag**
-> But for now it's just a small following...
-> *(one voice)* ...for now.
+The singable lyrics are in `tools/music_video/song.json` (62 lines,
+381 syllables, 7 voices: lead, choir, Priest, shout, whisper, solo and teal).
+They follow the beat sheet's wording, with small changes to fit syllables to
+the melody. For example, "nothing alarming, we've got biscuits and a robe" and
+"three of them said maybe" are kept. The verse-1 line "I counted them twice"
+moves the coin gag into the lyric. "Please, okay, thanks" as the reading of
+`PLZKTKS` was confirmed by the user on 2026-10-07.
 
-Rough edges (verse 2's second half, the chorus 3 tail) are left for the lyric
-pass in slice 1. "Please, okay, thanks" as the reading of `PLZKTKS` was
-confirmed by the user on 2026-10-07.
+`python tools/music_video/song_data.py` validates the song:
+- syllable and note counts match;
+- pitches are in range;
+- sections and shots tile all 96 bars;
+- no voice overlaps itself;
+- every take and plate named by a shot is known;
+- future ideas are labelled plates, never gameplay.
 
-**Slice 1 delivered (2026-10-07):** the full lyrics, melody, sections and shot
-list now live in `tools/music_video/song.json`, which supersedes this draft.
-`python tools/music_video/song_data.py` validates it: 90 bars, 180 s,
-54 lines, 396 syllables, 22 shots. Lyrics approval is still the user gate.
+### 4.1 Staged set pieces
+
+Most beat-sheet gags need things the game does not contain. They are built
+**inside the real renderer during capture only**, using a capture-side
+`mv_set.gd` that draws props in the game's own procedural shape language
+(the outlines, palette and listener bodies from `gathering.gd` and
+`player.gd`). Nothing is added to `scripts/` or `scenes/`.
+
+| Element | How it is staged |
+| --- | --- |
+| Folding-table HQ (table, candle, handwritten sign, robe on a hook, biscuit tin, three mismatched chairs) | `mv_set.gd` props on an empty patch of the Bramblewick map |
+| Gerald and the pie | A capture-spawned listener with a pie prop, reused in every Gerald beat |
+| Countdown, FOLLOWERS: 3, +1 FOLLOWER | Edit overlays; the countdown starts from the game's real 11 seconds |
+| Confetti (one piece), tiny fire, a single spark, lightning, the explosion | `CPUParticles2D` or drawn props during capture, or flashes in the edit |
+| Crowds of 30, then hundreds; robe racks; the NOTHING ALARMING banner; the statue; tables everywhere | Extra capture-spawned listeners and props; never counted as game recruits |
+| Lectern, bell, smoke and dark lighting in the bridge | Props and a `CanvasModulate` around the real Priest encounter |
+| Clipboard, VERY sign, chairs, the industrial biscuit tin, golden idol | Props, plus close-ups made in the edit |
+| Teal "wind machine" spotlight | A light-cone prop and robe cloth driven by real `step_motion` |
+| Map with three pins, the enormous vision, the queue sign | Pillow-drawn plates in the same style as the postcards |
+
+Staged shots carry the corner tag. The video never says that crowds, the HQ or
+Gerald are game features.
 
 ## 5. Pipeline
 
@@ -208,7 +202,7 @@ song.json ──► compose.py ──► backing.wav + beats.json
 
 ```json
 {
-  "bpm": 120, "beats_per_bar": 4, "key": "A minor",
+  "fps": 30, "frames_per_beat": 14, "beats_per_bar": 4, "key": "A minor",
   "sections": [{"id": "verse1", "bars": [5, 12], "choir_voices": 1, "shot": "opening"}],
   "lines": [
     {"bar": 5, "beat": 1, "text": "Woke up in Bramblewick",
@@ -223,7 +217,7 @@ song.json ──► compose.py ──► backing.wav + beats.json
 
 A validator in the tools checks that:
 - note beats fill each line;
-- sections tile all 90 bars;
+- sections tile all 96 bars;
 - shot ranges cover the timeline without gaps;
 - every take named by a shot exists in the capture plan;
 - every future-direction shot is a `plate` with the not-built label, never a `take`.
@@ -291,7 +285,7 @@ second frame saved, funded build setup cut away, persistence disabled.
   `purchase_button.pressed` are fired on frames taken from `beats.json`.
 - **Password take:**
   1. `show_title()`, then set `title_screen.password_input.secret = false` (staged, labelled) so the letters are readable.
-  2. Type `PASSWORD` one character per beat and submit, which shows the real error.
+  2. Type `SKTKZLP` (the upside-down note) one character per beat and submit, which shows the real error.
   3. Clear the field and type `PLZKTKS` one letter per beat, then submit through the real `text_submitted` path.
   4. Hold on "The seal is open." and the revealed level buttons, then press `2 · Bellmarket` to travel for real.
 
@@ -346,7 +340,7 @@ second frame saved, funded build setup cut away, persistence disabled.
 ### 5.7 `review_music_video.py`
 
 The script checks that:
-- the frame count is 5,400 (180 s x 30), and a full decode reports no errors;
+- the frame count is 5,376 (179.2 s x 30), and a full decode reports no errors;
 - loudness and true peak meet the targets, with no silence gaps.
 
 It also produces:
@@ -379,14 +373,14 @@ Commit each slice when it is complete and validated (see
 
 | # | Slice | Outcome | Checks | Human gate |
 | --- | --- | --- | --- | --- |
-| 1 | Song data | `song.json` with full lyrics, melody, sections and shots; validator | Validator passes; 90 bars tile; future shots are plates | **User approves lyrics, title and the password gag** |
-| 2 | Backing track | `backing.wav` + `beats.json` | Duration 180 s; 360 beats; loudness measured | Listen |
+| 1 | Song data | `song.json` with full lyrics, melody, sections and shots; validator | Validator passes; 96 bars tile; future shots are plates | **User approves lyrics, title and the password gag** |
+| 2 | Backing track | `backing.wav` + `beats.json` | Duration 179.2 s; 384 beats; loudness measured | Listen |
 | 3 | Voice prototype | 8-bar chorus with choir, plus the "P-L-Z" shout | Pitch tracks notes (measured); no clipping | **User listening test: keep, retune or rethink** |
 | 4 | Full vocals and mix | `song.wav` | -14 LUFS ±1, ≤ -1 dBTP | Listen |
 | 5 | Animatic | Song + captions + postcards over the backdrop, no footage | Caption timings match note starts | Sing-along check |
 | 6 | Capture | All takes + `events.json` | Promo-style recruit/victory assertions; password and travel assertions; 0 failures | Inspect contact frames |
-| 7 | 30 s chorus cut | Bars 17-32 edited | Frame count; cuts on bar frames | **First real review** |
-| 8 | Full video | 3:00 MP4 | Full review script | Watch-through |
+| 7 | 30 s chorus cut | Bars 17-32 (29.9 s) edited | Frame count; cuts on bar frames | **First real review** |
+| 8 | Full video | 179.2 s MP4 | Full review script | Watch-through |
 | 9 | Handoff | README section, VERIFICATION entry, provenance | Link check | - |
 
 ## 8. Risks
@@ -408,6 +402,6 @@ Commit each slice when it is complete and validated (see
   loudly rather than drifting.
 - **16:9 crop clips ritual or title text.** Checked in slice 6, with the framed
   layout as a fallback.
-- **Render time and disk use.** About 5,400 used frames (plus handles) at
+- **Render time and disk use.** About 5,376 used frames (plus handles) at
   1920 x 1200 PNG is roughly 12-16 GB in ignored exports. Delete capture frames
   after encoding shots if space is tight.

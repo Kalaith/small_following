@@ -63,8 +63,13 @@ def line_start(song: dict, line: dict) -> float:
     return (line["bar"] - 1) * song["beats_per_bar"] + (line["beat"] - 1)
 
 
+def bpm(song: dict) -> float:
+    return 60.0 * song["fps"] / song["frames_per_beat"]
+
+
 def seconds(song: dict, beat: float) -> float:
-    return beat * 60.0 / song["bpm"]
+    """Beats are a whole number of video frames, so cuts land on exact frames."""
+    return beat * song["frames_per_beat"] / song["fps"]
 
 
 def load(path: Path = SONG) -> dict:
@@ -150,7 +155,9 @@ def main() -> int:
     per_bar = song["beats_per_bar"]
     duration = seconds(song, song["bars"] * per_bar)
     sung = sum(len(syllables(line["syl"])) for line in song["lines"])
-    print(f"VALID: {song['title']} / {song['bars']} bars / {duration:.0f}s / "
+    frames = song["bars"] * per_bar * song["frames_per_beat"]
+    print(f"VALID: {song['title']} / {bpm(song):.2f} BPM / {song['bars']} bars / "
+          f"{duration:.1f}s / {frames} frames / "
           f"{len(song['lines'])} lines / {sung} syllables / {len(song['shots'])} shots")
     return 0
 
