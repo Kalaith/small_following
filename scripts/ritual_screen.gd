@@ -123,7 +123,7 @@ func configure(catalog: Array, progression: Progression) -> void:
 	dismiss_demo_message()
 	_hovered_id = ""
 	_catalog = catalog
-	_market_circle = not catalog.is_empty() and str(catalog[0].get("id", "")).begins_with("market_")
+	_market_circle = not catalog.is_empty() and str(catalog[0].get("area", "bramblewick")) == "bellmarket"
 	_progression = progression
 	_by_id.clear()
 	node_positions = Layout.build(catalog)

@@ -1,5 +1,25 @@
 # Verification record - ranked progression, 2026-10-02
 
+## 2026-10-07 - Market presentation follows area, not an ID prefix
+
+`configure` decided `_market_circle` (seal artwork, title, subtitle, legend
+and return button) from `catalog[0].id.begins_with("market_")` — a single
+string prefix on whichever item happened to sort first. It now reads that
+same item's validated `area` field (`"bellmarket"`, defaulting to
+`"bramblewick"` like every other area check in `progression.gd`), the same
+field `data/upgrades.json` already sets on every market definition.
+`progression.active_area` was considered but rejected: `test_market_ritual.gd`
+deliberately configures the separate 144-node fixture against a progression
+whose `active_area` is still `"bellmarket"` from an earlier step and expects
+the generic scalable fallback, not the market seal, so the signal has to
+live on the catalog's own entries, not the progression object.
+
+`tests/test_market_ritual.gd` gained two checks: a one-item catalog whose ID
+does not start with `market_` but carries `area: bellmarket` still renders
+the market seal, and a village-area item whose ID happens to start with
+`market_` does not. All twenty-three suites pass unchanged except market
+ritual, now 112 checks.
+
 ## 2026-10-07 - Guarded effect-text lookup for merchant/trial/faith nodes
 
 `_effect_text` indexed a literal label dictionary with `[key]` for

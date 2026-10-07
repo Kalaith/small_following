@@ -87,6 +87,16 @@ func _run() -> void:
 	check(screen.node_positions.size() == 144 and not screen._market_circle, "separate large fixture still uses scalable fallback")
 	screen.focus_node("fixture_12_11")
 	check(screen.hit_test(screen.world_to_screen(screen.nodes_position("fixture_12_11"))) == "fixture_12_11", "fixture distant node transform remains usable")
+	var renamed_market := Progression.new()
+	renamed_market.save_enabled = false
+	renamed_market.catalog = [{"id": "not_prefixed_at_all", "title": "Renamed", "area": "bellmarket", "branch": "market_talk", "ring": 1, "cost": 1, "requires": [], "effect": {"speech_speed_add": 0.1}}]
+	screen.configure(renamed_market.catalog, renamed_market)
+	check(screen._market_circle, "market presentation follows the validated area field, not a catalog[0] ID prefix")
+	var disguised_village := Progression.new()
+	disguised_village.save_enabled = false
+	disguised_village.catalog = [{"id": "market_shaped_village_node", "title": "Disguised", "area": "bramblewick", "branch": "talk", "ring": 1, "cost": 1, "requires": [], "effect": {"speech_speed_add": 0.1}}]
+	screen.configure(disguised_village.catalog, disguised_village)
+	check(not screen._market_circle, "a village node whose ID happens to start with market_ does not trigger market presentation")
 	screen.queue_free()
 	await process_frame
 	print("MARKET RITUAL RESULT: %d checks, %d failures" % [checks, failures])
