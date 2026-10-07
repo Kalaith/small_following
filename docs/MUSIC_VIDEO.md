@@ -111,7 +111,7 @@ village score; chorus 3 goes up a whole tone.
 | 5-12 | Verse 1 | Garden club, "three said maybe", nine coins, Gerald's pie | Real opening round (3 recruits, 9 donations), then the `coins_pie` set | Real + staged |
 | 13-16 | Pre-chorus | Wonky circle; "worked on my ritual, now I can't stop talking!" | Real ritual and Talking I purchase; the edit tilts the frame | Real |
 | 17-24 | Chorus 1 | Four people, tiny fire, one biscuit, "plus one!" | `chorus_hq` set, then a real recruit on the shout | Staged + real |
-| 25-32 | Verse 2 | Merchants' stall, teal cultist's solo, "That's enough", VERY sign | `stall_teal` set with the real teal helper | Staged |
+| 25-32 | Verse 2 | Merchants' stall; the teal cultist yells "Join us! Join us!"; on "That's enough", cut to the teal worker slumped and dejected, held through the instrumental | `stall_teal` set with the real teal helper | Staged |
 | 33-36 | Pre-chorus 2 | Bigger circle, chairs, "worldwide" map | The real 32-node circle; three-pin map plate | Real + plate |
 | 37-44 | Chorus 2 | Tight framing, NOTHING ALARMING banner, robe racks, square takeover | `crowd` / `crowd_wide` sets | Staged |
 | 45-52 | Bridge | Priest "No." / cult "OBJECTION!" x3 / "...fine." | Real Priest encounter (it really has 3 objections) plus staged lectern and bell | Real + staged |
@@ -130,6 +130,10 @@ upside down and read as `SKTKZLP`. That entry produces the game's real
 "...right", turns the paper the right way up, and the chant enters the real
 password.
 
+**Departure from the beat sheet (user, 2026-10-07):** the VERY SMALL
+FOLLOWING sign and its lyric are cut from verse 2. Bars 29-32 instead
+hold on the dejected teal worker after "That's enough".
+
 **Real-game rhymes kept deliberately:**
 - The opening round really earns 3 recruits and 9 donations.
 - The teal cultist is the real teal-robed helper.
@@ -143,8 +147,8 @@ distant voice.
 
 ## 4. Lyrics
 
-The singable lyrics are in `tools/music_video/song.json` (62 lines,
-380 syllables, 7 voices: lead, choir, Priest, shout, whisper, solo and teal).
+The singable lyrics are in `tools/music_video/song.json` (61 lines,
+370 syllables, 7 voices: lead, choir, Priest, shout, whisper, solo and teal).
 They follow the beat sheet's wording, with small changes to fit syllables to
 the melody. For example, "nothing alarming, we've got biscuits and a robe" and
 "three of them said maybe" are kept. The verse-1 line "I counted them twice"
@@ -175,7 +179,7 @@ Most beat-sheet gags need things the game does not contain. They are built
 | Confetti (one piece), tiny fire, a single spark, lightning, the explosion | `CPUParticles2D` or drawn props during capture, or flashes in the edit |
 | Crowds of 30, then hundreds; robe racks; the NOTHING ALARMING banner; the statue; tables everywhere | Extra capture-spawned listeners and props; never counted as game recruits |
 | Lectern, bell, smoke and dark lighting in the bridge | Props and a `CanvasModulate` around the real Priest encounter |
-| Clipboard, VERY sign, chairs, the industrial biscuit tin, golden idol | Props, plus close-ups made in the edit |
+| Clipboard, chairs, the industrial biscuit tin, golden idol | Props, plus close-ups made in the edit |
 | Teal "wind machine" spotlight | A light-cone prop and robe cloth driven by real `step_motion` |
 | Map with three pins, the enormous vision, the queue sign | Pillow-drawn plates in the same style as the postcards |
 
