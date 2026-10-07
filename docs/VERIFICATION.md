@@ -1,5 +1,22 @@
 # Verification record - ranked progression, 2026-10-02
 
+## 2026-10-07 - Guarded effect-text lookup for merchant/trial/faith nodes
+
+`_effect_text` indexed a literal label dictionary with `[key]` for
+merchant/trial/faith nodes; a key present in the node's effect but absent
+from that dictionary would throw instead of degrading. It now mirrors the
+market branch just above it: a `current.has(key)` guard before anything
+else, `labels.get(key, key.replace("_", " ").capitalize())` instead of
+`[key]`, and `not next.has(key)` added to the existing `complete` check
+before reading `next[key]`. All twelve current merchant/trial/faith nodes
+still map to their named labels, so this was latent, not an active defect.
+
+`tests/test_ritual_readability.gd` gained a check: a hand-built node whose
+single effect key (`speech_frequency`) exists in `effect_preview`'s output
+but has no dedicated label now shows a readable capitalized fallback
+instead of crashing on selection. All twenty-three suites pass (readability
+now 83 checks).
+
 ## 2026-10-07 - Typed progression, audio and market-gathering references
 
 The code health review also found `ritual_screen.gd`'s `_progression` typed

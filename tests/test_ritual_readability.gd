@@ -3,6 +3,7 @@ extends SceneTree
 ## All progression is in memory; this suite never opens the player's save.
 const Fixture = preload("res://tests/fixtures/ritual_fixture.gd")
 const Layout = preload("res://scripts/ritual_layout.gd")
+const Progression = preload("res://scripts/progression.gd")
 var checks: int = 0
 var failures: int = 0
 
@@ -35,6 +36,7 @@ func _run() -> void:
 	_test_paths_and_hover(screen)
 	_test_navigation_controls(screen)
 	_test_keyboard_gamepad_navigation(screen)
+	_test_effect_text_guard(screen, scene.progression)
 	_test_overview_control(screen)
 	_test_transforms(screen)
 	_test_labels(screen)
@@ -225,6 +227,24 @@ func _test_keyboard_gamepad_navigation(screen) -> void:
 	check(screen.selected_id == reached, "repeating the same direction at the accessible edge holds the current selection instead of erroring")
 	screen.navigate(Vector2.ZERO)
 	check(screen.selected_id == reached, "a zero direction is a no-op")
+
+
+func _test_effect_text_guard(screen, real_progression) -> void:
+	# A merchant/trial/faith node whose single effect key exists in
+	# effect_preview's totals but has no dedicated label must degrade to a
+	# readable fallback instead of crashing on a literal dictionary index.
+	var hazard := Progression.new()
+	hazard.save_enabled = false
+	hazard.coins = 10
+	hazard.catalog = [{
+		"id": "hazard_1", "title": "Hazard", "description": "",
+		"branch": "trial", "ring": 1, "cost": 1, "requires": [],
+		"effect": {"speech_frequency": 1.0},
+	}]
+	screen.configure(hazard.catalog, hazard)
+	screen.select_node("hazard_1")
+	check(not screen._effect_label.text.is_empty() and screen._effect_label.text.begins_with("Speech Frequency"), "an unmapped but known effect key falls back to a readable label instead of crashing")
+	screen.configure(real_progression.catalog, real_progression)
 
 
 func _test_overview_control(screen) -> void:

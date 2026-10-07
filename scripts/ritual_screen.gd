@@ -519,8 +519,11 @@ func _effect_text(id: String, branch: String, complete: bool) -> String:
 	if branch in ["merchant", "trial", "faith"]:
 		var item: Dictionary = _by_id[id]
 		var key: String = str(item.effect.keys()[0])
-		var label: String = {"merchant_unlock": "MERCHANT PAIR", "merchant_conviction_add": "MERCHANT CONVICTION", "merchant_donation_add": "GOLD PER MERCHANT", "encounter_unlock": "TOWN DEBATE", "encounter_conviction_add": "ALL OPPONENTS / CONVICTION", "skeptic_conviction_add": "SKEPTIC / CONVICTION", "guard_conviction_add": "GUARD / CONVICTION", "zealot_conviction_add": "ZEALOT / CONVICTION", "priest_conviction_add": "PRIEST / CONVICTION"}[key]
-		return "%s\n%.1f%s" % [label, current[key], "" if complete else " -> %.1f" % next[key]]
+		if not current.has(key):
+			return ""
+		var labels: Dictionary = {"merchant_unlock": "MERCHANT PAIR", "merchant_conviction_add": "MERCHANT CONVICTION", "merchant_donation_add": "GOLD PER MERCHANT", "encounter_unlock": "TOWN DEBATE", "encounter_conviction_add": "ALL OPPONENTS / CONVICTION", "skeptic_conviction_add": "SKEPTIC / CONVICTION", "guard_conviction_add": "GUARD / CONVICTION", "zealot_conviction_add": "ZEALOT / CONVICTION", "priest_conviction_add": "PRIEST / CONVICTION"}
+		var label: String = str(labels.get(key, key.replace("_", " ").capitalize()))
+		return "%s\n%.1f%s" % [label, current[key], "" if complete or not next.has(key) else " -> %.1f" % next[key]]
 	var stat_key: String = {"talk": "speech_frequency", "persuade": "conviction", "run": "run_multiplier", "gather": "gatherings", "helper": "helpers"}.get(branch, "")
 	var heading: String = {"talk": "TALKING FREQUENCY", "persuade": "CONVICTION PER PHRASE", "run": "RUNNING SPEED", "gather": "VILLAGE GATHERINGS", "helper": "HELPERS"}.get(branch, "")
 	var units: String = {"talk": "phrases/s", "persuade": "conviction", "run": "x base", "gather": "groups of five", "helper": "helpers"}.get(branch, "")
