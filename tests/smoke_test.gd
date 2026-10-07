@@ -193,7 +193,7 @@ func _test_graph(scene) -> void:
 	check(screen.pan.distance_to(old_pan + Vector2(30, 15)) < 0.01, "actual drag handler pans")
 	motion.button_mask = 0
 	screen.graph._gui_input(motion)
-	check(not screen._dragging, "pointer release outside clears drag state")
+	check(not screen.pointer.dragging, "pointer release outside clears drag state")
 	var fake = load("res://scripts/progression.gd").new()
 	fake.save_enabled = false
 	fake.catalog = Fixture.build()

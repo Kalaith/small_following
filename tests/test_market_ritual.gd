@@ -34,7 +34,7 @@ func _run() -> void:
 	root.add_child(screen)
 	screen.travel_requested.connect(func(area_id: String) -> void: travel_requests.append(area_id))
 	await process_frame
-	check(screen.node_positions.size() == 30 and screen._market_circle, "market uses only its separate thirty-node circle")
+	check(screen.node_positions.size() == 30 and screen.market_circle, "market uses only its separate thirty-node circle")
 	check(screen.get_branch_summaries().size() == 5, "five branches are independently browsable")
 	for branch in screen.get_branch_summaries():
 		check(branch.available == 1 and branch.count == 6, "each six-node branch offers one affordable root")
@@ -84,19 +84,19 @@ func _run() -> void:
 	screen.update_state()
 	check(screen.is_circle_complete() and screen.open_demo_message() and screen.demo_message_label.text.contains("Bellmarket"), "market completion stays specific to its own circle")
 	screen.configure(Fixture.build(), state)
-	check(screen.node_positions.size() == 144 and not screen._market_circle, "separate large fixture still uses scalable fallback")
+	check(screen.node_positions.size() == 144 and not screen.market_circle, "separate large fixture still uses scalable fallback")
 	screen.focus_node("fixture_12_11")
 	check(screen.hit_test(screen.world_to_screen(screen.nodes_position("fixture_12_11"))) == "fixture_12_11", "fixture distant node transform remains usable")
 	var renamed_market := Progression.new()
 	renamed_market.save_enabled = false
 	renamed_market.catalog = [{"id": "not_prefixed_at_all", "title": "Renamed", "area": "bellmarket", "branch": "market_talk", "ring": 1, "cost": 1, "requires": [], "effect": {"speech_speed_add": 0.1}}]
 	screen.configure(renamed_market.catalog, renamed_market)
-	check(screen._market_circle, "market presentation follows the validated area field, not a catalog[0] ID prefix")
+	check(screen.market_circle, "market presentation follows the validated area field, not a catalog[0] ID prefix")
 	var disguised_village := Progression.new()
 	disguised_village.save_enabled = false
 	disguised_village.catalog = [{"id": "market_shaped_village_node", "title": "Disguised", "area": "bramblewick", "branch": "talk", "ring": 1, "cost": 1, "requires": [], "effect": {"speech_speed_add": 0.1}}]
 	screen.configure(disguised_village.catalog, disguised_village)
-	check(not screen._market_circle, "a village node whose ID happens to start with market_ does not trigger market presentation")
+	check(not screen.market_circle, "a village node whose ID happens to start with market_ does not trigger market presentation")
 	screen.queue_free()
 	await process_frame
 	print("MARKET RITUAL RESULT: %d checks, %d failures" % [checks, failures])

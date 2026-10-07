@@ -15,7 +15,10 @@ The project targets Godot 4.2.2, GDScript and Compatibility rendering. It has no
 | `scripts/gathering.gd` | Village and mixed market audiences, per-listener eligibility/threshold/reward, phrase timing, overflow and authoritative recruitment |
 | `scripts/encounter.gd` | Opponent arrival, objections, conviction decay and one victory signal |
 | `scripts/progression.gd` | Catalog validation, authoritative purchase checks, stat calculations and versioned local progression |
-| `scripts/ritual_screen.gd` | Procedural ritual geometry, pan/zoom, selection, readable details and action signals |
+| `scripts/ritual_screen.gd` | Ritual state, controls, selection, pan/zoom and action signals |
+| `scripts/ritual_seal_art.gd`, `ritual_node_art.gd`, `ritual_labels.gd` | Procedural seal and core ornament; edges, node sigils and glyphs; label placement |
+| `scripts/ritual_pointer.gd`, `ritual_branch_nav.gd` | Mouse/touch gestures; branch summaries, buttons and node browser |
+| `scripts/ritual_text.gd`, `ritual_style.gd`, `ritual_widgets.gd` | Detail wording, shared palette and geometry, styled label/button factories |
 | `scripts/ritual_layout.gd` | Authored production-node positions and satellite envelopes; generic branch/ring placement for other content |
 | `data/upgrades.json` | 62 real definitions and 65 ranks split into 32 village nodes/35 ranks and 30 market nodes/ranks, with stable IDs and validated effects/prices |
 | `scripts/village.gd` | Deterministic ground/props and collision footprints |

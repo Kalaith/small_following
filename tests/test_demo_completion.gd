@@ -133,7 +133,7 @@ func _test_screen() -> void:
 		var hover := InputEventMouseMotion.new()
 		hover.position = centre - screen.graph.global_position
 		screen.graph._gui_input(hover)
-		check(screen._core_hovered and screen.graph.mouse_default_cursor_shape == Control.CURSOR_POINTING_HAND, "lit centre hover advertises clicking at zoom %.2f" % target_zoom)
+		check(screen.core_hovered and screen.graph.mouse_default_cursor_shape == Control.CURSOR_POINTING_HAND, "lit centre hover advertises clicking at zoom %.2f" % target_zoom)
 		click_core(screen)
 		check(screen.demo_message_visible() and screen.demo_message_label.text == "This is the end of the demo", "transformed centre opens exact demo message at zoom %.2f" % target_zoom)
 		var overlay_id: int = screen._demo_overlay.get_instance_id()
