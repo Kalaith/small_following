@@ -125,6 +125,18 @@ func _campaign() -> void:
 	var broken: Dictionary = snapshot.duplicate(true)
 	broken.purchased.erase("debate_1")
 	check(state._validated_snapshot(broken).is_empty(), "victories require the debate unlock in saves")
+	# The required ID is derived from whichever definition carries
+	# encounter_unlock, not the literal string "debate_1"; a minimal
+	# catalog avoids the production prerequisite web entirely.
+	var relabeled := Progression.new()
+	relabeled.save_enabled = false
+	relabeled.catalog = [{"id": "renamed_debate_unlock", "title": "Renamed", "description": "", "branch": "trial", "ring": 1, "cost": 1, "requires": [], "effect": {"encounter_unlock": 1}}]
+	relabeled.all_catalog = relabeled.catalog
+	check(relabeled._encounter_unlock_id() == "renamed_debate_unlock", "the unlock ID follows a rename in the catalog")
+	var minimal_snapshot: Dictionary = {"schema_version": Progression.SAVE_VERSION, "coins": 0, "total_recruits": 0, "available_recruits": 0, "round_number": 1, "encounter_stage": 1, "active_area": "bramblewick", "level_select_unlocked": false, "purchased": {"debate_1": 1}}
+	check(relabeled._validated_snapshot(minimal_snapshot).is_empty(), "the literal string debate_1 no longer satisfies a renamed unlock")
+	minimal_snapshot.purchased = {"renamed_debate_unlock": 1}
+	check(not relabeled._validated_snapshot(minimal_snapshot).is_empty(), "the renamed unlock id satisfies the same rule")
 	# Backup after a second stage-four save is itself complete.
 	check(state.save_progress(), "save completion backup")
 	var file := FileAccess.open(path, FileAccess.WRITE)

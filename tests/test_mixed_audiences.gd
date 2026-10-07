@@ -209,5 +209,11 @@ func _check_market_world(progression: MarketProgression) -> void:
 				reachable = false
 		group.reset_round()
 	check(reachable, "all twenty-five market listener stand cells have reachable paths around actual props")
+	# The homogeneous (no-profile) path sets listener_count directly; it must
+	# not index the five authored offsets/colors out of bounds.
+	var oversized := Gathering.new()
+	oversized.listener_count = 9
+	world.add_child(oversized)
+	check(oversized.listener_count == 5 and oversized.listeners.size() == 5, "an oversized listener_count without profiles is bounded to the five authored slots")
 	world.queue_free()
 	await process_frame

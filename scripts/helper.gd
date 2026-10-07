@@ -9,6 +9,8 @@ const BODY_RADIUS: float = 7.0
 const START_OFFSET := Vector2(-24, 24)
 const STAND_OFFSET := Vector2(0, 28)
 const MAX_STEP: float = 1.0 / 60.0
+## Floating-point slack when comparing accumulated per-frame time to a fixed interval.
+const TIME_EPSILON: float = 0.000001
 
 var target_group: Node2D = null
 var target_index: int = -1
@@ -83,7 +85,7 @@ func advance(delta: float, groups: Array[Node2D]) -> void:
 	search_attempts = 0
 	# Bounded steps also handle a long render frame or the final clamped slice.
 	var remaining: float = maxf(delta, 0.0)
-	while remaining > 0.000001:
+	while remaining > TIME_EPSILON:
 		var step: float = minf(remaining, MAX_STEP)
 		_advance_step(step, groups)
 		remaining -= step
@@ -116,7 +118,7 @@ func _advance_step(delta: float, groups: Array[Node2D]) -> void:
 		return
 	_cloth_trail = _cloth_trail.move_toward(Vector2.ZERO, remaining * 25.0)
 	phrase_elapsed += remaining
-	if phrase_elapsed + 0.000001 >= PHRASE_SECONDS:
+	if phrase_elapsed + TIME_EPSILON >= PHRASE_SECONDS:
 		phrase_elapsed = maxf(0.0, phrase_elapsed - PHRASE_SECONDS)
 		conviction += CONVICTION_PER_PHRASE
 		if conviction >= target_group.listener_conviction_required(target_index):

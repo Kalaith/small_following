@@ -2,6 +2,7 @@ extends Node2D
 ## Editable, hand-drawn placeholder village. No mockup image is used in the scene.
 ## Main calls build_props(actors) so props and characters share one Y-sort parent.
 
+const DrawShapes = preload("res://scripts/draw_shapes.gd")
 const WORLD_SIZE: Vector2 = Vector2(1560.0, 1100.0)
 const GRASS: Color = Color("a7b976")
 const GRASS_LIGHT: Color = Color("b6c58a")
@@ -140,9 +141,7 @@ func _draw_fence(origin: Vector2, count: int, spacing: float) -> void:
 
 
 func _oval(center: Vector2, radii: Vector2, tint: Color) -> void:
-	draw_set_transform(center, 0.0, radii)
-	draw_circle(Vector2.ZERO, 1.0, tint)
-	draw_set_transform(Vector2.ZERO)
+	DrawShapes.oval(self, center, radii, tint)
 
 
 class VillageProp:
@@ -336,6 +335,4 @@ class VillageProp:
 
 
 	func _oval(center: Vector2, radii: Vector2, tint: Color) -> void:
-		draw_set_transform(center, 0.0, radii)
-		draw_circle(Vector2.ZERO, 1.0, tint)
-		draw_set_transform(Vector2.ZERO)
+		DrawShapes.oval(self, center, radii, tint)

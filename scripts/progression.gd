@@ -161,6 +161,16 @@ func catalog_for_area(area_id: String) -> Array[Dictionary]:
 	return result
 
 
+## The town-debate encounters require their one unlocking upgrade, whichever
+## stable ID currently carries the encounter_unlock effect in the catalog.
+func _encounter_unlock_id() -> String:
+	var definitions: Array[Dictionary] = all_catalog if not all_catalog.is_empty() else catalog
+	for entry in definitions:
+		if entry.get("effect", {}).has("encounter_unlock"):
+			return str(entry.id)
+	return ""
+
+
 func find_upgrade(id: String) -> Dictionary:
 	for entry in catalog:
 		if entry.id == id:
@@ -548,7 +558,8 @@ func _validated_snapshot(raw: Variant) -> Dictionary:
 		return {}
 	if not _integer_between(raw.get("encounter_stage", 0), 0, 4):
 		return {}
-	if int(raw.get("encounter_stage", 0)) > 0 and not raw.purchased.has("debate_1"):
+	var unlock_id: String = _encounter_unlock_id()
+	if int(raw.get("encounter_stage", 0)) > 0 and (unlock_id.is_empty() or not raw.purchased.has(unlock_id)):
 		return {}
 	if int(raw.schema_version) >= 4:
 		if not raw.get("active_area") is String or not raw.active_area in AREA_IDS:

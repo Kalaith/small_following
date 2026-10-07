@@ -7,6 +7,8 @@ const CENTER := Vector2(790, 570)
 const ENTRANCE := Vector2(1470, 630)
 const TURN := Vector2(1000, 630)
 const WALK_SPEED: float = 220.0
+## Floating-point slack when comparing accumulated per-frame time to a fixed interval.
+const TIME_EPSILON: float = 0.000001
 const PROFILES: Array[Dictionary] = [
 	{"id": "skeptic", "title": "Skeptic", "conviction": 42.0, "rebuttals": 0, "decay": 0.0, "coat": "728b98", "hint": "A patient argument / 42 conviction"},
 	{"id": "guard", "title": "Town Guard", "conviction": 72.0, "rebuttals": 2, "decay": 0.0, "coat": "607590", "hint": "First 2 phrases answer objections"},
@@ -54,7 +56,7 @@ func advance_speech(delta: float, in_range: bool, interval: float, conviction: f
 		progress = maxf(0.0, progress - float(PROFILES[stage].decay) * delta)
 	else:
 		phrase_elapsed += maxf(0.0, delta)
-		while phrase_elapsed + 0.000001 >= interval and not defeated:
+		while phrase_elapsed + TIME_EPSILON >= interval and not defeated:
 			phrase_elapsed = maxf(0.0, phrase_elapsed - interval)
 			phrase_spoken.emit()
 			if rebuttals_left > 0:

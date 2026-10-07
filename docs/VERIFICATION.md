@@ -1,5 +1,53 @@
 # Verification record - ranked progression, 2026-10-02
 
+## 2026-10-07 - Eight remaining small couplings and duplications
+
+The code health review's bundled "remaining couplings" bullet named nine
+items; this pass fixed eight and left one (see TODO's narrowed bullet).
+
+- `progression.gd`'s save validation required the literal `"debate_1"` when
+  `encounter_stage > 0`. A new `_encounter_unlock_id()` instead finds whichever
+  catalog entry carries the `encounter_unlock` effect, so a future rename
+  cannot silently stop validating saved victories.
+- `scenes/main.tscn`'s authored `Village` node was destroyed and replaced by
+  `_rebuild_area()` on every `_ready()`, including the first. The placeholder
+  is removed from the scene; `_rebuild_area()` now uses `get_node_or_null`
+  so the same method stays correct on both the first call and later area travel.
+- `village.gd`'s two identical `_oval` implementations (one in the script,
+  one in the nested `VillageProp` class, which cannot see the outer script's
+  methods) now both delegate to a new `scripts/draw_shapes.gd` static helper.
+- The `0.000001` phrase-timing epsilon, repeated unnamed across `helper.gd`,
+  `encounter.gd` and `gathering.gd`, is now a local named `TIME_EPSILON`
+  constant in each (kept local rather than shared, since these three systems
+  are deliberately independent owners per ARCHITECTURE.md).
+- `village_input.gd`'s pointer sentinels are now named `MOUSE_POINTER` (-1)
+  and `NO_POINTER` (-2) with a comment explaining the three-state convention
+  (touch index / mouse / idle).
+- `gathering._ready()`'s homogeneous (non-profile) path set `listener_count`
+  directly with no bound, unlike the profile path's `validate_profiles()`;
+  it now clamps to the five authored offsets/colors and pushes an error,
+  matching the profile path's style.
+- `gathering.gd`'s plain village progress/phrase bars drew `progress /
+  conviction_required` and `phrase_elapsed / last_phrase_interval` unclamped,
+  while the market detail bars already clamped both with `minf(..., 1.0)`.
+  Both village bars now clamp the same way, matching their market twin.
+- `game_audio.apply_preferences` indexed `values[channel]` directly; it now
+  uses `values.get(channel, volumes[channel])` so a settings dictionary
+  missing a channel (an older save before a new channel existed) keeps the
+  current volume instead of throwing.
+
+`tests/test_encounters.gd` gained two checks proving the unlock ID follows a
+rename rather than the literal string. `tests/test_mixed_audiences.gd`
+gained one check: an oversized `listener_count` without profiles is bounded
+to five instead of indexing out of bounds. The progress/phrase bar clamp and
+the audio fallback are presentation/robustness fixes with no new assertable
+return value; they were verified by reading the resulting code against the
+pattern they now match, not by a new headless check. All twenty-three
+suites pass: encounters now 213 checks, mixed audiences 37. The removed
+scene placeholder was exercised implicitly by every suite that instantiates
+`main.tscn`. The headless import still exits 1 on the existing unrelated
+`_EDITOR_GET` condition.
+
 ## 2026-10-07 - Documented the four newest suites in the verification block
 
 `test_mixed_audiences.gd`, `test_recruit_economy.gd`, `test_ritual_touch.gd`

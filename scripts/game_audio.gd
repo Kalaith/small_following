@@ -120,8 +120,11 @@ func set_volume(channel: String, value: float) -> void:
 
 
 func apply_preferences(values: Dictionary) -> void:
+	# `values` is settings_store's validated dictionary; a channel absent
+	# there (an older save before a new channel existed) keeps its current
+	# volume instead of indexing a key that might not exist by convention.
 	for channel in volumes:
-		volumes[channel] = float(values[channel])
+		volumes[channel] = float(values.get(channel, volumes[channel]))
 	muted = values.muted
 	voice_muted = values.voice_muted
 	_apply_levels()

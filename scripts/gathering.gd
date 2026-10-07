@@ -9,6 +9,8 @@ const CONVICTION_REQUIRED: float = 3.0
 const DONATION: int = 3
 const MERCHANT_COUNT: int = 2
 const MERCHANT_CONVICTION: float = 9.0
+## Floating-point slack when comparing accumulated per-frame time to a fixed interval.
+const TIME_EPSILON: float = 0.000001
 
 var listener_count: int = LISTENER_COUNT
 var conviction_required: float = CONVICTION_REQUIRED
@@ -121,6 +123,11 @@ func _ready() -> void:
 		npc_type = "mixed"
 	var offsets: Array[Vector2] = [Vector2(-43, -13), Vector2(0, -29), Vector2(41, -8), Vector2(-23, 26), Vector2(28, 30)]
 	var colors: Array[Color] = [Color("#be8066"), Color("#b89c58"), Color("#679391"), Color("#7c88aa"), Color("#caaf77")]
+	# The homogeneous (non-profile) path sets listener_count directly with no
+	# validate_profiles() pass; bound it to the authored offsets/colors too.
+	if listener_count > offsets.size():
+		push_error("A gathering supports at most %d listeners." % offsets.size())
+		listener_count = offsets.size()
 	for i in range(listener_count):
 		var listener := Listener.new()
 		listener.position = offsets[i]
@@ -140,12 +147,12 @@ func tick_persuasion(delta: float, phrase_interval: float, conviction: float) ->
 		return
 	last_phrase_interval = maxf(phrase_interval, 0.05)
 	phrase_elapsed += maxf(delta, 0.0)
-	while phrase_elapsed + 0.000001 >= last_phrase_interval and first_unconverted() >= 0:
+	while phrase_elapsed + TIME_EPSILON >= last_phrase_interval and first_unconverted() >= 0:
 		phrase_elapsed = maxf(0.0, phrase_elapsed - last_phrase_interval)
 		phrase_spoken.emit()
 		progress += maxf(0.0, conviction)
 		var next: int = first_unconverted()
-		while next >= 0 and progress + 0.000001 >= listener_conviction_required(next):
+		while next >= 0 and progress + TIME_EPSILON >= listener_conviction_required(next):
 			progress = maxf(0.0, progress - listener_conviction_required(next))
 			recruit_listener(next)
 			next = first_unconverted()
@@ -275,12 +282,12 @@ func _draw() -> void:
 	draw_style_box(_caption_style(), Rect2(-width * 0.5 - 10, -142, width + 20, 30))
 	draw_string(font, Vector2(-width * 0.5, -121), caption, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("#fff1d0"))
 	draw_line(Vector2(-38, 58), Vector2(38, 58), Color("#55654e"), 5)
-	draw_line(Vector2(-38, 58), Vector2(-38 + 76 * progress / conviction_required, 58), Color("#f3d98c"), 5)
+	draw_line(Vector2(-38, 58), Vector2(-38 + 76 * minf(progress / conviction_required, 1.0), 58), Color("#f3d98c"), 5)
 	for i in range(3):
 		var filled: bool = progress >= conviction_required * float(i + 1) / 3.0
 		draw_circle(Vector2(-14 + i * 14, 69), 3, Color("#f3d98c") if filled else Color("#6d7353"))
 	draw_line(Vector2(-22, 78), Vector2(22, 78), Color("#6d7353"), 2)
-	draw_line(Vector2(-22, 78), Vector2(-22 + 44 * phrase_elapsed / last_phrase_interval, 78), Color("#c4b1df"), 2)
+	draw_line(Vector2(-22, 78), Vector2(-22 + 44 * minf(phrase_elapsed / last_phrase_interval, 1.0), 78), Color("#c4b1df"), 2)
 
 
 func _draw_market_details() -> void:

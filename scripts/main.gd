@@ -111,9 +111,12 @@ func _rebuild_area() -> void:
 			actor.queue_free()
 	encounter = null
 	helper = null
-	var previous: Node = $Village
-	remove_child(previous)
-	previous.queue_free()
+	# No authored placeholder survives to _rebuild_area's second call (area
+	# travel); only a prior script-built world needs removing there.
+	var previous: Node = get_node_or_null("Village")
+	if previous:
+		remove_child(previous)
+		previous.queue_free()
 	var world: Node2D = Market.new() if progression.active_area == "bellmarket" else Village.new()
 	world.name = "Village"
 	add_child(world)
