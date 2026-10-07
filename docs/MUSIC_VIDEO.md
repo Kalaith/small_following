@@ -109,7 +109,7 @@ village score; chorus 3 goes up a whole tone.
 | --- | --- | --- | --- | --- |
 | 1-4 | Intro | Folding-table HQ, wake-up, **00:11** countdown | `hq_wake` set | Staged set |
 | 5-12 | Verse 1 | Garden club, "three said maybe", nine coins, Gerald's pie | Real opening round (3 recruits, 9 donations), then the `coins_pie` set | Real + staged |
-| 13-16 | Pre-chorus | Wonky circle, Talking One, fast talking | Real ritual and Talking I purchase; the edit tilts the frame | Real |
+| 13-16 | Pre-chorus | Wonky circle; "worked on my ritual, now I can't stop talking!" | Real ritual and Talking I purchase; the edit tilts the frame | Real |
 | 17-24 | Chorus 1 | Four people, tiny fire, one biscuit, "plus one!" | `chorus_hq` set, then a real recruit on the shout | Staged + real |
 | 25-32 | Verse 2 | Merchants' stall, teal cultist's solo, "That's enough", VERY sign | `stall_teal` set with the real teal helper | Staged |
 | 33-36 | Pre-chorus 2 | Bigger circle, chairs, "worldwide" map | The real 32-node circle; three-pin map plate | Real + plate |
@@ -144,7 +144,7 @@ distant voice.
 ## 4. Lyrics
 
 The singable lyrics are in `tools/music_video/song.json` (62 lines,
-381 syllables, 7 voices: lead, choir, Priest, shout, whisper, solo and teal).
+380 syllables, 7 voices: lead, choir, Priest, shout, whisper, solo and teal).
 They follow the beat sheet's wording, with small changes to fit syllables to
 the melody. For example, "nothing alarming, we've got biscuits and a robe" and
 "three of them said maybe" are kept. The verse-1 line "I counted them twice"
