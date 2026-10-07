@@ -59,6 +59,6 @@ Exit: the helper performs its documented task, rewards are counted once and the 
 
 ## 5. Production assets and a small release
 
-Resolve missing original references, choose the production art treatment and replace placeholders in small batches. Add essential audio, input rebinding, accessible graph navigation, volume controls and readable focus states. Define the first export platform before platform-specific setup.
+Resolve missing original references, choose the production art treatment and replace placeholders in small batches. Essential audio, input rebinding, keyboard/gamepad graph navigation and volume controls are implemented (2026-10-07); readable focus states for the settings screen itself remain open. Define the first export platform before platform-specific setup.
 
 Exit: asset provenance is recorded; the exported game launches on the chosen target; purchases, restart and recovery work there; and a complete fresh-save session reaches an intended stopping point. Build a small complete slice before expanding to hundreds of upgrades, towns or spells.

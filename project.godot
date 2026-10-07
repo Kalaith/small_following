@@ -66,6 +66,22 @@ toggle_fullscreen={
 "deadzone": 0.2,
 "events": [Object(InputEventKey,"physical_keycode":4194342)]
 }
+ritual_nav_up={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"physical_keycode":84), Object(InputEventJoypadButton,"button_index":11)]
+}
+ritual_nav_down={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"physical_keycode":71), Object(InputEventJoypadButton,"button_index":12)]
+}
+ritual_nav_left={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"physical_keycode":70), Object(InputEventJoypadButton,"button_index":13)]
+}
+ritual_nav_right={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"physical_keycode":72), Object(InputEventJoypadButton,"button_index":14)]
+}
 
 [input_devices]
 pointing/emulate_mouse_from_touch=true

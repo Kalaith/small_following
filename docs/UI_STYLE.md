@@ -168,7 +168,7 @@ Village ground accepts tap/click destinations with a visible marker; tapping
 the cultist stops. The between-round village has Ritual circle and Next round
 buttons. Menus and HUD regions must not leak taps into movement.
 
-Graph selection uses tap or mouse. Drag with one finger, drag empty space with the left
+Graph selection uses tap, mouse or T/F/G/H and the gamepad D-pad. Drag with one finger, drag empty space with the left
 button, or use the middle button, to pan; wheel zoom anchors at the pointer.
 Visible + / - buttons zoom about the graph centre. Touch selects on release,
 with a movement threshold separating taps from pans. Navigation/selectors use
@@ -211,7 +211,10 @@ available on selection rather than hover alone. Keep teaching short and name
 the actual button or gesture. If help is expanded in future, provide a visible
 way to reopen it rather than leaving long instructions across play.
 
-Keyboard/gamepad graph traversal and gamepad rebinding are outstanding work.
+Keyboard/gamepad graph traversal (2026-10-07) steps the selection to the
+closest node within a roughly 70-degree cone of T/F/G/H or the D-pad; U/Inscribe
+and the existing gamepad buttons purchase it. Remapping which physical gamepad
+button fires an action, rather than the keyboard key, remains outstanding.
 Physical gamepad behavior is unverified. Touch navigation, selection and dismissal
 have visible controls; keep synthetic input, browser emulation and real-device
 acceptance distinct in the verification record. Small phone screens still reduce

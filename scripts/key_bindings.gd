@@ -6,6 +6,8 @@ const ACTIONS: Dictionary = {
 	"next_round": "Next round", "buy_upgrade": "Buy upgrade",
 	"toggle_audio": "Mute all sound", "toggle_voice": "Mute speech",
 	"toggle_fullscreen": "Fullscreen",
+	"ritual_nav_up": "Graph: move up", "ritual_nav_down": "Graph: move down",
+	"ritual_nav_left": "Graph: move left", "ritual_nav_right": "Graph: move right",
 }
 
 

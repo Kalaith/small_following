@@ -60,9 +60,10 @@ use feet origins and Y sorting. No external assets or original-art edits.
 | Intermission village | Inspect the expanded village | Village | Existing Tab/Enter guidance; helper waits |
 
 New nodes use unused angles and additional rings. Pan, zoom, transformed
-selection and recenter remain available. Capture at 1280 × 800; smaller window
-support and accessible graph traversal remain open. Human route uncertainty
-and graph readability require playtesting separately from scripted checks.
+selection, recenter and keyboard/gamepad graph traversal (2026-10-07) remain
+available. Capture at 1280 × 800; smaller window support remains open. Human
+route uncertainty and graph readability require playtesting separately from
+scripted checks.
 
 ## Implementation ownership and acceptance
 

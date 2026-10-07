@@ -20,7 +20,7 @@ The real catalog retains three branches across three rings. Each branch has a co
 
 A readable stationary details area names the selected node and rank, shows its current-to-next effect, next-rank price and prerequisite, and clearly marks maximum rank. The purchase label must identify the next rank; a partly ranked node must not look permanently finished. This area supports the ritual rather than replacing it.
 
-Mouse dragging pans the graph and the wheel zooms it. Labels and hit areas must remain usable as the circle grows. Fit/reset controls should provide a way back after exploring. A separate 144-node fixture exercises large layouts; those test nodes are not part of the game's upgrade catalog. More branches, search and accessible keyboard/gamepad graph navigation remain content and UX work.
+Mouse dragging pans the graph and the wheel zooms it. Labels and hit areas must remain usable as the circle grows. Fit/reset controls should provide a way back after exploring. A separate 144-node fixture exercises large layouts; those test nodes are not part of the game's upgrade catalog. Keyboard/gamepad graph navigation (T/F/G/H or the D-pad) shipped 2026-10-07; more branches and search remain content and UX work.
 
 The full-screen ritual is an intentional intermission, while the normal village HUD remains small. Tab returns to the visible village and reopens the ritual. Movement continues in either view, and the screen must clearly state how to start the next round.
 

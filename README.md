@@ -19,7 +19,7 @@ From the project folder, `.\Run.ps1` also launches the game; pass `-GodotExe '<i
 | Move the cultist | Tap / click village ground, or WASD / arrows / gamepad left stick |
 | Stop tap movement | Tap the cultist; keys / stick also take over immediately |
 | Speak | Stay within range of a gathering |
-| Select an upgrade | Tap / click its ritual node, or choose it in the node list below the graph |
+| Select an upgrade | Tap / click its ritual node, choose it in the node list below the graph, or step to the nearest node with T/F/G/H or the gamepad D-pad |
 | Find a branch | Branch selector above the graph (eight named branches) |
 | Enlarge the selected upgrade | Focus selected button |
 | Return to branch overview | Overview button (clears selection) |
@@ -45,7 +45,7 @@ alternate keys for movement and gameplay/audio/fullscreen shortcuts, conflict
 messages, and Restore default keys. Bindings save automatically. Esc and Tab
 stay fixed for navigation; gamepad bindings remain available.
 
-Movement remains active during the ritual; Tab or **Return to the village** reveals the village between rounds. **Ritual circle** reopens upgrades and **Next round** begins again without a keyboard. A new round returns the cultist to the starting entrance. Gamepad movement/action mappings exist but were not physically tested; graph selection and navigation use touch or a mouse.
+Movement remains active during the ritual; Tab or **Return to the village** reveals the village between rounds. **Ritual circle** reopens upgrades and **Next round** begins again without a keyboard. A new round returns the cultist to the starting entrance. Gamepad movement/action mappings exist but were not physically tested; graph selection and navigation use touch, a mouse, or T/F/G/H and the D-pad, stepping to the closest node in the pressed direction.
 
 Tap movement follows a straight line at the current running speed, with a small
 destination ring. Tap again to change direction, tap the cultist to stop, and tap

@@ -1,5 +1,49 @@
 # Verification record - ranked progression, 2026-10-02
 
+## 2026-10-07 - Keyboard/gamepad ritual graph navigation
+
+The ritual graph had no keyboard or gamepad way to change its selection;
+only tap/mouse hit-testing and the mouse-driven branch/node pickers could
+move it. Four new Input Map actions (`ritual_nav_up/down/left/right`,
+default T/F/G/H or the gamepad D-pad) are rebindable through the existing
+`key_bindings.gd`/settings infrastructure like any other action.
+`ritual_screen.navigate(direction)` steps from the selected node, or the
+centre when nothing is selected, to the closest node whose position falls
+within a roughly 70-degree cone of the requested direction, then calls the
+existing `focus_node`. The existing `buy_upgrade` action (U / gamepad X)
+already purchases whatever is selected, so this closes the gap named in
+TODO: "gamepad movement mappings do not yet provide gamepad upgrade-graph
+selection."
+
+Wiring lives in `ritual_screen._unhandled_input`, guarded by `visible` and
+the same `_pointer_input_enabled` flag `main.gd` already clears while
+settings covers the ritual, so navigation cannot move the hidden selection
+underneath an open settings page.
+
+`tests/test_ritual_readability.gd` gained nine checks: directional entry
+from the unselected centre against the real catalog (talk/faith/run/persuade
+for up/down/left/right), moving to a different real node and holding at the
+accessible edge without erroring, a zero-direction no-op, and a thirteen-step
+walk across every ring of the separate 144-node fixture's sixth branch,
+confirming it advances exactly one ring per press and does not wrap past the
+outermost ring. `tests/test_key_mapping.gd` gained five checks driving the
+actual `T` key and a simulated `InputEventJoypadButton` D-pad press through
+real input dispatch, and confirming both are ignored while settings covers
+the ritual or the ritual itself is hidden. All twenty-three suites pass:
+smoke 92, progression 113, pacing 59, helper 34, encounters 210, readability
+82, demo completion 46, audio 27, settings 34, key mapping 78, areas 44,
+market progression 94, market pacing 31, market campaign 26, market flow 27,
+title 15, market ritual 110, mixed audiences 36, recruit economy 134, ritual
+touch 25, touch movement 27, merchants and exit reporting no failures.
+
+Remapping which physical gamepad button fires an action (rather than the
+keyboard key) remains outstanding; so does keyboard/gamepad focus navigation
+of the settings screen itself. Physical gamepad hardware was not tested; the
+simulated `InputEventJoypadButton` proves the action wiring, not real
+controller feel. Rendered captures were not rerun: selection changes drawing
+through the existing `focus_node`/`select_node` path exercised by every other
+suite, and no new geometry or layout was added.
+
 ## 2026-10-07 - Preferences schema migration
 
 The code health review also found that `settings_store.valid()` required

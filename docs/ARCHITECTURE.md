@@ -135,7 +135,13 @@ visible navigation retain access to every node. Branch summaries drive a dropdow
 for the eight production branches; catalogs with six or fewer use buttons. They report owned-node and affordable-purchase counts. A separate
 node picker lists every entry in the selected branch, including locked nodes,
 and focuses the chosen node. `focus_node` centers selection at a readable zoom;
-`focus_branch` chooses a useful starting node in that branch. These operations
+`focus_branch` chooses a useful starting node in that branch. `navigate(direction)`
+(2026-10-07) steps from the selected node, or the centre when nothing is
+selected, to the closest node whose position falls within a roughly
+70-degree cone of the requested direction, then focuses it; `ritual_nav_up/
+down/left/right` (default T/F/G/H or the gamepad D-pad, rebindable through
+`key_bindings.gd` like any other action) drive it while the ritual is
+visible and not covered by settings. These operations
 do not purchase or persist anything. Pan and zoom affect drawing,
 label placement and hit testing through the same coordinate conversion. The
 mouse wheel anchors zoom at the cursor; dragging changes pan. Recenter restores
@@ -149,8 +155,8 @@ A separate 144-node test fixture stresses placement, overview/detail
 navigation and transformed selection without entering the production catalog
 or save. Large-scale test success does not prove that hundreds of authored
 upgrades will be readable or balanced. New content still needs sensible
-spacing, meaningful effects and human navigation review. Keyboard/gamepad
-graph traversal, filtering and search are future work.
+spacing, meaningful effects and human navigation review. Filtering and
+search remain future work; keyboard/gamepad graph traversal does not.
 
 ## Ritual completion centre
 
@@ -278,7 +284,9 @@ Restarting restores progression and active area, then opens the title. Play / Co
 There is no dialogue system, magic or third area. Audio and independently
 saved settings are implemented; Web/Windows export workflows are documented
 in [PUBLISHING](PUBLISHING.md). Window resizing scales the canvas; accessible
-UI scaling and gamepad rebinding remain future work. Keyboard bindings use the
+UI scaling remains future work, as does remapping which physical gamepad
+button fires an action (the keyboard side, including the 2026-10-07 ritual
+graph-navigation keys, is already rebindable). Keyboard bindings use the
 separate settings store described in [SETTINGS](SETTINGS.md). Application focus does not
 implement a pause/earnings policy.
 

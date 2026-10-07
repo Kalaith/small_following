@@ -34,6 +34,7 @@ func _run() -> void:
 	_test_prerequisite_routes(screen, scene.progression.catalog)
 	_test_paths_and_hover(screen)
 	_test_navigation_controls(screen)
+	_test_keyboard_gamepad_navigation(screen)
 	_test_overview_control(screen)
 	_test_transforms(screen)
 	_test_labels(screen)
@@ -201,6 +202,31 @@ func _test_navigation_controls(screen) -> void:
 		check(screen.hit_test(screen.world_to_screen(screen.node_positions["run_5"])) == "run_5", "focus selected button recovers an offscreen selection")
 
 
+func _test_keyboard_gamepad_navigation(screen) -> void:
+	# Keyboard/gamepad graph traversal has no pointer or hit-test geometry to
+	# drive; these check navigate() directly against the real authored seal.
+	screen.clear_selection()
+	screen.navigate(Vector2.UP)
+	check(screen.selected_id == "talk_4", "pressing up from the unselected centre enters the most up-aligned real node")
+	screen.clear_selection()
+	screen.navigate(Vector2.DOWN)
+	check(screen.selected_id == "sermon_1", "pressing down from the unselected centre enters the faith branch")
+	screen.clear_selection()
+	screen.navigate(Vector2.LEFT)
+	check(screen.selected_id == "run_2", "pressing left from the unselected centre enters the running branch")
+	screen.clear_selection()
+	screen.navigate(Vector2.RIGHT)
+	check(screen.selected_id == "persuade_1", "pressing right from the unselected centre enters the conviction branch")
+	screen.focus_node("talk_1")
+	screen.navigate(Vector2.UP)
+	var reached: String = screen.selected_id
+	check(reached != "talk_1" and screen._by_id.has(reached), "navigating up from a selected node moves to a different real node")
+	screen.navigate(Vector2.UP)
+	check(screen.selected_id == reached, "repeating the same direction at the accessible edge holds the current selection instead of erroring")
+	screen.navigate(Vector2.ZERO)
+	check(screen.selected_id == reached, "a zero direction is a no-op")
+
+
 func _test_overview_control(screen) -> void:
 	screen.reset_view()
 	var overview_zoom: float = screen.zoom
@@ -284,6 +310,15 @@ func _test_large_graph(screen) -> void:
 	check(screen.zoom > overview_zoom, "branch navigation expands the overview into readable detail")
 	check(screen.label_bounds().size() > 0, "branch focus exposes node labels")
 	check(overview_labels < 144, "large overview suppresses the wall of individual labels")
+	screen.focus_node("fixture_1_6")
+	var walked_all_rings: bool = true
+	for ring in range(2, 13):
+		screen.navigate(Vector2.DOWN)
+		if screen.selected_id != "fixture_%d_6" % ring:
+			walked_all_rings = false
+	check(walked_all_rings and screen.selected_id == "fixture_12_6", "repeated directional presses walk the separate fixture outward one ring at a time")
+	screen.navigate(Vector2.DOWN)
+	check(screen.selected_id == "fixture_12_6", "holding the direction at the outermost fixture ring does not error or wrap")
 	screen.focus_node("fixture_12_11")
 	check(screen.selected_id == "fixture_12_11" and screen.hit_test(screen.world_to_screen(screen.node_positions["fixture_12_11"])) == "fixture_12_11", "distant selected node remains reachable after branch navigation")
 	screen.recenter_button.pressed.emit()

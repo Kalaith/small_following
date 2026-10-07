@@ -6,8 +6,10 @@ Requested: a settings page containing sound controls and a fullscreen toggle,
 plus an extra key mapping tab and a fix for horizontal arrow movement.
 Implemented on the Godot 4.2.2 / Compatibility baseline. Separate channel
 sliders, saved preferences, Esc/F11 shortcuts and the layout below are local
-implementation choices. Keyboard/gamepad traversal, gamepad rebinding and further
-accessibility settings remain outside this pass. No export or publishing is
+implementation choices. Keyboard/gamepad graph traversal shipped 2026-10-07
+(see [UI_STYLE](UI_STYLE.md#5-input-and-discoverability)); remapping which
+physical gamepad button fires an action, and further accessibility settings
+beyond it, remain outside this pass. No export or publishing is
 included; browser fullscreen behavior needs separate exported verification.
 
 ## Screen brief
@@ -51,24 +53,28 @@ the underlying ritual. The timer behavior is explained on the page.
 
 ## Keyboard mapping
 
-Four movement directions, next round, buy upgrade, mute all, mute speech and
-fullscreen each have a required primary key and an optional alternate. Defaults
-come from `project.godot`: WASD/arrows, Enter, U, M, V and F11. Left and Right
-now use the engine's correct physical key codes; End no longer moves the cultist.
-Existing gamepad events remain on the same Input Map actions.
+Four movement directions, next round, buy upgrade, mute all, mute speech,
+fullscreen and four ritual graph-navigation directions each have a required
+primary key and an optional alternate. Defaults come from `project.godot`:
+WASD/arrows, Enter, U, M, V, F11 and T/F/G/H for graph up/left/down/right.
+Left and Right now use the engine's correct physical key codes; End no
+longer moves the cultist. Existing gamepad events remain on the same Input
+Map actions, including the D-pad for graph navigation.
 
 Assignments use single physical keys, so letter labels describe keyboard
 positions. Modifier chords, duplicate assignments and reserved Esc/Tab are
 rejected with a message; the previous binding remains. Clear removes only an
 alternate. To exchange occupied keys, first move one action to an unused key.
-Restore default keys resets all nine actions without changing audio/display.
+Restore default keys resets every keyboard action without changing audio/display.
 
 Esc remains settings/back and cancels an active key choice first. Tab remains
 village/ritual navigation; between rounds it cancels capture and reveals the
 village. Captured keys cannot trigger one-shot game shortcuts. Direct movement
 and round time continue even during capture, as stated on the page. HUD,
-ritual and sound/display shortcut hints follow changed keys. Settings and graph
-controls still use the mouse; keyboard/gamepad UI traversal is future work.
+ritual and sound/display shortcut hints follow changed keys. The settings
+page's own controls still use the mouse; keyboard/gamepad UI traversal of
+settings itself, and remapping a gamepad button rather than a keyboard key,
+remain future work.
 
 Exit Game (requested 2026-10-03) shares the fixed footer with Back to game and
 has no keyboard shortcut, so Esc continues to mean return. Exiting preserves
@@ -94,8 +100,10 @@ No resolution, rendering backend or export setting is changed.
 
 `settings_store.gd` validates `user://settings.json`, separately from
 progression. It stores four finite 0-1 volumes and boolean mute/fullscreen
-preferences plus optional `key_bindings`: all nine supported action IDs, each
-with two integer key codes (zero means an unassigned alternate). Validation
+preferences plus optional `key_bindings`: every supported action ID in
+`key_bindings.gd`'s `ACTIONS` (nine original actions plus the four ritual
+graph-navigation directions added 2026-10-07), each with two integer key
+codes (zero means an unassigned alternate). Validation
 rejects missing/unknown actions, malformed slots, nonintegral or unknown
 codes, duplicate assignments and reserved keys before applying anything.
 
@@ -131,8 +139,14 @@ Verify sliders, mute shortcuts, preference recovery, visible notices, movement,
 round expiry, Tab return, hidden-action protection and actual fullscreen/window
 transitions. Render the page over village and ritual at base and compact sizes.
 `tests/test_key_mapping.gd` checks physical movement events, capture/conflicts,
-shortcut dispatch, restart, old preferences, malformed saves and recovery.
-`tests/test_settings.gd` additionally checks the schema-2 migration: a
+shortcut dispatch, restart, old preferences, malformed saves and recovery,
+plus a real key and a simulated D-pad press moving the ritual's graph
+selection, and both being ignored while settings covers the ritual or the
+ritual itself is hidden. `tests/test_ritual_readability.gd` checks the
+direction-to-nearest-node selection itself against the real catalog and the
+separate 144-node fixture, including holding a direction at the accessible
+edge without erroring. `tests/test_settings.gd` additionally checks the
+schema-2 migration: a
 schema-1 file missing a newer key defaults it instead of failing, a present
 but out-of-range key still fails, a migrated file saves forward at the
 current schema, and an existing `.corrupt` file blocks a second overwrite.

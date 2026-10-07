@@ -91,8 +91,9 @@ The helper obeys audience requirements and keeps its own speaking/movement
 stats. An unlock makes a listener eligible; it does not recruit them instantly.
 
 Maintain keyboard, mouse and touch paths, visible intermission controls and
-existing gamepad movement. Do not imply that full gamepad graph navigation is
-already implemented. New inspection must not depend on hover.
+existing gamepad movement, plus the 2026-10-07 D-pad/keyboard graph
+navigation. Do not imply that remapping a gamepad button, rather than using
+its fixed default, is already implemented. New inspection must not depend on hover.
 
 ## 5. Systems, economy and timing
 

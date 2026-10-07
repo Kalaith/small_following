@@ -77,7 +77,7 @@ var _touch_index: int = -1
 var _touch_start: Vector2 = Vector2.ZERO
 var _touch_last: Vector2 = Vector2.ZERO
 var _touch_dragged: bool = false
-var _pointer_input_enabled: bool = true
+var _pointer_input_enabled: bool = true # Also gates keyboard/gamepad graph navigation; see set_pointer_input_enabled.
 var _hovered_id: String = ""
 var _font: Font
 var _title_label: Label
@@ -155,7 +155,7 @@ func update_state(round_recruits: int = 0) -> void:
 	_round_recruits = round_recruits
 	if not _built:
 		return
-	_hint_label.text = "Tab: %s / %s: next round\nMovement stays active." % ["market" if _market_circle else "village", Keys.hint("next_round")]
+	_hint_label.text = "Tab: %s / %s: next round\n%s%s%s%s or D-pad: move selection / %s: inscribe\nMovement stays active." % ["market" if _market_circle else "village", Keys.hint("next_round"), Keys.hint("ritual_nav_up"), Keys.hint("ritual_nav_down"), Keys.hint("ritual_nav_left"), Keys.hint("ritual_nav_right"), Keys.hint("buy_upgrade")]
 	_demo_hint.text = "Esc: dismiss / Tab: village / %s: next round" % Keys.hint("next_round")
 	_subtitle_label.text = "ROUND COMPLETE  /  %d NEW FOLLOWERS" % _round_recruits
 	_title_label.text = "Bellmarket's circle." if _market_circle else "The circle grows."
@@ -423,6 +423,56 @@ func focus_node(id: String) -> void:
 	zoom = maxf(0.8, zoom)
 	pan = -Vector2(node_positions[id]) * zoom
 	graph.queue_redraw()
+
+
+func navigate(direction: Vector2) -> void:
+	# Keyboard/gamepad graph traversal: step from the selected node (or the
+	# centre, when nothing is selected) to the closest node whose position
+	# falls within a roughly 70-degree cone around the requested direction.
+	# A radial branch's own nodes stay the best-aligned candidates, so
+	# repeated presses walk outward along one branch; a wide cone still lets
+	# an unaligned press cross into a neighboring branch near the centre.
+	if direction.is_zero_approx() or node_positions.is_empty():
+		return
+	var origin: Vector2 = node_positions.get(selected_id, Vector2.ZERO)
+	var want: Vector2 = direction.normalized()
+	var best_id: String = ""
+	var best_alignment: float = -1.0
+	var best_distance: float = INF
+	for id in node_positions:
+		if id == selected_id:
+			continue
+		var delta: Vector2 = node_positions[id] - origin
+		if delta.is_zero_approx():
+			continue
+		var alignment: float = delta.normalized().dot(want)
+		if alignment < 0.35:
+			continue
+		var distance: float = delta.length()
+		if best_id.is_empty() or alignment > best_alignment + 0.02 or (absf(alignment - best_alignment) <= 0.02 and distance < best_distance):
+			best_id = str(id)
+			best_alignment = alignment
+			best_distance = distance
+	if not best_id.is_empty():
+		focus_node(best_id)
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if not visible or not _pointer_input_enabled or demo_message_visible():
+		return
+	var direction: Vector2 = Vector2.ZERO
+	if event.is_action_pressed("ritual_nav_up"):
+		direction = Vector2.UP
+	elif event.is_action_pressed("ritual_nav_down"):
+		direction = Vector2.DOWN
+	elif event.is_action_pressed("ritual_nav_left"):
+		direction = Vector2.LEFT
+	elif event.is_action_pressed("ritual_nav_right"):
+		direction = Vector2.RIGHT
+	else:
+		return
+	navigate(direction)
+	get_viewport().set_input_as_handled()
 
 
 func _state(id: String) -> String:

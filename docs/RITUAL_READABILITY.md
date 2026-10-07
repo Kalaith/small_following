@@ -112,7 +112,8 @@ Keep the detail panel stationary and readable while graph transforms change.
 The overview must not hide interactive state without a visible route to it.
 Use reduced detail deliberately at scale; reveal labels as the player focuses
 or zooms in. Preserve an understandable maximum-rank state and unaffordable
-reason. Keyboard/gamepad graph traversal remains separate work. The later touch
+reason. Keyboard/gamepad graph traversal (T/F/G/H or D-pad, nearest node in
+the pressed direction) shipped 2026-10-07. The later touch
 update adds tap selection, finger pan and visible zoom/navigation buttons;
 [verification](VERIFICATION.md) distinguishes input checks from device acceptance.
 

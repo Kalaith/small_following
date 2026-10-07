@@ -54,6 +54,7 @@ func _run() -> void:
 	key_event(KEY_END, true)
 	check(Input.get_vector("move_left", "move_right", "move_up", "move_down") == Vector2.ZERO, "End is not movement")
 	key_event(KEY_END, false)
+	await test_graph_navigation(scene)
 	await test_bindings(scene)
 	scene.queue_free()
 	await process_frame
@@ -88,6 +89,35 @@ func cleanup() -> void:
 		for suffix in ["", ".bak", ".tmp", ".corrupt"]:
 			if FileAccess.file_exists(path + suffix):
 				DirAccess.remove_absolute(path + suffix)
+
+
+func joy_tap(button: int) -> void:
+	for pressed in [true, false]:
+		var event := InputEventJoypadButton.new()
+		event.button_index = button
+		event.pressed = pressed
+		root.push_input(event)
+
+
+func test_graph_navigation(scene) -> void:
+	scene.set_settings_visible(false)
+	check(scene.ritual_screen.visible and not scene.settings_screen.visible, "ritual stays open once settings close")
+	scene.ritual_screen.clear_selection()
+	tap(KEY_T)
+	check(scene.ritual_screen.selected_id == "talk_4", "T moves the graph selection toward the pressed direction")
+	var reached: String = scene.ritual_screen.selected_id
+	joy_tap(JOY_BUTTON_DPAD_DOWN)
+	check(scene.ritual_screen.selected_id != reached, "a gamepad D-pad press also moves the graph selection")
+	var before_hidden: String = scene.ritual_screen.selected_id
+	scene.set_settings_visible(true)
+	tap(KEY_G)
+	check(scene.ritual_screen.selected_id == before_hidden, "graph navigation keys do nothing while settings covers the ritual")
+	scene.set_settings_visible(false)
+	scene.set_ritual_visible(false)
+	tap(KEY_T)
+	check(scene.ritual_screen.selected_id == before_hidden, "graph navigation keys do nothing while the ritual itself is hidden")
+	scene.set_ritual_visible(true)
+	scene.set_settings_visible(true)
 
 
 func test_bindings(scene) -> void:
