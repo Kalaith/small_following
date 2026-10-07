@@ -9,6 +9,7 @@ const GameAudio = preload("res://scripts/game_audio.gd")
 const SettingsStore = preload("res://scripts/settings_store.gd")
 const SettingsScreen = preload("res://scripts/settings_screen.gd")
 const Keys = preload("res://scripts/key_bindings.gd")
+const Pad = preload("res://scripts/pad_bindings.gd")
 const Market = preload("res://scripts/market.gd")
 const Village = preload("res://scripts/village.gd")
 const TitleScreen = preload("res://scripts/title_screen.gd")
@@ -68,6 +69,7 @@ func _ready() -> void:
 		settings.path = settings_path_override
 	settings.load_settings()
 	Keys.apply(settings.key_bindings)
+	Pad.apply(settings.pad_bindings)
 	game_audio.apply_preferences(settings.values)
 	game_audio.name = "GameAudio"
 	add_child(game_audio)
@@ -370,6 +372,7 @@ func _refresh_settings() -> void:
 		message = "Saving preferences..." if not settings_timer.is_stopped() else "Preferences saved automatically."
 	settings_screen.refresh(game_audio, is_fullscreen(), message)
 	settings_screen.refresh_bindings(settings.key_bindings)
+	settings_screen.refresh_pad(settings.pad_bindings)
 
 
 func _exit_tree() -> void:
@@ -418,6 +421,8 @@ func _build_settings() -> void:
 	settings_screen.fullscreen_requested.connect(set_fullscreen)
 	settings_screen.binding_requested.connect(_rebind_key)
 	settings_screen.reset_keys_requested.connect(_reset_keys)
+	settings_screen.pad_binding_requested.connect(_rebind_pad)
+	settings_screen.reset_pad_requested.connect(_reset_pad)
 	_refresh_settings()
 
 
@@ -434,6 +439,22 @@ func _rebind_key(action: String, slot: int, code: int) -> void:
 func _reset_keys() -> void:
 	settings.reset_keys()
 	settings_screen.binding_message.text = "Default keys restored."
+	_keys_changed()
+
+
+func _rebind_pad(action: String, button: int) -> void:
+	var error: String = settings.rebind_pad(action, button)
+	if not error.is_empty():
+		settings_screen.binding_message.text = error
+		return
+	settings_screen.cancel_capture()
+	settings_screen.binding_message.text = "%s: %s" % [Pad.ACTIONS[action], Pad.button_name(button)]
+	_keys_changed()
+
+
+func _reset_pad() -> void:
+	settings.reset_pad()
+	settings_screen.binding_message.text = "Default gamepad buttons restored."
 	_keys_changed()
 
 

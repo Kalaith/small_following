@@ -2,6 +2,7 @@ extends SceneTree
 ## Physical key events catch incorrect serialized codes that action_press misses.
 const Keys = preload("res://scripts/key_bindings.gd")
 const Store = preload("res://scripts/settings_store.gd")
+const Pad = preload("res://scripts/pad_bindings.gd")
 const FIXTURE: String = "user://key_mapping_test_fixture.json"
 const PROGRESSION_FIXTURE: String = "user://key_mapping_progression_fixture.json"
 var checks: int = 0
@@ -56,6 +57,7 @@ func _run() -> void:
 	key_event(KEY_END, false)
 	await test_graph_navigation(scene)
 	await test_bindings(scene)
+	test_pad_bindings(scene)
 	scene.queue_free()
 	await process_frame
 	print("KEY MAPPING RESULT: %d checks, %d failures" % [checks, failures])
@@ -290,4 +292,50 @@ func test_bindings(scene) -> void:
 	scene.settings.save_enabled = false
 	scene._reset_keys()
 	scene._save_settings()
+	cleanup()
+
+
+func test_pad_bindings(scene) -> void:
+	var page = scene.settings_screen
+	scene.settings.save_enabled = false
+	scene.set_settings_visible(true)
+	page.tabs.current_tab = 1
+	page.begin_pad_capture("buy_upgrade")
+	check(page.capture_action == "buy_upgrade" and page.pad_buttons.buy_upgrade.text == "Press a button…", "pad binding button starts capture")
+	joy_tap(JOY_BUTTON_Y)
+	check(page.capture_action.is_empty() and scene.settings.pad_bindings.buy_upgrade == JOY_BUTTON_Y, "a pressed gamepad button assigns and finishes capture")
+	check(page.pad_buttons.buy_upgrade.text == Pad.button_name(JOY_BUTTON_Y), "pad label reflects the assigned button")
+	var event := InputEventJoypadButton.new()
+	event.button_index = JOY_BUTTON_Y
+	check(InputMap.event_is_action(event, "buy_upgrade"), "rebound button fires the action")
+	event.button_index = JOY_BUTTON_X
+	check(not InputMap.event_is_action(event, "buy_upgrade"), "replaced button no longer fires the action")
+	check(Keys.hint("buy_upgrade") == "U", "pad rebinding leaves the keyboard slot intact")
+	page.begin_pad_capture("next_round")
+	joy_tap(JOY_BUTTON_Y)
+	check(page.capture_action == "next_round" and page.binding_message.text.contains("already assigned") and scene.settings.pad_bindings.next_round == JOY_BUTTON_A, "duplicate button is refused and explained")
+	tap(KEY_ESCAPE)
+	check(page.visible and page.capture_action.is_empty(), "Escape cancels pad capture without closing settings")
+	var analog := InputEventJoypadMotion.new()
+	analog.axis = JOY_AXIS_LEFT_X
+	analog.axis_value = -1.0
+	check(InputMap.event_is_action(analog, "move_left"), "analog movement survives pad rebinding")
+	var loaded := Store.new()
+	loaded.path = FIXTURE
+	scene.settings.save_enabled = true
+	scene.settings.path = FIXTURE
+	check(scene.settings.save_settings(), "pad mapping saves")
+	loaded.load_settings()
+	check(loaded.pad_bindings.buy_upgrade == JOY_BUTTON_Y, "pad mapping persists across load")
+	for malformed in ["missing", "duplicate", "range", "fraction"]:
+		var mapping: Dictionary = Pad.defaults()
+		match malformed:
+			"missing": mapping.erase("next_round")
+			"duplicate": mapping.next_round = mapping.buy_upgrade
+			"range": mapping.next_round = 99
+			"fraction": mapping.next_round = 0.5
+		check(not loaded.valid({"schema": 2, "values": Store.DEFAULTS, "pad_bindings": mapping}), "reject malformed pad data: " + malformed)
+	page.reset_pad_button.pressed.emit()
+	check(scene.settings.pad_bindings == Pad.defaults() and Pad.defaults().buy_upgrade == JOY_BUTTON_X, "restore defaults resets gamepad buttons")
+	scene.settings.save_enabled = false
 	cleanup()

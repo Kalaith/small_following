@@ -9,8 +9,11 @@ signal voice_mute_requested
 signal fullscreen_requested(value: bool)
 signal binding_requested(action: String, slot: int, code: int)
 signal reset_keys_requested
+signal pad_binding_requested(action: String, button: int)
+signal reset_pad_requested
 
 const Keys = preload("res://scripts/key_bindings.gd")
+const Pad = preload("res://scripts/pad_bindings.gd")
 const GameAudio = preload("res://scripts/game_audio.gd")
 
 var sliders: Dictionary = {}
@@ -27,6 +30,10 @@ var binding_buttons: Dictionary = {}
 var binding_message: Label
 var cancel_button: Button
 var reset_keys_button: Button
+var reset_pad_button: Button
+var pad_buttons: Dictionary = {}
+var capture_pad: bool = false
+var current_pad: Dictionary = {}
 var capture_action: String = ""
 var capture_slot: int = 0
 var current_bindings: Dictionary = {}
@@ -190,12 +197,16 @@ func _build_key_mapping() -> void:
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	page.add_child(scroll)
+	var holder := VBoxContainer.new()
+	holder.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	holder.add_theme_constant_override("separation", 10)
+	scroll.add_child(holder)
 	var grid := GridContainer.new()
 	grid.columns = 4
 	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	grid.add_theme_constant_override("h_separation", 12)
 	grid.add_theme_constant_override("v_separation", 6)
-	scroll.add_child(grid)
+	holder.add_child(grid)
 	for title in ["Action", "Primary", "Alternate", ""]:
 		grid.add_child(_label(title, 14, Color("d7b9ff")))
 	for action in Keys.ACTIONS:
@@ -219,7 +230,25 @@ func _build_key_mapping() -> void:
 			cancel_capture()
 			binding_requested.emit(action, 1, 0))
 		grid.add_child(clear)
-	var fixed := _label("Esc: settings / cancel key choice   ·   Tab: village / ritual\nThese navigation keys stay fixed. Gamepad bindings stay available.", 14, Color("bdaece"))
+	holder.add_child(_label("Gamepad buttons", 20, Color("d7b9ff")))
+	var pad_grid := GridContainer.new()
+	pad_grid.columns = 2
+	pad_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	pad_grid.add_theme_constant_override("h_separation", 12)
+	pad_grid.add_theme_constant_override("v_separation", 6)
+	holder.add_child(pad_grid)
+	for action in Pad.ACTIONS:
+		var label := _label(Pad.ACTIONS[action], 16)
+		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		pad_grid.add_child(label)
+		var button := _key_button("")
+		button.custom_minimum_size.x = 200
+		button.clip_text = true
+		button.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		button.pressed.connect(begin_pad_capture.bind(action))
+		pad_grid.add_child(button)
+		pad_buttons[action] = button
+	var fixed := _label("Esc: settings / cancel choice   ·   Tab: village / ritual\nThese navigation keys stay fixed. Analog stick movement stays available.", 14, Color("bdaece"))
 	fixed.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	page.add_child(fixed)
 	binding_message = _label("Choose a binding to change it.", 14, Color("e1cf9b"))
@@ -233,6 +262,11 @@ func _build_key_mapping() -> void:
 		cancel_capture()
 		reset_keys_requested.emit())
 	actions.add_child(reset_keys_button)
+	reset_pad_button = _key_button("Restore default buttons")
+	reset_pad_button.pressed.connect(func() -> void:
+		cancel_capture()
+		reset_pad_requested.emit())
+	actions.add_child(reset_pad_button)
 	cancel_button = _key_button("Cancel key choice")
 	cancel_button.pressed.connect(cancel_capture)
 	cancel_button.hide()
@@ -262,13 +296,31 @@ func refresh_bindings(mapping: Dictionary) -> void:
 	for action in binding_buttons:
 		for slot in range(2):
 			var button: Button = binding_buttons[action][slot]
-			button.text = "Press a key…" if capture_action == action and capture_slot == slot else Keys.key_name(int(mapping[action][slot]))
+			button.text = "Press a key…" if capture_action == action and capture_slot == slot and not capture_pad else Keys.key_name(int(mapping[action][slot]))
 			button.tooltip_text = "%s: %s" % [Keys.ACTIONS[action], button.text]
+
+
+func refresh_pad(mapping: Dictionary) -> void:
+	current_pad = mapping.duplicate()
+	for action in pad_buttons:
+		var button: Button = pad_buttons[action]
+		button.text = "Press a button…" if capture_action == action and capture_pad else Pad.button_name(int(mapping[action]))
+		button.tooltip_text = "%s: %s" % [Pad.ACTIONS[action], button.text]
+
+
+func begin_pad_capture(action: String) -> void:
+	capture_action = action
+	capture_pad = true
+	binding_message.text = "Press a gamepad button for %s. Esc cancels." % Pad.ACTIONS[action]
+	cancel_button.show()
+	refresh_bindings(current_bindings)
+	refresh_pad(current_pad)
 
 
 func begin_capture(action: String, slot: int) -> void:
 	capture_action = action
 	capture_slot = slot
+	capture_pad = false
 	binding_message.text = "Press a new key for %s. Esc cancels." % Keys.ACTIONS[action]
 	cancel_button.show()
 	refresh_bindings(current_bindings)
@@ -280,10 +332,17 @@ func cancel_capture() -> void:
 		cancel_button.hide()
 		binding_message.text = "Choose a binding to change it."
 		refresh_bindings(current_bindings)
+		refresh_pad(current_pad)
 
 
 func capture_key(event: InputEvent) -> bool:
-	if capture_action.is_empty() or not event is InputEventKey:
+	if capture_action.is_empty():
+		return false
+	if capture_pad and event is InputEventJoypadButton:
+		if event.pressed:
+			pad_binding_requested.emit(capture_action, event.button_index)
+		return true
+	if not event is InputEventKey:
 		return false
 	# Tab retains its between-round escape route through main.gd.
 	if event.is_action("toggle_ritual"):
@@ -292,6 +351,8 @@ func capture_key(event: InputEvent) -> bool:
 	if event.pressed and not event.echo:
 		if event.is_action("toggle_settings"):
 			cancel_capture()
+		elif capture_pad:
+			binding_message.text = "Press a gamepad button, or Esc to cancel."
 		elif event.alt_pressed or event.ctrl_pressed or event.meta_pressed or event.shift_pressed:
 			binding_message.text = "Choose a single key without Shift, Ctrl, Alt or Meta."
 		else:

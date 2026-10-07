@@ -5,7 +5,6 @@ and open design decisions are not listed here; their exit conditions live in
 [milestones](docs/MILESTONES.md) and the limits they leave open are stated in
 the [verification record](docs/VERIFICATION.md).
 
-- [ ] Add gamepad rebinding: remapping which physical gamepad button fires an action. Accessible keyboard/gamepad ritual graph navigation and keyboard rebinding of every action, including the new graph directions, shipped 2026-10-07 ([VERIFICATION](docs/VERIFICATION.md)).
 - [ ] Add further accessibility settings and keyboard/gamepad navigation for the settings screen, including saved preferences for each new setting.
 - [ ] Resolve the installed editor's `_EDITOR_GET` import-check error and unexplained automatic-shutdown exit status; keep those limitations separate from runtime check results.
 

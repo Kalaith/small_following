@@ -43,7 +43,9 @@ From the project folder, `.\Run.ps1` also launches the game; pass `-GodotExe '<i
 The table shows default keys. Settings → Key mapping provides primary and
 alternate keys for movement and gameplay/audio/fullscreen shortcuts, conflict
 messages, and Restore default keys. Bindings save automatically. Esc and Tab
-stay fixed for navigation; gamepad bindings remain available.
+stay fixed for navigation. The same page remaps one gamepad button for next
+round, buy upgrade and each graph direction (with Restore default buttons);
+analog stick movement is fixed.
 
 Movement remains active during the ritual; Tab or **Return to the village** reveals the village between rounds. **Ritual circle** reopens upgrades and **Next round** begins again without a keyboard. A new round returns the cultist to the starting entrance. Gamepad movement/action mappings exist but were not physically tested; graph selection and navigation use touch, a mouse, or T/F/G/H and the D-pad, stepping to the closest node in the pressed direction.
 

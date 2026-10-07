@@ -1689,3 +1689,13 @@ project's green clear color. Both presets now include the title scene.
   included and delivered; a normal browser reload remains the visual check.
 
 This was an export-configuration fix; gameplay test suites were not rerun.
+
+## Gamepad rebinding (2026-10-07)
+
+`scripts/pad_bindings.gd` stores one gamepad button per action for next round,
+buy upgrade and the four graph directions (`pad_bindings` in settings, optional
+so older files still load). Duplicates, out-of-range and fractional buttons are
+rejected on load and on save; analog movement and keyboard slots are untouched.
+`test_key_mapping.gd` is now 94 checks, 0 failures and `test_settings.gd`
+34 checks, 0 failures, both headless. A physical gamepad was not used: capture
+is exercised with synthetic `InputEventJoypadButton` events only.

@@ -1,6 +1,7 @@
 extends RefCounted
 ## Preferences never share a file or schema with earned progression.
 const Keys = preload("res://scripts/key_bindings.gd")
+const Pad = preload("res://scripts/pad_bindings.gd")
 ## Schema 1 shipped the original six keys. Schema 2 tolerates a saved
 ## `values` dictionary missing a newer key (it defaults in on load) so a
 ## single added setting cannot invalidate every existing preferences file.
@@ -11,6 +12,7 @@ const DEFAULTS: Dictionary = {
 }
 var values: Dictionary = DEFAULTS.duplicate()
 var key_bindings: Dictionary = Keys.defaults()
+var pad_bindings: Dictionary = Pad.defaults()
 var save_enabled: bool = true
 var path: String = "user://settings.json"
 var last_error: String = ""
@@ -38,6 +40,8 @@ func valid(data: Variant) -> bool:
 			var amount: float = float(candidate[key])
 			if not is_finite(amount) or amount < 0.0 or amount > 1.0:
 				return false
+	if data.has("pad_bindings") and not Pad.valid(data.pad_bindings):
+		return false
 	return not data.has("key_bindings") or Keys.valid(data.key_bindings)
 
 
@@ -63,6 +67,7 @@ func load_settings() -> void:
 	if valid(data):
 		values = _migrated(data)
 		key_bindings = Keys.normalized(data.get("key_bindings", Keys.defaults()))
+		pad_bindings = Pad.normalized(data.get("pad_bindings", Pad.defaults()))
 		return
 	# Preserve a genuinely future format rather than replacing it with an older backup.
 	if data is Dictionary and (data.get("schema") is int or data.get("schema") is float) and int(data.schema) > CURRENT_SCHEMA:
@@ -73,6 +78,7 @@ func load_settings() -> void:
 	if valid(backup):
 		values = _migrated(backup)
 		key_bindings = Keys.normalized(backup.get("key_bindings", Keys.defaults()))
+		pad_bindings = Pad.normalized(backup.get("pad_bindings", Pad.defaults()))
 		last_error = "Recovered settings from backup."
 	elif FileAccess.file_exists(path) or FileAccess.file_exists(path + ".bak"):
 		writes_blocked = true
@@ -84,7 +90,7 @@ func save_settings() -> bool:
 		return true
 	if writes_blocked:
 		return false
-	var snapshot := {"schema": CURRENT_SCHEMA, "values": values, "key_bindings": key_bindings}
+	var snapshot := {"schema": CURRENT_SCHEMA, "values": values, "key_bindings": key_bindings, "pad_bindings": pad_bindings}
 	if not valid(snapshot):
 		last_error = "Settings are invalid and could not be saved."
 		return false
@@ -128,3 +134,16 @@ func rebind(action: String, slot: int, code: int) -> String:
 func reset_keys() -> void:
 	key_bindings = Keys.defaults()
 	Keys.apply(key_bindings)
+
+
+func rebind_pad(action: String, button: int) -> String:
+	var error: String = Pad.change_error(pad_bindings, action, button)
+	if error.is_empty():
+		pad_bindings[action] = button
+		Pad.apply(pad_bindings)
+	return error
+
+
+func reset_pad() -> void:
+	pad_bindings = Pad.defaults()
+	Pad.apply(pad_bindings)
