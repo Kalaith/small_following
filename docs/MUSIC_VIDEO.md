@@ -372,8 +372,11 @@ cut away, and persistence disabled before each scene enters the tree.
   - it walks with the carried statue and idol;
   - it sits in at the humble HQ.
 
-  In staged takes, the game's own idle helper is hidden, so it never stands
-  around "resting".
+  The helper appears without its status caption (user, 2026-10-07):
+  - staged takes draw the game's teal-helper shape from `mv_set.gd`, and the game's own idle helper is hidden;
+  - in real rounds, the real helper keeps working, hidden, while an identical caption-free double follows its position every frame, so its behaviour on screen is unchanged.
+
+  Gerald keeps his name tag, which the pie joke needs.
 - **The statue is carried (user, 2026-10-07):** followers lift the statue
   onto their shoulders and carry it on poles, both in the Bellmarket
   procession and in the closing procession. The closing column goes around
@@ -390,7 +393,7 @@ cut away, and persistence disabled before each scene enters the tree.
     - `full_core_dance` (the helper round);
     - `ritual_first` (the real first inscription);
     - `constellation_tour` (32 inscribed nodes);
-    - `debate`: a real Priest encounter on a staged set with a lectern, bell, Gerald and dim light, after 4.5 s of establishing set;
+    - `debate`: a real Priest encounter on a staged set with a lectern, a bell and Gerald, framed close so the Priest reads clearly, after 4.5 s of establishing set;
     - `bellmarket`: a real round after the real unlock;
   - staged:
     - `hq_wake`, `coins_pie`, `chorus_hq`, `stall_teal`, `crowd`, `crowd_wide` (same crowd, same seed), `bellmarket_procession`, `clipboard`, `hq_humble`, `hq_final`, `pullback`;

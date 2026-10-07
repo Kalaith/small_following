@@ -53,6 +53,7 @@ var route_stop: int = 0
 var route_pause: int = 12
 var captured: Array[String] = []
 var own_camera: bool = false
+var helper_twin: Node2D = null  # a caption-free double that follows the real helper
 
 
 func _initialize() -> void:
@@ -175,6 +176,9 @@ func setup(purchases: int = 0) -> void:
 	camera = Camera2D.new()
 	scene.add_child(camera)
 	own_camera = false
+	helper_twin = null
+	if not take_staged:
+		mirror_helper()
 	rng.seed = hash(take)
 	recruit_count = 0
 	route_stop = 0
@@ -217,6 +221,9 @@ func finish_step(s: int, keep_ritual: bool = false) -> void:
 		return
 	if own_camera and not camera.is_current():
 		camera.make_current()
+	if is_instance_valid(helper_twin) and is_instance_valid(scene.helper):
+		scene.helper.hide()
+		helper_twin.position = scene.helper.position
 	scene.hud_layout.hide()
 	scene.settings_button.hide()
 	if not keep_ritual:
@@ -291,12 +298,16 @@ func gerald(at: Vector2) -> Node2D:
 
 
 func teal(at: Vector2) -> Node2D:
-	## The game's own teal helper, posed for a staged scene (it does not recruit here).
-	var helper = Helper.new()
-	actors().add_child(helper)
-	helper.active = true
-	helper.position = at
-	return helper
+	## The game's teal helper (its drawing, without the status caption), posed for a scene.
+	return prop("helper", at)
+
+
+func mirror_helper() -> void:
+	## Real rounds: the real helper keeps working, hidden; an identical double without
+	## the status caption follows it exactly, so its behaviour is unchanged on screen.
+	if is_instance_valid(scene.helper):
+		scene.helper.hide()
+		helper_twin = teal(scene.helper.position)
 
 
 func bearers(count: int = 4) -> Array:
@@ -374,7 +385,7 @@ func build_hq(final: bool) -> Dictionary:
 		for i in range(8):
 			prop("chair", HQ + Vector2(-260 + i * 74, 70), {"tint": [Color("7c88aa"), Color("b89c58"), Color("be8066")][i % 3]})
 		prop("robe_rack", HQ + Vector2(-250, -30))
-		set["tin"] = prop("tin", HQ + Vector2(250, 10), {"size_scale": 3.4, "tint": Color("b8423f"), "count": 9, "text": "BISCUITS"})
+		set["tin"] = prop("tin", HQ + Vector2(300, -34), {"size_scale": 3.4, "tint": Color("b8423f"), "count": 9, "text": "BISCUITS"})
 	set["table"] = prop("table", HQ, {"tint": MvSet.WOOD_LIGHT})
 	set["candle"] = prop("candle", HQ + Vector2(-34, 1), {"lift": 46.0})
 	if not final:
@@ -587,10 +598,7 @@ func take_debate() -> void:
 	prop("lectern", Vector2(720, 668))
 	prop("bell", Vector2(905, 520))
 	var him: Node2D = gerald(Vector2(625, 610))
-	var dim := CanvasModulate.new()
-	dim.color = Color(0.78, 0.72, 0.86)
-	scene.add_child(dim)
-	look(Vector2(800, 600), 1.45)
+	look(Vector2(790, 600), 2.1)
 	var rebuttals: int = -1
 	for s in range(take_steps):
 		await physics_frame
@@ -618,6 +626,7 @@ func take_bellmarket() -> void:
 	begin("bellmarket", 7 * 60, false)
 	await travel_to_bellmarket()
 	scene.start_next_round()
+	mirror_helper()
 	watch_recruits()
 	follow_player()
 	for s in range(take_steps):
@@ -754,6 +763,7 @@ func take_chorus_hq() -> void:
 	await setup()
 	var set: Dictionary = build_hq(false)
 	set["tin"].count = 1   # one biscuit left
+	prop("pie", HQ + Vector2(2, 3), {"lift": 46.0})  # Gerald's pie, still on the table
 	prop("fire", HQ + Vector2(-20, -78))
 	seat_cultist()
 	var people: Array = [person(HQ + Vector2(-66, -12)), person(HQ + Vector2(64, -10)), teal(HQ + Vector2(-8, 42))]
@@ -777,11 +787,8 @@ func take_stall_teal() -> void:
 		people.append(person(stall + Vector2(-110 + i * 44, 92)))
 	for i in range(5):
 		people.append(person(stall + Vector2(-88 + i * 44, 126)))
-	var helper = Helper.new()
-	actors().add_child(helper)
-	helper.active = true
-	var formation: Vector2 = stall + Vector2(132, 126)
-	helper.position = formation
+	var formation: Vector2 = stall + Vector2(-132, 126)  # the open side, clear of the house
+	var helper: Node2D = teal(formation)
 	var spot: Vector2 = stall + Vector2(0, 168)
 	var cone: Node2D = prop("cone", spot + Vector2(0, 4))
 	cone.hide()

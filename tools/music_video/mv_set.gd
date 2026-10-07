@@ -57,6 +57,7 @@ func _draw() -> void:
 		"flag": _flag()
 		"zzz": _zzz()
 		"nametag": _nametag()
+		"helper": _helper()
 
 
 func _shadow(width: float) -> void:
@@ -124,7 +125,11 @@ func _tin() -> void:
 		draw_circle(Vector2(-6 + (i % 3) * 6, -2 + (i / 3) * 4), 3.2, Color("d9a95b"))
 	draw_set_transform(Vector2(0, -lift), 0.0, Vector2(size_scale, size_scale))
 	if text != "":
-		_text(Vector2(0, -6), text, 7, Color("3a2a22"), w * 2)
+		# Shrink the label until it fits inside the tin's band.
+		var font_size: int = 7
+		while font_size > 3 and ThemeDB.fallback_font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x > w * 2 - 4:
+			font_size -= 1
+		_text(Vector2(0, -8), text, font_size, Color("3a2a22"), w * 2)
 
 
 func _bowl() -> void:
@@ -292,3 +297,16 @@ func _nametag() -> void:
 	var width: float = font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, 12).x + 12
 	draw_rect(Rect2(-width * 0.5, -14, width, 18), Color(0.16, 0.12, 0.2, 0.85))
 	_text(Vector2(0, 0), text, 12, CREAM, width)
+
+
+func _helper() -> void:
+	# scripts/helper.gd's teal helper, without its status caption.
+	draw_set_transform(Vector2(0, -lift), 0.0, Vector2(1, 0.4))
+	draw_circle(Vector2.ZERO, 12, Color(0.22, 0.27, 0.2, 0.22))
+	draw_set_transform(Vector2(0, -lift), 0.0, Vector2.ONE)
+	draw_colored_polygon(PackedVector2Array([Vector2(-7, -24), Vector2(7, -24), Vector2(12, -2), Vector2(-12, -2)]), Color("528c83"))
+	draw_line(Vector2(-7, -21), Vector2(7, -5), Color("dac5ee"), 3)
+	draw_circle(Vector2(0, -29), 11, Color("69a699"))
+	draw_circle(Vector2(0, -28), 7, Color("314c4e"))
+	draw_circle(Vector2(-2, -28), 1, Color("fff1d0"))
+	draw_circle(Vector2(3, -28), 1, Color("fff1d0"))
