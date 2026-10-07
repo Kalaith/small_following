@@ -20,6 +20,11 @@ var speaking: bool = false
 var path: PackedVector2Array = []
 var navigation := AStarGrid2D.new()
 var _cloth_trail := Vector2.ZERO
+# Bounds repeated full sweeps within one advance() call once a search finds
+# no reachable eligible listener; advance() clears it for the next call.
+var _search_exhausted: bool = false
+## Counts full _choose_target sweeps; diagnostic and test-observable only.
+var search_attempts: int = 0
 
 
 func configure_navigation(actors: Node2D) -> void:
@@ -74,6 +79,8 @@ func set_active(value: bool) -> void:
 func advance(delta: float, groups: Array[Node2D]) -> void:
 	if not active:
 		return
+	_search_exhausted = false
+	search_attempts = 0
 	# Bounded steps also handle a long render frame or the final clamped slice.
 	var remaining: float = maxf(delta, 0.0)
 	while remaining > 0.000001:
@@ -86,7 +93,9 @@ func advance(delta: float, groups: Array[Node2D]) -> void:
 func _advance_step(delta: float, groups: Array[Node2D]) -> void:
 	if not is_instance_valid(target_group) or target_index < 0 or not target_group.is_listener_eligible(target_index) or target_group.listeners[target_index].following:
 		_clear_target()
-		_choose_target(groups)
+		if not _search_exhausted:
+			_choose_target(groups)
+			_search_exhausted = target_index < 0
 	if target_index < 0:
 		_cloth_trail = _cloth_trail.move_toward(Vector2.ZERO, delta * 25.0)
 		return
@@ -121,6 +130,7 @@ func _cell(at: Vector2) -> Vector2i:
 
 
 func _choose_target(groups: Array[Node2D]) -> void:
+	search_attempts += 1
 	var from: Vector2i = _cell(global_position)
 	if not navigation.is_in_boundsv(from) or navigation.is_point_solid(from):
 		return

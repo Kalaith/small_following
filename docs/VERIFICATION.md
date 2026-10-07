@@ -1,5 +1,23 @@
 # Verification record - ranked progression, 2026-10-02
 
+## 2026-10-07 - Bounded the helper's empty target search
+
+`_choose_target` ran a fresh A* sweep over every eligible unconverted
+listener, and `_advance_step` called it again on every one of up to sixty
+1/60s sub-steps `advance()` takes to cover a long frame or a clamped round
+boundary. Finding a target is self-limiting (the helper stops searching
+once it has one), but finding none repeated the full sweep on every
+remaining sub-step. `advance()` now clears a `_search_exhausted` flag at
+entry; `_advance_step` skips `_choose_target` once a sweep this call has
+already found nothing, and the flag clears again on the next `advance()`
+call so a later opportunity is never missed.
+
+A new `search_attempts` counter (diagnostic and test-observable only,
+reset alongside the flag) makes the bound directly checkable.
+`tests/test_helper.gd` gained a check: a full simulated second with no
+reachable listener now sweeps for a target exactly once instead of once
+per sub-step. All twenty-three suites pass; helper is now 37 checks.
+
 ## 2026-10-07 - The helper's obstacle contract is a group, not a name
 
 `helper.gd`'s `configure_navigation` found footprint shapes with

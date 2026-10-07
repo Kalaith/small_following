@@ -151,6 +151,7 @@ func _run() -> void:
 	scene.queue_free()
 	await process_frame
 	await _test_obstacle_group_contract()
+	await _test_bounded_empty_search()
 	print("HELPER RESULT: %d checks, %d failures" % [checks, failures])
 	quit(0 if failures == 0 else 1)
 
@@ -184,5 +185,22 @@ func _test_obstacle_group_contract() -> void:
 	helper.configure_navigation(actors)
 	check(helper.navigation.is_point_solid(helper._cell(Vector2(300, 300))), "a shape in the obstacle group blocks pathing regardless of its node name")
 	check(not helper.navigation.is_point_solid(helper._cell(Vector2(600, 300))), "a shape named \"Shape\" but outside the obstacle group no longer blocks pathing")
+	actors.queue_free()
+	await process_frame
+
+
+func _test_bounded_empty_search() -> void:
+	# Finding no reachable eligible listener must not repeat the full A*
+	# sweep on every one of up to sixty sub-steps in a single advance() call.
+	var actors := Node2D.new()
+	root.add_child(actors)
+	var helper := Helper.new()
+	actors.add_child(helper)
+	helper.configure_navigation(actors)
+	helper.global_position = Vector2(300, 300)
+	helper.set_active(true)
+	var empty_groups: Array[Node2D] = []
+	helper.advance(1.0, empty_groups)
+	check(helper.search_attempts == 1, "a full second with no listener sweeps for a target at most once, not once per sub-step")
 	actors.queue_free()
 	await process_frame
