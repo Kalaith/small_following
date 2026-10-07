@@ -3,6 +3,7 @@ extends SceneTree
 const Gathering = preload("res://scripts/gathering.gd")
 const Helper = preload("res://scripts/helper.gd")
 const Market = preload("res://scripts/market.gd")
+const Progression = preload("res://scripts/progression.gd")
 
 var checks: int = 0
 var failures: int = 0
@@ -10,7 +11,9 @@ var rewards: Array[int] = []
 var phrases: int = 0
 
 
-class MarketProgression extends RefCounted:
+class MarketProgression extends Progression:
+	# A minimal double satisfying gathering.configure_market's typed parameter;
+	# only the two members market gatherings actually call are overridden.
 	var guild: bool = false
 	var patron: bool = false
 	var guild_bonus: int = 0

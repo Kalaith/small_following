@@ -1,5 +1,27 @@
 # Verification record - ranked progression, 2026-10-02
 
+## 2026-10-07 - Typed progression, audio and market-gathering references
+
+The code health review also found `ritual_screen.gd`'s `_progression` typed
+as a bare `RefCounted`, checked at every call site with `has_method` before
+a reflective `call(...)`. `const Progression = preload("res://scripts/
+progression.gd")` works as a static type in Godot 4.2.2, so `_progression`,
+`configure`'s parameter, `settings_screen.refresh`'s `audio` parameter (now
+`GameAudio`) and `gathering.gd`'s `_market_progression`/`configure_market`
+(now `Progression`) are statically typed. `has_method` guards and `.call`
+reflection are gone; `is_instance_valid` guards remain where `_progression`
+can legitimately be null before `configure()` runs.
+
+`tests/test_mixed_audiences.gd`'s `MarketProgression` test double extended
+`RefCounted` and would no longer satisfy `configure_market`'s typed
+parameter; it now extends `Progression` and overrides only the two methods
+market gatherings call, preserving the same lightweight double without a
+real catalog or save. No other fixture duck-typed either parameter.
+
+Behavior is unchanged; all twenty-three suites pass with unchanged check
+counts (mixed audiences still 36). The headless import still exits 1 on the
+existing unrelated `_EDITOR_GET` condition.
+
 ## 2026-10-07 - Keyboard/gamepad ritual graph navigation
 
 The ritual graph had no keyboard or gamepad way to change its selection;

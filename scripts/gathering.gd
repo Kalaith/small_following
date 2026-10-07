@@ -3,6 +3,7 @@ extends Node2D
 signal recruited(donation: int)
 signal phrase_spoken
 
+const Progression = preload("res://scripts/progression.gd")
 const LISTENER_COUNT: int = 5
 const CONVICTION_REQUIRED: float = 3.0
 const DONATION: int = 3
@@ -15,7 +16,7 @@ var donation: int = DONATION
 var npc_type: String = "villager"
 ## Empty profiles preserve the original homogeneous village/merchant rules.
 var listener_profiles: Array[Dictionary] = []
-var _market_progression = null
+var _market_progression: Progression = null
 
 var group_name: String = "Neighbours"
 var recruits: int = 0
@@ -193,7 +194,7 @@ func reset_round() -> void:
 	queue_redraw()
 
 
-func configure_market(progression) -> void:
+func configure_market(progression: Progression) -> void:
 	_market_progression = progression
 	for index in range(listeners.size()):
 		listeners[index].locked = not is_listener_eligible(index)

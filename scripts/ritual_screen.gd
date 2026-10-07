@@ -27,6 +27,7 @@ const TOUCH_TARGET_RADIUS: float = 28.0
 const EMULATED_MOUSE_DEVICE: int = -1
 const Layout = preload("res://scripts/ritual_layout.gd")
 const Keys = preload("res://scripts/key_bindings.gd")
+const Progression = preload("res://scripts/progression.gd")
 
 class GraphCanvas extends Control:
 	var screen: Control
@@ -68,7 +69,7 @@ var _label_rects: Dictionary = {}
 var _label_model: Array[Dictionary] = []
 var _catalog: Array = []
 var _by_id: Dictionary = {}
-var _progression: RefCounted
+var _progression: Progression
 var _max_radius: float = FIRST_RING
 var _round_recruits: int = 0
 var _dragging: bool = false
@@ -117,7 +118,7 @@ func _ready() -> void:
 	update_state()
 
 
-func configure(catalog: Array, progression: RefCounted) -> void:
+func configure(catalog: Array, progression: Progression) -> void:
 	_reset_pointer_gesture()
 	dismiss_demo_message()
 	_hovered_id = ""
@@ -163,17 +164,16 @@ func update_state(round_recruits: int = 0) -> void:
 	village_button.text = "Return to the market" if _market_circle else "Return to the village"
 	if _market_circle:
 		_subtitle_label.text = "BELLMARKET  /  %d NEW FOLLOWERS  /  FIVE PATHS, YOUR CHOICE" % _round_recruits
-	elif is_instance_valid(_progression) and _progression.has_method("map_complete"):
-		if _progression.map_complete():
-			_subtitle_label.text = "BRAMBLEWICK COMPLETE / Priest convinced / %s: play again" % Keys.hint("next_round")
-		elif _progression.has_unlock("encounter_unlock"):
-			var opponents: Array[String] = ["Skeptic", "Town Guard", "Zealot", "Priest"]
-			_subtitle_label.text = "TOWN DEBATE %d/4 / Next: %s / %s: next round" % [_progression.encounter_stage, opponents[_progression.encounter_stage], Keys.hint("next_round")]
-	var coins: int = int(_progression.get("coins")) if is_instance_valid(_progression) else 0
+	elif is_instance_valid(_progression) and _progression.map_complete():
+		_subtitle_label.text = "BRAMBLEWICK COMPLETE / Priest convinced / %s: play again" % Keys.hint("next_round")
+	elif is_instance_valid(_progression) and _progression.has_unlock("encounter_unlock"):
+		var opponents: Array[String] = ["Skeptic", "Town Guard", "Zealot", "Priest"]
+		_subtitle_label.text = "TOWN DEBATE %d/4 / Next: %s / %s: next round" % [_progression.encounter_stage, opponents[_progression.encounter_stage], Keys.hint("next_round")]
+	var coins: int = _progression.coins if is_instance_valid(_progression) else 0
 	_coins_label.text = "%d  donations" % coins
-	_recruits_label.text = "%d  recruits available" % (int(_progression.get("available_recruits")) if is_instance_valid(_progression) else 0)
-	_lifetime_label.text = "%d lifetime recruits" % (int(_progression.get("total_recruits")) if is_instance_valid(_progression) else 0)
-	var save_error: String = str(_progression.get("last_error")) if is_instance_valid(_progression) else ""
+	_recruits_label.text = "%d  recruits available" % (_progression.available_recruits if is_instance_valid(_progression) else 0)
+	_lifetime_label.text = "%d lifetime recruits" % (_progression.total_recruits if is_instance_valid(_progression) else 0)
+	var save_error: String = _progression.last_error if is_instance_valid(_progression) else ""
 	_error_label.text = "NOTICE: " + save_error if not save_error.is_empty() else ""
 	_error_label.tooltip_text = save_error
 	var item: Dictionary = _by_id.get(selected_id, {})
@@ -209,7 +209,7 @@ func update_state(round_recruits: int = 0) -> void:
 			_status_label.text = "SEALED\nRequires " + ", ".join(required_names) + "."
 			purchase_button.text = "Rank %d\n%s" % [_displayed_rank + 1, price]
 		"unaffordable":
-			var purchase_state: Dictionary = _progression.call("purchase_state", selected_id)
+			var purchase_state: Dictionary = _progression.purchase_state(selected_id)
 			_status_label.text = "AWAITING OFFERING\n" + str(purchase_state.message)
 			purchase_button.text = "Inscribe rank %d\n%s" % [_displayed_rank + 1, price]
 		"affordable":
@@ -339,7 +339,7 @@ func get_selected_rank() -> int:
 
 
 func is_circle_complete() -> bool:
-	return is_instance_valid(_progression) and _progression.has_method("is_circle_complete") and _progression.is_circle_complete()
+	return is_instance_valid(_progression) and _progression.is_circle_complete()
 
 
 func completion_hit_test(screen_point: Vector2) -> bool:
@@ -476,39 +476,29 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _state(id: String) -> String:
-	if is_instance_valid(_progression) and _progression.has_method("status"):
-		return str(_progression.call("status", id))
-	return "unknown"
+	return _progression.status(id) if is_instance_valid(_progression) else "unknown"
 
 
 func _rank(id: String) -> int:
-	if is_instance_valid(_progression) and _progression.has_method("rank"):
-		return int(_progression.call("rank", id))
-	return 0
+	return _progression.rank(id) if is_instance_valid(_progression) else 0
 
 
 func _max_rank(id: String) -> int:
-	if is_instance_valid(_progression) and _progression.has_method("max_rank"):
-		return int(_progression.call("max_rank", id))
-	return 1
+	return _progression.max_rank(id) if is_instance_valid(_progression) else 1
 
 
 func _next_cost(id: String) -> int:
-	if is_instance_valid(_progression) and _progression.has_method("next_cost"):
-		return int(_progression.call("next_cost", id))
-	return 0
+	return _progression.next_cost(id) if is_instance_valid(_progression) else 0
 
 
 func _next_recruit_cost(id: String) -> int:
-	if is_instance_valid(_progression) and _progression.has_method("next_recruit_cost"):
-		return int(_progression.call("next_recruit_cost", id))
-	return 0
+	return _progression.next_recruit_cost(id) if is_instance_valid(_progression) else 0
 
 
 func _effect_text(id: String, branch: String, complete: bool) -> String:
-	if not is_instance_valid(_progression) or not _progression.has_method("effect_preview"):
+	if not is_instance_valid(_progression):
 		return ""
-	var preview: Dictionary = _progression.call("effect_preview", id)
+	var preview: Dictionary = _progression.effect_preview(id)
 	var current: Dictionary = preview.get("current", {})
 	var next: Dictionary = preview.get("next", {})
 	if branch.begins_with("market_"):

@@ -11,6 +11,7 @@ signal binding_requested(action: String, slot: int, code: int)
 signal reset_keys_requested
 
 const Keys = preload("res://scripts/key_bindings.gd")
+const GameAudio = preload("res://scripts/game_audio.gd")
 
 var sliders: Dictionary = {}
 var percentages: Dictionary = {}
@@ -162,7 +163,7 @@ func _layout() -> void:
 	panel.position = (size - panel.size) * 0.5
 
 
-func refresh(audio: Node, fullscreen: bool, message: String) -> void:
+func refresh(audio: GameAudio, fullscreen: bool, message: String) -> void:
 	for channel in sliders:
 		sliders[channel].set_value_no_signal(audio.volumes[channel] * 100.0)
 		percentages[channel].text = "%d%%" % roundi(audio.volumes[channel] * 100.0)
