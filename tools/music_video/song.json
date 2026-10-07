@@ -116,8 +116,8 @@
     {"id": "gerald_pie", "bars": [11, 12], "take": "coins_pie", "staged": true, "note": "Gerald sets down a pie; HOLD slightly too long"},
     {"id": "wonky_circle", "bars": [13, 14], "take": "ritual_first", "note": "Real ritual; the edit tilts the frame, then rotates the 'rug' back"},
     {"id": "talking_one", "bars": [15, 16], "take": "ritual_first", "in_event": "purchase", "at_bar": 15, "note": "Real Quickened Words I inscription; the lyric nicknames it Talking One"},
-    {"id": "chorus_hq", "bars": [17, 20], "take": "chorus_hq", "staged": true, "note": "Four people; a tiny fire behind; one biscuit left"},
-    {"id": "plus_one", "bars": [21, 24], "take": "full_core_dance", "in_event": "recruit", "at_bar": 22, "note": "Real round: countdown and a recruit on the 'plus one' shout"},
+    {"id": "chorus_hq", "bars": [17, 20], "take": "chorus_hq", "staged": true, "note": "Four people (one is the teal helper); a tiny fire behind; one biscuit left"},
+    {"id": "plus_one", "bars": [21, 24], "take": "full_core_dance", "in_event": "helper_recruit", "at_bar": 22, "note": "Real expanded round with the helper unlocked: the helper's recruit lands on the 'plus one' shout"},
     {"id": "stall", "bars": [25, 26], "take": "stall_teal", "staged": true, "note": "Merchants' stall; maybe twelve people now"},
     {"id": "teal_yell", "bars": [27, 28], "take": "stall_teal", "staged": true, "in_event": "teal_step_forward", "at_bar": 28, "note": "The real teal helper steps into a spotlight, yelling 'Join us! Join us!'"},
     {"id": "teal_depressed", "bars": [29, 32], "take": "stall_teal", "staged": true, "in_event": "teal_slump", "at_bar": 29, "note": "On 'That's enough': cut to the teal helper back in formation, slumped and dejected; held through the instrumental"},
@@ -128,7 +128,7 @@
     {"id": "crowd_back", "bars": [42, 42], "take": "crowd", "staged": true, "note": "Smash back to close-up"},
     {"id": "square_takeover", "bars": [43, 44], "take": "crowd_wide", "staged": true, "note": "Tables everywhere; Gerald still has the pie"},
     {"id": "debate", "bars": [45, 52], "take": "debate", "in_event": "priest_convinced", "at_bar": 52, "note": "Real Priest encounter; staged lectern and bell; looks at Gerald's pie; HOLD on '...fine'"},
-    {"id": "procession", "bars": [53, 56], "take": "bellmarket_procession", "staged": true, "note": "Marching followers and a statue enter Bellmarket"},
+    {"id": "procession", "bars": [53, 56], "take": "bellmarket_procession", "staged": true, "note": "Followers lift the statue onto their shoulders and carry it into Bellmarket; the helper walks with it"},
     {"id": "bellmarket", "bars": [57, 58], "take": "bellmarket", "note": "Real Bellmarket: guilds and patrons watch"},
     {"id": "clipboard", "bars": [59, 60], "take": "clipboard", "staged": true, "note": "Clipboard follower count turned face-down; HOLD"},
     {"id": "spoiler", "bars": [61, 64], "take": "password", "staged": true, "in_event": "wrong_password", "at_bar": 63, "note": "Upside-down note typed as SKTKZLP; the real seal error; HOLD the silence uncomfortably long before '...right'"},
@@ -141,10 +141,10 @@
     {"id": "minions_magic", "bars": [79, 80], "plate": "postcard-minions-magic", "label": "IDEA - NOT BUILT YET", "note": "Helpers keep arriving; one polite spark"},
     {"id": "vision", "bars": [81, 81], "plate": "vision-enormous", "label": "DAYDREAM", "note": "Hundreds of followers, towers, ships, banners"},
     {"id": "or_twenty", "bars": [82, 84], "take": "hq_humble", "staged": true, "note": "Back at the folding table; Gerald sits down, pie untouched; HOLD after 'Or twenty'"},
-    {"id": "hq_final", "bars": [85, 88], "take": "hq_final", "staged": true, "note": "HQ quietly not humble; golden idol squeezes past"},
+    {"id": "hq_final", "bars": [85, 88], "take": "hq_final", "staged": true, "note": "HQ quietly not humble; the golden idol is carried past, the helper beside it"},
     {"id": "pullback", "bars": [89, 90], "take": "pullback", "staged": true, "note": "Camera pulls back: dozens, hundreds, the square"},
     {"id": "biscuit_tin", "bars": [91, 92], "take": "hq_final", "staged": true, "note": "The biscuit tin is now industrial-sized"},
-    {"id": "procession_pullback", "bars": [93, 95], "take": "pullback", "staged": true, "note": "Procession through Bramblewick, over a bridge and a hill"},
+    {"id": "procession_pullback", "bars": [93, 95], "take": "pullback", "staged": true, "note": "The column lifts the statue onto their shoulders and carries it north out of Bramblewick, around the village well"},
     {"id": "end_card", "bars": [96, 96], "plate": "end-card", "note": "SMALL FOLLOWING sign + PLEASE FORM AN ORDERLY QUEUE plank; cut to black"}
   ]
 }

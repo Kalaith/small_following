@@ -27,11 +27,29 @@ python tools/music_video/render_music_video.py --animatic  # animatic.mp4 + time
 | `exports/music_video/plates/*.png`, `plates.json` | 1920 x 1080 plates and their labels and design-note sources |
 | `exports/music_video/animatic.mp4` | Song, karaoke captions, plates and labelled placeholder cards for footage (H.264 + AAC, 5,376 frames) |
 | `exports/music_video/timeline.json` | Shot frame ranges, caption windows and per-syllable frames, password letter frames |
+| `exports/music_video/capture/<take>/` | 18 takes of 1920 x 1080 PNG frames at 30 fps, each with `events.json` |
 | `exports/music_video/review/` | Contact sheets and caption-sync stills |
 
 `sing.py` exits non-zero unless the song is exactly 179.2 s, within
 -14±1 LUFS, at or under -1 dBTP (cross-checked with FFmpeg `ebur128`), and
 silent only in the planned dead air after the wrong password.
+
+## Capture (slice 6)
+
+From the project root, with a display (the window mirrors the frames being
+captured; leave it open, because closing it ends the run):
+
+```powershell
+& 'C:\Program Files\Godot\Godot_v4.2.2-stable_mono_win64_console.exe' --fixed-fps 60 --path . --script res://tools/music_video/capture_music_video.gd -- "--capture-dir=res://exports/music_video/capture"
+```
+
+Add `--takes=a,b` to capture only some takes, and `--preview` to save every
+8th frame for a quick look. The game renders off-screen at 1920 x 1080: the
+game view is widened to 16:9 (1422 x 800 units), so nothing is cropped. Each
+take writes `capture/<take>/00000.png...` and `events.json`, which holds frame
+counts, song bars, events and checks. The run exits non-zero on any failed
+check. Nothing under `scripts/` or `scenes/` is changed. Staged props come from
+`mv_set.gd`, and followers and the helper are the game's own classes.
 
 ## Provenance
 
@@ -62,6 +80,11 @@ silent only in the planned dead air after the wrong password.
   the hilltop abbey) and `docs/GAME_DESIGN.md` (helpers, minions and magic).
   Each postcard names its source and carries an "IDEA - NOT BUILT YET" stamp.
   Fonts are the system's Georgia and Trebuchet MS.
+- **Footage:** real Godot 4.2.2 renders of the game, captured by
+  `capture_music_video.gd`. Gameplay takes are real simulation with real
+  outcomes, which the script asserts. Staged takes pose the game's own
+  characters and capture-only props (`mv_set.gd`, drawn in the game's style),
+  and the edit labels them STAGED.
 - **Measurement:** loudness is measured with an in-script BS.1770-4 meter and
   cross-checked with FFmpeg `ebur128`. Peaks are controlled by a 4x
   oversampled look-ahead limiter.

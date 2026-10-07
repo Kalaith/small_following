@@ -336,44 +336,76 @@ and the independent singers described above.
 
 ### 5.4 `capture_music_video.gd`: takes and choreography
 
-Same isolation pattern as `capture_promo.gd`: fixed 60 Hz physics, every
-second frame saved, funded build setup cut away, persistence disabled.
+Built 2026-10-07 (slice 6). Same isolation pattern as `capture_promo.gd`:
+fixed 60 Hz physics, every second step saved for 30 fps, funded build setup
+cut away, and persistence disabled before each scene enters the tree.
 
-- **Resolution:** run at 1920 x 1200 (16:10, the project's aspect), then crop
-  to 1920 x 1080 in the edit. A capture-side "clean" mode hides `hud_layout`
-  and the settings button for village shots. Ritual and title shots need a
-  check that the crop does not cut off text; if it does, those shots use the
-  promo's framed layout instead.
-- **Event log:** each take writes `events.json` with frame numbers for
-  recruits, phrases, purchases, rebuttals, victory, password letters and
-  travel. The editor uses it to shift a take's in-point so that a chosen real
-  event lands on a downbeat. This keeps gameplay timing real while still
-  syncing it to the music.
-- **Beat-timed ritual actions:** `select_node`, `focus_node`, `reset_view` and
-  `purchase_button.pressed` are fired on frames taken from `beats.json`.
-- **Password take:**
-  1. `show_title()`, then set `title_screen.password_input.secret = false` (staged, labelled) so the letters are readable.
-  2. Type `SKTKZLP` (the upside-down note) one character per beat and submit, which shows the real error.
-  3. Clear the field and type `PLZKTKS` one letter per beat, then submit through the real `text_submitted` path.
-  4. Hold on "The seal is open." and the revealed level buttons, then press `2 · Bellmarket` to travel for real.
+- **Resolution:** the game renders off-screen in a 1920 x 1080 `SubViewport`.
+  The game view is widened from 1280 x 800 to 1422 x 800, so the output is
+  native 16:9 and nothing is cropped. The ritual and title screens lay out in
+  full. The capture does not depend on the monitor size: a 1920 x 1200 window
+  was clamped by this display. The visible window mirrors the frames being
+  captured; closing it ends the capture.
+- **Clean frames:** `hud_layout` and the settings button are hidden. Village
+  takes also hide the ritual overlay. Staged cameras are clamped to the map,
+  so no frame shows the void past its edge.
+- **Event log:** each take writes `events.json`, which holds:
+  - its frame count;
+  - for staged takes, the first and last song bar and the two-beat handles;
+  - frame-stamped events (recruits, `third_recruit`, `helper_recruit`, `purchase`, `objection`, `priest_convinced`, `wrong_password`, `letter_*`, `seal_open`, `travel`, `teal_step_forward`, `teal_slump`, `statue_lifted` and the other staged beats);
+  - the take's checks.
 
-  Assertions: the wrong guess fails, the right one sets `unlocked`, and the travel lands in Bellmarket.
-- **Staged choreography (labelled):** listener hops and sways via each
-  listener's `position`/`rotation` on the beat; a conga line that moves
-  recruited listeners onto the cultist's position history; small cultist
-  side-steps through `step_motion` so the robe cloth swings for real.
-- **Takes:**
-  - `title`, `opening`, `ritual_first`, `full_core_dance`, `expansion_helper`;
-  - `constellation_tour`, `conga`, `debate` (stages 0-3), `centre_lit`;
-  - `password`, `bellmarket` (after a full village setup), `bellmarket_wide`;
-  - `recap_alone` (the cultist standing alone at the Bramblewick entrance).
-- **Checks, as in the promo:**
-  - the opening earns 3 recruits and the full core earns 15;
-  - the helper recruits at least 1;
-  - the Priest is actually convinced;
-  - the password sequence behaves as above;
-  - Bellmarket loads its five districts;
-  - the capture finishes with 0 failures.
+  The editor shifts each real take's in-point so that its `in_event` lands on
+  the shot's `at_bar`.
+- **Staging (labelled):** everything staged uses public properties, the game's
+  own classes (`Gathering.Listener` followers, the `Helper`) and capture-only
+  props from `tools/music_video/mv_set.gd` in the game's flat style. Those
+  props include the HQ table, chairs, candle, sign, robe hook, biscuit tins,
+  ceremonial bowl, pie, fire, banners, robe racks, lectern, bell, spotlight,
+  stone statue, golden idol, clipboard, rug and flags. Gerald is a listener
+  with a pie and a name tag. No file under `scripts/` or `scenes/` changes.
+- **The helper, featured (user, 2026-10-07):**
+  - the plus-one round (bars 21-24) is a real round with the helper unlocked; the camera keeps the cultist and the recruiting helper in frame;
+  - the teal helper is one of the four at the chorus HQ;
+  - it stands by the cultist in the crowd;
+  - it takes the spotlight at the stall;
+  - it walks with the carried statue and idol;
+  - it sits in at the humble HQ.
+
+  In staged takes, the game's own idle helper is hidden, so it never stands
+  around "resting".
+- **The statue is carried (user, 2026-10-07):** followers lift the statue
+  onto their shoulders and carry it on poles, both in the Bellmarket
+  procession and in the closing procession. The closing column goes around
+  the east side of the village well, never through it.
+- **Password take:** the title screen with `password_input.secret = false`
+  (staged, labelled), so the letters are readable.
+  1. `SKTKZLP` (the note held upside down) is typed one character per beat and submitted through the real `text_submitted` path on bar 63, which shows the real error.
+  2. The field clears on "Not that one."
+  3. `PLZKTKS` is typed one letter per shouted beat and submitted on bar 68, which opens the seal.
+  4. `2 · Bellmarket` is pressed, and the game really travels.
+- **Takes (18, all named by `song.json`):**
+  - real gameplay:
+    - `opening`;
+    - `full_core_dance` (the helper round);
+    - `ritual_first` (the real first inscription);
+    - `constellation_tour` (32 inscribed nodes);
+    - `debate`: a real Priest encounter on a staged set with a lectern, bell, Gerald and dim light, after 4.5 s of establishing set;
+    - `bellmarket`: a real round after the real unlock;
+  - staged:
+    - `hq_wake`, `coins_pie`, `chorus_hq`, `stall_teal`, `crowd`, `crowd_wide` (same crowd, same seed), `bellmarket_procession`, `clipboard`, `hq_humble`, `hq_final`, `pullback`;
+    - `password` (real UI, staged timing and unmasking).
+- **Checks:**
+  - the opening earns 3 recruits and 9 donations;
+  - Quickened Words I is bought with those real donations;
+  - the helper is unlocked and really recruits, and the round recruits at least 15;
+  - the circle has 32 inscribed nodes;
+  - the Priest is really convinced;
+  - the completed Bramblewick circle unlocks Bellmarket, travel succeeds and Bellmarket has five districts;
+  - the wrong password fails, `PLZKTKS` opens the seal and level 2 lands in Bellmarket;
+  - the bowl gets nine coins;
+  - every frame is 1920 x 1080;
+  - the run ends with 0 failures.
 
 ### 5.5 `postcards.py`: future direction plates
 
@@ -446,7 +478,7 @@ Commit each slice when it is complete and validated (see
 | 3 | Voice prototype | Whole-song draft of the wordless growing choir (revised after the first 8-bar test), plus the "P-L-Z" chant | Pitch tracks notes (measured); no clipping | **User listening test: keep, retune or rethink** |
 | 4 | Full vocals and mix | `song.wav` (built 2026-10-07; `sing.py` checks pass: 179.200 s, -14.0 LUFS, -1.3 dBTP, FFmpeg agrees, only the planned dead air) | -14 LUFS ±1, ≤ -1 dBTP | Listen |
 | 5 | Animatic | Song + captions + postcards over the backdrop, no footage (built 2026-10-07: `animatic.mp4`; 369 syllables within half a frame of their notes; 5,376 frames, 179.200 s, clean decode) | Caption timings match note starts | Sing-along check |
-| 6 | Capture | All takes + `events.json` | Promo-style recruit/victory assertions; password and travel assertions; 0 failures | Inspect contact frames |
+| 6 | Capture | All takes + `events.json` (built 2026-10-07: 18 takes, 6,275 frames, 0 failures; every shot fits its take) | Promo-style recruit/victory assertions; password and travel assertions; 0 failures | Inspect contact frames |
 | 7 | 30 s chorus cut | Bars 17-32 (29.9 s) edited | Frame count; cuts on bar frames | **First real review** |
 | 8 | Full video | 179.2 s MP4 | Full review script | Watch-through |
 | 9 | Handoff | README section, VERIFICATION entry, provenance | Link check | - |
@@ -468,8 +500,8 @@ Commit each slice when it is complete and validated (see
   transforms, `password_input.secret` and existing public methods. If a
   capture script breaks because game internals change, the capture fails
   loudly rather than drifting.
-- **16:9 crop clips ritual or title text.** Checked in slice 6, with the framed
-  layout as a fallback.
-- **Render time and disk use.** About 5,376 used frames (plus handles) at
-  1920 x 1200 PNG is roughly 12-16 GB in ignored exports. Delete capture frames
+- **16:9 crop clips ritual or title text.** Resolved in slice 6: the capture
+  renders native 16:9 by widening the game view, so nothing is cropped.
+- **Render time and disk use.** The slice 6 capture is 6,275 frames at
+  1920 x 1080 PNG, 1.5 GB in ignored exports, in about 15 minutes. Delete capture frames
   after encoding shots if space is tight.
