@@ -5,6 +5,11 @@ and open design decisions are not listed here; their exit conditions live in
 [milestones](docs/MILESTONES.md) and the limits they leave open are stated in
 the [verification record](docs/VERIFICATION.md).
 
+## Music video
+
+- [ ] Build the sung music video in the slices of
+  [the plan](docs/MUSIC_VIDEO.md#7-slices), starting with `song.json` and its
+  validator. Lyrics approval and the voice listening test are user gates.
 
 ## Code health
 

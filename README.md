@@ -180,6 +180,7 @@ See [save fields and recovery rules](docs/ARCHITECTURE.md#local-progression-and-
 - [Opening-round timing and route evidence](docs/PACING.md)
 - [Visual direction and future asset needs](docs/VISUAL_DIRECTION.md)
 - [Staged milestones](docs/MILESTONES.md)
+- [Music video plan - proposal](docs/MUSIC_VIDEO.md)
 - [Outstanding work only](TODO.md)
 - [Architecture, upgrade data and save recovery](docs/ARCHITECTURE.md)
 - [Guidance for future agents](AGENTS.md)
