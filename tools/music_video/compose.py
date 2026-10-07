@@ -373,9 +373,10 @@ def cue(song: dict, bar: int, beat: float, what: str) -> dict:
 
 # --- mix bus -----------------------------------------------------------------
 
-def reverb(send: np.ndarray, rng: np.random.Generator) -> np.ndarray:
-    t = _t(1.8)
-    decay = np.exp(-6.9 * t / 1.6)
+def reverb(send: np.ndarray, rng: np.random.Generator, seconds: float = 1.8,
+           rt60: float = 1.6) -> np.ndarray:
+    t = _t(seconds)
+    decay = np.exp(-6.9 * t / rt60)
     wet = np.zeros_like(send)
     pre = round(.018 * SR)
     for channel in range(2):

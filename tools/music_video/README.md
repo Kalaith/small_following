@@ -11,17 +11,19 @@ From the project root (Python 3.11 with NumPy and SciPy; FFmpeg for checks):
 ```powershell
 python tools/music_video/song_data.py   # validate song.json
 python tools/music_video/compose.py     # backing.wav + beats.json (about 15 s)
-python tools/music_video/sing.py --prototype  # slice 3 listening test (about 25 s)
-python tools/music_video/sing.py --shapes     # the vowel shape chosen for each syllable
+python tools/music_video/sing.py --prototype  # slice 3 whole-song draft (about 4 min)
+python tools/music_video/sing.py --shapes     # syllable shapes used by the articulated chant
 ```
 
 | Output | Contents |
 | --- | --- |
 | `exports/music_video/audio/backing.wav` | 179.2 s, 48 kHz stereo 16-bit backing track, -18 LUFS integrated, under -1 dBTP |
 | `exports/music_video/beats.json` | 384 beats with time and video frame, section starts, and editorial cues (record scratch, dead air, smash cut, hard cut) |
-| `exports/music_video/audio/prototype_chorus.wav` | Bars 17-24 (chorus 1): lead, 3-voice choir and the "plus one!" shout over the ducked backing, mastered to -14 LUFS |
-| `exports/music_video/audio/prototype_password.wav` | Bars 65-68: the 12-voice P-L-Z-K-T-K-S chant and "Please! Okay! Thanks!" |
-| `exports/music_video/audio/prototype_vocals.wav` | Both excerpts, vocals only |
+| `exports/music_video/audio/prototype_full.wav` | Whole-song draft: backing plus the wordless growing choir, -14 LUFS |
+| `exports/music_video/audio/prototype_vocals.wav` | The same, vocals only |
+| `exports/music_video/audio/prototype_alone.wav` | Bars 5-24: the lone voice, then its first companion |
+| `exports/music_video/audio/prototype_password.wav` | Bars 65-68: the articulated P-L-Z-K-T-K-S chant |
+| `exports/music_video/audio/prototype_ritual.wav` | Bars 85-96: sixteen voices, organum, drone and cathedral reverb |
 
 ## Provenance
 
@@ -37,11 +39,11 @@ python tools/music_video/sing.py --shapes     # the vowel shape chosen for each 
 - **Vocals:** synthesized by `sing.py` with source-filter synthesis, extending
   the murmur approach in `tools/build_game_audio.py`. A harmonic source with
   portamento, delayed vibrato and slow pitch drift passes through a cascade of
-  moving vowel formants (Peterson and Barney style averages). Consonants are
-  seeded filtered-noise bursts. Each syllable becomes a vowel shape plus one
-  consonant from a small fixed set, so the choir does not pronounce English;
-  the real words appear only as captions. The lead sings an octave below the
-  written melody, in the cultist's register.
+  moving vowel formants (Peterson and Barney style averages). The singing is
+  wordless: open vowel arcs grow from one voice into a ritual choir, using
+  organum fourths and fifths, a root-and-fifth drone and a synthetic cathedral
+  reverb. Only the shouts, whispers and password chant use seeded noise
+  consonants. The lyrics appear only in the captions.
 - **Measurement:** loudness is measured with an in-script BS.1770-4 meter and
   cross-checked with FFmpeg `ebur128`. Peaks are controlled by a 4x
   oversampled look-ahead limiter.

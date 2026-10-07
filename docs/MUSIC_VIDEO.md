@@ -19,7 +19,7 @@ music video may read the promo's helpers as reference but forks what it needs.
 
 | Item | Status |
 | --- | --- |
-| Voice approach | **Confirmed (user, 2026-10-07):** on-brand and fully original. A synthesized formant "cult choir" sings vowel-matched nonsense syllables; the real lyrics appear as karaoke captions. No recorded voices, samples, song generators, voice services or model downloads. |
+| Voice approach | **Revised (user, 2026-10-07, after the slice 3 listening test):** fully original and synthesized, but **wordless**. The first prototype mimicked lyric syllables; it sounded off, and its consonant bursts made an annoying noise. Now one voice sings the melody on open vowels and grows into a choir, which becomes a churchy, satanic ritual choir by the end. The lyrics appear only as karaoke captions. The articulated password chant is kept as approved. No recorded voices, samples, song generators, voice services or model downloads. |
 | Separate project | **Confirmed:** new `tools/music_video/` and ignored `exports/music_video/`. |
 | Game content shown | **Confirmed:** current build, which has changed since the promo (see section 2). |
 | Length | **Confirmed (user):** about 3 minutes: 96 bars at 128.57 BPM (14 frames per beat) = 179.2 s. A 30-second chorus cut is reviewed first. |
@@ -139,10 +139,18 @@ hold on the dejected teal worker after "That's enough".
 - The Priest really raises three objections.
 - "Make the circle bigger" plays over the real circle, which grew to 32 nodes.
 
-The choir grows with the story: one voice in verse 1, then 3, 6 and 12 by
-chorus 3, the password chant and the final chorus. It drops back to one voice
-for the spoiler, "Or twenty" and the tag, so the final "...for now" is a single
-distant voice.
+The choir grows with the story (user, 2026-10-07). One wordless voice carries
+verses 1 and 2. A second voice joins in chorus 1, then 4 in chorus 2, 6 in the
+bridge, 8 in chorus 3, 12 for the password chant and 16 in the final chorus and
+tag. A per-section `ritual` amount (0 to 1) turns the added voices from
+doublings into ritual harmony:
+- low singers an octave down;
+- parallel fourths and fifths, which sometimes land on the tritone;
+- a low "ohh" drone on each chord root and fifth;
+- a cathedral reverb.
+
+The spoiler, "someday" and "Or twenty" fall back to one to three voices. The
+final "...for now" is a single voice over the dying ritual drone.
 
 ## 4. Lyrics
 
@@ -280,31 +288,40 @@ A validator in the tools checks that:
 
   These moments are listed as `cues` in `beats.json`.
 
-### 5.3 `sing.py`: the formant choir
+### 5.3 `sing.py`: the growing wordless choir
 
-Extends the approach in `tools/build_game_audio.py` (harmonic series weighted
-by Gaussian formant peaks) into a singing voice:
+Extends the approach in `tools/build_game_audio.py` into source-filter singing.
+A harmonic source with continuous phase passes through a cascade of moving
+vowel formants, computed per sample.
 
-- **Pitch per note** from `song.json`, with portamento between legato notes
-  and delayed vibrato (about 5.5 Hz, ±30 cents, after 150 ms).
-- **Vowel-matched nonsense:** each lyric syllable is reduced to its vowel class
-  (a/e/i/o/u/schwa, using F1-F3 tables), with a consonant chosen from a small
-  fixed onset set. The choir sings shapes that track the lyric without
-  pronouncing English, so it stays clearly synthetic and close to the game's
-  murmurs.
-- **Consonants:** short shaped noise bursts (s, sh, k, t, p) before vowel onsets.
-- **Choir:** N copies with seeded ±8-cent detune, ±10 ms timing jitter and
-  stereo spread; N follows `choir_voices` per section.
-- **Characters:**
-  - the cultist (current murmur range, about 155-250 Hz);
-  - the Priest (formants and f0 lowered about an octave, slower vibrato);
-  - "Objection!" and the password letters as spoken, unpitched shouts;
-  - the spoiler whisper as breathy noise through the same vowel formants, with no harmonic source.
-- Light ducking of the backing under the lead; master normalized to -14 LUFS
-  integrated, -1 dBTP (provisional YouTube-style target; the promo used -16).
+- **Pitch per note** from `song.json`, with portamento between legato notes,
+  delayed vibrato (about 5.5 Hz, ±30 cents, after 150 ms) and slow drift. The
+  lead sings an octave below the written melody, in the cultist's register.
+- **Wordless:** each line is sung on a slow vowel arc (for example "oh" to
+  "ah" in the verses, "ah" to "oh" in the choruses). It begins with a hummed
+  "m" and re-articulates notes with soft dips, not consonants. Lyrics appear
+  only in the captions.
+- **Growth:** the section's `choir_voices` sets the singer count. Below ritual
+  0.4, the added singers double the lead at the unison or an octave apart.
+  From 0.4 on, they become organum: an octave below and diatonic fourths and
+  fifths below, sung by darker `bass` voices. Above 0.75, a two-part drone
+  holds each bar's chord root and fifth. Detune, timing spread, stereo width
+  and cathedral reverb send all grow with `ritual`, and the lead recedes into
+  the choir.
+- **Articulated exceptions:** the password chant, the shouts ("plus one!",
+  "OBJECTION!") and the whispers keep their syllables and consonant bursts.
+  The password chant was approved in the first listening test.
+- **Characters:** the Priest sings low and wordless; the teal helper is a
+  brighter wordless voice.
+- **Mix:** one vocal gain for the whole song, so the growth is heard as
+  written. Light ducking of the backing under the lead. The master is
+  normalized to -14 LUFS integrated, under -1 dBTP, with the true-peak limiter
+  from `compose.py`.
 
-**Risk:** additive formant singing can sound buzzy. Slice 3 is a deliberately
-small 8-bar listening test before any further vocal work.
+**Slice 3 history.** The first prototype (`a115f80`) sang vowel-matched
+syllables. The user rejected that direction and asked for the version above.
+The second prototype renders the whole song as a draft (`prototype_full.wav`)
+plus excerpts.
 
 ### 5.4 `capture_music_video.gd`: takes and choreography
 
@@ -415,7 +432,7 @@ Commit each slice when it is complete and validated (see
 | --- | --- | --- | --- | --- |
 | 1 | Song data | `song.json` with full lyrics, melody, sections and shots; validator | Validator passes; 96 bars tile; future shots are plates | **User approves lyrics, title and the password gag** |
 | 2 | Backing track | `backing.wav` + `beats.json` | Duration 179.2 s; 384 beats; loudness measured | Listen |
-| 3 | Voice prototype | 8-bar chorus with choir, plus the "P-L-Z" shout | Pitch tracks notes (measured); no clipping | **User listening test: keep, retune or rethink** |
+| 3 | Voice prototype | Whole-song draft of the wordless growing choir (revised after the first 8-bar test), plus the "P-L-Z" chant | Pitch tracks notes (measured); no clipping | **User listening test: keep, retune or rethink** |
 | 4 | Full vocals and mix | `song.wav` | -14 LUFS ±1, ≤ -1 dBTP | Listen |
 | 5 | Animatic | Song + captions + postcards over the backdrop, no footage | Caption timings match note starts | Sing-along check |
 | 6 | Capture | All takes + `events.json` | Promo-style recruit/victory assertions; password and travel assertions; 0 failures | Inspect contact frames |
