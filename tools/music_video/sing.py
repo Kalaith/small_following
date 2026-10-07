@@ -47,7 +47,8 @@ VOWELS = {
 DIPHTHONGS = {"ai": ("a", "I"), "ei": ("e", "I"), "ou": ("O", "u"), "au": ("a", "u"), "oi": ("o", "I")}
 NASAL = (280, 1300, 2500)
 GLIDE_SHAPES = {"w": (330, 750, 2300), "r": (380, 1100, 1600), "l": (380, 1300, 2700), "y": (280, 2200, 2900)}
-BANDWIDTHS = (70, 95, 130)  # narrow, singerly resonances
+BANDWIDTHS = (70, 95, 130)  # narrow resonances: the articulated shouts and chant
+OPEN_BANDWIDTHS = (95, 120, 170)  # the singers: wider, less honky
 
 WORDS = {
     "a": "U", "the": "U", "i": "ai", "my": "ai", "by": "ai", "pie": "ai", "now": "au",
@@ -116,15 +117,21 @@ def _vowel(w: str) -> str:
 
 VOICES = {
     # octave shift, formant scale, source tilt, vibrato (cents, Hz), gain
-    "lead": {"octave": -12, "formants": 1.0, "tilt": 1.0, "vibrato": (30, 5.5), "gain": 1.0, "ring": 1.4},
-    "solo": {"octave": -12, "formants": 1.0, "tilt": 1.1, "vibrato": (22, 5.0), "gain": .8, "ring": .8},
-    "choir": {"octave": -12, "formants": 1.0, "tilt": 1.05, "vibrato": (26, 5.3), "gain": .7, "ring": .9},
-    "teal": {"octave": -12, "formants": 1.1, "tilt": .8, "vibrato": (15, 6.5), "gain": .9, "ring": 1.6},
-    "priest": {"octave": 0, "formants": .86, "tilt": 1.1, "vibrato": (20, 4.4), "gain": 1.7, "ring": .6},
+    "lead": {"octave": 0, "formants": 1.06, "tilt": .62, "vibrato": (32, 5.6), "gain": 1.0, "ring": 2.6,
+             "bw": OPEN_BANDWIDTHS, "drift": 5, "breath": .10},
+    "solo": {"octave": 0, "formants": 1.06, "tilt": .7, "vibrato": (24, 5.0), "gain": .8, "ring": 2.0,
+             "bw": OPEN_BANDWIDTHS, "drift": 5, "breath": .14},
+    "choir": {"octave": 0, "formants": 1.0, "tilt": .72, "vibrato": (28, 5.4), "gain": .7, "ring": 1.8,
+              "bw": OPEN_BANDWIDTHS, "drift": 11, "breath": .10},
+    "teal": {"octave": 0, "formants": 1.12, "tilt": .6, "vibrato": (16, 6.5), "gain": .9, "ring": 2.4,
+             "bw": OPEN_BANDWIDTHS, "drift": 6, "breath": .08},
+    "priest": {"octave": 0, "formants": .86, "tilt": .85, "vibrato": (20, 4.4), "gain": 1.7, "ring": 1.4,
+               "bw": OPEN_BANDWIDTHS, "drift": 5, "breath": .08},
     "shout": {"octave": 0, "formants": 1.12, "tilt": .65, "vibrato": (0, 5.0), "gain": .75, "ring": 1.2},
     "whisper": {"octave": 0, "formants": 1.0, "tilt": 1.0, "vibrato": (0, 5.0), "gain": .55, "ring": 0},
     # the low ritual singers and the drone
-    "bass": {"octave": -24, "formants": .9, "tilt": 1.2, "vibrato": (14, 4.6), "gain": .9, "ring": .3},
+    "bass": {"octave": -24, "formants": .9, "tilt": .9, "vibrato": (16, 4.8), "gain": .9, "ring": 1.0,
+             "bw": OPEN_BANDWIDTHS, "drift": 12, "breath": .07},
 }
 # Sections that keep sung syllables. The password chant is the one place the
 # choir is articulated; everywhere else the singers are wordless.
@@ -136,8 +143,8 @@ VOWEL_ARCS = {
     "someday": ("o", "a"), "or_twenty": ("o", "O"), "tag": ("a", "o"),
 }
 # Ritual harmony: (octave, diatonic steps) for the singers added to a melody.
-LIGHT_PARTS = [(-12, 0), (0, 0), (-12, 0), (-24, 0)]
-RITUAL_PARTS = [(-24, 0), (-12, -3), (-12, 0), (-24, 0), (-12, -4), (0, 0), (-24, -3), (-12, 0)]
+LIGHT_PARTS = [(0, 0), (-12, 0), (0, 0), (-12, 0)]
+RITUAL_PARTS = [(-12, 0), (0, -3), (-24, 0), (0, 0), (-12, -4), (-12, -3), (0, -4), (-24, 0)]
 DRONE_RITUAL = .75
 CROWD_GAIN = 2.0  # shouts and the chant cut through the whole-song vocal level  # sections at or above this ritual level get a low drone
 
@@ -158,7 +165,7 @@ def diatonic(midi: int, steps: int, transpose: int) -> int:
     return o * 12 + scale[i] + transpose
 
 
-def _singer(rng, octave=-12, steps=0, detune=0.0, delay=0.0, pan=0.0, gain=1.0, voice=None,
+def _singer(rng, octave=0, steps=0, detune=0.0, delay=0.0, pan=0.0, gain=1.0, voice=None,
             shout_midi=55.0, formant_shift=1.0) -> dict:
     return {"octave": octave, "steps": steps, "detune": detune, "delay": delay, "pan": pan,
             "gain": gain, "voice": voice, "shout_midi": shout_midi, "formant_shift": formant_shift}
@@ -181,17 +188,19 @@ def copies(song: dict, line: dict, index: int) -> list[dict]:
     if extra <= 0:
         return out
     parts = RITUAL_PARTS if ritual >= .4 else LIGHT_PARTS
-    total = .4 + .7 * ritual  # the choir overtakes the lead as the ritual deepens
+    total = .4 + 1.5 * ritual  # the choir overtakes the lead as the ritual deepens
     for c in range(extra):
         octave, steps = parts[c % len(parts)]
         out.append(_singer(
             rng, octave=octave, steps=steps,
-            detune=float(rng.uniform(-1, 1) * (7 + 7 * ritual)),
-            delay=float(rng.uniform(-1, 1) * (.012 + .018 * ritual)),
+            detune=float(rng.uniform(-1, 1) * (8 + 8 * ritual)),
+            delay=float(rng.uniform(-1, 1) * (.025 + .025 * ritual)),
             pan=float(-.75 + 1.5 * c / max(1, extra - 1)) if extra > 1 else 0.0,
             gain=total / math.sqrt(extra) * (1.25 if octave == -24 else 1.0),
             voice="bass" if octave == -24 else "choir",
-            formant_shift=float(rng.uniform(.93, 1.05) * (1 - .05 * ritual))))
+            # vocal tracts differ: low parts are bigger singers, high parts smaller
+            formant_shift=float(rng.uniform(.94, 1.06) * {-24: .88, -12: .93, 0: 1.04}[octave]
+                                * (1 - .04 * ritual))))
     return out
 
 
@@ -253,10 +262,11 @@ def _smooth(x: np.ndarray) -> np.ndarray:
     return x * x * (3 - 2 * x)
 
 
-def _cascade(freq: np.ndarray, formants: np.ndarray, scale: float, ring: float) -> np.ndarray:
+def _cascade(freq: np.ndarray, formants: np.ndarray, scale: float, ring: float,
+             widths=BANDWIDTHS) -> np.ndarray:
     """Magnitude of a cascade of vowel resonances (unity at DC) plus fixed F4/F5."""
     gain = np.ones_like(freq)
-    tracks = [(formants[i] * scale, BANDWIDTHS[i]) for i in range(3)]
+    tracks = [(formants[i] * scale, widths[i]) for i in range(3)]
     tracks += [(3300 * scale, 220), (3900 * scale, 280)]
     for centre, width in tracks:
         c2 = centre * centre
@@ -306,6 +316,11 @@ def render_copy(song: dict, line: dict, singer: dict, voice: str, seed) -> tuple
     cursor, k = PRE, 0
     prev_hz, prev_end, prev_form = None, -1, None
     whisper = voice == "whisper"
+    sung = "drift" in spec  # the wordless singers: each one a little different
+    if sung:
+        vib_rate, vib_phase, vib_depth = rng.uniform(.88, 1.12), rng.uniform(0, 2 * np.pi), rng.uniform(.75, 1.2)
+    else:
+        vib_rate, vib_phase, vib_depth = 1.0, 0.0, 1.0
     for i, note in enumerate(notes):
         a, b = cursor, cursor + round(note["beats"] * per_beat)
         cursor = b
@@ -316,7 +331,7 @@ def render_copy(song: dict, line: dict, singer: dict, voice: str, seed) -> tuple
         else:  # wordless: a slow vowel arc across the line, a hummed 'm' to begin
             pos = k / max(1, sung_total - 1)
             vowel = (1 - pos) * np.array(VOWELS[arc[0]], float) + pos * np.array(VOWELS[arc[1]], float)
-            s = {"onset": "n" if k == 0 and not line.get("drone") else "", "vowel": arc[0],
+            s = {"onset": "", "vowel": arc[0],
                  "formants": vowel, "coda": ""}
         k += 1
         length = b - a
@@ -336,8 +351,9 @@ def render_copy(song: dict, line: dict, singer: dict, voice: str, seed) -> tuple
             depth, rate = spec["vibrato"]
             if length > .3 * SR and depth:
                 onset = np.clip((t - .15) / .2, 0, 1)
-                curve *= 2 ** (depth * onset * np.sin(2 * np.pi * rate * t) / 1200)
-            drift = np.cumsum(rng.normal(0, 1, length)) / math.sqrt(SR) * 2.5  # cents
+                wobble = np.sin(2 * np.pi * rate * vib_rate * (a / SR + t) + vib_phase)
+                curve *= 2 ** (depth * vib_depth * onset * wobble / 1200)
+            drift = np.cumsum(rng.normal(0, 1, length)) / math.sqrt(SR) * spec.get("drift", 2.5)  # cents
             curve *= 2 ** ((drift - drift.mean()) / 1200)
             pitched.append((a, b, target))
         else:  # spoken shout: a falling contour around a crowd member's pitch
@@ -413,6 +429,15 @@ def render_copy(song: dict, line: dict, singer: dict, voice: str, seed) -> tuple
     for row in range(3):
         filled = np.flatnonzero(form[row])
         form[row] = np.interp(np.arange(n), filled, form[row][filled])
+    if sung:
+        # Human unsteadiness: fast pitch jitter and slow loudness shimmer.
+        jitter = compose._filtered(rng.normal(0, 1, n), "lowpass", 25, 2)
+        f0 = f0 * 2 ** (6 * jitter / (np.std(jitter) + 1e-9) / 1200)
+        shimmer = compose._filtered(rng.normal(0, 1, n), "lowpass", 6, 2)
+        amp = amp * (1 + .07 * shimmer / (np.std(shimmer) + 1e-9))
+        # Singers open the vowel on high notes so the first resonance stays above the pitch.
+        form[0] = np.maximum(form[0], f0 * 1.08 / spec["formants"])
+        form[1] = np.maximum(form[1], form[0] + 250)
 
     scale = spec["formants"]
     if whisper:
@@ -424,13 +449,15 @@ def render_copy(song: dict, line: dict, singer: dict, voice: str, seed) -> tuple
         top = int(cutoff / f0.min()) + 1
         for h in range(1, top + 1):
             freq = h * f0
-            weight = (h ** -spec["tilt"]) * _cascade(freq, form, scale, spec["ring"])
+            weight = (h ** -spec["tilt"]) * _cascade(freq, form, scale, spec["ring"],
+                                                     spec.get("bw", BANDWIDTHS))
             weight[freq > cutoff] = 0
             out += weight * np.sin(h * phase)
         out *= amp
-        breath = compose._filtered(rng.normal(0, 1, n), "bandpass", (1200, 6000)) * amp
+        band = (1500, 7500) if sung else (1200, 6000)
+        breath = compose._filtered(rng.normal(0, 1, n), "bandpass", band) * amp
         level = np.sqrt(np.mean(out[amp > .5] ** 2)) if np.any(amp > .5) else 1.0
-        out += breath * level * (.18 if voice == "shout" else .05)
+        out += breath * level * (.18 if voice == "shout" else spec.get("breath", .05))
 
     level = np.sqrt(np.mean(out[amp > .5] ** 2)) if np.any(amp > .5) else 1.0
     for event in events:
@@ -488,8 +515,8 @@ def render(song: dict, bars: tuple[int, int] | None = None) -> tuple[np.ndarray,
             a, b = max(0, start), min(length, start + len(audio))
             part = audio[a - start:b - start]
             left, right = math.sqrt((1 - singer["pan"]) / 2), math.sqrt((1 + singer["pan"]) / 2)
-            dry[a:b, 0] += part * left * (1 - .35 * ritual)
-            dry[a:b, 1] += part * right * (1 - .35 * ritual)
+            dry[a:b, 0] += part * left * (1 - .2 * ritual)
+            dry[a:b, 1] += part * right * (1 - .2 * ritual)
             wet = .35 if voice in ("choir", "priest", "bass") else .22
             for bus, level in ((send, wet * (1 - ritual)), (cathedral, .55 * ritual)):
                 bus[a:b, 0] += part * left * level

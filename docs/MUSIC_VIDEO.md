@@ -296,18 +296,26 @@ vowel formants, computed per sample.
 
 - **Pitch per note** from `song.json`, with portamento between legato notes,
   delayed vibrato (about 5.5 Hz, ±30 cents, after 150 ms) and slow drift. The
-  lead sings an octave below the written melody, in the cultist's register.
+  lead sings the written melody (up to E5). On high notes it opens the vowel,
+  keeping F1 above the pitch, as singers do.
+- **Open, human timbre:** wide resonances, a bright source (about -21 dB from
+  2 to 8 kHz), a singer's ring near 3 kHz and audible breath. Fast pitch
+  jitter and slow loudness shimmer keep sustained notes from sounding like a
+  pure tone.
 - **Wordless:** each line is sung on a slow vowel arc (for example "oh" to
-  "ah" in the verses, "ah" to "oh" in the choruses). It begins with a hummed
-  "m" and re-articulates notes with soft dips, not consonants. Lyrics appear
+  "ah" in the verses, "ah" to "oh" in the choruses). It re-articulates notes
+  with soft dips, not consonants. Lyrics appear
   only in the captions.
 - **Growth:** the section's `choir_voices` sets the singer count. Below ritual
   0.4, the added singers double the lead at the unison or an octave apart.
   From 0.4 on, they become organum: an octave below and diatonic fourths and
   fifths below, sung by darker `bass` voices. Above 0.75, a two-part drone
-  holds each bar's chord root and fifth. Detune, timing spread, stereo width
-  and cathedral reverb send all grow with `ritual`, and the lead recedes into
-  the choir.
+  holds each bar's chord root and fifth. Each singer has its own
+  vibrato rate, phase and depth, its own pitch wander and vocal-tract size, and
+  up to ±50 ms of timing spread, so the copies do not phase-lock into one
+  thick voice. Detune, stereo width, choir level and cathedral reverb send all
+  grow with `ritual`, while the lead recedes into the choir. The final chorus
+  is the loudest vocal section.
 - **Articulated exceptions:** the password chant, the shouts ("plus one!",
   "OBJECTION!") and the whispers keep their syllables and consonant bursts.
   The password chant was approved in the first listening test.
@@ -321,7 +329,10 @@ vowel formants, computed per sample.
 **Slice 3 history.** The first prototype (`a115f80`) sang vowel-matched
 syllables. The user rejected that direction and asked for the version above.
 The second prototype renders the whole song as a draft (`prototype_full.wav`)
-plus excerpts.
+plus excerpts. The user's notes on it were a nasal, "blocked nose" tone, a lead
+that never reached the high notes, and an ending that did not sound like 16
+singers. The third prototype adds the brighter timbre, the written-pitch lead
+and the independent singers described above.
 
 ### 5.4 `capture_music_video.gd`: takes and choreography
 
