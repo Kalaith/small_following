@@ -13,6 +13,8 @@ python tools/music_video/song_data.py   # validate song.json
 python tools/music_video/compose.py     # backing.wav + beats.json (about 15 s)
 python tools/music_video/sing.py --excerpts   # song.wav + vocals.wav + excerpts, then checks (about 4 min)
 python tools/music_video/sing.py --shapes     # syllable shapes used by the articulated chant
+python tools/music_video/postcards.py          # plates: six future postcards, map, daydream, end card (about 10 s)
+python tools/music_video/render_music_video.py --animatic  # animatic.mp4 + timeline.json, then checks (about 2 min)
 ```
 
 | Output | Contents |
@@ -22,6 +24,10 @@ python tools/music_video/sing.py --shapes     # syllable shapes used by the arti
 | `exports/music_video/audio/song.wav` | The final song: backing plus the wordless growing choir, 179.2 s, -14 LUFS, under -1 dBTP |
 | `exports/music_video/audio/vocals.wav` | Vocals only, normalized to -16 LUFS for review |
 | `exports/music_video/audio/excerpt_*.wav` | Listening excerpts: the lone voice (bars 5-24), the password chant (65-68) and the ritual ending (85-96) |
+| `exports/music_video/plates/*.png`, `plates.json` | 1920 x 1080 plates and their labels and design-note sources |
+| `exports/music_video/animatic.mp4` | Song, karaoke captions, plates and labelled placeholder cards for footage (H.264 + AAC, 5,376 frames) |
+| `exports/music_video/timeline.json` | Shot frame ranges, caption windows and per-syllable frames, password letter frames |
+| `exports/music_video/review/` | Contact sheets and caption-sync stills |
 
 `sing.py` exits non-zero unless the song is exactly 179.2 s, within
 -14±1 LUFS, at or under -1 dBTP (cross-checked with FFmpeg `ebur128`), and
@@ -46,6 +52,16 @@ silent only in the planned dead air after the wrong password.
   organum fourths and fifths, a root-and-fifth drone and a synthetic cathedral
   reverb. Only the shouts, whispers and password chant use seeded noise
   consonants. The lyrics appear only in the captions.
+- **Plates and postcards:** drawn by `postcards.py` with Pillow. Characters
+  come from `sprites.py`, which ports the game's own `_draw()` shapes and
+  colours (`scripts/gathering.gd` listeners, `scripts/player.gd` cultist,
+  `scripts/helper.gd` helper). Extra props (pie, captain's hat, mortarboard,
+  wimple, top hat) are new and drawn in the same style. The backdrop is the
+  promo's. Future ideas come only from `docs/FUTURE_LEVELS.md` section 8
+  (Rosecourt, Tidemouth, the lantern fair, the university and observatory,
+  the hilltop abbey) and `docs/GAME_DESIGN.md` (helpers, minions and magic).
+  Each postcard names its source and carries an "IDEA - NOT BUILT YET" stamp.
+  Fonts are the system's Georgia and Trebuchet MS.
 - **Measurement:** loudness is measured with an in-script BS.1770-4 meter and
   cross-checked with FFmpeg `ebur128`. Peaks are controlled by a 4x
   oversampled look-ahead limiter.

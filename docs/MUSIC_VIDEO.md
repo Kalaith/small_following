@@ -445,7 +445,7 @@ Commit each slice when it is complete and validated (see
 | 2 | Backing track | `backing.wav` + `beats.json` | Duration 179.2 s; 384 beats; loudness measured | Listen |
 | 3 | Voice prototype | Whole-song draft of the wordless growing choir (revised after the first 8-bar test), plus the "P-L-Z" chant | Pitch tracks notes (measured); no clipping | **User listening test: keep, retune or rethink** |
 | 4 | Full vocals and mix | `song.wav` (built 2026-10-07; `sing.py` checks pass: 179.200 s, -14.0 LUFS, -1.3 dBTP, FFmpeg agrees, only the planned dead air) | -14 LUFS ±1, ≤ -1 dBTP | Listen |
-| 5 | Animatic | Song + captions + postcards over the backdrop, no footage | Caption timings match note starts | Sing-along check |
+| 5 | Animatic | Song + captions + postcards over the backdrop, no footage (built 2026-10-07: `animatic.mp4`; 369 syllables within half a frame of their notes; 5,376 frames, 179.200 s, clean decode) | Caption timings match note starts | Sing-along check |
 | 6 | Capture | All takes + `events.json` | Promo-style recruit/victory assertions; password and travel assertions; 0 failures | Inspect contact frames |
 | 7 | 30 s chorus cut | Bars 17-32 (29.9 s) edited | Frame count; cuts on bar frames | **First real review** |
 | 8 | Full video | 179.2 s MP4 | Full review script | Watch-through |
