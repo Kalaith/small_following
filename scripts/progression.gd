@@ -458,6 +458,25 @@ func effect_preview(id: String) -> Dictionary:
 	return result
 
 
+func has_progress() -> bool:
+	return coins > 0 or total_recruits > 0 or round_number > 1 or not purchased.is_empty() or encounter_stage > 0 or active_area != "bramblewick" or level_select_unlocked
+
+
+## Replaces progression with a fresh first-round village save. The old save is
+## first copied to `.previous`, which ordinary saves never rotate, so it outlives
+## the next rounds' writes. A failed copy or write changes nothing.
+func start_new_game() -> bool:
+	last_error = ""
+	if save_enabled and not _write_blocked and FileAccess.file_exists(save_path):
+		if DirAccess.copy_absolute(save_path, save_path + ".previous") != OK:
+			return _fail("Cannot keep a copy of the current save, so it was not replaced.")
+	var fresh: Dictionary = {"schema_version": SAVE_VERSION, "coins": 0, "total_recruits": 0, "available_recruits": 0, "round_number": 1, "purchased": {}, "encounter_stage": 0, "active_area": "bramblewick", "level_select_unlocked": false}
+	if not _write_snapshot(fresh):
+		return false
+	_apply_snapshot(fresh)
+	return true
+
+
 func save_progress() -> bool:
 	return _write_snapshot(_snapshot())
 

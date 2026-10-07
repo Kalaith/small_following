@@ -4,6 +4,7 @@ extends Control
 signal continue_requested
 signal level_requested(area_id: String)
 signal settings_requested
+signal new_game_requested
 
 const INK := Color("110d1c")
 const LILAC := Color("d7b9ff")
@@ -15,7 +16,13 @@ const ACCESS_PASSWORD: String = "PLZKTKS"
 var unlocked: bool = false
 var current_area: String = "bramblewick"
 var market_available: bool = false
+## Whether a save holds anything a new game would discard; it asks first if so.
+var has_progress: bool = false
 var continue_button: Button
+var new_game_button: Button
+var confirm_new_game_button: Button
+var cancel_new_game_button: Button
+var _new_game_confirm: VBoxContainer
 var password_input: LineEdit
 var unlock_button: Button
 var level_one_button: Button
@@ -37,11 +44,34 @@ func _ready() -> void:
 	_refresh()
 
 
-func configure(area_id: String, available: bool) -> void:
+func configure(area_id: String, available: bool, progress: bool = false) -> void:
 	current_area = area_id
 	market_available = available
+	has_progress = progress
 	if is_instance_valid(continue_button):
+		_new_game_confirm.hide()
 		_refresh()
+
+
+## Without saved progress there is nothing to lose, so the new game starts at once.
+func request_new_game() -> void:
+	if has_progress:
+		_new_game_confirm.show()
+		cancel_new_game_button.grab_focus()
+		_refresh()
+	else:
+		new_game_requested.emit()
+
+
+func _confirm_new_game() -> void:
+	_new_game_confirm.hide()
+	new_game_requested.emit()
+
+
+func _cancel_new_game() -> void:
+	_new_game_confirm.hide()
+	new_game_button.grab_focus()
+	_refresh()
 
 
 func submit_password(value: String) -> bool:
@@ -70,7 +100,8 @@ func _refresh() -> void:
 	_journey_label.text = "Continue in " + ("Bellmarket" if current_area == "bellmarket" else "Bramblewick")
 	if market_available and current_area != "bellmarket":
 		_journey_label.text += " · Bellmarket is open"
-	_level_choices.visible = unlocked
+	# The confirmation and level list never share the menu, which keeps it on screen.
+	_level_choices.visible = unlocked and not _new_game_confirm.visible
 	_layout()
 
 
@@ -90,6 +121,27 @@ func _build_controls() -> void:
 	continue_button = _button("Play / Continue", true)
 	continue_button.pressed.connect(func() -> void: continue_requested.emit())
 	_menu.add_child(continue_button)
+	new_game_button = _button("New game", false)
+	new_game_button.pressed.connect(request_new_game)
+	_menu.add_child(new_game_button)
+	_new_game_confirm = VBoxContainer.new()
+	_new_game_confirm.add_theme_constant_override("separation", 8)
+	_new_game_confirm.hide()
+	_menu.add_child(_new_game_confirm)
+	var warning: Label = _label("Start over from round 1 in Bramblewick? Your donations, recruits and inscriptions will be cleared. A copy of this save is kept beside it as progression.json.previous.", 14, Color("f0b7c4"))
+	warning.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_new_game_confirm.add_child(warning)
+	var confirm_row := HBoxContainer.new()
+	confirm_row.add_theme_constant_override("separation", 10)
+	_new_game_confirm.add_child(confirm_row)
+	confirm_new_game_button = _button("Start over", false)
+	confirm_new_game_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	confirm_new_game_button.pressed.connect(_confirm_new_game)
+	confirm_row.add_child(confirm_new_game_button)
+	cancel_new_game_button = _button("Keep my save", true)
+	cancel_new_game_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	cancel_new_game_button.pressed.connect(_cancel_new_game)
+	confirm_row.add_child(cancel_new_game_button)
 	var settings: Button = _button("Settings", false)
 	settings.pressed.connect(func() -> void: settings_requested.emit())
 	_menu.add_child(settings)
@@ -170,7 +222,7 @@ func _layout() -> void:
 	if not is_instance_valid(_menu):
 		return
 	var menu_width: float = minf(410, size.x * 0.36)
-	_menu.position = Vector2(size.x * 0.62, 100 if unlocked else 174)
+	_menu.position = Vector2(size.x * 0.62, 100 if unlocked or _new_game_confirm.visible else 174)
 	_menu.size = Vector2(menu_width, 0)
 	_heading.position = Vector2(32, 110)
 	_heading.size = Vector2(size.x * 0.55, 200)

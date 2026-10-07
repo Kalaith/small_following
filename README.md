@@ -27,6 +27,7 @@ From the project folder, `.\Run.ps1` also launches the game; pass `-GodotExe '<i
 | Zoom / restore view | + / - buttons or mouse wheel; Recenter restores the view |
 | Buy selected upgrade | U / Inscribe button / gamepad X (left face button) |
 | Choose any implemented level | Enter `PLZKTKS` on the title screen, then choose level 1 or 2 |
+| Start a new game | **New game** on the title screen; with saved progress, confirm **Start over**. The old save is copied to `progression.json.previous` |
 | Open the completed circle | Click the lit ritual centre / Inner circle lit button |
 | Travel to Bellmarket | Complete Bramblewick's circle, open its centre, then choose Travel to Bellmarket |
 | Return to Bramblewick | Return to Bramblewick button in the market ritual |

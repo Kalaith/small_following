@@ -227,6 +227,7 @@ func _build_title() -> void:
 	title_screen.continue_requested.connect(continue_from_title)
 	title_screen.level_requested.connect(_start_selected_level)
 	title_screen.settings_requested.connect(set_settings_visible.bind(true))
+	title_screen.new_game_requested.connect(start_new_game)
 	title_screen.hide()
 
 
@@ -244,7 +245,7 @@ func show_title() -> void:
 	hud_layout.hide()
 	settings_button.hide()
 	title_screen.unlocked = title_screen.unlocked or progression.level_select_unlocked
-	title_screen.configure(progression.active_area, progression.is_area_unlocked("bellmarket"))
+	title_screen.configure(progression.active_area, progression.is_area_unlocked("bellmarket"), progression.has_progress())
 	title_screen.show()
 	if not progression.last_error.is_empty():
 		title_screen.show_error(progression.last_error)
@@ -265,6 +266,25 @@ func continue_from_title() -> void:
 	if not catalog_ready:
 		title_screen.show_error(progression.last_error)
 		return
+	_leave_title()
+	_begin_round(false)
+
+
+## Title-only: wipes progression to a fresh save, rebuilds Bramblewick and
+## begins round 1. A failed save keeps the current game and shows why.
+func start_new_game() -> void:
+	if not title_active:
+		return
+	if not catalog_ready or not progression.start_new_game():
+		title_screen.show_error(progression.last_error)
+		return
+	_rebuild_area()
+	round_recruits = 0
+	apply_upgrades()
+	ritual_screen.configure(progression.catalog, progression)
+	_configure_destination()
+	game_audio.reset_motion()
+	game_audio.stop_speech()
 	_leave_title()
 	_begin_round(false)
 

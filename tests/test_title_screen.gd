@@ -6,6 +6,7 @@ var checks: int = 0
 var requested_levels: Array[String] = []
 var continue_count: int = 0
 var settings_count: int = 0
+var new_game_count: int = 0
 
 
 func _initialize() -> void:
@@ -27,6 +28,7 @@ func _run() -> void:
 	title.level_requested.connect(func(area_id: String) -> void: requested_levels.append(area_id))
 	title.continue_requested.connect(func() -> void: continue_count += 1)
 	title.settings_requested.connect(func() -> void: settings_count += 1)
+	title.new_game_requested.connect(func() -> void: new_game_count += 1)
 	await process_frame
 	check(not title.unlocked and not title._level_choices.visible, "level choices start hidden")
 	title.level_two_button.pressed.emit()
@@ -36,6 +38,20 @@ func _run() -> void:
 	check(not title.feedback_label.text.is_empty(), "incorrect password has visible feedback")
 	title.continue_button.pressed.emit()
 	check(continue_count == 1, "normal play remains available without password")
+	title.new_game_button.pressed.emit()
+	check(new_game_count == 1 and not title._new_game_confirm.visible, "a save without progress starts a new game without asking")
+	title.configure("bramblewick", false, true)
+	title.new_game_button.pressed.emit()
+	check(new_game_count == 1 and title._new_game_confirm.visible, "saved progress asks before a new game")
+	title.cancel_new_game_button.pressed.emit()
+	check(new_game_count == 1 and not title._new_game_confirm.visible, "keeping the save requests nothing")
+	title.new_game_button.pressed.emit()
+	await process_frame
+	check(Rect2(Vector2.ZERO, title.size).encloses(title.confirm_new_game_button.get_global_rect()), "new-game confirmation stays within base viewport")
+	await _capture("title-new-game-confirm")
+	title.confirm_new_game_button.pressed.emit()
+	check(new_game_count == 2 and not title._new_game_confirm.visible, "confirming requests exactly one new game")
+	title.configure("bramblewick", false)
 	await _capture("title-screen")
 	title.password_input.text = "PLZKTKS"
 	title.password_input.text_submitted.emit(title.password_input.text)
@@ -49,6 +65,12 @@ func _run() -> void:
 	title.submit_password("PLZKTKS")
 	await process_frame
 	check(Rect2(Vector2.ZERO, title.size).encloses(title.level_two_button.get_global_rect()), "second level stays within base viewport")
+	title.configure("bellmarket", true, true)
+	title.new_game_button.pressed.emit()
+	await process_frame
+	check(not title._level_choices.visible and Rect2(Vector2.ZERO, title.size).encloses(title.confirm_new_game_button.get_global_rect()), "confirmation replaces the open level list and stays on screen")
+	title.cancel_new_game_button.pressed.emit()
+	check(title._level_choices.visible, "keeping the save brings the level list back")
 	await _capture("title-level-select")
 	title.queue_free()
 	await process_frame

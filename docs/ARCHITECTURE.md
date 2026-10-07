@@ -276,6 +276,7 @@ Loading follows these rules:
 - Missing canonical with valid backup: restore the backup.
 - Invalid canonical with valid backup: restore the backup and preserve the damaged original as `.corrupt` on a successful later save.
 - Invalid canonical without a valid backup: start fresh in memory and preserve the damaged original as `.corrupt` before replacing it.
+- New game (title only) copies the canonical save to `.previous`, which ordinary saves never rotate, then writes a fresh round-1 Bramblewick snapshot through the same staged write. A failed copy or write changes nothing and the title shows the error; a blocked (newer-schema) save cannot be replaced this way.
 - A newer schema, invalid backup without a canonical file, or an existing conflicting `.corrupt` recovery file is preserved; saving is blocked as appropriate and the UI explains the problem.
 
 Do not delete recovery files automatically to silence a notice. Schemas 1, 2, 3 and 4 are supported for loading; current writes use schema 4. Save validation checks earned Bellmarket access without village nodes added after the market shipped (`POST_MARKET_VILLAGE_IDS`, currently Beckoning Call), so an existing market save stays valid; live travel still requires every current village rank. Removing or renaming a purchased catalog ID, lowering a rank cap below saved progress or changing a purchased effect requires a deliberate compatibility/migration plan.

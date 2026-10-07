@@ -1751,3 +1751,17 @@ varied coats spread over the map, none behind a roof, canopy or stall; the
 ritual overview shows Beckoning Call inside the Running spiral without overlap.
 Human play feel, whether the pull feels strong enough, and wanderer readability
 at normal zoom were not assessed.
+
+## New game from the title screen (2026-10-07)
+
+**New game** sits under Play / Continue. With saved progress it shows a
+confirmation (Start over / Keep my save) in place of the level list; without
+progress it starts at once. Confirming copies the save to `.previous`, writes a
+fresh round-1 Bramblewick save and begins the round. New `test_new_game.gd`
+(20 checks) drives the real scene with an isolated fixture: no reset during
+play, cancel changes nothing, a failed write keeps the game and shows the
+error, the replaced save survives byte-for-byte after round 1's own save, and a
+new game from Bellmarket returns to Bramblewick without password access.
+`test_title_screen.gd` is 22 headless checks. All 25 suites exit 0, 0
+failures. Rendered title captures (scratch folder) show the confirmation fits
+the 1280x800 menu; human feel was not assessed.

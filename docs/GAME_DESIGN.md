@@ -28,6 +28,7 @@ This project is a bounded two-area prototype of movement, short earning rounds, 
 - During village play, the playable space dominates and the HUD remains minimal and contextual.
 - Recruitment briefly shows the numeric coin payout near the recruited character; merchants have no permanent payout label (requested 2026-10-03). Use digits rather than repeated coin symbols for larger rewards.
 - The tone is cute. The title is **Small Following**.
+- The title screen offers a new game (requested 2026-10-07). It asks before discarding saved progress and keeps a copy of the replaced save; settings and key bindings are not reset.
 
 - Add merchants, three persuadable enemy types, a town-center priest boss, related ritual upgrades and a persistent first-map finish (requested 2026-10-03). Areas beyond Bellmarket remain future work.
 
