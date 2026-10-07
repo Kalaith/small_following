@@ -266,6 +266,19 @@ A validator in the tools checks that:
   - final tag: thins to one bell.
 - Writes `backing.wav` (48 kHz stereo) and `beats.json` (time of every beat
   and bar) for the editor and capture.
+- **Built 2026-10-07 (slice 2).** The harmony is a per-bar `chords` list on
+  each `song.json` section, with `transpose` applied. The backing track is
+  normalized to -18 LUFS under -1 dBTP with a true-peak look-ahead limiter
+  (`limit()`), which `sing.py` reuses. Gags have their own arrangement moments:
+  - the band deflates after "That's enough";
+  - OBJECTION stabs;
+  - the band drops out on "...fine";
+  - a vinyl stop into the spoiler;
+  - three beats of dead air after the wrong password;
+  - a shimmer as the seal opens;
+  - the enormous daydream is cut off for "Or twenty".
+
+  These moments are listed as `cues` in `beats.json`.
 
 ### 5.3 `sing.py`: the formant choir
 

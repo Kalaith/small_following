@@ -12,6 +12,7 @@ import sys
 
 SONG = Path(__file__).resolve().with_name("song.json")
 NOTE = re.compile(r"^([A-G])(#|b)?(-?\d)$")
+CHORD = re.compile(r"^([A-G])(#|b)?(m)?$")
 SEMITONE = {"C": 0, "D": 2, "E": 4, "F": 5, "G": 7, "A": 9, "B": 11}
 PITCH_RANGE = (40, 84)  # E2..C6: the Priest's low notes up to the choir's top
 FUTURE_LABEL = "NOT BUILT"
@@ -59,6 +60,31 @@ def caption(text: str) -> str:
                     for word in text.split())
 
 
+def chord(name: str) -> tuple[int, bool]:
+    """'Am' -> (pitch class 9, minor); 'F#' -> (6, major)."""
+    match = CHORD.match(name)
+    if not match:
+        raise ValueError(f"bad chord {name!r}")
+    letter, accidental, minor = match.groups()
+    shift = {"#": 1, "b": -1}.get(accidental or "", 0)
+    return (SEMITONE[letter] + shift) % 12, bool(minor)
+
+
+def bar_chords(song: dict) -> list[tuple[int, bool]]:
+    """One (pitch class, minor) per bar, with each section's transpose applied."""
+    chords = []
+    for section in song["sections"]:
+        shift = section.get("transpose", 0)
+        for name in section["chords"].split():
+            root, minor = chord(name)
+            chords.append(((root + shift) % 12, minor))
+    return chords
+
+
+def section_at(song: dict, bar: int) -> dict:
+    return next(s for s in song["sections"] if s["bars"][0] <= bar <= s["bars"][1])
+
+
 def line_start(song: dict, line: dict) -> float:
     return (line["bar"] - 1) * song["beats_per_bar"] + (line["beat"] - 1)
 
@@ -93,6 +119,14 @@ def validate(song: dict) -> list[str]:
     sections = song["sections"]
     _tiles([s["bars"] for s in sections], total, "sections", errors)
     _tiles([s["bars"] for s in song["shots"]], total, "shots", errors)
+    for section in sections:
+        names = section.get("chords", "").split()
+        length = section["bars"][1] - section["bars"][0] + 1
+        if len(names) != length:
+            errors.append(f"section {section['id']}: {len(names)} chords for {length} bars")
+        for name in names:
+            if not CHORD.match(name):
+                errors.append(f"section {section['id']}: bad chord {name!r}")
 
     def section_of(bar: int) -> dict | None:
         return next((s for s in sections if s["bars"][0] <= bar <= s["bars"][1]), None)
