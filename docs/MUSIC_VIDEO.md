@@ -180,8 +180,13 @@ Working title: **"Just a Small Following"**
 > *(one voice)* ...for now.
 
 Rough edges (verse 2's second half, the chorus 3 tail) are left for the lyric
-pass in slice 1. "Please, okay, thanks" is the video's reading of `PLZKTKS`,
-not something documented elsewhere; the user should confirm the gag.
+pass in slice 1. "Please, okay, thanks" as the reading of `PLZKTKS` was
+confirmed by the user on 2026-10-07.
+
+**Slice 1 delivered (2026-10-07):** the full lyrics, melody, sections and shot
+list now live in `tools/music_video/song.json`, which supersedes this draft.
+`python tools/music_video/song_data.py` validates it: 90 bars, 180 s,
+54 lines, 396 syllables, 22 shots. Lyrics approval is still the user gate.
 
 ## 5. Pipeline
 
