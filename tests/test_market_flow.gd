@@ -111,7 +111,7 @@ func _run() -> void:
 	var ranks: Dictionary = game.progression.purchased.duplicate(true)
 	game.ritual_screen.return_area_button.pressed.emit()
 	check(game.progression.active_area == "bramblewick" and game.groups.size() == 3 and not game.round_active, "ritual return button restores village between rounds")
-	check(game.progression.purchased == ranks and game.progression.catalog.size() == 32, "return preserves market ranks and original village catalog")
+	check(game.progression.purchased == ranks and game.progression.catalog.size() == 33, "return preserves market ranks and original village catalog")
 	for entry in game.progression.catalog:
 		game.progression.purchased[entry.id] = entry.max_rank
 	game.progression.level_select_unlocked = false

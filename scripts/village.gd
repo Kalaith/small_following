@@ -153,6 +153,19 @@ class VillageProp:
 	var variant: int = 0
 
 
+	## Local bounds of the drawn art, from feet anchor up to roof or canopy. Actors
+	## placed inside would be hidden by Y sorting or read as standing in the prop.
+	func visual_rect() -> Rect2:
+		match kind:
+			"house": return Rect2(-115, -175, 230, 190)
+			"tree": return Rect2(-72, -170, 144, 180)
+			"well": return Rect2(-72, -148, 144, 160)
+			"market": return Rect2(-82, -125, 164, 140)
+			"bench": return Rect2(-52, -42, 104, 52)
+			"flowers": return Rect2(-40, -26, 80, 40)
+		return Rect2()
+
+
 	func add_footprint() -> void:
 		if kind == "flowers":
 			return

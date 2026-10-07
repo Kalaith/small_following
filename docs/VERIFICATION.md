@@ -1729,3 +1729,25 @@ node. A resize refits only an untouched graph; a deliberate view keeps its zoom
 and pan, and the Overview button or any explicit reset returns to refit-on-resize.
 `test_ritual_readability.gd` (86 checks, 0 failures) and `test_market_ritual.gd`
 (112 checks, 0 failures) pass headless; pixels were not inspected.
+
+## Small groups, lone wanderers and Beckoning Call (2026-10-07)
+
+Bramblewick now opens with groups of 4 / 3 / 4 (invitations 4 / 3) plus five
+lone wanderers re-scattered each round, and a two-rank, gold-only Running node,
+Beckoning Call, that walks wanderers within 180 / 320 px toward the cultist.
+The village catalog is 33 nodes / 37 ranks / 1041 gold / 250 recruits. Save
+schema stays 4; existing Bellmarket saves validate without the new node. Design
+values and route numbers are in [PACING](PACING.md#smaller-groups-and-lone-wanderers---2026-10-07).
+
+All 24 suites, headless with Godot 4.2.2 mono, exit 0 with 0 failures,
+including the new `test_wanderers.gd` (30 checks) and `test_pacing.gd`
+(74 checks). `test_mixed_audiences.gd` prints its expected oversized-roster
+error. The import step exits 1 with the known engine defect above, identically
+on the previous commit. `capture_starter.gd` with rendering exits 0 (full-rank
+capture clears all 11 group listeners at 8.433 s, 2.567 s left); its PNGs went
+to a scratch folder and `docs/verification/` images were not replaced.
+Inspected renders: whole-village overviews for three seeds show wanderers in
+varied coats spread over the map, none behind a roof, canopy or stall; the
+ritual overview shows Beckoning Call inside the Running spiral without overlap.
+Human play feel, whether the pull feels strong enough, and wanderer readability
+at normal zoom were not assessed.

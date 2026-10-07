@@ -98,20 +98,21 @@ func _run() -> void:
 	scene.advance_round(50.0)
 	check(scene.coins == before and helper.completed_recruits == 0 and not helper.active, "helper cannot finish beyond clamped round time")
 	# Player speech must skip an out-of-order helper recruit and keep overflow.
-	var group = scene.groups[1]
+	var group = scene.groups[0]
 	group.reset_round()
 	before = scene.coins
-	group.recruit_listener(4)
-	group.tick_persuasion(5.0, 1.0, 2.0)
-	check(group.recruits == 4 and group.progress == 1.0 and not group.listeners[3].following, "player overflow survives an out-of-order helper conversion")
+	group.recruit_listener(3)
+	group.tick_persuasion(4.0, 1.0, 2.0)
+	check(group.recruits == 3 and group.progress == 2.0 and not group.listeners[2].following, "player overflow survives an out-of-order helper conversion")
 	group.tick_persuasion(1.0, 1.0, 2.0)
-	check(group.recruits == 5 and scene.coins == before + 15, "all listeners finish exactly once after mixed recruitment")
+	check(group.recruits == 4 and scene.coins == before + 12, "all listeners finish exactly once after mixed recruitment")
 	# Check every current listener's stand cell, including both invitation groups.
 	scene.round_active = false
 	for id in ["talk_2", "talk_3", "talk_4", "east_1"]:
 		check(scene.purchase_upgrade(id), "path coverage setup: " + id)
 	var reachable: bool = true
-	for audience in scene.groups:
+	check(scene.wanderers.size() == 5, "lone wanderers are part of the helper's audience")
+	for audience in scene.audiences():
 		for listener in range(audience.listeners.size()):
 			for index in range(audience.listeners.size()):
 				audience.listeners[index].following = index != listener
@@ -121,7 +122,7 @@ func _run() -> void:
 			if helper.target_index != listener or helper.path.is_empty() or helper.path[-1].distance_to(audience.listeners[listener].global_position) > 50.0:
 				reachable = false
 		audience.reset_round()
-	check(reachable, "all twenty-five listeners have reachable helper stand cells")
+	check(reachable, "every group listener and lone wanderer has a reachable helper stand cell")
 	# Route from below the market to the east audience; direct travel crosses its body.
 	helper.reset_round(Vector2(1128, 792) - helper.START_OFFSET)
 	helper.set_active(true)

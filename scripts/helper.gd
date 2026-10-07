@@ -20,6 +20,9 @@ var completed_recruits: int = 0
 var active: bool = false
 var speaking: bool = false
 var path: PackedVector2Array = []
+var _target_spot := Vector2.ZERO
+## The listener node _target_spot belongs to; targets assigned elsewhere skip the check.
+var _spot_listener: Node2D = null
 var navigation := AStarGrid2D.new()
 var _cloth_trail := Vector2.ZERO
 # Bounds repeated full sweeps within one advance() call once a search finds
@@ -93,7 +96,7 @@ func advance(delta: float, groups: Array[Node2D]) -> void:
 
 
 func _advance_step(delta: float, groups: Array[Node2D]) -> void:
-	if not is_instance_valid(target_group) or target_index < 0 or not target_group.is_listener_eligible(target_index) or target_group.listeners[target_index].following:
+	if not is_instance_valid(target_group) or target_index < 0 or not target_group.is_listener_eligible(target_index) or target_group.listeners[target_index].following or _target_moved():
 		_clear_target()
 		if not _search_exhausted:
 			_choose_target(groups)
@@ -127,6 +130,12 @@ func _advance_step(delta: float, groups: Array[Node2D]) -> void:
 			_clear_target()
 
 
+## A beckoned wanderer that walked off the spot this helper pathed to needs a fresh path.
+func _target_moved() -> bool:
+	var listener: Node2D = target_group.listeners[target_index]
+	return listener == _spot_listener and listener.global_position.distance_to(_target_spot) > CELL
+
+
 func _cell(at: Vector2) -> Vector2i:
 	return Vector2i((at / CELL).floor())
 
@@ -155,12 +164,15 @@ func _choose_target(groups: Array[Node2D]) -> void:
 				best_distance = distance
 				target_group = group
 				target_index = index
+				_target_spot = group.listeners[index].global_position
+				_spot_listener = group.listeners[index]
 				path = candidate
 
 
 func _clear_target() -> void:
 	target_group = null
 	target_index = -1
+	_spot_listener = null
 	phrase_elapsed = 0.0
 	conviction = 0.0
 	speaking = false

@@ -37,7 +37,7 @@ func simulate(label: String, order: Array[int] = Route.CIRCUIT, purchases: Array
 
 func _run() -> void:
 	var carried: Dictionary = await simulate("all village ranks / market entry")
-	check(carried.running_speed == 432.0 and carried.phrase_frequency == 3.5 and carried.conviction_per_phrase == 5.0 and carried.village_upgrade_spend == 1014, "normal market balancing uses ALL village ranks and their distinct carried stats")
+	check(carried.running_speed == 432.0 and carried.phrase_frequency == 3.5 and carried.conviction_per_phrase == 5.0 and carried.village_upgrade_spend == 1041, "normal market balancing uses ALL village ranks and their distinct carried stats")
 	check(carried.recruited_types.guild == 0 and carried.recruited_types.patron == 0 and carried.donations == carried.recruits * 4, "full village entry improves actual open-listener yield without bypassing specialist introductions")
 	var guild: Dictionary = await simulate("six guild ranks / Guild Row to carts", [2, 1, 0], Route.branch_purchases("guild"))
 	check(guild.recruited_types.guild >= 2 and guild.recruited_types.patron == 0 and guild.donations > carried.donations, "guild specialization pays through completed rich-trader conversations")

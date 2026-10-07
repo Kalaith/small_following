@@ -72,7 +72,7 @@ func _test_catalog() -> void:
 			var effect: Dictionary = state.find_upgrade(entry.id).rank_effects[index]
 			if entry.branch == "run" or effect.has("run_speed_add"):
 				running_free = running_free and int(entry.rank_recruit_costs[index]) == 0
-	check(state.catalog.size() == 32 and ranks == 35 and gold_total == 1014, "existing 32 nodes, 35 ranks and 1014 gold are preserved")
+	check(state.catalog.size() == 33 and ranks == 37 and gold_total == 1041, "33 nodes, 37 ranks and 1041 gold: the original 1014 plus Beckoning Call")
 	check(explicit_costs and recruit_total == 250, "every village rank declares its recruit cost and the village total remains 250")
 	check(running_free, "every movement rank explicitly costs zero recruits")
 	check(state.next_recruit_cost("talk_1") == 1 and state.next_recruit_cost("persuade_1") == 2, "early support ranks fit ordinary opening recruitment")
@@ -80,7 +80,7 @@ func _test_catalog() -> void:
 		var modified: Dictionary = definitions.duplicate(true)
 		modified.upgrades[0].rank_recruit_costs = invalid
 		write_fixture(CATALOG_FIXTURE, JSON.stringify(modified))
-		check(not state.load_catalog(CATALOG_FIXTURE) and state.catalog.size() == 32, "reject malformed recruit costs without replacing catalog: " + JSON.stringify(invalid))
+		check(not state.load_catalog(CATALOG_FIXTURE) and state.catalog.size() == 33, "reject malformed recruit costs without replacing catalog: " + JSON.stringify(invalid))
 	for branch in ["run", "renamed_movement"]:
 		var modified: Dictionary = definitions.duplicate(true)
 		modified.upgrades[2].branch = branch
@@ -125,13 +125,13 @@ func _test_purchases() -> void:
 	before = state._snapshot()
 	check(not state.try_purchase("meadow_1", 0) and not state.try_purchase("missing", 0) and state._snapshot() == before, "locked and unknown purchases preserve both resources")
 	var full = fresh()
-	full.coins = 1014
+	full.coins = 1041
 	full.total_recruits = 279
 	full.available_recruits = 250
 	for entry in full.catalog:
 		for expected_rank in range(full.max_rank(entry.id)):
 			check(full.try_purchase(entry.id, expected_rank), "buy existing catalog rank: %s/%d" % [entry.id, expected_rank + 1])
-	check(full.coins == 0 and full.available_recruits == 0 and full.total_recruits == 279 and full.is_circle_complete(), "all ranks cost exactly 1014 gold and 250 recruits; zero balance still completes the demo")
+	check(full.coins == 0 and full.available_recruits == 0 and full.total_recruits == 279 and full.is_circle_complete(), "all ranks cost exactly 1041 gold and 250 recruits; zero balance still completes the demo")
 	full.purchased.talk_3 = 1
 	full.available_recruits = 279
 	check(not full.is_circle_complete(), "abundant recruits cannot replace a missing purchased rank")

@@ -412,3 +412,81 @@ exceeds assignment costs in these routes; it does not gate completion. The
 prices feel right. Human play should assess route feel, carried savings, the
 value of each branch and whether the late curve is too long before tuning these
 provisional numbers.
+
+## Smaller groups and lone wanderers - 2026-10-07
+
+The user asked to replace Bramblewick's three crowds of five with groups of
+three or four plus a few random NPCs around the map, never blocked by houses
+or other props, and for upgrades that pull them closer so running pays off.
+That direction is the user's; every number below is provisional tuning.
+
+| Village audience | Listeners | Notes |
+| --- | ---: | --- |
+| Wellside neighbours / Market regulars / Garden club | 4 / 3 / 4 | Same positions; 11 group listeners at the opening. |
+| Meadow neighbours / East lane visitors (invitations) | 4 / 3 | Same positions and prices; 18 group listeners when expanded. |
+| Lone wanderers | 5 x 1 | Re-scattered every round. |
+| Travelling merchants | 2 | Unchanged. |
+
+Wanderers are ordinary one-listener gatherings: 3 conviction, 3 donations,
+same speech, overflow and helper rules. Placement (`scripts/wanderers.gd`)
+rejects any spot whose listener body overlaps a prop's drawn art (houses,
+trees, well, market stall, benches, flowers), or lies within 190 px of a
+group present this round, the entrance or the debate centre, or within 150 px
+of another wanderer. Buying an invitation re-scatters the wanderers off the new
+group. A player at a group's edge can sometimes also reach a wanderer; the
+nearest audience is spoken to as usual. `tests/test_wanderers.gd`
+checks 300 seeded scatters against those rules independently of the
+placement code.
+
+**Beckoning Call** is a two-rank Running node after Fleet Footsteps I, costing
+9 then 18 gold and no recruits. Unconverted wanderers within 180 px (320 px at
+rank 2) walk toward the cultist at 110 px/s during active round time, stop
+58 px away (inside speaking range) and slide along prop footprints rather than
+entering them. It does not change speech frequency, conviction or run speed.
+The village catalog becomes 33 nodes / 37 ranks, 1041 gold and 250 recruits.
+Existing saves are untouched: save validation checks earned Bellmarket access
+without village nodes added after the market shipped, while live travel still
+needs the full current circle.
+
+`tests/test_pacing.gd` now fixes wanderer seed 4242 so routes are
+reproducible; no measured group-only route below converts a wanderer on the
+way. Same practical allowances as before (0.20 s reaction, 0.10 s switches,
+95 px stops), real motion and conversation at 1/60 s:
+
+| Route | Group recruits | Group clear / time left |
+| --- | ---: | --- |
+| Opening, stay at garden / well / market | 3 | Final recruit 9.433 / 9.850 / 10.283 s |
+| Practical opening at each group | 3 | Unchanged three-recruit opening |
+| Previous nine purchases, garden -> well -> market | 10 / 11 | Incomplete |
+| Full original ranks, garden -> well -> market | 11 / 11 | 8.433 s / 2.567 s |
+| Full ranks, all six orders | 11 / 11 | 8.433-9.000 s |
+| Full ranks, hesitant (1.2 s / 0.3 s pauses) | 11 / 11 | 9.833 s / 1.167 s |
+| Expanded village, full player ranks | 18 / 18 | 9.233 s / 1.767 s |
+
+The old narrow 0.20-0.80 s full-clear margin no longer applies: with eleven
+group listeners the full original ranks leave about 2.5 seconds, which is the
+time meant for running to wanderers. A sixty-second baseline tour still
+converts all eleven group listeners (last at 36.55 s), so there is no hidden
+cap.
+
+Wanderer yield depends on each round's scatter, so the chase comparison runs
+five seeds. Each route clears garden -> well -> market with full original
+ranks, then walks to the nearest open wanderer until time runs out:
+
+| Seed | Without Beckoning Call: total (last recruit) | With Beckoning Call II: total (last recruit) |
+| ---: | --- | --- |
+| 4242 | 13 (11.000 s) | 13 (10.233 s) |
+| 11 | 13 (10.900 s) | 13 (9.600 s) |
+| 777 | 13 (10.700 s) | 13 (10.050 s) |
+| 2024 | 13 (10.783 s) | 13 (10.150 s) |
+| 99 | 12 (9.933 s) | 14 (10.200 s) |
+| **Total** | **64** | **66** |
+
+The upgrade's measured gain is modest: usually the same count about 0.7 s
+sooner, occasionally two more people. Wanderers drawn toward a group take some
+of its speech, delaying the group clear by about 0.5 s. This scripted
+nearest-first chase does not route to exploit the pull, and it is not a human
+playtest. If the pull should feel stronger, the levers are `PULL_SPEED`
+(110 px/s), the reach values in the catalog, or the wanderer count. Playtest
+whether five wanderers is enough, whether 180 / 320 px feels like "pulling them
+in", and whether the opening still reads as roughly three conversions.

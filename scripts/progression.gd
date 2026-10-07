@@ -5,7 +5,13 @@ extends RefCounted
 const SAVE_VERSION: int = 4
 const MAX_COUNTER: int = 1000000000
 const AREA_IDS: Array[String] = ["bramblewick", "bellmarket"]
-const EFFECT_KEYS: Array[String] = ["encounter_conviction_add", "skeptic_conviction_add", "guard_conviction_add", "zealot_conviction_add", "priest_conviction_add", "merchant_conviction_add", "merchant_donation_add", "speech_speed_add", "conviction_add", "run_speed_add", "meadow_unlock", "east_unlock", "helper_unlock", "merchant_unlock", "encounter_unlock", "market_guild_unlock", "market_patron_unlock", "market_guild_donation_add", "market_patron_donation_add"]
+## Village nodes added after Bellmarket shipped. Saves validate earned market
+## access without them, so a player already there is not rejected; ordinary
+## travel still requires the whole current circle.
+const POST_MARKET_VILLAGE_IDS: Array[String] = ["beckon_1"]
+## One beckon point draws wanderers from this many world pixels away.
+const BECKON_PIXELS_PER_POINT: float = 100.0
+const EFFECT_KEYS: Array[String] = ["beckon_add", "encounter_conviction_add", "skeptic_conviction_add", "guard_conviction_add", "zealot_conviction_add", "priest_conviction_add", "merchant_conviction_add", "merchant_donation_add", "speech_speed_add", "conviction_add", "run_speed_add", "meadow_unlock", "east_unlock", "helper_unlock", "merchant_unlock", "encounter_unlock", "market_guild_unlock", "market_patron_unlock", "market_guild_donation_add", "market_patron_donation_add"]
 const UNLOCK_KEYS: Array[String] = ["meadow_unlock", "east_unlock", "helper_unlock", "merchant_unlock", "encounter_unlock", "market_guild_unlock", "market_patron_unlock"]
 
 const BASE_MERCHANT_DONATION: int = 12
@@ -324,6 +330,11 @@ func run_multiplier() -> float:
 	return 1.0 + _sum_effect("run_speed_add")
 
 
+## World pixels within which lone wanderers walk toward the cultist; zero without Beckoning Call.
+func beckon_reach() -> float:
+	return BECKON_PIXELS_PER_POINT * _sum_effect("beckon_add")
+
+
 func has_unlock(key: String) -> bool:
 	return key in UNLOCK_KEYS and _sum_effect(key) >= 1.0
 
@@ -417,6 +428,7 @@ func effect_preview(id: String) -> Dictionary:
 		"merchant_conviction_add": base_conviction + float(totals.merchant_conviction_add),
 		"merchant_donation_add": BASE_MERCHANT_DONATION + int(float(totals.merchant_donation_add)),
 		"helpers": int(_unlocked(totals, "helper_unlock")),
+		"beckon_reach": BECKON_PIXELS_PER_POINT * float(totals.beckon_add),
 	}
 	current.encounter_unlock = int(_unlocked(totals, "encounter_unlock"))
 	current.encounter_conviction_add = base_conviction + opponent_bonus
@@ -442,6 +454,7 @@ func effect_preview(id: String) -> Dictionary:
 			var key: String = "market_" + kind + suffix
 			result.next[key] += float(effect.get(key, 0.0))
 	result.next.helpers += int(effect.get("helper_unlock", 0))
+	result.next.beckon_reach += BECKON_PIXELS_PER_POINT * float(effect.get("beckon_add", 0.0))
 	return result
 
 
@@ -596,9 +609,17 @@ func _validated_snapshot(raw: Variant) -> Dictionary:
 	var needs_market_access: bool = normalized.active_area == "bellmarket"
 	for id in normalized.purchased:
 		needs_market_access = needs_market_access or find_upgrade(id).get("area", "bramblewick") == "bellmarket"
-	if needs_market_access and not normalized.level_select_unlocked and not _ranks_complete(catalog_for_area("bramblewick"), normalized.purchased):
+	if needs_market_access and not normalized.level_select_unlocked and not _ranks_complete(_market_gate_definitions(), normalized.purchased):
 		return {}
 	return normalized
+
+
+func _market_gate_definitions() -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	for entry in catalog_for_area("bramblewick"):
+		if not entry.id in POST_MARKET_VILLAGE_IDS:
+			result.append(entry)
+	return result
 
 
 func _read_snapshot(path: String) -> Dictionary:

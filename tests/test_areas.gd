@@ -47,7 +47,7 @@ func fill_village(state: RefCounted) -> void:
 func _run() -> void:
 	clean_fixture()
 	var state = fresh()
-	check(state.active_area == "bramblewick" and state.catalog.size() == 32 and state.all_catalog.size() == 62, "fresh game exposes village circle and validates both catalogs")
+	check(state.active_area == "bramblewick" and state.catalog.size() == 33 and state.all_catalog.size() == 63, "fresh game exposes village circle and validates both catalogs")
 	check(state.catalog_for_area("bellmarket").size() == 30 and state.catalog_for_area("unknown").is_empty(), "area catalogs include exactly implemented local nodes")
 	check(state.is_area_unlocked("bramblewick") and not state.is_area_unlocked("bellmarket") and not state.is_area_unlocked("unknown"), "only the implemented opening area starts unlocked")
 	check(not state.try_travel("bellmarket") and not state.try_travel("unknown", true) and state.active_area == "bramblewick", "locked and unknown travel preserve the current area")
@@ -64,15 +64,15 @@ func _run() -> void:
 	check(state.save_progress(), "completed village snapshot is staged successfully")
 	var original_bytes: String = FileAccess.get_file_as_string(FIXTURE)
 	state.save_path = "user://missing_area_test_directory/progression.json"
-	check(not state.try_travel("bellmarket") and state.active_area == "bramblewick" and state.catalog.size() == 32 and not state.level_select_unlocked, "failed travel write changes neither area, catalog nor bypass access")
+	check(not state.try_travel("bellmarket") and state.active_area == "bramblewick" and state.catalog.size() == 33 and not state.level_select_unlocked, "failed travel write changes neither area, catalog nor bypass access")
 	check(FileAccess.get_file_as_string(FIXTURE) == original_bytes, "failed travel preserves the prior save bytes")
 	state.save_path = FIXTURE
 	check(state.try_travel("bellmarket") and state.active_area == "bellmarket" and state.catalog.size() == 30, "successful travel selects the separate market circle")
-	check(state.coins == 77 and state.total_recruits == 91 and state.available_recruits == 23 and state.round_number == 18 and state.encounter_stage == 2 and state.purchased.size() == 32, "travel preserves wallets, lifetime history, round, encounters and village ranks")
+	check(state.coins == 77 and state.total_recruits == 91 and state.available_recruits == 23 and state.round_number == 18 and state.encounter_stage == 2 and state.purchased.size() == 33, "travel preserves wallets, lifetime history, round, encounters and village ranks")
 	check(state.is_circle_complete("bramblewick") and not state.is_circle_complete() and not state.is_circle_complete("bellmarket"), "completion is derived separately for each area")
 	var restored = fresh()
 	check(restored.load_progress() and restored.active_area == "bellmarket" and restored.catalog.size() == 30 and restored.purchased == state.purchased and restored.encounter_stage == 2, "schema4 reload restores area while validating off-area ranks")
-	check(restored.try_travel("bramblewick") and restored.catalog.size() == 32 and restored.try_travel("bellmarket") and restored.purchased == state.purchased, "repeated return travel preserves all progress")
+	check(restored.try_travel("bramblewick") and restored.catalog.size() == 33 and restored.try_travel("bellmarket") and restored.purchased == state.purchased, "repeated return travel preserves all progress")
 	var saved: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(FIXTURE))
 	check(saved.schema_version == 4 and saved.active_area == "bellmarket" and saved.level_select_unlocked == false and not saved.has("circle_complete"), "schema4 stores area and explicit access without a completion flag")
 	write_fixture(FIXTURE, {"broken": true})
@@ -160,6 +160,8 @@ func _test_existing_market_save() -> void:
 	for branch in ["run", "talk", "persuade", "guild", "patron"]:
 		for tier in [1, 2, 3]:
 			legacy.purchased["market_" + branch + "_" + str(tier)] = 1
+	# Beckoning Call joined the village circle after this save reached the market.
+	legacy.purchased.erase("beckon_1")
 	write_fixture(FIXTURE, legacy)
 	var original_bytes: String = FileAccess.get_file_as_string(FIXTURE)
 	var restored = fresh()
@@ -170,7 +172,8 @@ func _test_existing_market_save() -> void:
 	for branch in ["run", "talk", "persuade", "guild", "patron"]:
 		for tier in [4, 5, 6]:
 			new_ranks += restored.rank("market_" + branch + "_" + str(tier))
-	check(new_ranks == 0 and restored.is_circle_complete("bramblewick") and not restored.is_circle_complete(), "new fifteen ranks begin unowned and expanded market completion is derived from all thirty nodes")
+	check(new_ranks == 0 and not restored.is_circle_complete(), "new fifteen ranks begin unowned and expanded market completion is derived from all thirty nodes")
+	check(not restored.is_circle_complete("bramblewick") and restored.rank("beckon_1") == 0 and restored.status("beckon_1") == "locked", "the later village node stays unbought and only off-area locked while in the market")
 	check(FileAccess.get_file_as_string(FIXTURE) == original_bytes and restored.save_progress() and FileAccess.get_file_as_string(FIXTURE + ".bak") == original_bytes, "loading old market ranks preserves exact original bytes through the next staged backup")
 	var round_trip = fresh()
 	check(round_trip.load_progress() and round_trip._snapshot() == legacy and not round_trip.is_circle_complete(), "pre-expansion schema4 state round-trips without charges, grants or stale completion")

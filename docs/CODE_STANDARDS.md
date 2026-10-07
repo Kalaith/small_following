@@ -138,7 +138,11 @@ Preserve these transaction and compatibility rules:
    unchanged. Preserve donations, event total, round and encounter progress;
    initialize schema-1/2 available recruits to the old total without retroactive
    charges, retaining schema-3 availability. Default older schemas to Bramblewick
-   with no bypass access. Keep migration tests isolated.
+   with no bypass access. Save validation checks earned market access against
+   the village circle as it stood when Bellmarket shipped
+   (`POST_MARKET_VILLAGE_IDS` excluded), so later village nodes never reject an
+   existing save; live travel still needs every current rank. Keep migration
+   tests isolated.
 5. Preserve unsupported future saves and damaged originals. Follow existing
    backup/`.corrupt` rules rather than deleting files to suppress a notice.
 6. Prepare area content before requesting transactional travel. Persist the

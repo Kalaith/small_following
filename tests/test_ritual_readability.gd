@@ -43,7 +43,7 @@ func _run() -> void:
 	_test_labels(screen)
 	await _test_large_graph(screen)
 	screen.configure(scene.progression.catalog, scene.progression)
-	check(screen.node_positions.size() == 32, "restoring production data preserves all thirty-two upgrades")
+	check(screen.node_positions.size() == 33, "restoring production data preserves all thirty-three upgrades")
 	check(JSON.stringify(scene.progression.catalog) == original_catalog, "view layout never mutates catalog definitions")
 	check(scene.progression.purchased == original_purchases and scene.coins == original_coins, "view navigation never changes ranks or donations")
 	scene.queue_free()
@@ -191,7 +191,7 @@ func _test_navigation_controls(screen) -> void:
 	var represented: int = 0
 	for summary in summaries:
 		represented += int(summary.count)
-	check(summaries.size() == 8 and represented == 32, "branch navigation accounts for every production upgrade")
+	check(summaries.size() == 8 and represented == 33, "branch navigation accounts for every production upgrade")
 	check(screen.branch_picker.visible and screen.branch_picker.item_count == 8, "eight branches use the visible branch dropdown")
 	screen.branch_picker.item_selected.emit(screen.branch_nav.order.find("run"))
 	check(screen.selected_id == "run_1" and screen._node_title.text.contains("Footsteps"), "branch button focuses an available progression choice and refreshes details")

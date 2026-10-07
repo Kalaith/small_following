@@ -21,6 +21,8 @@ var listener_profiles: Array[Dictionary] = []
 var _market_progression: Progression = null
 
 var group_name: String = "Neighbours"
+## Rotates the coat palette so lone wanderers do not all wear the same colour.
+var coat_offset: int = 0
 var recruits: int = 0
 var progress: float = 0.0
 var phrase_elapsed: float = 0.0
@@ -122,6 +124,14 @@ func _ready() -> void:
 		listener_count = listener_profiles.size()
 		npc_type = "mixed"
 	var offsets: Array[Vector2] = [Vector2(-43, -13), Vector2(0, -29), Vector2(41, -8), Vector2(-23, 26), Vector2(28, 30)]
+	# Smaller village crowds stand in their own balanced huddles; a lone wanderer
+	# stands on the gathering origin. Pairs and full five keep the authored ring.
+	if listener_count == 1:
+		offsets = [Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO]
+	elif listener_count == 3:
+		offsets = [Vector2(-32, -12), Vector2(30, -16), Vector2(0, 24), Vector2(-23, 26), Vector2(28, 30)]
+	elif listener_count == 4:
+		offsets = [Vector2(-38, -10), Vector2(8, -30), Vector2(38, 4), Vector2(-6, 26), Vector2(28, 30)]
 	var colors: Array[Color] = [Color("#be8066"), Color("#b89c58"), Color("#679391"), Color("#7c88aa"), Color("#caaf77")]
 	# The homogeneous (non-profile) path sets listener_count directly with no
 	# validate_profiles() pass; bound it to the authored offsets/colors too.
@@ -132,7 +142,7 @@ func _ready() -> void:
 		var listener := Listener.new()
 		listener.position = offsets[i]
 		listener.merchant = npc_type == "merchant"
-		listener.coat = colors[i]
+		listener.coat = colors[(i + coat_offset) % colors.size()]
 		listener.phase = float(i)
 		if not listener_profiles.is_empty():
 			listener.role = String(listener_profiles[i]["role"])
@@ -275,12 +285,14 @@ func _draw() -> void:
 	if not listener_profiles.is_empty():
 		_draw_market_details()
 		return
-	draw_arc(Vector2.ZERO, 69, 0, TAU, 56, Color(1, 0.93, 0.62, 0.7), 2, true)
+	var lone: bool = listener_count == 1
+	draw_arc(Vector2.ZERO, 34 if lone else 69, 0, TAU, 56, Color(1, 0.93, 0.62, 0.7), 2, true)
 	var font := ThemeDB.fallback_font
 	var caption: String = "%s  %d/%d" % [group_name, recruits, listener_count]
 	var width: float = font.get_string_size(caption, HORIZONTAL_ALIGNMENT_LEFT, -1, 16).x
-	draw_style_box(_caption_style(), Rect2(-width * 0.5 - 10, -142, width + 20, 30))
-	draw_string(font, Vector2(-width * 0.5, -121), caption, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("#fff1d0"))
+	var caption_top: float = -112.0 if lone else -142.0
+	draw_style_box(_caption_style(), Rect2(-width * 0.5 - 10, caption_top, width + 20, 30))
+	draw_string(font, Vector2(-width * 0.5, caption_top + 21), caption, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("#fff1d0"))
 	draw_line(Vector2(-38, 58), Vector2(38, 58), Color("#55654e"), 5)
 	draw_line(Vector2(-38, 58), Vector2(-38 + 76 * minf(progress / conviction_required, 1.0), 58), Color("#f3d98c"), 5)
 	for i in range(3):

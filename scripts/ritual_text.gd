@@ -38,9 +38,14 @@ static func effect_text(progression: Progression, by_id: Dictionary, id: String,
 		var labels: Dictionary = {"merchant_unlock": "MERCHANT PAIR", "merchant_conviction_add": "MERCHANT CONVICTION", "merchant_donation_add": "GOLD PER MERCHANT", "encounter_unlock": "TOWN DEBATE", "encounter_conviction_add": "ALL OPPONENTS / CONVICTION", "skeptic_conviction_add": "SKEPTIC / CONVICTION", "guard_conviction_add": "GUARD / CONVICTION", "zealot_conviction_add": "ZEALOT / CONVICTION", "priest_conviction_add": "PRIEST / CONVICTION"}
 		var label: String = str(labels.get(key, key.replace("_", " ").capitalize()))
 		return "%s\n%.1f%s" % [label, current[key], "" if complete or not next.has(key) else " -> %.1f" % next[key]]
+	if by_id.has(id) and by_id[id].get("effect", {}).has("beckon_add") and current.has("beckon_reach"):
+		var reach: float = float(current.beckon_reach)
+		if complete or not next.has("beckon_reach"):
+			return "BECKONING REACH\nwanderers within %d px" % int(reach)
+		return "BECKONING REACH\n%d → %d px" % [int(reach), int(next.beckon_reach)]
 	var stat_key: String = {"talk": "speech_frequency", "persuade": "conviction", "run": "run_multiplier", "gather": "gatherings", "helper": "helpers"}.get(branch, "")
 	var heading: String = {"talk": "TALKING FREQUENCY", "persuade": "CONVICTION PER PHRASE", "run": "RUNNING SPEED", "gather": "VILLAGE GATHERINGS", "helper": "HELPERS"}.get(branch, "")
-	var units: String = {"talk": "phrases/s", "persuade": "conviction", "run": "x base", "gather": "groups of five", "helper": "helpers"}.get(branch, "")
+	var units: String = {"talk": "phrases/s", "persuade": "conviction", "run": "x base", "gather": "groups", "helper": "helpers"}.get(branch, "")
 	if stat_key.is_empty() or not current.has(stat_key):
 		return ""
 	var current_value: float = float(current[stat_key])
@@ -48,8 +53,8 @@ static func effect_text(progression: Progression, by_id: Dictionary, id: String,
 		return "ONE LISTENER AT A TIME\n1 helper / 150 px per second" if complete else "HELPERS\n0 → 1 / one listener at a time"
 	if branch == "gather":
 		if complete or not next.has(stat_key):
-			return "%s\n%d groups / %d listeners" % [heading, int(current_value), int(current_value) * 5]
-		return "%s\n%d → %d groups of five" % [heading, int(current_value), int(next[stat_key])]
+			return "%s\n%d groups of three or four" % [heading, int(current_value)]
+		return "%s\n%d → %d groups" % [heading, int(current_value), int(next[stat_key])]
 	if complete or not next.has(stat_key):
 		return "%s\n%.2f %s" % [heading, current_value, units]
 	return "%s\n%.2f → %.2f %s" % [heading, current_value, float(next[stat_key]), units]

@@ -15,7 +15,8 @@ This project is a bounded two-area prototype of movement, short earning rounds, 
 - Round end opens a large occult ritual-circle upgrade screen, using purple, violet and lilac rather than the references' red.
 - The initial upgrades improve talking speed, persuasion effectiveness and running speed through distinct mechanics.
 - Selected existing upgrade ranks cost recruits as well as gold, with followers supporting audiences and shared preaching. Running upgrades remain gold-only. Preserve a separate lifetime-recruited statistic and existing purchased upgrades without retroactive charges (requested 2026-10-03).
-- Preserve the original ranked progression. With full ranks on the original nine nodes, a competent practical route should fully convert all three groups inside the round with little time to spare; merely reaching the groups does not meet this target.
+- Preserve the original ranked progression. With full ranks on the original nine nodes, a competent practical route should fully convert all three groups inside the round; merely reaching the groups does not meet this target.
+- Bramblewick moves from three crowds of five to smaller groups of three or four plus a few lone NPCs scattered around the map, never placed behind or inside houses or other props, so running between people pays off. Add upgrades that pull those NPCs closer (requested 2026-10-07). The exact sizes, wanderer count, reach and prices below are provisional.
 - The upgrade structure must accommodate over 100 future upgrades/layers through data and navigable rings or branches.
 - Spread the existing inscriptions more fully around the circle. Every local upgrade rank lights the inner circle. The original demo message allowed continued play (requested 2026-10-03); the implemented village centre now leads deliberately to Bellmarket's separate circle.
 - Implement the market level with its own similar but distinct purple circle and frequent choices among three to five upgrades, supporting faster routes and richer NPC specializations. Add a title screen where `PLZKTKS` permits starting any implemented level (requested 2026-10-04).
@@ -40,7 +41,9 @@ values are documented below and in [PACING](PACING.md#bellmarket-rebalance---202
 | --- | --- | --- |
 | Round duration | 11 seconds | Target roughly three opening conversions; validate with human routes as well as simulation. |
 | Starting position | World position (780, 680), restored at each new round | Makes opening routes repeatable; decide whether later rounds should preserve position. |
-| Gatherings | Three initial groups, five listeners each; two unlockable groups and an optional merchant pair | A small route-choice sample; initial capacity is 15 and expanded capacity is 25. |
+| Gatherings | Three initial groups of 4 / 3 / 4; invitations add groups of 4 and 3; an optional merchant pair | Groups hold 11 listeners initially and 18 when expanded. |
+| Lone wanderers | Five single villagers, re-scattered at random each round clear of prop art, every group site, the entrance and the debate centre | Rewards running between people; 16 opening listeners in total. |
+| Beckoning Call | Running-branch node after Fleet Footsteps I; wanderers within 180 px (rank 2: 320 px) walk toward the cultist at 110 px/s and stop inside speaking range; 9 + 18 gold, no recruits | Pulls lone NPCs in without changing speech, conviction or speed. |
 | Talking range | 105 world pixels | One nearest unfinished audience receives phrases. |
 | Base talking | One phrase per second | Talking speed changes phrase frequency. |
 | Base persuasion | One conviction per phrase; three conviction recruits a listener | Persuasion changes work done per phrase. |

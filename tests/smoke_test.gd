@@ -32,7 +32,7 @@ func _run() -> void:
 	scene.set_process(false)
 	scene.seconds_left = scene.ROUND_SECONDS
 	var player = scene.player
-	check(scene.groups.size() == 3 and scene.progression.catalog.size() == 32, "three gatherings and thirty-two real upgrades")
+	check(scene.groups.size() == 3 and scene.progression.catalog.size() == 33, "three gatherings and thirty-three real upgrades")
 	check(player.get_node("Camera2D").enabled, "following camera enabled")
 	for action in ["move_left", "move_right", "move_up", "move_down", "next_round", "buy_upgrade", "toggle_ritual"]:
 		check(InputMap.has_action(action) and not InputMap.action_get_events(action).is_empty(), "mapped action: " + action)
@@ -101,12 +101,12 @@ func _run() -> void:
 	check(scene.progression.conviction_per_phrase() == 1.5 and player.movement_speed == 180.0, "persuasion changes conviction alone")
 	check(scene.purchase_upgrade("run_1"), "running purchase")
 	check(is_equal_approx(player.movement_speed, 207.0), "running changes actual movement speed")
-	var group = scene.groups[1]
+	var group = scene.groups[0]
 	group.reset_round()
 	group.tick_persuasion(5.0, 1.0, 2.0)
-	check(group.recruits == 3 and group.progress == 1.0, "persuasion overflow is retained across listeners")
+	check(group.listener_count == 4 and group.recruits == 3 and group.progress == 1.0, "persuasion overflow is retained across listeners")
 	group.tick_persuasion(100.0, 0.5, 2.5)
-	check(group.recruits == 5, "audience capacity still applies, no duplicate rewards")
+	check(group.recruits == 4, "audience capacity still applies, no duplicate rewards")
 
 	await _test_graph(scene)
 	scene.queue_free()
@@ -138,7 +138,7 @@ func _test_expanded_village() -> void:
 	scene.player.position = scene.groups[3].position
 	var before: int = scene.coins
 	scene.advance_round(3.0)
-	check(scene.groups[3].recruits == 5 and scene.coins == before + 15, "new listeners recruit and pay through ordinary conversation")
+	check(scene.groups[3].recruits == 4 and scene.coins == before + 12, "four meadow listeners recruit and pay through ordinary conversation")
 	scene.advance_round(100.0)
 	scene.start_next_round()
 	check(scene.groups[3].recruits == 0 and scene.groups.size() == 5, "expanded audiences reset next round and remain unlocked")
@@ -219,7 +219,7 @@ func _test_graph(scene) -> void:
 	screen.focus_node("fixture_12_11")
 	check(screen.hit_test(screen.world_to_screen(screen.node_positions["fixture_12_11"])) == "fixture_12_11", "outermost ring remains navigable after pan/zoom")
 	screen.configure(scene.progression.catalog, scene.progression)
-	check(screen.node_positions.size() == 32, "fixture never becomes gameplay content")
+	check(screen.node_positions.size() == 33, "fixture never becomes gameplay content")
 	screen.select_node("talk_1")
 	check(screen.purchase_button.disabled, "purchased node button shows maximum state")
 	screen.select_node("talk_3")

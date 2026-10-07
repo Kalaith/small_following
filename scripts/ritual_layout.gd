@@ -29,6 +29,7 @@ const VILLAGE_POSITIONS: Dictionary = {
 	"run_4": Vector2(-450, 125),
 	"run_5": Vector2(-450, 235),
 	"run_6": Vector2(-360, 300),
+	"beckon_1": Vector2(-255, 140),
 	"persuade_1": Vector2(165, 25),
 	"persuade_2": Vector2(280, 0),
 	"persuade_3": Vector2(385, 60),

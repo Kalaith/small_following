@@ -57,7 +57,7 @@ func legacy_purchases(state: RefCounted) -> Dictionary:
 func _run() -> void:
 	clean_fixture()
 	var state = fresh()
-	check(state.catalog.size() == 32, "thirty-two implemented definitions load")
+	check(state.catalog.size() == 33, "thirty-three implemented definitions load")
 	check(state.max_rank("talk_1") == 1 and state.max_rank("talk_3") == 2 and state.rank("talk_3") == 0, "ranks extend outer seals without adding nodes")
 	check(state.max_rank("none") == 0 and state.next_cost("none") == 0, "unknown nodes have no purchasable rank")
 	check(state.load_progress() and state.coins == 0 and state.round_number == 1, "missing save has fresh defaults")
@@ -222,7 +222,7 @@ func _run() -> void:
 	modified = definitions.duplicate(true)
 	modified.upgrades[0].requires = ["talk_3"]
 	write_fixture(CATALOG_FIXTURE, JSON.stringify(modified))
-	check(not state.load_catalog(CATALOG_FIXTURE) and state.catalog.size() == 32, "cyclic catalog rejected without replacing current definitions")
+	check(not state.load_catalog(CATALOG_FIXTURE) and state.catalog.size() == 33, "cyclic catalog rejected without replacing current definitions")
 	modified = definitions.duplicate(true)
 	modified.upgrades[1].id = "talk_1"
 	write_fixture(CATALOG_FIXTURE, JSON.stringify(modified))

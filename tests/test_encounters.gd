@@ -69,7 +69,7 @@ func _setup(full: bool):
 func _campaign() -> void:
 	var scene = _setup(true)
 	var state = scene.progression
-	check(state.catalog.size() == 32, "production circle contains 32 implemented nodes")
+	check(state.catalog.size() == 33, "production circle contains 33 implemented nodes")
 	check(state.conviction_per_phrase() == 5 and is_equal_approx(state.speech_interval(), 1.0 / 3.5), "full player stats keep frequency and conviction distinct")
 	check(state.encounter_conviction("priest") == 14 and state.encounter_conviction("skeptic") == 10 and state.conviction_for("merchant") == 8, "specialist effects target their actual NPCs")
 	for version in [1, 2]:

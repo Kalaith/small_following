@@ -355,6 +355,13 @@ func finish_capture(scene) -> void:
 	quit(1 if failed else 0)
 
 
+func _group_recruits(scene) -> int:
+	var total: int = 0
+	for group in scene.groups:
+		total += group.recruits
+	return total
+
+
 func capture_full_clear(scene) -> void:
 	# Same competent route model as pacing tests: small reactions, ordinary 95px stops.
 	scene.progression.total_recruits = 0
@@ -365,10 +372,13 @@ func capture_full_clear(scene) -> void:
 	var index: int = 0
 	var pause_steps: int = 12
 	var steps: int = 0
-	while scene.round_active and scene.round_recruits < 15 and steps < 700:
+	var capacity: int = 0
+	for group in scene.groups:
+		capacity += group.listener_count
+	while scene.round_active and _group_recruits(scene) < capacity and steps < 700:
 		await physics_frame
 		var target = scene.groups[order[index]]
-		if target.recruits == 5 and index < 2:
+		if target.recruits == target.listener_count and index < 2:
 			index += 1
 			target = scene.groups[order[index]]
 			pause_steps = 6
@@ -382,7 +392,7 @@ func capture_full_clear(scene) -> void:
 		steps += 1
 	scene._update_hud()
 	print("FULL CLEAR CAPTURE: %d recruits in %.3fs, %.3fs remaining" % [scene.round_recruits, steps / 60.0, scene.seconds_left])
-	if scene.round_recruits != 15:
+	if _group_recruits(scene) != capacity:
 		failed = true
 		push_error("Full-rank capture route failed to clear all three groups.")
 	await save_frame("village-full-clear.png")

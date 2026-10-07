@@ -15,7 +15,7 @@ Work only inside this project unless the user explicitly broadens the task. Read
 - The player is the little robed cultist and can always move directly, including between rounds and while the ritual screen is open. Tab must let the player return to the visible village between rounds.
 - The village occupies most of the screen during active rounds. Keep its persistent HUD small and interactions contextual. The requested ritual upgrade screen is a separate, intentionally large intermission.
 - An ordinary opening round targets roughly three conversions through travel and speaking time. Do not implement an arbitrary three-recruit cap.
-- Full ranks should allow a competent practical route to convert all 15 listeners across the three groups just inside the same 11-second round. Measure actual completed conversions and remaining time; visiting groups alone is insufficient. Keep human route uncertainty explicit.
+- Bramblewick opens with three small groups (4 / 3 / 4) plus five lone wanderers scattered each round clear of prop art (requested 2026-10-07). Full ranks should let a competent practical route convert all eleven group listeners inside the same 11-second round with time left to chase wanderers. Measure actual completed conversions and remaining time; visiting groups alone is insufficient. Keep human route uncertainty explicit.
 - Robe cloth visibly trails movement and settles at rest.
 - The upgrade screen is a purple occult circle whose visible nodes and connections form its geometry. Do not replace it with a fixed rectangular skill-card menu.
 - Keep talking frequency, conviction per phrase and running speed mechanically distinct. Preserve conviction overflow so upgrades improve cumulative recruitment.

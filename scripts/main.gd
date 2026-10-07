@@ -14,9 +14,22 @@ const DonationPopup = preload("res://scripts/donation_popup.gd")
 const Market = preload("res://scripts/market.gd")
 const Village = preload("res://scripts/village.gd")
 const TitleScreen = preload("res://scripts/title_screen.gd")
+const Wanderers = preload("res://scripts/wanderers.gd")
 const ROUND_SECONDS: float = 11.0
 const START_POSITION := Vector2(780, 680)
 const BASE_RUN_SPEED: float = 180.0
+## Bramblewick crowds are small huddles of three or four; lone wanderers fill
+## the spaces between. Indices of the opening three are stable for tests/tools.
+const VILLAGE_GATHERINGS: Array[Dictionary] = [
+	{"title": "Wellside neighbours", "at": Vector2(560, 540), "count": 4},
+	{"title": "Market regulars", "at": Vector2(1050, 480), "count": 3},
+	{"title": "Garden club", "at": Vector2(850, 850), "count": 4},
+]
+const INVITED_GATHERINGS: Array[Dictionary] = [
+	{"key": "meadow_unlock", "title": "Meadow neighbours", "at": Vector2(470, 800), "count": 4},
+	{"key": "east_unlock", "title": "East lane visitors", "at": Vector2(1250, 580), "count": 3},
+]
+const MERCHANT_POSITION := Vector2(1020, 650)
 
 @export var show_title_on_start: bool = false
 var title_screen: Control
@@ -33,6 +46,12 @@ var settings_screen: Control
 var settings_button: Button
 var settings_timer: Timer
 var groups: Array[Node2D] = []
+## One-listener gatherings kept apart from `groups` so group indices stay stable.
+var wanderers: Array[Node2D] = []
+## Nonzero seeds make wanderer placement reproducible for tests and captures.
+var wanderer_seed: int = 0
+var _wanderer_rng := RandomNumberGenerator.new()
+var _footprints: Array[Node] = []
 var added_gatherings: Dictionary = {}
 var encounter: Node2D = null
 var helper: Node2D = null
@@ -109,6 +128,7 @@ func _ready() -> void:
 func _rebuild_area() -> void:
 	nearest_group = null
 	groups.clear()
+	wanderers.clear()
 	added_gatherings.clear()
 	for actor in $Actors.get_children():
 		if actor != player:
@@ -127,6 +147,7 @@ func _rebuild_area() -> void:
 	add_child(world)
 	move_child(world, 0)
 	world.build_props($Actors)
+	_footprints = _obstacle_footprints()
 	if progression.active_area == "bellmarket":
 		for entry in Market.GROUP_LAYOUT:
 			var gathering := Gathering.new()
@@ -139,9 +160,15 @@ func _rebuild_area() -> void:
 			$Actors.add_child(gathering)
 			groups.append(gathering)
 	else:
-		_add_gathering("Wellside neighbours", Vector2(560, 540))
-		_add_gathering("Market regulars", Vector2(1050, 480))
-		_add_gathering("Garden club", Vector2(850, 850))
+		for entry in VILLAGE_GATHERINGS:
+			_add_gathering(entry.title, entry.at, false, entry.count)
+		if wanderer_seed != 0:
+			_wanderer_rng.seed = wanderer_seed
+		else:
+			_wanderer_rng.randomize()
+		for index in range(Wanderers.COUNT):
+			wanderers.append(_new_gathering(Wanderers.TITLE, Vector2.ZERO, 1, false, index))
+		scatter_wanderers()
 	player.clear_walk_target()
 	player.position = area_start_position()
 	player.get_node("Camera2D").reset_smoothing()
@@ -252,19 +279,63 @@ func _start_selected_level(area_id: String) -> void:
 	_begin_round(false)
 
 
-func _add_gathering(title: String, at: Vector2, merchant: bool = false) -> void:
+func _add_gathering(title: String, at: Vector2, merchant: bool = false, count: int = Gathering.LISTENER_COUNT) -> void:
+	var gathering := _new_gathering(title, at, Gathering.MERCHANT_COUNT if merchant else count, merchant)
+	groups.append(gathering)
+
+
+func _new_gathering(title: String, at: Vector2, count: int, merchant: bool = false, coat_offset: int = 0) -> Node2D:
 	var gathering := Gathering.new()
 	gathering.group_name = title
 	gathering.position = at
+	gathering.listener_count = count
+	gathering.coat_offset = coat_offset
 	if merchant:
 		gathering.npc_type = "merchant"
-		gathering.listener_count = Gathering.MERCHANT_COUNT
 		gathering.conviction_required = Gathering.MERCHANT_CONVICTION
 		gathering.donation = progression.merchant_donation()
 	gathering.recruited.connect(_on_recruited)
 	gathering.phrase_spoken.connect(game_audio.on_phrase)
 	$Actors.add_child(gathering)
-	groups.append(gathering)
+	return gathering
+
+
+## Every speakable audience: fixed groups first, then lone wanderers.
+func audiences() -> Array[Node2D]:
+	var result: Array[Node2D] = groups.duplicate()
+	result.append_array(wanderers)
+	return result
+
+
+## Moves every wanderer to a fresh spot clear of prop art, the groups present
+## now, the entrance and the debate centre. Invitations re-scatter on arrival.
+func scatter_wanderers() -> void:
+	if wanderers.is_empty():
+		return
+	var avoid: Array[Vector2] = [START_POSITION, Encounter.CENTER]
+	for group in groups:
+		avoid.append(group.position)
+	var spots: Array[Vector2] = Wanderers.scatter(_wanderer_rng, _village_props(), avoid, wanderers.size())
+	for index in range(wanderers.size()):
+		# A crowded map leaves surplus wanderers out of the round rather than overlapping art.
+		wanderers[index].visible = index < spots.size()
+		wanderers[index].position = spots[index] if index < spots.size() else Vector2(-10000, -10000)
+
+
+func _village_props() -> Array[Node]:
+	var props: Array[Node] = []
+	for child in $Actors.get_children():
+		if child is Village.VillageProp:
+			props.append(child)
+	return props
+
+
+func _obstacle_footprints() -> Array[Node]:
+	var footprints: Array[Node] = []
+	for shape_node in $Actors.find_children("*", "CollisionShape2D", true, false):
+		if shape_node.is_in_group("helper_obstacle_shape"):
+			footprints.append(shape_node)
+	return footprints
 
 
 func _process(delta: float) -> void:
@@ -478,10 +549,14 @@ func advance_round(delta: float) -> void:
 	if title_active:
 		return
 	nearest_group = null
+	if round_active and not wanderers.is_empty():
+		# Beckoning Call draws lone wanderers in during the round's usable time only.
+		Wanderers.pull(wanderers, player.global_position, progression.beckon_reach(), minf(maxf(delta, 0.0), seconds_left), _footprints)
 	var closest_distance: float = player.speaking_radius
 	var nearby_group: Node2D = null
 	var nearby_distance: float = player.speaking_radius + 30.0
-	for group in groups:
+	var all_audiences: Array[Node2D] = audiences()
+	for group in all_audiences:
 		var distance: float = player.global_position.distance_to(group.global_position)
 		if distance <= nearby_distance:
 			nearby_distance = distance
@@ -511,14 +586,14 @@ func advance_round(delta: float) -> void:
 		game_audio.stop_speech()
 	if is_instance_valid(helper):
 		helper.set_active(true)
-		helper.advance(usable_delta, groups)
+		helper.advance(usable_delta, all_audiences)
 	seconds_left = maxf(0.0, seconds_left - usable_delta)
 	if seconds_left <= 0.0:
 		round_active = false
 		game_audio.stop_speech()
 		if is_instance_valid(helper):
 			helper.set_active(false)
-		for group in groups:
+		for group in all_audiences:
 			group.set_listening(false)
 		progression.save_progress()
 		set_ritual_visible(true)
@@ -570,16 +645,17 @@ func apply_upgrades() -> void:
 			group.configure_market(progression)
 		_apply_helper()
 		return
-	for entry in [
-		{"key": "meadow_unlock", "title": "Meadow neighbours", "at": Vector2(470, 800)},
-		{"key": "east_unlock", "title": "East lane visitors", "at": Vector2(1250, 580)},
-	]:
+	var group_count: int = groups.size()
+	for entry in INVITED_GATHERINGS:
 		if progression.has_unlock(entry.key) and not added_gatherings.has(entry.key):
-			_add_gathering(entry.title, entry.at)
+			_add_gathering(entry.title, entry.at, false, entry.count)
 			added_gatherings[entry.key] = true
 	if progression.has_unlock("merchant_unlock") and not added_gatherings.has("merchant_unlock"):
-		_add_gathering("Travelling merchants", Vector2(1020, 650), true)
+		_add_gathering("Travelling merchants", MERCHANT_POSITION, true)
 		added_gatherings["merchant_unlock"] = true
+	# Purchases happen between rounds, so moving wanderers off a new group is safe.
+	if groups.size() != group_count:
+		scatter_wanderers()
 	for group in groups:
 		if group.npc_type == "merchant":
 			group.donation = progression.merchant_donation()
@@ -617,8 +693,9 @@ func _begin_round(increment: bool) -> void:
 	round_recruits = 0
 	nearest_group = null
 	round_active = true
-	for group in groups:
+	for group in audiences():
 		group.reset_round()
+	scatter_wanderers()
 	# Every round uses the same entrance; walking in menus does not grant a head start.
 	player.clear_walk_target()
 	player.position = area_start_position()

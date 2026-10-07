@@ -130,16 +130,16 @@ func _test_catalog_validation() -> void:
 		var invalid: Dictionary = source.duplicate(true)
 		match kind:
 			"unknown_area":
-				invalid.upgrades[32].area = "unimplemented"
+				invalid.upgrades[33].area = "unimplemented"
 			"cross_area_requirement":
-				invalid.upgrades[32].requires = ["run_1"]
+				invalid.upgrades[33].requires = ["run_1"]
 			"fractional_donation":
-				invalid.upgrades[42].effect.market_guild_donation_add = 0.5
+				invalid.upgrades[43].effect.market_guild_donation_add = 0.5
 			"misplaced_market_effect":
 				invalid.upgrades[0].effect = {"market_guild_donation_add": 4}
 		var file: FileAccess = FileAccess.open(CATALOG_FIXTURE, FileAccess.WRITE)
 		file.store_string(JSON.stringify(invalid))
 		file.close()
-		check(not state.load_catalog(CATALOG_FIXTURE) and state.catalog.size() == 30 and state.all_catalog.size() == 62, "invalid market catalog preserves validated definitions: " + kind)
+		check(not state.load_catalog(CATALOG_FIXTURE) and state.catalog.size() == 30 and state.all_catalog.size() == 63, "invalid market catalog preserves validated definitions: " + kind)
 	if FileAccess.file_exists(CATALOG_FIXTURE):
 		DirAccess.remove_absolute(CATALOG_FIXTURE)
