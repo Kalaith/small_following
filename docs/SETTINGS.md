@@ -92,18 +92,29 @@ No resolution, rendering backend or export setting is changed.
 
 ## Storage and ownership
 
-`settings_store.gd` validates schema-1 `user://settings.json`, separately from
+`settings_store.gd` validates `user://settings.json`, separately from
 progression. It stores four finite 0-1 volumes and boolean mute/fullscreen
 preferences plus optional `key_bindings`: all nine supported action IDs, each
-with two integer key codes (zero means an unassigned alternate). Older schema-1
-files without this field retain their preferences and use corrected defaults.
-Validation rejects missing/unknown actions, malformed slots, nonintegral or
-unknown codes, duplicate assignments and reserved keys before applying anything.
-Saves stage and reread a temporary file before promoting it,
-retaining a valid prior file as `.bak`. A damaged main can recover from backup;
-the damaged original is preserved as `.corrupt` before a later save. Unsupported
-versions or unrecoverable files are preserved and writes blocked, with a notice
-that adjustments last this session. Ordinary write failures also show a notice.
+with two integer key codes (zero means an unassigned alternate). Validation
+rejects missing/unknown actions, malformed slots, nonintegral or unknown
+codes, duplicate assignments and reserved keys before applying anything.
+
+Schema 1 shipped the original six `values` keys; schema 2 (2026-10-07)
+validates only the keys actually present in a saved file and defaults any
+absent one from `DEFAULTS` on load, so adding a new preference cannot by
+itself invalidate an existing file. Saving always writes the current schema
+with every key populated. `CURRENT_SCHEMA` in `settings_store.gd` is the single
+place that both bounds and names the accepted range; raise it again the same
+way the next time a new key needs defaulting.
+
+Saves stage and reread a temporary file before promoting it, retaining a
+valid prior file as `.bak`. A damaged main can recover from backup; the
+damaged original is preserved as `.corrupt` before a later save, and an
+existing `.corrupt` file is left untouched rather than overwritten by a second
+incident, mirroring `progression.gd`'s recovery-archive policy. Unsupported
+future versions or unrecoverable files are preserved and writes blocked, with
+a notice that adjustments last this session. Ordinary write failures also show
+a notice.
 
 Changes apply immediately, save after 0.4 seconds without further edits and
 flush on closing settings or exiting the scene. `game_audio.gd` owns actual
@@ -121,6 +132,10 @@ round expiry, Tab return, hidden-action protection and actual fullscreen/window
 transitions. Render the page over village and ritual at base and compact sizes.
 `tests/test_key_mapping.gd` checks physical movement events, capture/conflicts,
 shortcut dispatch, restart, old preferences, malformed saves and recovery.
+`tests/test_settings.gd` additionally checks the schema-2 migration: a
+schema-1 file missing a newer key defaults it instead of failing, a present
+but out-of-range key still fails, a migrated file saves forward at the
+current schema, and an existing `.corrupt` file blocks a second overwrite.
 The display run additionally clicks the actual binding control. For targeted
 captures, run `tests/capture_starter.gd` with `--settings-only` after `--`.
 See [verification](VERIFICATION.md) for measured results and limitations.

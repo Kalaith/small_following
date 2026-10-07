@@ -62,6 +62,28 @@ func _run() -> void:
 	loaded.path = FIXTURE
 	loaded.load_settings()
 	check(loaded.writes_blocked and not loaded.save_settings() and FileAccess.get_file_as_string(FIXTURE).contains("99"), "future preferences are preserved")
+	write_fixture('{"schema":1,"values":{"music":0.6}}')
+	loaded = Store.new()
+	loaded.path = FIXTURE
+	loaded.load_settings()
+	check(loaded.values.music == 0.6 and loaded.values.master == Store.DEFAULTS.master and loaded.values.fullscreen == Store.DEFAULTS.fullscreen, "a schema-1 file missing newer keys defaults them instead of failing")
+	check(loaded.last_error.is_empty() and not loaded.writes_blocked, "a defaulted migration is not treated as a recovered or blocked file")
+	check(loaded.save_settings(), "a migrated file can be saved forward")
+	loaded = Store.new()
+	loaded.path = FIXTURE
+	loaded.load_settings()
+	check(int(JSON.parse_string(FileAccess.get_file_as_string(FIXTURE)).schema) == Store.CURRENT_SCHEMA, "saving a migrated file writes the current schema")
+	check(not store.valid({"schema": 1, "values": {"master": 9.0}}), "a present but out-of-range key still fails validation despite the migration path")
+	write_fixture("broken")
+	var corrupt_file := FileAccess.open(FIXTURE + ".corrupt", FileAccess.WRITE)
+	corrupt_file.store_string("already recovered once")
+	corrupt_file.close()
+	var guard := Store.new()
+	guard.path = FIXTURE
+	guard.values.music = 0.9
+	check(not guard.save_settings() and guard.last_error.contains(".corrupt"), "an existing .corrupt file blocks the save instead of being overwritten")
+	check(FileAccess.get_file_as_string(FIXTURE + ".corrupt") == "already recovered once", "the earlier .corrupt recovery file is left untouched")
+	DirAccess.remove_absolute(FIXTURE + ".corrupt")
 	var invalid: Dictionary = Store.DEFAULTS.duplicate()
 	invalid.master = 1.1
 	check(not store.valid({"schema": 1, "values": invalid}), "out-of-range volume rejected")

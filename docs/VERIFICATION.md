@@ -1,5 +1,33 @@
 # Verification record - ranked progression, 2026-10-02
 
+## 2026-10-07 - Preferences schema migration
+
+The code health review also found that `settings_store.valid()` required
+every `DEFAULTS` key to be present, so adding a single new preference would
+fail validation on every existing `settings.json`, fall through to an
+equally outdated backup, and block writes for the session. `valid()` now
+checks only the keys actually present in a saved file; an absent key is
+treated as a migration and defaulted from `DEFAULTS` on load rather than a
+corrupt file. `CURRENT_SCHEMA` moved from a fixed 1 to a named constant
+(now 2); saving always writes the full current key set at that schema.
+Separately, `save_settings()` no longer overwrites an existing `.corrupt`
+recovery file with a second one, matching `progression.gd`'s policy of
+preserving the first damaged original.
+
+`tests/test_settings.gd` gained seven checks: a schema-1 file missing a
+newer key defaults it and is not treated as recovered/blocked; the migrated
+values save forward and read back at the current schema; a present
+out-of-range key still fails `valid()`; and a pre-existing `.corrupt` file
+blocks a second overwrite and is left byte-for-byte unchanged. All
+twenty-three suites pass: smoke 92, progression 113, pacing 59, helper 34,
+encounters 210, readability 73, demo completion 46, audio 27, settings 34,
+key mapping 73, areas 44, market progression 94, market pacing 31, market
+campaign 26, market flow 27, title 15, market ritual 110, mixed audiences 36,
+recruit economy 134, ritual touch 25, touch movement 27, merchants and exit
+reporting no failures. No UI, save or catalog behavior changed; this is a
+preferences-storage fix only. The recorded `_EDITOR_GET` import error is
+unrelated and was not rerun in this pass.
+
 ## 2026-10-07 - Ritual refresh cost
 
 A full-source review recorded its maintainability findings under TODO's code

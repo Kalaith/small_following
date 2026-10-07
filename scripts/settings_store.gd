@@ -1,6 +1,10 @@
 extends RefCounted
 ## Preferences never share a file or schema with earned progression.
 const Keys = preload("res://scripts/key_bindings.gd")
+## Schema 1 shipped the original six keys. Schema 2 tolerates a saved
+## `values` dictionary missing a newer key (it defaults in on load) so a
+## single added setting cannot invalidate every existing preferences file.
+const CURRENT_SCHEMA: int = 2
 const DEFAULTS: Dictionary = {
 	"master": 1.0, "music": 1.0, "footsteps": 1.0, "speech": 1.0,
 	"muted": false, "voice_muted": false, "fullscreen": false,
@@ -16,12 +20,15 @@ var writes_blocked: bool = false
 func valid(data: Variant) -> bool:
 	if not data is Dictionary or not (data.get("schema") is int or data.get("schema") is float):
 		return false
-	if data.schema != 1 or not data.get("values") is Dictionary:
+	var schema: int = int(data.schema)
+	if schema < 1 or schema > CURRENT_SCHEMA or not data.get("values") is Dictionary:
 		return false
 	var candidate: Dictionary = data.values
-	for key in DEFAULTS:
-		if not candidate.has(key):
-			return false
+	# Validate only the keys actually present; a missing key is a migration
+	# (defaulted on load), not a corrupt file.
+	for key in candidate:
+		if not DEFAULTS.has(key):
+			continue
 		if DEFAULTS[key] is bool:
 			if not candidate[key] is bool:
 				return false
@@ -41,22 +48,30 @@ func _read(filename: String) -> Variant:
 	return parser.data if parser.parse(FileAccess.get_file_as_string(filename)) == OK else null
 
 
+func _migrated(data: Dictionary) -> Dictionary:
+	# A present key is trusted (validated already); an absent one defaults in,
+	# so a preferences file written before a setting existed still loads.
+	var merged: Dictionary = DEFAULTS.duplicate()
+	merged.merge(data.values, true)
+	return merged
+
+
 func load_settings() -> void:
 	if not save_enabled:
 		return
 	var data: Variant = _read(path)
 	if valid(data):
-		values = data.values.duplicate()
+		values = _migrated(data)
 		key_bindings = Keys.normalized(data.get("key_bindings", Keys.defaults()))
 		return
-	# Preserve future formats rather than replacing them with an older backup.
-	if data is Dictionary and data.get("schema") != 1:
+	# Preserve a genuinely future format rather than replacing it with an older backup.
+	if data is Dictionary and (data.get("schema") is int or data.get("schema") is float) and int(data.schema) > CURRENT_SCHEMA:
 		writes_blocked = true
 		last_error = "Settings use an unsupported version. Changes last this session."
 		return
 	var backup: Variant = _read(path + ".bak")
 	if valid(backup):
-		values = backup.values.duplicate()
+		values = _migrated(backup)
 		key_bindings = Keys.normalized(backup.get("key_bindings", Keys.defaults()))
 		last_error = "Recovered settings from backup."
 	elif FileAccess.file_exists(path) or FileAccess.file_exists(path + ".bak"):
@@ -69,7 +84,7 @@ func save_settings() -> bool:
 		return true
 	if writes_blocked:
 		return false
-	var snapshot := {"schema": 1, "values": values, "key_bindings": key_bindings}
+	var snapshot := {"schema": CURRENT_SCHEMA, "values": values, "key_bindings": key_bindings}
 	if not valid(snapshot):
 		last_error = "Settings are invalid and could not be saved."
 		return false
@@ -83,8 +98,13 @@ func save_settings() -> bool:
 	if not valid(_read(temporary)):
 		return _failed()
 	if FileAccess.file_exists(path):
-		var destination: String = path + ".bak" if valid(_read(path)) else path + ".corrupt"
-		if DirAccess.copy_absolute(path, destination) != OK:
+		if valid(_read(path)):
+			if DirAccess.copy_absolute(path, path + ".bak") != OK:
+				return _failed()
+		elif FileAccess.file_exists(path + ".corrupt"):
+			last_error = "A previous .corrupt recovery file already exists; damaged settings preserved. Move it aside before saving again."
+			return false
+		elif DirAccess.copy_absolute(path, path + ".corrupt") != OK:
 			return _failed()
 	if DirAccess.rename_absolute(temporary, path) != OK:
 		return _failed()
