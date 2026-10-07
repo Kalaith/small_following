@@ -1,17 +1,19 @@
-"""Sing song.json with a synthesized formant choir.
+"""Sing song.json with a synthesized, wordless, growing choir and mix the song.
 
-Run: python tools/music_video/sing.py --prototype
+Run: python tools/music_video/sing.py [--excerpts]   (after compose.py)
 Writes, under exports/music_video/audio/:
-  prototype_chorus.wav    bars 17-24 (chorus 1), vocals over the backing track
-  prototype_password.wav  bars 65-68 (the P-L-Z chant), vocals over the backing
-  prototype_vocals.wav    both excerpts, vocals only
-and prints a pitch report measured from the rendered lead and choir.
+  song.wav      the final mix: backing + vocals, -14 LUFS, under -1 dBTP
+  vocals.wav    vocals only, for review
+  excerpt_*.wav listening excerpts (with --excerpts)
+then checks length, loudness (cross-checked with FFmpeg), true peak and
+unplanned silences, prints a pitch report, and exits 1 on any failure.
 
 The voice is source-filter synthesis: a harmonic source with continuous phase,
-portamento and delayed vibrato, shaped per sample by a cascade of moving vowel
-formants. Each syllable is reduced to a vowel shape plus a consonant from a
-small fixed set, so the choir tracks the lyric without pronouncing English.
-No recordings, samples, voice services or model downloads are used.
+portamento, vibrato and human jitter, shaped per sample by a cascade of moving
+vowel formants. Lines are sung wordlessly on vowel arcs; one voice grows into a
+ritual choir (organum, drone, cathedral reverb). Only the shouts, whispers and
+password chant are articulated. No recordings, samples, voice services or model
+downloads are used.
 """
 from __future__ import annotations
 
@@ -603,46 +605,118 @@ def pitch_report(song: dict, bars_list) -> list[str]:
 
 # --- entry points ------------------------------------------------------------
 
-PROTOTYPE_CUTS = {  # listening excerpts cut from the full draft
-    "prototype_alone.wav": (5, 24),      # one voice, then the first companion
-    "prototype_password.wav": (65, 68),  # the articulated chant, as approved
-    "prototype_ritual.wav": (85, 96),    # sixteen voices, organum and drone
+EXCERPTS = {  # listening excerpts cut from song.wav (--excerpts)
+    "excerpt_alone.wav": (5, 24),      # one voice, then the first companion
+    "excerpt_password.wav": (65, 68),  # the articulated chant
+    "excerpt_ritual.wav": (85, 96),    # sixteen voices, organum and drone
 }
+TARGET_LUFS = -14.0
+LUFS_TOLERANCE = 1.0
+SILENCE_DB, SILENCE_MIN = -60.0, .5  # a gap is 0.5 s or more below -60 dBFS
 
 
-def prototype(song: dict) -> int:
-    """Rethought voice test: the whole song as a draft, plus excerpts."""
+def mix(song: dict) -> tuple[np.ndarray, np.ndarray]:
+    """The final song (mastered) and the vocals at their in-mix level."""
     backing = read_wav(compose.AUDIO / "backing.wav")
     vocals, lead_env = render(song)
     bed = duck(backing, lead_env)
     # One vocal gain for the whole song, so the choir's growth is heard as written.
-    gain = 10 ** ((compose.loudness(bed) + 1.5 - compose.loudness(vocals)) / 20)
-    vocals *= gain
-    full = master(bed + vocals)
-    compose.write_wav(compose.AUDIO / "prototype_full.wav", full.astype(np.float32))
-    print(f"prototype_full.wav: {len(full) / SR:.1f}s, {compose.loudness(full):.1f} LUFS, "
-          f"{compose.true_peak(full):.1f} dBTP")
+    vocals *= 10 ** ((compose.loudness(bed) + 1.5 - compose.loudness(vocals)) / 20)
+    return master(bed + vocals, TARGET_LUFS), vocals
+
+
+def silences(audio: np.ndarray) -> list[tuple[float, float]]:
+    hop = round(.05 * SR)
+    frames = len(audio) // hop
+    rms = np.sqrt(np.mean(audio[:frames * hop].reshape(frames, hop, -1) ** 2, axis=(1, 2)))
+    quiet = 20 * np.log10(rms + 1e-12) < SILENCE_DB
+    gaps, start = [], None
+    for i, q in enumerate(np.append(quiet, False)):
+        if q and start is None:
+            start = i
+        elif not q and start is not None:
+            if (i - start) * hop / SR >= SILENCE_MIN:
+                gaps.append((start * hop / SR, i * hop / SR))
+            start = None
+    return gaps
+
+
+def ffmpeg_loudness(path) -> tuple[float, float] | None:
+    """Cross-check with FFmpeg's ebur128 (integrated LUFS, true peak dBFS)."""
+    import shutil
+    import subprocess
+    if not shutil.which("ffmpeg"):
+        return None
+    result = subprocess.run(["ffmpeg", "-hide_banner", "-nostats", "-i", str(path), "-af",
+                             "ebur128=peak=true", "-f", "null", "-"], capture_output=True, text=True)
+    summary = result.stderr[result.stderr.rfind("Summary:"):]
+    lufs = re.search(r"I:\s+(-?[\d.]+) LUFS", summary)
+    peak = re.search(r"Peak:\s+(-?[\d.]+) dBFS", summary)
+    return (float(lufs.group(1)), float(peak.group(1))) if lufs and peak else None
+
+
+def checks(song: dict, audio: np.ndarray, path) -> list[str]:
+    """Slice 4 acceptance: exact length, loudness, peak, and only intended silences."""
+    failures = []
+    per_beat = SR * song["frames_per_beat"] // song["fps"]
+    expected = song["bars"] * song["beats_per_bar"] * per_beat
+    if len(audio) != expected:
+        failures.append(f"length {len(audio)} samples, expected {expected}")
+    lufs, peak = compose.loudness(audio), compose.true_peak(audio)
+    if abs(lufs - TARGET_LUFS) > LUFS_TOLERANCE:
+        failures.append(f"loudness {lufs:.1f} LUFS outside {TARGET_LUFS}±{LUFS_TOLERANCE}")
+    if peak > compose.TRUE_PEAK_LIMIT:
+        failures.append(f"true peak {peak:.2f} dBTP above {compose.TRUE_PEAK_LIMIT}")
+    measured = ffmpeg_loudness(path)
+    if measured and (abs(measured[0] - lufs) > .3 or measured[1] > compose.TRUE_PEAK_LIMIT):
+        failures.append(f"FFmpeg disagrees: {measured[0]} LUFS, {measured[1]} dBTP")
+    # The only planned gap is the dead air after the wrong password (bar 63, beats 2-4).
+    beat = per_beat / SR
+    dead_air = ((62 * 4 + 1) * beat - .15, (63 * 4) * beat + .15)
+    for start, end in silences(audio):
+        if not (dead_air[0] <= start and end <= dead_air[1]):
+            failures.append(f"unplanned silence {start:.2f}-{end:.2f}s")
+    print(f"checks: {len(audio) / SR:.3f}s, {lufs:.1f} LUFS, {peak:.1f} dBTP"
+          + (f"; FFmpeg {measured[0]} LUFS, {measured[1]} dBTP" if measured else "; FFmpeg not found")
+          + f"; silences {[(round(a, 2), round(b, 2)) for a, b in silences(audio)]}")
+    return failures
+
+
+def sing_song(song: dict, excerpts: bool) -> int:
+    full, vocals = mix(song)
+    out = compose.AUDIO / "song.wav"
+    compose.write_wav(out, full.astype(np.float32))
     voc = master(vocals, -16.0)
-    compose.write_wav(compose.AUDIO / "prototype_vocals.wav", voc.astype(np.float32))
-    print(f"prototype_vocals.wav: {len(voc) / SR:.1f}s (whole song, vocals only)")
+    compose.write_wav(compose.AUDIO / "vocals.wav", voc.astype(np.float32))
+    print(f"song.wav: {len(full) / SR:.1f}s; vocals.wav: vocals only, -16 LUFS (review copy)")
     per_bar = song["beats_per_bar"] * (SR * song["frames_per_beat"] // song["fps"])
-    for name, (first, last) in PROTOTYPE_CUTS.items():
-        a, b = (first - 1) * per_bar, min(len(full), last * per_bar + round(.6 * SR))
-        cut = full[a:b].copy()
-        cut[:240] *= np.linspace(0, 1, 240)[:, None]
-        cut *= np.minimum((len(cut) - np.arange(len(cut))) / (.5 * SR), 1)[:, None]
-        compose.write_wav(compose.AUDIO / name, cut.astype(np.float32))
-        print(f"{name}: bars {first}-{last}, {len(cut) / SR:.1f}s")
-    for stale in ("prototype_chorus.wav",):
-        (compose.AUDIO / stale).unlink(missing_ok=True)
+    levels = []
+    for section in song["sections"][1:]:
+        first, last = section["bars"]
+        levels.append(f"{section['id']} {compose.loudness(vocals[(first - 1) * per_bar:last * per_bar]):.1f}")
+    print("vocal level by section (LUFS): " + ", ".join(levels))
     for row in pitch_report(song, [(1, song["bars"])]):
         print(row)
-    return 0
+    for stale in compose.AUDIO.glob("prototype_*.wav"):
+        stale.unlink()
+    if excerpts:
+        for name, (first, last) in EXCERPTS.items():
+            a, b = (first - 1) * per_bar, min(len(full), last * per_bar + round(.6 * SR))
+            cut = full[a:b].copy()
+            cut[:240] *= np.linspace(0, 1, 240)[:, None]
+            cut *= np.minimum((len(cut) - np.arange(len(cut))) / (.5 * SR), 1)[:, None]
+            compose.write_wav(compose.AUDIO / name, cut.astype(np.float32))
+            print(f"{name}: bars {first}-{last}, {len(cut) / SR:.1f}s")
+    failures = checks(song, read_wav(out), out)
+    for failure in failures:
+        print("FAIL:", failure)
+    print("RESULT:", "FAIL" if failures else "PASS")
+    return 1 if failures else 0
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--prototype", action="store_true", help="render the slice 3 listening test")
+    parser.add_argument("--excerpts", action="store_true", help="also cut listening excerpts")
     parser.add_argument("--shapes", action="store_true", help="print each syllable's vowel shape")
     args = parser.parse_args()
     song = song_data.load()
@@ -656,10 +730,7 @@ def main() -> int:
                      for s in song_data.syllables(line["syl"])]
             print(f"{line['bar']:>3} {line['voice']:<7} " + " ".join(parts))
         return 0
-    if args.prototype:
-        return prototype(song)
-    parser.print_help()
-    return 1
+    return sing_song(song, args.excerpts)
 
 
 if __name__ == "__main__":

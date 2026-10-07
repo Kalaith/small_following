@@ -11,7 +11,7 @@ From the project root (Python 3.11 with NumPy and SciPy; FFmpeg for checks):
 ```powershell
 python tools/music_video/song_data.py   # validate song.json
 python tools/music_video/compose.py     # backing.wav + beats.json (about 15 s)
-python tools/music_video/sing.py --prototype  # slice 3 whole-song draft (about 4 min)
+python tools/music_video/sing.py --excerpts   # song.wav + vocals.wav + excerpts, then checks (about 4 min)
 python tools/music_video/sing.py --shapes     # syllable shapes used by the articulated chant
 ```
 
@@ -19,11 +19,13 @@ python tools/music_video/sing.py --shapes     # syllable shapes used by the arti
 | --- | --- |
 | `exports/music_video/audio/backing.wav` | 179.2 s, 48 kHz stereo 16-bit backing track, -18 LUFS integrated, under -1 dBTP |
 | `exports/music_video/beats.json` | 384 beats with time and video frame, section starts, and editorial cues (record scratch, dead air, smash cut, hard cut) |
-| `exports/music_video/audio/prototype_full.wav` | Whole-song draft: backing plus the wordless growing choir, -14 LUFS |
-| `exports/music_video/audio/prototype_vocals.wav` | The same, vocals only |
-| `exports/music_video/audio/prototype_alone.wav` | Bars 5-24: the lone voice, then its first companion |
-| `exports/music_video/audio/prototype_password.wav` | Bars 65-68: the articulated P-L-Z-K-T-K-S chant |
-| `exports/music_video/audio/prototype_ritual.wav` | Bars 85-96: sixteen voices, organum, drone and cathedral reverb |
+| `exports/music_video/audio/song.wav` | The final song: backing plus the wordless growing choir, 179.2 s, -14 LUFS, under -1 dBTP |
+| `exports/music_video/audio/vocals.wav` | Vocals only, normalized to -16 LUFS for review |
+| `exports/music_video/audio/excerpt_*.wav` | Listening excerpts: the lone voice (bars 5-24), the password chant (65-68) and the ritual ending (85-96) |
+
+`sing.py` exits non-zero unless the song is exactly 179.2 s, within
+-14±1 LUFS, at or under -1 dBTP (cross-checked with FFmpeg `ebur128`), and
+silent only in the planned dead air after the wrong password.
 
 ## Provenance
 
