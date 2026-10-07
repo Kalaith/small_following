@@ -1,5 +1,17 @@
 # Verification record - ranked progression, 2026-10-02
 
+## 2026-10-07 - Documented the four newest suites in the verification block
+
+`test_mixed_audiences.gd`, `test_recruit_economy.gd`, `test_ritual_touch.gd`
+and `test_touch_movement.gd` covered their respective features and passed,
+but were absent from the documented command block in
+[development guide §5](GAME_DEVELOPMENT_GUIDE.md#5-verification-workflow),
+so following that guide literally would skip them. All four now appear
+with the same `--fixed-fps 60` flag as the other timing-dependent suites.
+Documentation only; every command in the updated block, including these
+four, was actually run during this session's other 2026-10-07 changes with
+no failures.
+
 ## 2026-10-07 - Bounded the helper's empty target search
 
 `_choose_target` ran a fresh A* sweep over every eligible unconverted

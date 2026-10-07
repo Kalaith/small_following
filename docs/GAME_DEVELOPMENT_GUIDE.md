@@ -147,6 +147,10 @@ $godotExe = 'C:\Program Files\Godot\Godot_v4.2.2-stable_mono_win64_console.exe'
 & $godotExe --headless --fixed-fps 60 --path . --script res://tests/test_market_flow.gd
 & $godotExe --headless --fixed-fps 60 --path . --script res://tests/test_title_screen.gd
 & $godotExe --headless --fixed-fps 60 --path . --script res://tests/test_market_ritual.gd
+& $godotExe --headless --fixed-fps 60 --path . --script res://tests/test_mixed_audiences.gd
+& $godotExe --headless --fixed-fps 60 --path . --script res://tests/test_recruit_economy.gd
+& $godotExe --headless --fixed-fps 60 --path . --script res://tests/test_ritual_touch.gd
+& $godotExe --headless --fixed-fps 60 --path . --script res://tests/test_touch_movement.gd
 ```
 
 The installed editor has a recorded `_EDITOR_GET` import failure. Preserve
