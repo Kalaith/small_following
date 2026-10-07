@@ -161,6 +161,14 @@ def validate(song: dict) -> list[str]:
             errors.append(f"{where}: overlaps the previous {line['voice']} line")
         voice_end[line["voice"]] = end
 
+    for overlay in song.get("overlays", []):
+        where = f"overlay {overlay.get('text', '?')!r}"
+        if overlay.get("style") not in ("counter", "pop"):
+            errors.append(f"{where}: unknown style {overlay.get('style')!r}")
+        start = (overlay["bar"] - 1) * per_bar + overlay["beat"] - 1
+        if start < 0 or start + overlay["beats"] > total * per_bar:
+            errors.append(f"{where}: runs outside the song")
+
     for shot in song["shots"]:
         where = f"shot {shot['id']}"
         has_take, has_plate = "take" in shot, "plate" in shot

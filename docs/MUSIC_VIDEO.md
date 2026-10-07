@@ -440,6 +440,18 @@ cut away, and persistence disabled before each scene enters the tree.
   1920 x 1080, 30 fps, H.264/yuv420p, 48 kHz stereo AAC, fast start, plus
   `timeline.json` and FFmpeg logs.
 
+**Built for slice 7.** `render_music_video.py --cut chorus` (or `--cut full`)
+edits from the captured takes:
+- a real shot with an `in_event` is shifted so that event lands on its `at_bar`; a beat-timed take starts after its two-beat handle;
+- the editor fails if a shot would need frames its take does not have, or if a cut falls off a bar line.
+
+It draws:
+- `song.json` `overlays` ("FOLLOWERS: 3" in the game's HUD panel style, a rising "+1 FOLLOWER" like the game's donation popups);
+- a STAGED corner tag on staged shots;
+- a shot's own `tag`, such as the debate's "REAL GAMEPLAY · STAGED SET" (user, 2026-10-07).
+
+Captions and password stamps are shared with the animatic.
+
 ### 5.7 `review_music_video.py`
 
 The script checks that:
@@ -482,7 +494,7 @@ Commit each slice when it is complete and validated (see
 | 4 | Full vocals and mix | `song.wav` (built 2026-10-07; `sing.py` checks pass: 179.200 s, -14.0 LUFS, -1.3 dBTP, FFmpeg agrees, only the planned dead air) | -14 LUFS ±1, ≤ -1 dBTP | Listen |
 | 5 | Animatic | Song + captions + postcards over the backdrop, no footage (built 2026-10-07: `animatic.mp4`; 369 syllables within half a frame of their notes; 5,376 frames, 179.200 s, clean decode) | Caption timings match note starts | Sing-along check |
 | 6 | Capture | All takes + `events.json` (built 2026-10-07: 18 takes, 6,275 frames, 0 failures; every shot fits its take) | Promo-style recruit/victory assertions; password and travel assertions; 0 failures | Inspect contact frames |
-| 7 | 30 s chorus cut | Bars 17-32 (29.9 s) edited | Frame count; cuts on bar frames | **First real review** |
+| 7 | 30 s chorus cut | Bars 17-32 (29.9 s) edited (built 2026-10-07: `chorus_cut.mp4`, 896 frames, 5 shots cut on bar lines; the helper's recruit lands on "plus one!", and the stall camera pushes in on the helper's spotlight) | Frame count; cuts on bar frames | **First real review** |
 | 8 | Full video | 179.2 s MP4 | Full review script | Watch-through |
 | 9 | Handoff | README section, VERIFICATION entry, provenance | Link check | - |
 

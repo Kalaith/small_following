@@ -15,6 +15,7 @@ python tools/music_video/sing.py --excerpts   # song.wav + vocals.wav + excerpts
 python tools/music_video/sing.py --shapes     # syllable shapes used by the articulated chant
 python tools/music_video/postcards.py          # plates: six future postcards, map, daydream, end card (about 10 s)
 python tools/music_video/render_music_video.py --animatic  # animatic.mp4 + timeline.json, then checks (about 2 min)
+python tools/music_video/render_music_video.py --cut chorus  # chorus_cut.mp4: bars 17-32 from the footage (about 40 s)
 ```
 
 | Output | Contents |
@@ -26,6 +27,7 @@ python tools/music_video/render_music_video.py --animatic  # animatic.mp4 + time
 | `exports/music_video/audio/excerpt_*.wav` | Listening excerpts: the lone voice (bars 5-24), the password chant (65-68) and the ritual ending (85-96) |
 | `exports/music_video/plates/*.png`, `plates.json` | 1920 x 1080 plates and their labels and design-note sources |
 | `exports/music_video/animatic.mp4` | Song, karaoke captions, plates and labelled placeholder cards for footage (H.264 + AAC, 5,376 frames) |
+| `exports/music_video/chorus_cut.mp4` | Slice 7 review cut: bars 17-32 edited from the footage, with captions, overlays and tags |
 | `exports/music_video/timeline.json` | Shot frame ranges, caption windows and per-syllable frames, password letter frames |
 | `exports/music_video/capture/<take>/` | 18 takes of 1920 x 1080 PNG frames at 30 fps, each with `events.json` |
 | `exports/music_video/review/` | Contact sheets and caption-sync stills |

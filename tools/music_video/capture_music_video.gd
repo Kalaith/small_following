@@ -806,6 +806,11 @@ func take_stall_teal() -> void:
 			var t: float = smooth((b - 12.0) / 0.4)
 			helper.position = formation.lerp(spot, t) + Vector2(0, -7.0 * absf(sin(TAU * b)))
 			helper.rotation = 0.0
+			# Push in on the helper's big moment, then cut back wide on "That's enough".
+			var push: float = smooth((b - 12.0) / 0.75)
+			look((stall + Vector2(0, 60)).lerp(spot + Vector2(0, -36), push), lerpf(1.55, 2.9, push))
+		elif b >= 16.0:
+			look(stall + Vector2(0, 60), 1.55)
 		if on_beat(s, 16.0):  # bar 29, "That's enough": back in formation, slumped
 			cone.hide()
 			helper.position = formation + Vector2(0, 5)

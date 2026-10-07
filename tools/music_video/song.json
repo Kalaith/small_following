@@ -109,6 +109,10 @@
     {"bar": 93, "beat": 1, "voice": "lead", "syl": "It's just a small fol-low-ing...", "notes": "G4:.5 A4:.5 C5:.5 E5:1.5 D5:.5 C5:.5 C5:3"},
     {"bar": 95, "beat": 3, "voice": "solo", "syl": "...for now.", "notes": "A4:.5 A4:1.5"}
   ],
+  "overlays": [
+    {"bar": 17, "beat": 1, "beats": 16, "text": "FOLLOWERS: 3", "style": "counter"},
+    {"bar": 22, "beat": 2, "beats": 3, "text": "+1 FOLLOWER", "style": "pop"}
+  ],
   "shots": [
     {"id": "hq_wake", "bars": [1, 6], "take": "hq_wake", "staged": true, "note": "Folding-table HQ; wakes at the table; 00:11 countdown; rushes outside"},
     {"id": "garden_pitch", "bars": [7, 8], "take": "opening", "in_event": "third_recruit", "at_bar": 8, "note": "Real opening round: the garden club gives 3 recruits"},
@@ -127,7 +131,7 @@
     {"id": "crowd_reveal", "bars": [41, 41], "take": "crowd_wide", "staged": true, "note": "SMASH CUT wide: enormous crowd"},
     {"id": "crowd_back", "bars": [42, 42], "take": "crowd", "staged": true, "note": "Smash back to close-up"},
     {"id": "square_takeover", "bars": [43, 44], "take": "crowd_wide", "staged": true, "note": "Tables everywhere; Gerald still has the pie"},
-    {"id": "debate", "bars": [45, 52], "take": "debate", "in_event": "priest_convinced", "at_bar": 52, "note": "Real Priest encounter; staged lectern and bell; looks at Gerald's pie; HOLD on '...fine'"},
+    {"id": "debate", "bars": [45, 52], "take": "debate", "tag": "REAL GAMEPLAY · STAGED SET", "in_event": "priest_convinced", "at_bar": 52, "note": "Real Priest encounter; staged lectern and bell; looks at Gerald's pie; HOLD on '...fine'"},
     {"id": "procession", "bars": [53, 56], "take": "bellmarket_procession", "staged": true, "note": "Followers lift the statue onto their shoulders and carry it into Bellmarket; the helper walks with it"},
     {"id": "bellmarket", "bars": [57, 58], "take": "bellmarket", "note": "Real Bellmarket: guilds and patrons watch"},
     {"id": "clipboard", "bars": [59, 60], "take": "clipboard", "staged": true, "note": "Clipboard follower count turned face-down; HOLD"},

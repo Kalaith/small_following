@@ -333,6 +333,148 @@ def animatic(song: dict) -> int:
     return 1 if failures else 0
 
 
+# --- the real edit (slice 7 onward) -------------------------------------------------------
+
+CAPTURE = OUT / "capture"
+CUTS = {"chorus": (17, 32), "full": (1, 96)}
+
+
+def footage_in(song: dict, shot: dict, take: dict) -> int:
+    """The take frame that plays on the shot's first video frame.
+
+    Real takes with an in_event are shifted so that event lands on the shot's
+    at_bar; beat-timed takes start after their two-beat handle at their first bar.
+    """
+    per_bar = song["beats_per_bar"] * song["frames_per_beat"]
+    if "in_event" in shot:
+        hits = [e["frame"] for e in take["events"] if e["name"] == shot["in_event"]]
+        if not hits:
+            raise ValueError(f"shot {shot['id']}: event {shot['in_event']!r} not in take {shot['take']}")
+        return hits[0] - (shot["at_bar"] - shot["bars"][0]) * per_bar
+    if take["handle_frames"]:
+        return take["handle_frames"] + (shot["bars"][0] - take["first_bar"]) * per_bar
+    return 0
+
+
+def draw_overlay(draw: ImageDraw.ImageDraw, song: dict, overlay: dict, frame: int) -> None:
+    fpb = song["frames_per_beat"]
+    start = ((overlay["bar"] - 1) * song["beats_per_bar"] + overlay["beat"] - 1) * fpb
+    age, length = frame - start, overlay["beats"] * fpb
+    if not 0 <= age < length:
+        return
+    if overlay["style"] == "counter":  # in the game's HUD panel style
+        face = font(32, bold=True)
+        width = draw.textlength(overlay["text"], font=face)
+        draw.rounded_rectangle((40, 40, 40 + width + 40, 98), 12, fill=(48, 66, 54, 238))
+        draw.text((60, 69), overlay["text"], font=face, fill="#fff3d5", anchor="lm")
+    else:  # a pop that rises and fades, like the game's donation popups
+        scale = 1 + .5 * max(0.0, 1 - age / 5)
+        alpha = int(255 * min(1.0, (length - age) / 8))
+        draw.text((W / 2, 190 - 40 * age / length), overlay["text"], anchor="mm",
+                  font=font(int(70 * scale), serif=True, bold=True), fill=(255, 228, 161, alpha),
+                  stroke_width=4, stroke_fill=(42, 24, 56, alpha))
+
+
+def edit(song: dict, cut: str) -> int:
+    """Edit bars first..last from the captured takes, plates, captions and the song."""
+    first_bar, last_bar = CUTS[cut]
+    failures = []
+    per_bar = song["beats_per_bar"] * song["frames_per_beat"]
+    lines = caption_lines(song)
+    failures += caption_checks(song, lines)
+    backdrop = postcards.backdrop_array()
+    start, end = (first_bar - 1) * per_bar, last_bar * per_bar
+    shots, takes = [], {}
+    for shot in song["shots"]:
+        a, b = shot_frames(song, shot)
+        if b <= start or a >= end:
+            continue
+        entry = {**shot, "first": a, "last": b}
+        if "plate" in shot:
+            entry["base"] = framed(np.asarray(Image.open(postcards.OUT / f"{shot['plate']}.png").convert("RGB")),
+                                   backdrop)
+        else:
+            if shot["take"] not in takes:
+                takes[shot["take"]] = json.loads((CAPTURE / shot["take"] / "events.json").read_text())
+            take = takes[shot["take"]]
+            entry["source"] = footage_in(song, shot, take)
+            if entry["source"] < 0 or entry["source"] + (b - a) > take["frames"]:
+                failures.append(f"shot {shot['id']} needs take frames {entry['source']}-"
+                                f"{entry['source'] + b - a} of {take['frames']}")
+        shots.append(entry)
+    letters = password_events(song)
+    frames = end - start
+    out = OUT / ("chorus_cut.mp4" if cut == "chorus" else "Small_Following_Just_a_Small_Following.mp4")
+    seconds = start / song["fps"]
+    duration = frames / song["fps"]
+    fades = f"afade=t=in:d=0.01,afade=t=out:st={duration - .4:.3f}:d=0.4" if cut != "full" else "anull"
+    REVIEW.mkdir(parents=True, exist_ok=True)
+    encoder = subprocess.Popen(
+        [FFMPEG, "-y", "-hide_banner", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "rgb24",
+         "-s", f"{W}x{H}", "-r", str(song["fps"]), "-i", "-",
+         "-ss", f"{seconds:.6f}", "-t", f"{duration:.6f}", "-i", str(OUT / "audio" / "song.wav"),
+         "-map", "0:v", "-map", "1:a", "-af", fades, "-c:v", "libx264", "-preset", "slow", "-crf", "16",
+         "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "256k", "-movflags", "+faststart", str(out)],
+        stdin=subprocess.PIPE)
+    stills, cuts, previous = [], [], None
+    shot_i = 0
+    for frame in range(start, end):
+        while frame >= shots[shot_i]["last"]:
+            shot_i += 1
+        shot = shots[shot_i]
+        if shot["id"] != previous:
+            cuts.append(frame)
+            previous = shot["id"]
+        if "plate" in shot:
+            progress = (frame - shot["first"]) / max(1, shot["last"] - shot["first"] - 1)
+            base = push(shot["base"], progress, .12 if shot["plate"] == "vision-enormous" else .05)
+            image = Image.fromarray(base).convert("RGBA")
+        else:
+            index = shot["source"] + frame - shot["first"]
+            path = CAPTURE / shot["take"] / f"{index:05d}.png"
+            if not path.exists():
+                failures.append(f"missing footage {path.name} in {shot['take']}")
+                image = Image.fromarray(backdrop).convert("RGBA")
+            else:
+                image = Image.open(path).convert("RGBA")
+        draw = ImageDraw.Draw(image, "RGBA")
+        tag = shot.get("tag") or ("STAGED" if shot.get("staged") else "")
+        if tag:
+            corner_tag(draw, tag)
+        if shot["id"] == "password":
+            ribbon = draw_password(draw, song, letters, frame)
+            if ribbon is not None:
+                image.alpha_composite(ribbon, (-40, 40))
+                draw = ImageDraw.Draw(image, "RGBA")
+        for overlay in song.get("overlays", []):
+            draw_overlay(draw, song, overlay, frame)
+        for line in lines:
+            if line["show"] <= frame < line["hide"]:
+                draw_caption(draw, line, frame)
+        rgb = image.convert("RGB")
+        encoder.stdin.write(rgb.tobytes())
+        if frame == cuts[-1] + 14:  # a beat into each shot
+            stills.append(rgb.resize((480, 270)))
+        if (frame - start) % 300 == 0:
+            print(f"  frame {frame - start}/{frames}", flush=True)
+    encoder.stdin.close()
+    if encoder.wait() != 0:
+        failures.append("FFmpeg encoding failed")
+    off_bar = [c for c in cuts if c % per_bar]
+    if off_bar:
+        failures.append(f"cuts off the bar line at frames {off_bar}")
+    print(f"edit: bars {first_bar}-{last_bar}, {len(cuts)} shots, cuts at frames {[c - start for c in cuts]}")
+    sheet = Image.new("RGB", (4 * 480, math.ceil(len(stills) / 4) * 270))
+    for i, still in enumerate(stills):
+        sheet.paste(still, ((i % 4) * 480, (i // 4) * 270))
+    sheet.save(REVIEW / f"{cut}_cut_sheet.png")
+    failures += video_checks(out, frames, song["fps"])
+    for failure in failures:
+        print("FAIL:", failure)
+    print("RESULT:", "FAIL" if failures else "PASS", out.name)
+    return 1 if failures else 0
+
+
 def video_checks(path: Path, frames: int, fps: int) -> list[str]:
     failures = []
     probe = json.loads(subprocess.run(
@@ -364,6 +506,7 @@ def video_checks(path: Path, frames: int, fps: int) -> list[str]:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--animatic", action="store_true", help="render the slice 5 animatic")
+    parser.add_argument("--cut", choices=sorted(CUTS), help="edit from footage: chorus (bars 17-32) or full")
     args = parser.parse_args()
     song = song_data.load()
     errors = song_data.validate(song)
@@ -375,6 +518,8 @@ def main() -> int:
         return 1
     if args.animatic:
         return animatic(song)
+    if args.cut:
+        return edit(song, args.cut)
     parser.print_help()
     return 1
 
