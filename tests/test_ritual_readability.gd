@@ -38,6 +38,7 @@ func _run() -> void:
 	_test_keyboard_gamepad_navigation(screen)
 	_test_effect_text_guard(screen, scene.progression)
 	_test_overview_control(screen)
+	_test_resize_keeps_view(screen)
 	_test_transforms(screen)
 	_test_labels(screen)
 	await _test_large_graph(screen)
@@ -373,3 +374,25 @@ func _click_node(screen, id: String) -> void:
 	screen.graph._gui_input(event)
 	event.pressed = false
 	screen.graph._gui_input(event)
+
+
+func _test_resize_keeps_view(screen) -> void:
+	var original_size: Vector2 = screen.size
+	screen.reset_view()
+	screen.size = original_size + Vector2(120, 80)
+	screen._layout()
+	check(screen.pan.is_zero_approx() and not screen._view_adjusted, "resizing an untouched graph still refits it")
+	screen.zoom_at(screen.graph.global_position + screen.graph.size * 0.5, 2.0)
+	screen.pan_by(Vector2(35, -22))
+	var kept_zoom: float = screen.zoom
+	var kept_pan: Vector2 = screen.pan
+	screen.size = original_size
+	screen._layout()
+	check(is_equal_approx(screen.zoom, kept_zoom) and screen.pan.is_equal_approx(kept_pan), "resizing keeps a deliberate pan and zoom")
+	screen.overview_button.pressed.emit()
+	screen.size = original_size + Vector2(40, 0)
+	screen._layout()
+	check(screen.pan.is_zero_approx(), "overview returns to refit-on-resize")
+	screen.size = original_size
+	screen._layout()
+	screen.reset_view()

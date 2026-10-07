@@ -42,6 +42,8 @@ var selected_id: String = ""
 var node_positions: Dictionary = {}
 var zoom: float = 1.0
 var pan: Vector2 = Vector2.ZERO
+## True once the player has panned, zoomed or focused; a window resize then keeps that view.
+var _view_adjusted: bool = false
 var graph: GraphCanvas
 var purchase_button: Button
 var next_button: Button
@@ -397,11 +399,13 @@ func zoom_at(screen_point: Vector2, factor: float) -> void:
 	var world_anchor: Vector2 = screen_to_world(screen_point)
 	zoom = clampf(zoom * factor, MIN_ZOOM, MAX_ZOOM)
 	pan = screen_point - graph.global_position - graph.size * 0.5 - world_anchor * zoom
+	_view_adjusted = true
 	graph.queue_redraw()
 
 
 func pan_by(delta: Vector2) -> void:
 	pan += delta
+	_view_adjusted = true
 	graph.queue_redraw()
 
 
@@ -411,6 +415,7 @@ func reset_view() -> void:
 	# Reserve the inscription rim, outward ticks and a little breathing room.
 	zoom = clampf(minf(graph.size.x, graph.size.y) / ((_max_radius + 64.0) * 2.0), MIN_ZOOM, 1.0)
 	pan = Vector2.ZERO
+	_view_adjusted = false
 	_hovered_id = ""
 	graph.queue_redraw()
 
@@ -422,6 +427,7 @@ func focus_node(id: String) -> void:
 	select_node(id)
 	zoom = maxf(0.8, zoom)
 	pan = -Vector2(node_positions[id]) * zoom
+	_view_adjusted = true
 	graph.queue_redraw()
 
 
@@ -848,7 +854,8 @@ func _layout() -> void:
 	focus_button.size = Vector2(138, 56)
 	overview_button.position = Vector2(_detail_x - 366, 56)
 	overview_button.size = Vector2(92, 56)
-	reset_view()
+	if not _view_adjusted:
+		reset_view()
 	queue_redraw()
 
 

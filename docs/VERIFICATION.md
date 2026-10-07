@@ -1721,3 +1721,11 @@ the error, so that change was not kept. Runtime launches (`--headless --quit`)
 and every test suite exit 0, so runtime results stay separate from the import
 check. The only remedy is a different engine build, which is a human decision;
 the item is therefore no longer agent-actionable.
+
+## Ritual view survives a window resize (2026-10-07)
+
+`ritual_screen.gd` tracks whether the player has panned, zoomed or focused a
+node. A resize refits only an untouched graph; a deliberate view keeps its zoom
+and pan, and the Overview button or any explicit reset returns to refit-on-resize.
+`test_ritual_readability.gd` (86 checks, 0 failures) and `test_market_ritual.gd`
+(112 checks, 0 failures) pass headless; pixels were not inspected.
