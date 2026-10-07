@@ -72,8 +72,8 @@ func _test_catalog() -> void:
 			var effect: Dictionary = state.find_upgrade(entry.id).rank_effects[index]
 			if entry.branch == "run" or effect.has("run_speed_add"):
 				running_free = running_free and int(entry.rank_recruit_costs[index]) == 0
-	check(state.catalog.size() == 33 and ranks == 37 and gold_total == 1041, "33 nodes, 37 ranks and 1041 gold: the original 1014 plus Beckoning Call")
-	check(explicit_costs and recruit_total == 250, "every village rank declares its recruit cost and the village total remains 250")
+	check(state.catalog.size() == 33 and ranks == 37 and gold_total == 1392, "33 nodes, 37 ranks and 1392 base gold after the late-tier re-pace")
+	check(explicit_costs and recruit_total == 314, "every village rank declares its recruit cost; the re-paced village total is 314")
 	check(running_free, "every movement rank explicitly costs zero recruits")
 	check(state.next_recruit_cost("talk_1") == 1 and state.next_recruit_cost("persuade_1") == 2, "early support ranks fit ordinary opening recruitment")
 	for invalid in [[], [-1], [1.5], [true], ["1"], [null], [1, 2], [Progression.MAX_COUNTER + 1]]:
@@ -125,13 +125,13 @@ func _test_purchases() -> void:
 	before = state._snapshot()
 	check(not state.try_purchase("meadow_1", 0) and not state.try_purchase("missing", 0) and state._snapshot() == before, "locked and unknown purchases preserve both resources")
 	var full = fresh()
-	full.coins = 1041
-	full.total_recruits = 279
-	full.available_recruits = 250
+	full.coins = 1392
+	full.total_recruits = 343
+	full.available_recruits = 314
 	for entry in full.catalog:
 		for expected_rank in range(full.max_rank(entry.id)):
 			check(full.try_purchase(entry.id, expected_rank), "buy existing catalog rank: %s/%d" % [entry.id, expected_rank + 1])
-	check(full.coins == 0 and full.available_recruits == 0 and full.total_recruits == 279 and full.is_circle_complete(), "all ranks cost exactly 1041 gold and 250 recruits; zero balance still completes the demo")
+	check(full.coins == 0 and full.available_recruits == 0 and full.total_recruits == 343 and full.is_circle_complete(), "before any debate victory all ranks cost exactly 1392 gold and 314 recruits; zero balance still completes the demo")
 	full.purchased.talk_3 = 1
 	full.available_recruits = 279
 	check(not full.is_circle_complete(), "abundant recruits cannot replace a missing purchased rank")

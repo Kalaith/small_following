@@ -28,6 +28,7 @@ This project is a bounded two-area prototype of movement, short earning rounds, 
 - During village play, the playable space dominates and the HUD remains minimal and contextual.
 - Recruitment briefly shows the numeric coin payout near the recruited character; merchants have no permanent payout label (requested 2026-10-03). Use digits rather than repeated coin symbols for larger rewards.
 - The tone is cute. The title is **Small Following**.
+- Extend Bramblewick's play time toward about 30 minutes before Bellmarket (requested 2026-10-07). Chosen 2026-10-08: re-pace the late first run, raise prices and resistance inside the single run as each debate opponent falls, and after each mini boss add ordinary villagers who share its habit for more variety. Prestige/Sanctum is deferred until this balance is measured. Plan: [FIRST_MAP_PRESTIGE_PLAN](FIRST_MAP_PRESTIGE_PLAN.md).
 - The title screen offers a new game (requested 2026-10-07). It asks before discarding saved progress and keeps a copy of the replaced save; settings and key bindings are not reset.
 
 - Add merchants, three persuadable enemy types, a town-center priest boss, related ritual upgrades and a persistent first-map finish (requested 2026-10-03). Areas beyond Bellmarket remain future work.
@@ -43,6 +44,9 @@ values are documented below and in [PACING](PACING.md#bellmarket-rebalance---202
 | Round duration | 11 seconds | Target roughly three opening conversions; validate with human routes as well as simulation. |
 | Starting position | World position (780, 680), restored at each new round | Makes opening routes repeatable; decide whether later rounds should preserve position. |
 | Gatherings | Three initial groups of 4 / 3 / 4; invitations add groups of 4 and 3; an optional merchant pair | Groups hold 11 listeners initially and 18 when expanded. |
+| Town resistance | Unbought village ranks cost 20% more per convinced opponent (x1.0 to x1.8); market prices unaffected | Slows the late run without touching the opening |
+| Opponents' villagers | After Skeptic: 3 Doubters (6 conviction, 6 donations). After Guard: 3 Town watch (6 / 8; first 2 phrases each visit answered, ready again after 0.5 s away). After Zealot: 3 Devotees (9 / 10; lose 2 conviction/s while unattended). They join from the next round | Variety after each mini boss; helpers ignore the habits |
+| Late-tier prices | Tier IV-VI, invitations, merchants, helper, trials and faith x1.4 gold and x1.3 recruits (village base 1392 gold / 314 recruits); Priest needs 300 conviction | First-run re-pace |
 | Lone wanderers | Five single villagers, re-scattered at random each round clear of prop art, every group site, the entrance and the debate centre | Rewards running between people; 16 opening listeners in total. |
 | Beckoning Call | Running-branch node after Fleet Footsteps I; wanderers within 180 px (rank 2: 320 px) walk toward the cultist at 110 px/s and stop inside speaking range; 9 + 18 gold, no recruits | Pulls lone NPCs in without changing speech, conviction or speed. |
 | Talking range | 105 world pixels | One nearest unfinished audience receives phrases. |

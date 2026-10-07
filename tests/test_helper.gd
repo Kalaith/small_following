@@ -40,7 +40,7 @@ func _run() -> void:
 	scene.progression.save_path = "user://missing_helper_test_directory/save.json"
 	check(not scene.purchase_upgrade("helper_1") and not is_instance_valid(scene.helper) and scene.coins == before, "failed helper save grants no actor and spends nothing")
 	scene.progression.save_enabled = false
-	check(scene.purchase_upgrade("helper_1", 0) and is_instance_valid(scene.helper) and scene.coins == before - 30, "helper purchase creates one actor for thirty donations")
+	check(scene.purchase_upgrade("helper_1", 0) and is_instance_valid(scene.helper) and scene.coins == before - 42, "helper purchase creates one actor for forty-two donations")
 	check(scene.purchase_upgrade("run_1") and scene.purchase_upgrade("talk_1"), "player stat upgrades can coexist with independent helper stats")
 	var helper = scene.helper
 	scene.apply_upgrades()

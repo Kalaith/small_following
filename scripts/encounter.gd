@@ -13,7 +13,7 @@ const PROFILES: Array[Dictionary] = [
 	{"id": "skeptic", "title": "Skeptic", "conviction": 42.0, "rebuttals": 0, "decay": 0.0, "coat": "728b98", "hint": "A patient argument / 42 conviction"},
 	{"id": "guard", "title": "Town Guard", "conviction": 72.0, "rebuttals": 2, "decay": 0.0, "coat": "607590", "hint": "First 2 phrases answer objections"},
 	{"id": "zealot", "title": "Zealot", "conviction": 108.0, "rebuttals": 0, "decay": 6.0, "coat": "bb7454", "hint": "Loses 6 conviction/s when you leave"},
-	{"id": "priest", "title": "Priest of Bramblewick", "conviction": 240.0, "rebuttals": 3, "decay": 9.0, "coat": "e4d3a3", "hint": "3 objections / loses 9 conviction/s alone"},
+	{"id": "priest", "title": "Priest of Bramblewick", "conviction": 300.0, "rebuttals": 3, "decay": 9.0, "coat": "e4d3a3", "hint": "3 objections / loses 9 conviction/s alone"},
 ]
 
 var stage: int = 0

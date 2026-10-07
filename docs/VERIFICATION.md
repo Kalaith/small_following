@@ -1765,3 +1765,17 @@ new game from Bellmarket returns to Bramblewick without password access.
 `test_title_screen.gd` is 22 headless checks. All 25 suites exit 0, 0
 failures. Rendered title captures (scratch folder) show the confirmation fits
 the 1280x800 menu; human feel was not assessed.
+
+## First-run re-pace, town resistance and opponents' villagers (2026-10-08)
+
+Late village prices x1.4 gold / x1.3 recruits (base 1392 / 314), +20% per
+convinced opponent on unbought village ranks, Priest 300 conviction, and three
+new village types (Doubters, Town watch, Devotees) after the Skeptic, Guard
+and Zealot. New `test_village_types.gd` (24 checks) covers each habit, spawn
+timing, no duplicates, prop-art clearance, helper reach and real speech
+against the watch; new `test_village_campaign.gd` (6 checks) measures a
+fresh-save bot at 32 rounds (was 21). All 27 suites exit 0 with 0 failures
+headless; `capture_starter.gd` with rendering exits 0, and its opponent and
+village PNGs (scratch folder) show the Priest at 300 and the new groups. A
+whole-village render with all three groups was inspected: distinct
+accessories, no overlap with props. Human pacing and feel were not assessed.

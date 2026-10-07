@@ -490,3 +490,50 @@ playtest. If the pull should feel stronger, the levers are `PULL_SPEED`
 (110 px/s), the reach values in the catalog, or the wanderer count. Playtest
 whether five wanderers is enough, whether 180 / 320 px feels like "pulling them
 in", and whether the opening still reads as roughly three conversions.
+
+## First-run re-pace, resistance and opponents' villagers - 2026-10-08
+
+From [the plan](FIRST_MAP_PRESTIGE_PLAN.md), the user chose the first-run
+re-pace and escalation inside one run, plus new ordinary villagers after each
+mini boss; prestige is deferred. All values are provisional.
+
+- **Late prices:** 23 village nodes (tier IV-VI stats, invitations, helper,
+  merchants, trials and faith) cost x1.4 gold and x1.3 recruits, rounded. Base
+  village totals go from 1041 / 250 to **1392 gold / 314 recruits**. The core
+  nine and Beckoning Call are unchanged, so opening and full-core routes are
+  unchanged (`test_pacing.gd`, 74 checks).
+- **Town resistance:** each convinced opponent raises every unbought village
+  rank by 20% of its base price (`RESISTANCE_PRICE_STEP`), up to x1.8 after the
+  Priest. The ritual subtitle shows the current rise.
+- **Priest:** 240 -> **300** conviction.
+- **Opponents' villagers** join from the round after each victory:
+
+| After | Group (site) | Conviction / donations each | Habit |
+| --- | --- | --- | --- |
+| Skeptic | 3 Doubters (330, 580) | 6 / 6 | none; simply harder |
+| Town Guard | 3 Town watch (1290, 400) | 6 / 8 | first 2 phrases of each visit answered; objections return after 0.5 s away |
+| Zealot | 3 Devotees (680, 960) | 9 / 10 | lose 2 conviction/s while the cultist speaks elsewhere |
+
+The helper uses only the threshold, not the habits.
+
+`tests/test_village_campaign.gd` plays a fresh save: real rounds, nearest-first
+routing, debates once an opponent arrives (resting two rounds after a loss),
+cheapest-first shopping. Same bot before and after:
+
+| Build | Rounds to full circle + Priest | Debate victories at round |
+| --- | ---: | --- |
+| Before (2026-10-07) | 21 | Priest at 20 |
+| After | **32** | Skeptic 17, Guard 18, Zealot 22, Priest 32 |
+
+In the new run income peaks around 100-130 per round; 12 purchases were made
+at raised prices; the bot converted 18 doubters, 6 watchmen and 20 devotees.
+Rounds 22-32 are the Priest phase: the Faith ranks at x1.6 must be bought
+before 300 conviction falls inside one round, so this stretch is mostly
+farming the larger village. An earlier bot that re-fought a hopeless Priest
+every round needed 39 rounds at about 32 donations each; a player who does
+the same would hit a dull wall, which is worth watching in play.
+
+At the user's ~28 s per round, 32 bot rounds is about **15 minutes**, against
+a 30-minute goal; humans shop and route more slowly than the bot, so real
+time is likely longer. Next levers, in order: `RESISTANCE_PRICE_STEP`, the
+late multiplier, the new groups' thresholds, then the deferred Renewal.

@@ -169,6 +169,8 @@ func update_state(round_recruits: int = 0) -> void:
 	elif is_instance_valid(_progression) and _progression.has_unlock("encounter_unlock"):
 		var opponents: Array[String] = ["Skeptic", "Town Guard", "Zealot", "Priest"]
 		_subtitle_label.text = "TOWN DEBATE %d/4 / Next: %s / %s: next round" % [_progression.encounter_stage, opponents[_progression.encounter_stage], Keys.hint("next_round")]
+		if _progression.encounter_stage > 0:
+			_subtitle_label.text += " / Town resistance: prices +%d%%" % roundi((_progression.resistance_price_multiplier() - 1.0) * 100.0)
 	var coins: int = _progression.coins if is_instance_valid(_progression) else 0
 	_coins_label.text = "%d  donations" % coins
 	_recruits_label.text = "%d  recruits available" % (_progression.available_recruits if is_instance_valid(_progression) else 0)

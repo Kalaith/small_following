@@ -11,11 +11,25 @@ const MERCHANT_COUNT: int = 2
 const MERCHANT_CONVICTION: float = 9.0
 ## Floating-point slack when comparing accumulated per-frame time to a fixed interval.
 const TIME_EPSILON: float = 0.000001
+## Ordinary villagers who share a convinced opponent's habits. They join the
+## village after that opponent's victory. Rebuttals are phrases ignored at the
+## start of each visit; decay is conviction lost per second while unattended.
+const VILLAGE_TYPES: Dictionary = {
+	"doubter": {"conviction": 6.0, "donation": 6, "rebuttals": 0, "decay": 0.0, "coat": "7f95a3", "hint": "Each needs 6 conviction"},
+	"watch": {"conviction": 6.0, "donation": 8, "rebuttals": 2, "decay": 0.0, "coat": "62788f", "hint": "First 2 phrases each visit are answered"},
+	"devotee": {"conviction": 9.0, "donation": 10, "rebuttals": 0, "decay": 2.0, "coat": "b9705a", "hint": "Doubt returns at 2/s while you are away"},
+}
+## Time away from the player after which objections are ready again.
+const REBUTTAL_RESET_SECONDS: float = 0.5
 
 var listener_count: int = LISTENER_COUNT
 var conviction_required: float = CONVICTION_REQUIRED
 var donation: int = DONATION
 var npc_type: String = "villager"
+var rebuttals_per_visit: int = 0
+var decay_per_second: float = 0.0
+var rebuttals_left: int = 0
+var _unattended: float = 0.0
 ## Empty profiles preserve the original homogeneous village/merchant rules.
 var listener_profiles: Array[Dictionary] = []
 var _market_progression: Progression = null
@@ -38,6 +52,8 @@ class Listener extends Node2D:
 	var coat: Color = Color("#9c695a")
 	var phase: float = 0.0
 	var merchant: bool = false
+	## Village type accessory (doubter / watch / devotee); empty for ordinary listeners.
+	var kind: String = ""
 	var role: String = ""
 	var profile_type: String = "ordinary"
 	var locked: bool = false
@@ -80,6 +96,8 @@ class Listener extends Node2D:
 			draw_line(Vector2(12, -16), Vector2(12, -8), Color("#765923"), 2)
 		if not role.is_empty():
 			_draw_role(bob)
+		elif not kind.is_empty():
+			_draw_kind(bob)
 		if locked and not following:
 			draw_rect(Rect2(-5, -60, 10, 9), Color("#f3ddb0"))
 			draw_arc(Vector2(0, -60), 4, PI, TAU, 10, Color("#f3ddb0"), 2, true)
@@ -87,6 +105,20 @@ class Listener extends Node2D:
 		if following:
 			draw_line(Vector2(-4, -45), Vector2(-1, -42), Color("#fbf1b6"), 2)
 			draw_line(Vector2(-1, -42), Vector2(5, -49), Color("#fbf1b6"), 2)
+
+	func _draw_kind(bob: float) -> void:
+		match kind:
+			"doubter": # Spectacles and a closed book, like the Skeptic.
+				draw_arc(Vector2(-3, -29 + bob), 3.2, 0, TAU, 12, Color("493f3e"), 1.0, true)
+				draw_arc(Vector2(3, -29 + bob), 3.2, 0, TAU, 12, Color("493f3e"), 1.0, true)
+				draw_rect(Rect2(-14, -19, 10, 12), Color("634d78"))
+			"watch": # Round helmet and a short spear, like the Town Guard.
+				draw_arc(Vector2(0, -32 + bob), 9, PI, TAU, 14, Color("aab9bd"), 5, true)
+				draw_line(Vector2(13, 0), Vector2(13, -40), Color("7a6448"), 2)
+				draw_colored_polygon(PackedVector2Array([Vector2(10, -40), Vector2(16, -40), Vector2(13, -47)]), Color("c9d2d4"))
+			"devotee": # Pointed red hood and sun medallion, like the Zealot.
+				draw_colored_polygon(PackedVector2Array([Vector2(-10, -34 + bob), Vector2(0, -48 + bob), Vector2(10, -34 + bob)]), coat)
+				draw_circle(Vector2(0, -16 + bob), 3.5, Color("f3d075"))
 
 	func _draw_role(bob: float) -> void:
 		if profile_type == "guild":
@@ -144,6 +176,9 @@ func _ready() -> void:
 		listener.merchant = npc_type == "merchant"
 		listener.coat = colors[(i + coat_offset) % colors.size()]
 		listener.phase = float(i)
+		if VILLAGE_TYPES.has(npc_type):
+			listener.kind = npc_type
+			listener.coat = Color(String(VILLAGE_TYPES[npc_type].coat)).lerp(colors[(i + coat_offset) % colors.size()], 0.25)
 		if not listener_profiles.is_empty():
 			listener.role = String(listener_profiles[i]["role"])
 			listener.profile_type = String(listener_profiles[i]["npc_type"])
@@ -152,14 +187,30 @@ func _ready() -> void:
 		listeners.append(listener)
 
 
+## Applies a village type's thresholds, rewards and habits; call before _ready.
+func configure_village_type(type_id: String) -> void:
+	var rules: Dictionary = VILLAGE_TYPES[type_id]
+	npc_type = type_id
+	conviction_required = float(rules.conviction)
+	donation = int(rules.donation)
+	rebuttals_per_visit = int(rules.rebuttals)
+	decay_per_second = float(rules.decay)
+	rebuttals_left = rebuttals_per_visit
+
+
 func tick_persuasion(delta: float, phrase_interval: float, conviction: float) -> void:
 	if first_unconverted() < 0:
 		return
+	_unattended = 0.0
 	last_phrase_interval = maxf(phrase_interval, 0.05)
 	phrase_elapsed += maxf(delta, 0.0)
 	while phrase_elapsed + TIME_EPSILON >= last_phrase_interval and first_unconverted() >= 0:
 		phrase_elapsed = maxf(0.0, phrase_elapsed - last_phrase_interval)
 		phrase_spoken.emit()
+		if rebuttals_left > 0:
+			# An objection answered: the phrase is spent but adds no conviction.
+			rebuttals_left -= 1
+			continue
 		progress += maxf(0.0, conviction)
 		var next: int = first_unconverted()
 		while next >= 0 and progress + TIME_EPSILON >= listener_conviction_required(next):
@@ -174,6 +225,20 @@ func tick_persuasion(delta: float, phrase_interval: float, conviction: float) ->
 		# must not become stored work against a listener who is still locked.
 		phrase_elapsed = 0.0
 	queue_redraw()
+
+
+## Active-round time the player spends speaking elsewhere. Devotees lose
+## conviction and the watch readies its objections again.
+func advance_unattended(delta: float) -> void:
+	if delta <= 0.0:
+		return
+	_unattended += delta
+	if decay_per_second > 0.0 and progress > 0.0:
+		progress = maxf(0.0, progress - decay_per_second * delta)
+		queue_redraw()
+	if _unattended >= REBUTTAL_RESET_SECONDS and rebuttals_left != rebuttals_per_visit:
+		rebuttals_left = rebuttals_per_visit
+		queue_redraw()
 
 
 func first_unconverted() -> int:
@@ -203,6 +268,8 @@ func reset_round() -> void:
 	recruits = 0
 	progress = 0.0
 	phrase_elapsed = 0.0
+	rebuttals_left = rebuttals_per_visit
+	_unattended = 0.0
 	is_listening = false
 	is_nearby = false
 	for listener in listeners:
@@ -289,6 +356,13 @@ func _draw() -> void:
 	draw_arc(Vector2.ZERO, 34 if lone else 69, 0, TAU, 56, Color(1, 0.93, 0.62, 0.7), 2, true)
 	var font := ThemeDB.fallback_font
 	var caption: String = "%s  %d/%d" % [group_name, recruits, listener_count]
+	if rebuttals_left > 0 and first_unconverted() >= 0:
+		caption += "  /  %d objection%s" % [rebuttals_left, "" if rebuttals_left == 1 else "s"]
+	if VILLAGE_TYPES.has(npc_type) and is_listening:
+		var hint: String = String(VILLAGE_TYPES[npc_type].hint)
+		var hint_width: float = font.get_string_size(hint, HORIZONTAL_ALIGNMENT_LEFT, -1, 13).x
+		draw_style_box(_caption_style(), Rect2(-hint_width * 0.5 - 8, -108, hint_width + 16, 22))
+		draw_string(font, Vector2(-hint_width * 0.5, -92), hint, HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("e8d4a9"))
 	var width: float = font.get_string_size(caption, HORIZONTAL_ALIGNMENT_LEFT, -1, 16).x
 	var caption_top: float = -112.0 if lone else -142.0
 	draw_style_box(_caption_style(), Rect2(-width * 0.5 - 10, caption_top, width + 20, 30))

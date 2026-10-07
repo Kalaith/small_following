@@ -30,6 +30,13 @@ const INVITED_GATHERINGS: Array[Dictionary] = [
 	{"key": "east_unlock", "title": "East lane visitors", "at": Vector2(1250, 580), "count": 3},
 ]
 const MERCHANT_POSITION := Vector2(1020, 650)
+## Each convinced debate opponent leaves ordinary villagers who share its habits;
+## they join from the next round. Sites sit clear of prop art and other groups.
+const STAGE_GATHERINGS: Array[Dictionary] = [
+	{"stage": 1, "type": "doubter", "title": "Doubters", "at": Vector2(330, 580), "count": 3},
+	{"stage": 2, "type": "watch", "title": "Town watch", "at": Vector2(1290, 400), "count": 3},
+	{"stage": 3, "type": "devotee", "title": "Devotees", "at": Vector2(680, 960), "count": 3},
+]
 
 @export var show_title_on_start: bool = false
 var title_screen: Control
@@ -299,17 +306,19 @@ func _start_selected_level(area_id: String) -> void:
 	_begin_round(false)
 
 
-func _add_gathering(title: String, at: Vector2, merchant: bool = false, count: int = Gathering.LISTENER_COUNT) -> void:
-	var gathering := _new_gathering(title, at, Gathering.MERCHANT_COUNT if merchant else count, merchant)
+func _add_gathering(title: String, at: Vector2, merchant: bool = false, count: int = Gathering.LISTENER_COUNT, village_type: String = "") -> void:
+	var gathering := _new_gathering(title, at, Gathering.MERCHANT_COUNT if merchant else count, merchant, 0, village_type)
 	groups.append(gathering)
 
 
-func _new_gathering(title: String, at: Vector2, count: int, merchant: bool = false, coat_offset: int = 0) -> Node2D:
+func _new_gathering(title: String, at: Vector2, count: int, merchant: bool = false, coat_offset: int = 0, village_type: String = "") -> Node2D:
 	var gathering := Gathering.new()
 	gathering.group_name = title
 	gathering.position = at
 	gathering.listener_count = count
 	gathering.coat_offset = coat_offset
+	if not village_type.is_empty():
+		gathering.configure_village_type(village_type)
 	if merchant:
 		gathering.npc_type = "merchant"
 		gathering.conviction_required = Gathering.MERCHANT_CONVICTION
@@ -604,6 +613,9 @@ func advance_round(delta: float) -> void:
 		nearest_group.tick_persuasion(usable_delta, progression.speech_interval(), progression.conviction_for(nearest_group.npc_type))
 	elif not speaking_to_opponent:
 		game_audio.stop_speech()
+	for group in all_audiences:
+		if group != nearest_group:
+			group.advance_unattended(usable_delta)
 	if is_instance_valid(helper):
 		helper.set_active(true)
 		helper.advance(usable_delta, all_audiences)
@@ -673,6 +685,7 @@ func apply_upgrades() -> void:
 	if progression.has_unlock("merchant_unlock") and not added_gatherings.has("merchant_unlock"):
 		_add_gathering("Travelling merchants", MERCHANT_POSITION, true)
 		added_gatherings["merchant_unlock"] = true
+	_add_stage_gatherings()
 	# Purchases happen between rounds, so moving wanderers off a new group is safe.
 	if groups.size() != group_count:
 		scatter_wanderers()
@@ -680,6 +693,17 @@ func apply_upgrades() -> void:
 		if group.npc_type == "merchant":
 			group.donation = progression.merchant_donation()
 	_apply_helper()
+
+
+## Adds the villagers of every opponent convinced so far; never duplicates.
+func _add_stage_gatherings() -> void:
+	if progression.active_area != "bramblewick":
+		return
+	for entry in STAGE_GATHERINGS:
+		var key: String = "stage_%d" % entry.stage
+		if progression.encounter_stage >= entry.stage and not added_gatherings.has(key):
+			_add_gathering(entry.title, entry.at, false, entry.count, entry.type)
+			added_gatherings[key] = true
 
 
 func _apply_helper() -> void:
@@ -713,6 +737,8 @@ func _begin_round(increment: bool) -> void:
 	round_recruits = 0
 	nearest_group = null
 	round_active = true
+	# Opponents convinced last round send their villagers from this round on.
+	_add_stage_gatherings()
 	for group in audiences():
 		group.reset_round()
 	scatter_wanderers()

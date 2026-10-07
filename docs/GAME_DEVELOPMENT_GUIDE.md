@@ -134,6 +134,8 @@ $godotExe = 'C:\Program Files\Godot\Godot_v4.2.2-stable_mono_win64_console.exe'
 & $godotExe --headless --fixed-fps 60 --path . --script res://tests/test_helper.gd
 & $godotExe --headless --fixed-fps 60 --path . --script res://tests/test_merchants.gd
 & $godotExe --headless --fixed-fps 60 --path . --script res://tests/test_wanderers.gd
+& $godotExe --headless --fixed-fps 60 --path . --script res://tests/test_village_types.gd
+& $godotExe --headless --fixed-fps 60 --path . --script res://tests/test_village_campaign.gd
 & $godotExe --headless --fixed-fps 60 --path . --script res://tests/test_encounters.gd
 & $godotExe --headless --fixed-fps 60 --path . --script res://tests/test_ritual_readability.gd
 & $godotExe --headless --fixed-fps 60 --path . --script res://tests/test_demo_completion.gd

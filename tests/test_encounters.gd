@@ -108,7 +108,7 @@ func _campaign() -> void:
 	scene.set_ritual_visible(false)
 	check(scene.hud_layout.visible and not scene.ritual_screen.visible, "completed map still permits village return")
 	scene.start_next_round()
-	check(scene.round_active and not is_instance_valid(scene.encounter) and scene.groups.size() == 6, "after completion ordinary village rounds remain available")
+	check(scene.round_active and not is_instance_valid(scene.encounter) and scene.groups.size() == 9, "after completion ordinary village rounds remain available, with each opponent's villagers")
 	# Reload the actual scene from the fixture, without touching normal progression.
 	var restored = load("res://scenes/main.tscn").instantiate()
 	restored.save_path_override = path

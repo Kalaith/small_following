@@ -1,6 +1,11 @@
 # Bramblewick: a longer first map through Renewal (prestige) - proposal
 
-**Status:** proposal, 2026-10-07. Nothing here is implemented. The user's goal is
+**Status:** 2026-10-08 - the user chose section 4 (first-Rite re-pace) and
+escalation *within a single run* instead of per Renewal, plus new ordinary
+villagers after each mini boss. Those are implemented; see
+[PACING](PACING.md#first-run-re-pace-resistance-and-opponents-villagers---2026-10-08).
+Renewal, Devotion and the Sanctum are **deferred** until that balance is
+judged. Originally a proposal, 2026-10-07. The user's goal is
 recorded under *Confirmed direction*; every name, formula and number after it
 is a provisional starting value to be measured and tuned.
 [GAME_DESIGN](GAME_DESIGN.md) stays the current design until slices land.
