@@ -11,12 +11,17 @@ From the project root (Python 3.11 with NumPy and SciPy; FFmpeg for checks):
 ```powershell
 python tools/music_video/song_data.py   # validate song.json
 python tools/music_video/compose.py     # backing.wav + beats.json (about 15 s)
+python tools/music_video/sing.py --prototype  # slice 3 listening test (about 25 s)
+python tools/music_video/sing.py --shapes     # the vowel shape chosen for each syllable
 ```
 
 | Output | Contents |
 | --- | --- |
 | `exports/music_video/audio/backing.wav` | 179.2 s, 48 kHz stereo 16-bit backing track, -18 LUFS integrated, under -1 dBTP |
 | `exports/music_video/beats.json` | 384 beats with time and video frame, section starts, and editorial cues (record scratch, dead air, smash cut, hard cut) |
+| `exports/music_video/audio/prototype_chorus.wav` | Bars 17-24 (chorus 1): lead, 3-voice choir and the "plus one!" shout over the ducked backing, mastered to -14 LUFS |
+| `exports/music_video/audio/prototype_password.wav` | Bars 65-68: the 12-voice P-L-Z-K-T-K-S chant and "Please! Okay! Thanks!" |
+| `exports/music_video/audio/prototype_vocals.wav` | Both excerpts, vocals only |
 
 ## Provenance
 
@@ -29,6 +34,14 @@ python tools/music_video/compose.py     # backing.wav + beats.json (about 15 s)
   synthesized from sine sweeps and filtered seeded noise. The reverb is a seeded
   noise impulse response. No samples, recordings, borrowed melodies, voices,
   song generators or model downloads are used.
+- **Vocals:** synthesized by `sing.py` with source-filter synthesis, extending
+  the murmur approach in `tools/build_game_audio.py`. A harmonic source with
+  portamento, delayed vibrato and slow pitch drift passes through a cascade of
+  moving vowel formants (Peterson and Barney style averages). Consonants are
+  seeded filtered-noise bursts. Each syllable becomes a vowel shape plus one
+  consonant from a small fixed set, so the choir does not pronounce English;
+  the real words appear only as captions. The lead sings an octave below the
+  written melody, in the cultist's register.
 - **Measurement:** loudness is measured with an in-script BS.1770-4 meter and
   cross-checked with FFmpeg `ebur128`. Peaks are controlled by a 4x
   oversampled look-ahead limiter.
