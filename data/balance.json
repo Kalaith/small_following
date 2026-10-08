@@ -30,6 +30,7 @@
     "wanderers": {"count": 5, "pull_speed": 110.0, "beckon_pixels_per_point": 100.0},
     "resistance_price_step": 0.3
   },
+  "price_rounding": {"step": 5, "from": 20},
   "helper": {"walk_speed": 150.0, "phrase_seconds": 1.0, "conviction_per_phrase": 1.0},
   "encounters": {
     "walk_speed": 220.0,

@@ -214,6 +214,10 @@ func _definition_next_cost(upgrade: Dictionary, id: String) -> int:
 	var price: int = int(prices[rank(id)])
 	if upgrade.get("area", "bramblewick") == "bramblewick":
 		price = roundi(float(price) * resistance_price_multiplier())
+	# Prices of "price_rounding.from" or more round down to a multiple of
+	# "price_rounding.step", after resistance too; cheaper opening prices stay exact.
+	if price >= Balance.integer("price_rounding.from"):
+		price -= price % Balance.integer("price_rounding.step")
 	return price
 
 
