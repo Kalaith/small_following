@@ -27,11 +27,11 @@ static func effect_text(progression: Progression, by_id: Dictionary, id: String,
 			var label: String = str(labels.get(key, key.replace("_", " ").capitalize()))
 			if key.ends_with("_unlock"):
 				var ready: String = "Recruits beside you" if key == "market_helper_unlock" else "Ready to listen"
-				lines.append(label + ("\n" + ready if complete else "\nSealed → " + ready.to_lower()))
+				lines.append(label + ("\n" + ready if complete else "\nSealed -> " + ready.to_lower()))
 				continue
 			# Reach and head counts are whole numbers; rates keep two decimals.
 			var shown: String = "%d" if key in ["market_beckon_reach", "market_wanderers"] else "%.2f"
-			lines.append("%s\n%s%s" % [label, shown % float(current[key]), "" if complete or not next.has(key) else " → " + shown % float(next[key])])
+			lines.append("%s\n%s%s" % [label, shown % float(current[key]), "" if complete or not next.has(key) else " -> " + shown % float(next[key])])
 		return "\n".join(lines)
 	if branch in ["merchant", "trial", "faith"]:
 		var item: Dictionary = by_id[id]
@@ -45,7 +45,7 @@ static func effect_text(progression: Progression, by_id: Dictionary, id: String,
 		var reach: float = float(current.beckon_reach)
 		if complete or not next.has("beckon_reach"):
 			return "BECKONING REACH\nwanderers within %d px" % int(reach)
-		return "BECKONING REACH\n%d → %d px" % [int(reach), int(next.beckon_reach)]
+		return "BECKONING REACH\n%d -> %d px" % [int(reach), int(next.beckon_reach)]
 	var stat_key: String = {"talk": "speech_frequency", "persuade": "conviction", "run": "run_multiplier", "gather": "gatherings", "helper": "helpers"}.get(branch, "")
 	var heading: String = {"talk": "TALKING FREQUENCY", "persuade": "CONVICTION PER PHRASE", "run": "RUNNING SPEED", "gather": "VILLAGE GATHERINGS", "helper": "HELPERS"}.get(branch, "")
 	var units: String = {"talk": "phrases/s", "persuade": "conviction", "run": "x base", "gather": "groups", "helper": "helpers"}.get(branch, "")
@@ -53,14 +53,14 @@ static func effect_text(progression: Progression, by_id: Dictionary, id: String,
 		return ""
 	var current_value: float = float(current[stat_key])
 	if branch == "helper":
-		return "ONE LISTENER AT A TIME\n1 helper / 150 px per second" if complete else "HELPERS\n0 → 1 / one listener at a time"
+		return "ONE LISTENER AT A TIME\n1 helper / 150 px per second" if complete else "HELPERS\n0 -> 1 / one listener at a time"
 	if branch == "gather":
 		if complete or not next.has(stat_key):
 			return "%s\n%d groups of three or four" % [heading, int(current_value)]
-		return "%s\n%d → %d groups" % [heading, int(current_value), int(next[stat_key])]
+		return "%s\n%d -> %d groups" % [heading, int(current_value), int(next[stat_key])]
 	if complete or not next.has(stat_key):
 		return "%s\n%.2f %s" % [heading, current_value, units]
-	return "%s\n%.2f → %.2f %s" % [heading, current_value, float(next[stat_key]), units]
+	return "%s\n%.2f -> %.2f %s" % [heading, current_value, float(next[stat_key]), units]
 
 
 static func roman(value: int) -> String:
