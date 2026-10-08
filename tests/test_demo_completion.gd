@@ -88,11 +88,11 @@ func _run() -> void:
 	state.save_path = "user://missing_demo_completion_test_directory/save.json"
 	check(not state.try_purchase("talk_3", 1) and not state.is_circle_complete() and state.rank("talk_3") == 1 and state.coins == 55, "failed final-rank save cannot grant completion or spend donations")
 	state.save_path = FIXTURE
-	check(state.try_purchase("talk_3", 1) and state.is_circle_complete() and state.coins == 30, "successful final rank lights the centre at its price raised by two debate victories (18 -> 25)")
+	check(state.try_purchase("talk_3", 1) and state.is_circle_complete() and state.coins == 26, "successful final rank lights the centre at its price raised by two debate victories (18 -> 29)")
 	check(not state.map_complete(), "all ranks do not grant the separate Priest victory")
 	var restored = fresh()
 	check(restored.load_progress() and restored.is_circle_complete(), "completed save reload derives completion without a new flag")
-	check(restored.purchased == state.purchased and restored.coins == 30 and restored.total_recruits == 123 and restored.available_recruits == state.available_recruits and restored.round_number == 8 and restored.encounter_stage == 2, "completed-save reload preserves ranks, both resources, lifetime recruitment, round and encounter stage")
+	check(restored.purchased == state.purchased and restored.coins == 26 and restored.total_recruits == 123 and restored.available_recruits == state.available_recruits and restored.round_number == 8 and restored.encounter_stage == 2, "completed-save reload preserves ranks, both resources, lifetime recruitment, round and encounter stage")
 	var stored: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(FIXTURE))
 	check(stored.schema_version == Progression.SAVE_VERSION and not stored.has("circle_complete"), "completion remains derived rather than adding a save flag")
 	await _test_screen()

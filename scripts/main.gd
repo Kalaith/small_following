@@ -174,7 +174,9 @@ func _rebuild_area() -> void:
 		else:
 			_wanderer_rng.randomize()
 		for index in range(Wanderers.COUNT):
-			wanderers.append(_new_gathering(Wanderers.TITLE, Vector2.ZERO, 1, false, index))
+			var wanderer: Node2D = _new_gathering(Wanderers.TITLE, Vector2.ZERO, 1, false, index)
+			wanderer.show_caption = false
+			wanderers.append(wanderer)
 		scatter_wanderers()
 	player.clear_walk_target()
 	player.position = area_start_position()

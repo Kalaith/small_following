@@ -77,7 +77,7 @@ func _run() -> void:
 			mixed_group.recruit_listener(index)
 	var before_coins: int = game.coins
 	game.advance_round(3.0)
-	check(game.nearest_group == open_group and open_group.recruits == 1 and game.coins == before_coins + 4, "nearer locked-only audience cannot steal completed speech from an eligible group")
+	check(game.nearest_group == open_group and is_equal_approx(open_group.progress, 3.0) and mixed_group.progress == 0.0 and game.coins == before_coins, "nearer locked-only audience cannot steal speech from an eligible group")
 	check(mixed_group.is_nearby and mixed_group.first_unconverted() == -1 and mixed_group.progress == 0.0 and mixed_group.phrase_elapsed == 0.0, "locked-only audience stays inspectable without banking conviction or phrase time")
 	open_group.position = open_position
 	mixed_group.position = mixed_position

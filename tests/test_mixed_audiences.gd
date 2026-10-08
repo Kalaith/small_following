@@ -4,6 +4,13 @@ const Gathering = preload("res://scripts/gathering.gd")
 const Helper = preload("res://scripts/helper.gd")
 const Market = preload("res://scripts/market.gd")
 const Progression = preload("res://scripts/progression.gd")
+## Mechanics fixture with small hand-checkable thresholds, independent of the
+## tuned Bellmarket values in market.gd.
+const BAKER = {"role": "Baker", "npc_type": "ordinary", "conviction_required": 3.0, "donation": 4, "requires": ""}
+const PORTER = {"role": "Porter", "npc_type": "ordinary", "conviction_required": 3.0, "donation": 4, "requires": ""}
+const SHOPPER = {"role": "Shopper", "npc_type": "ordinary", "conviction_required": 3.0, "donation": 4, "requires": ""}
+const ARTISAN = {"role": "Artisan", "npc_type": "guild", "conviction_required": 9.0, "donation": 12, "requires": "market_guild_unlock"}
+const PATRON = {"role": "Patron", "npc_type": "patron", "conviction_required": 12.0, "donation": 20, "requires": "market_patron_unlock"}
 
 var checks: int = 0
 var failures: int = 0
@@ -54,7 +61,7 @@ func _run() -> void:
 	var group := Gathering.new()
 	group.group_name = "Mixed fixture"
 	group.position = Vector2(650, 500)
-	group.listener_profiles.assign([Market.ARTISAN, Market.BAKER, Market.PATRON, Market.PORTER, Market.SHOPPER])
+	group.listener_profiles.assign([ARTISAN, BAKER, PATRON, PORTER, SHOPPER])
 	group.configure_market(progression)
 	check(group.validate_profiles().is_empty(), "authored mixed roster validates before activation")
 	actors.add_child(group)

@@ -5,12 +5,12 @@ extends Node2D
 const Village = preload("res://scripts/village.gd")
 const WORLD_SIZE := Vector2(1560, 1100)
 const START_POSITION := Vector2(780, 680)
-const ORDINARY_CONVICTION: float = 3.0
-const ORDINARY_DONATION: int = 4
-const GUILD_CONVICTION: float = 9.0
-const GUILD_DONATION: int = 12
-const PATRON_CONVICTION: float = 12.0
-const PATRON_DONATION: int = 20
+const ORDINARY_CONVICTION: float = 24.0
+const ORDINARY_DONATION: int = 10
+const GUILD_CONVICTION: float = 48.0
+const GUILD_DONATION: int = 30
+const PATRON_CONVICTION: float = 60.0
+const PATRON_DONATION: int = 50
 
 const BAKER = {"role": "Baker", "npc_type": "ordinary", "conviction_required": ORDINARY_CONVICTION, "donation": ORDINARY_DONATION, "requires": ""}
 const PORTER = {"role": "Porter", "npc_type": "ordinary", "conviction_required": ORDINARY_CONVICTION, "donation": ORDINARY_DONATION, "requires": ""}

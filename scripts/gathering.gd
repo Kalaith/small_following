@@ -35,6 +35,9 @@ var listener_profiles: Array[Dictionary] = []
 var _market_progression: Progression = null
 
 var group_name: String = "Neighbours"
+## Village-type crowds and lone wanderers carry no name or hint overhead; the
+## ring and conviction bar still show who is listening.
+var show_caption: bool = true
 ## Rotates the coat palette so lone wanderers do not all wear the same colour.
 var coat_offset: int = 0
 var recruits: int = 0
@@ -196,6 +199,7 @@ func configure_village_type(type_id: String) -> void:
 	rebuttals_per_visit = int(rules.rebuttals)
 	decay_per_second = float(rules.decay)
 	rebuttals_left = rebuttals_per_visit
+	show_caption = false
 
 
 func tick_persuasion(delta: float, phrase_interval: float, conviction: float) -> void:
@@ -354,6 +358,9 @@ func _draw() -> void:
 		return
 	var lone: bool = listener_count == 1
 	draw_arc(Vector2.ZERO, 34 if lone else 69, 0, TAU, 56, Color(1, 0.93, 0.62, 0.7), 2, true)
+	_draw_progress()
+	if not show_caption:
+		return
 	var font := ThemeDB.fallback_font
 	var caption: String = "%s  %d/%d" % [group_name, recruits, listener_count]
 	if rebuttals_left > 0 and first_unconverted() >= 0:
@@ -367,6 +374,9 @@ func _draw() -> void:
 	var caption_top: float = -112.0 if lone else -142.0
 	draw_style_box(_caption_style(), Rect2(-width * 0.5 - 10, caption_top, width + 20, 30))
 	draw_string(font, Vector2(-width * 0.5, caption_top + 21), caption, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("#fff1d0"))
+
+
+func _draw_progress() -> void:
 	draw_line(Vector2(-38, 58), Vector2(38, 58), Color("#55654e"), 5)
 	draw_line(Vector2(-38, 58), Vector2(-38 + 76 * minf(progress / conviction_required, 1.0), 58), Color("#f3d98c"), 5)
 	for i in range(3):

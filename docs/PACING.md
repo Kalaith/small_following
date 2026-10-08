@@ -537,3 +537,43 @@ At the user's ~28 s per round, 32 bot rounds is about **15 minutes**, against
 a 30-minute goal; humans shop and route more slowly than the bot, so real
 time is likely longer. Next levers, in order: `RESISTANCE_PRICE_STEP`, the
 late multiplier, the new groups' thresholds, then the deferred Renewal.
+
+## Harder Bellmarket and a longer first map - 2026-10-08
+
+User feedback: Bramblewick still took about 10 minutes to beat, and Bellmarket
+was "really easy to convince with 0 new upgrades". All values are provisional.
+
+**Bramblewick.** Every node outside the core nine and Beckoning Call now costs
+x1.8 gold and x1.5 recruits of its previous price (village base **2377 gold /
+453 recruits**), and town resistance rises **30%** per convinced opponent
+(x2.2 after the Zealot). Opening and full-core routes are unchanged.
+
+| Bot run (`test_village_campaign.gd`) | Rounds | Victories at round |
+| --- | ---: | --- |
+| Before | 32 | Skeptic 17, Guard 18, Zealot 22, Priest 32 |
+| After | **54** | Skeptic 24, Guard 28, Zealot 32, Priest 54 |
+
+If the user's 10 minutes matched the 32-round bot, 54 rounds is about 17
+minutes. The Priest phase (22 rounds) is mostly farming; watch whether it
+feels like a wall.
+
+**Bellmarket.** Listeners need 8x (open), 5.3x (guild) and 5x (patron) the
+previous conviction: **24 / 48 / 60**, paying **10 / 30 / 50** gold. Market
+Refrain and Market Testimony ranks are doubled (full paths +5.4 phrases/s and
++10.5 conviction/phrase). From `test_market_pacing.gd`:
+
+| Build, five-district circuit | Recruits (of 25) | Gold | All eligible clear |
+| --- | ---: | ---: | --- |
+| Full village, no market ranks | 7 open (of 18 eligible) | 70 | No |
+| Six talk ranks | 15 | 150 | No |
+| Six persuade ranks | 17 | 170 | No |
+| First three tiers of every path | 21 | 410 | No |
+| All thirty market ranks | 25 | 739 | 7.9 s |
+
+A fresh password start (1 conviction/phrase) can no longer convince anyone in
+Bellmarket; it must earn in Bramblewick first.
+
+`test_market_campaign.gd` (zero carried gold): the balanced bot buys its first
+market rank after 2 rounds and the whole circle in **40 rounds**; the
+patron-then-guild specialist takes 114. Peak round income (739, full market)
+is about 1/19 of the circle's 14,100 gold, so that check now requires 1/15.

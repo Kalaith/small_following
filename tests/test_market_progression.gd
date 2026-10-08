@@ -50,8 +50,8 @@ func _run() -> void:
 	state.total_recruits = 1000
 	state.available_recruits = 1000
 	check(choices(state) == 5, "buying a root replaces it with its successor while four other paths stay available")
-	check(state.try_purchase("market_talk_1", 0) and is_equal_approx(state.speech_interval(), 1.0 / 1.5) and state.conviction_per_phrase() == 1.0 and is_equal_approx(state.run_multiplier(), 1.3), "speech path changes frequency independently")
-	check(state.try_purchase("market_persuade_1", 0) and state.conviction_per_phrase() == 1.75 and is_equal_approx(state.speech_interval(), 1.0 / 1.5), "conviction path changes phrase strength independently")
+	check(state.try_purchase("market_talk_1", 0) and is_equal_approx(state.speech_interval(), 1.0 / 2.0) and state.conviction_per_phrase() == 1.0 and is_equal_approx(state.run_multiplier(), 1.3), "speech path changes frequency independently")
+	check(state.try_purchase("market_persuade_1", 0) and state.conviction_per_phrase() == 2.5 and is_equal_approx(state.speech_interval(), 1.0 / 2.0), "conviction path changes phrase strength independently")
 	check(not state.has_unlock("market_guild_unlock") and not state.has_unlock("market_patron_unlock"), "stat purchases do not unlock rich audiences")
 	check(state.try_purchase("market_guild_1", 0) and state.has_unlock("market_guild_unlock") and not state.has_unlock("market_patron_unlock"), "guild introduction opens only guild traders")
 	check(state.try_purchase("market_patron_1", 0) and state.has_unlock("market_patron_unlock") and choices(state) == 5, "patron introduction stays independent and all second tiers remain choices")
@@ -67,7 +67,7 @@ func _run() -> void:
 	for branch in BRANCHES:
 		check(state.try_purchase("market_" + branch + "_3"), "original third-tier purchase remains independent: " + branch)
 	check(not state.is_circle_complete() and choices(state) == 5 and state.market_donation("guild", 12) == 22 and state.market_donation("patron", 18) == 33, "original fifteen nodes retain their effects and open five new fourth-tier choices")
-	check(is_equal_approx(state.run_multiplier(), 2.05) and is_equal_approx(state.speech_interval(), 1.0 / 2.8) and state.conviction_per_phrase() == 4.0, "original market ranks retain their exact distinct stat benefits")
+	check(is_equal_approx(state.run_multiplier(), 2.05) and is_equal_approx(state.speech_interval(), 1.0 / 4.6) and state.conviction_per_phrase() == 7.0, "original market ranks keep distinct (retuned) stat benefits")
 	var coins_before: int = state.coins
 	var recruits_before: int = state.available_recruits
 	check(not state.try_purchase("market_run_6", 0) and state.coins == coins_before and state.available_recruits == recruits_before, "new final nodes enforce preceding tiers without spending either wallet")
@@ -84,7 +84,7 @@ func _run() -> void:
 	for branch in ["persuade", "guild", "patron"]:
 		check(state.try_purchase("market_" + branch + "_6", 0), "remaining independent final purchase: " + branch)
 	check(state.is_circle_complete() and not state.is_circle_complete("bramblewick") and state.market_donation("guild", 12) == 46 and state.market_donation("patron", 18) == 69 and state.market_donation("ordinary", 4) == 4, "thirty-node market completes independently and specializations change only their intended rewards")
-	check(is_equal_approx(state.run_multiplier(), 2.65) and is_equal_approx(state.speech_interval(), 1.0 / 3.7) and state.conviction_per_phrase() == 6.25, "full market build applies the purchased running, frequency and conviction independently")
+	check(is_equal_approx(state.run_multiplier(), 2.65) and is_equal_approx(state.speech_interval(), 1.0 / 6.4) and state.conviction_per_phrase() == 11.5, "full market build applies the purchased running, frequency and conviction independently")
 	check(state.try_travel("bramblewick") and state.run_multiplier() == 1.0 and state.speech_interval() == 1.0 and state.conviction_per_phrase() == 1.0 and not state.has_unlock("market_guild_unlock") and state.market_donation("guild", 12) == 12, "returning removes market effects while preserving market purchases")
 	check(state.purchased.size() == 30 and not state.try_purchase("market_run_1") and not state.try_purchase("market_guild_6"), "inactive circle purchases remain unavailable")
 	for entry in state.catalog:
@@ -92,7 +92,7 @@ func _run() -> void:
 	var village_speed: float = state.run_multiplier()
 	var village_frequency: float = 1.0 / state.speech_interval()
 	var village_conviction: float = state.conviction_per_phrase()
-	check(state.try_travel("bellmarket") and is_equal_approx(state.run_multiplier(), village_speed + 1.65) and is_equal_approx(1.0 / state.speech_interval(), village_frequency + 2.7) and state.conviction_per_phrase() == village_conviction + 5.25 and state.has_unlock("helper_unlock"), "every earned village rank and helper carry into market alongside all thirty local upgrades")
+	check(state.try_travel("bellmarket") and is_equal_approx(state.run_multiplier(), village_speed + 1.65) and is_equal_approx(1.0 / state.speech_interval(), village_frequency + 5.4) and state.conviction_per_phrase() == village_conviction + 10.5 and state.has_unlock("helper_unlock"), "every earned village rank and helper carry into market alongside all thirty local upgrades")
 	check(state.try_travel("bramblewick") and is_equal_approx(state.run_multiplier(), village_speed) and is_equal_approx(1.0 / state.speech_interval(), village_frequency) and state.conviction_per_phrase() == village_conviction, "old village build is exactly restored after upgraded return travel")
 
 	var exact = fresh_market()

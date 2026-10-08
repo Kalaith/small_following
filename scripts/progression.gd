@@ -17,7 +17,7 @@ const UNLOCK_KEYS: Array[String] = ["meadow_unlock", "east_unlock", "helper_unlo
 const BASE_MERCHANT_DONATION: int = 12
 ## Bramblewick resists harder as each debate opponent is convinced: unbought
 ## village ranks cost this fraction more per convinced opponent (stage 0-4).
-const RESISTANCE_PRICE_STEP: float = 0.2
+const RESISTANCE_PRICE_STEP: float = 0.3
 const ENCOUNTER_REWARDS: Array[int] = [30, 45, 60, 120]
 
 var encounter_stage: int = 0

@@ -44,9 +44,9 @@ values are documented below and in [PACING](PACING.md#bellmarket-rebalance---202
 | Round duration | 11 seconds | Target roughly three opening conversions; validate with human routes as well as simulation. |
 | Starting position | World position (780, 680), restored at each new round | Makes opening routes repeatable; decide whether later rounds should preserve position. |
 | Gatherings | Three initial groups of 4 / 3 / 4; invitations add groups of 4 and 3; an optional merchant pair | Groups hold 11 listeners initially and 18 when expanded. |
-| Town resistance | Unbought village ranks cost 20% more per convinced opponent (x1.0 to x1.8); market prices unaffected | Slows the late run without touching the opening |
-| Opponents' villagers | After Skeptic: 3 Doubters (6 conviction, 6 donations). After Guard: 3 Town watch (6 / 8; first 2 phrases each visit answered, ready again after 0.5 s away). After Zealot: 3 Devotees (9 / 10; lose 2 conviction/s while unattended). They join from the next round | Variety after each mini boss; helpers ignore the habits |
-| Late-tier prices | Tier IV-VI, invitations, merchants, helper, trials and faith x1.4 gold and x1.3 recruits (village base 1392 gold / 314 recruits); Priest needs 300 conviction | First-run re-pace |
+| Town resistance | Unbought village ranks cost 30% more per convinced opponent (x1.0 to x2.2); market prices unaffected | Slows the late run without touching the opening |
+| Opponents' villagers | After Skeptic: 3 Doubters (6 conviction, 6 donations). After Guard: 3 Town watch (6 / 8; first 2 phrases each visit answered, ready again after 0.5 s away). After Zealot: 3 Devotees (9 / 10; lose 2 conviction/s while unattended). They join from the next round. Like lone wanderers they show no name, count or hint overhead, only the speaking ring and conviction bar | Variety after each mini boss; helpers ignore the habits |
+| Late-tier prices | Tier IV-VI, invitations, merchants, helper, trials and faith x2.5 gold and x1.95 recruits of their original prices (village base 2377 gold / 453 recruits); Priest needs 300 conviction | First-run re-pace |
 | Lone wanderers | Five single villagers, re-scattered at random each round clear of prop art, every group site, the entrance and the debate centre | Rewards running between people; 16 opening listeners in total. |
 | Beckoning Call | Running-branch node after Fleet Footsteps I; wanderers within 180 px (rank 2: 320 px) walk toward the cultist at 110 px/s and stop inside speaking range; 9 + 18 gold, no recruits | Pulls lone NPCs in without changing speech, conviction or speed. |
 | Talking range | 105 world pixels | One nearest unfinished audience receives phrases. |
@@ -141,7 +141,7 @@ See [the full-circle scope](RITUAL_COMPLETION.md).
 Bellmarket is implemented as five stationary mixed gatherings: Bread Court,
 Cart Crossing, Guild Row, Silk Arcade and Patron Steps. Eighteen ordinary
 listeners are always eligible; four guild traders and three patrons require
-their own introductions. Locks skip ineligible slots so they do not obstruct
+their own introductions. Market people are far harder than villagers: open listeners need 24 conviction (10 gold), guild traders 48 (30) and patrons 60 (50), so the carried village build reaches about seven of eighteen open listeners until market ranks are bought. Locks skip ineligible slots so they do not obstruct
 the open listeners. Each recruited person pays once through the shared
 gathering authority; the helper respects the same eligibility.
 

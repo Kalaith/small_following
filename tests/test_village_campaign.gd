@@ -11,7 +11,7 @@ const STEP: float = 1.0 / 60.0
 const MAX_ROUNDS: int = 150
 const WANDERER_SEED: int = 31337
 ## Provisional pacing window for this bot (see PACING); widen only with evidence.
-const ROUND_WINDOW := Vector2i(28, 40)
+const ROUND_WINDOW := Vector2i(48, 62)
 ## After losing to an opponent the bot farms this many rounds before retrying,
 ## as a player would rather than repeating a hopeless debate every round.
 const RETRY_AFTER_ROUNDS: int = 2

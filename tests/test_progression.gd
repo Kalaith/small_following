@@ -106,27 +106,27 @@ func _run() -> void:
 	check(not full.try_purchase("run_3", 2) and full.coins == 100, "maximum rank rejects repeated purchase even with sufficient currency")
 	check(full.status("talk_4") == "locked" and full.status("run_4") == "locked" and full.status("east_1") == "locked", "new tiers require gathering invitations")
 	check(full.gathering_count() == 3 and full.effect_preview("meadow_1").next.gatherings == 4, "unlock preview counts actual groups")
-	full.coins = 256
+	full.coins = 460
 	for id in ["meadow_1", "talk_4", "run_4", "east_1", "talk_5", "run_5"]:
 		var before_coins: int = full.coins
 		var price: int = full.next_cost(id)
 		check(full.try_purchase(id, 0) and full.coins == before_coins - price, "expansion purchase charges exact price: " + id)
 		check(not full.try_purchase(id, 0) and not full.try_purchase(id, 1) and full.coins == before_coins - price, "stale and maximum expansion purchases cannot charge: " + id)
-	check(full.coins == 0 and full.gathering_count() == 5 and is_equal_approx(full.speech_interval(), 1.0 / 3.0) and is_equal_approx(full.run_multiplier(), 2.2) and full.conviction_per_phrase() == 3.0, "six expansion nodes cost 256 and apply distinct effects")
+	check(full.coins == 0 and full.gathering_count() == 5 and is_equal_approx(full.speech_interval(), 1.0 / 3.0) and is_equal_approx(full.run_multiplier(), 2.2) and full.conviction_per_phrase() == 3.0, "six expansion nodes cost 460 and apply distinct effects")
 	check(full.effect_preview("helper_1").current.helpers == 0 and full.effect_preview("helper_1").next.helpers == 1, "helper preview explains one unlocked actor")
-	full.coins = 42
-	check(full.try_purchase("helper_1", 0) and full.coins == 0 and full.has_unlock("helper_unlock"), "one helper costs forty-two donations")
-	# Town resistance: each convinced opponent raises unbought village prices 20%.
+	full.coins = 76
+	check(full.try_purchase("helper_1", 0) and full.coins == 0 and full.has_unlock("helper_unlock"), "one helper costs seventy-six donations")
+	# Town resistance: each convinced opponent raises unbought village prices 30%.
 	var resist = fresh()
 	resist.save_enabled = false
 	check(resist.resistance_price_multiplier() == 1.0 and resist.next_cost("talk_1") == 6, "no resistance before the first debate victory")
 	resist.encounter_stage = 2
-	check(is_equal_approx(resist.resistance_price_multiplier(), 1.4) and resist.next_cost("talk_1") == 8 and resist.next_cost("talk_3") == 17, "two victories raise village prices by 40 percent, rounded")
+	check(is_equal_approx(resist.resistance_price_multiplier(), 1.6) and resist.next_cost("talk_1") == 10 and resist.next_cost("talk_3") == 19, "two victories raise village prices by 60 percent, rounded")
 	check(resist.next_cost("market_run_1") == 120, "market prices ignore Bramblewick's resistance")
-	resist.coins = 8
+	resist.coins = 10
 	resist.total_recruits = 10
 	resist.available_recruits = 10
-	check(resist.purchase_state("talk_1").gold_cost == 8 and resist.status("talk_1") == "affordable", "the purchase panel prices with the same resistance")
+	check(resist.purchase_state("talk_1").gold_cost == 10 and resist.status("talk_1") == "affordable", "the purchase panel prices with the same resistance")
 	full.save_enabled = true
 	check(full.save_progress(), "expanded ranks save using current schema")
 	var expanded_reload = fresh()

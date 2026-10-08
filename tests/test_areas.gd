@@ -167,7 +167,7 @@ func _test_existing_market_save() -> void:
 	var restored = fresh()
 	check(restored.load_progress() and restored.active_area == "bellmarket" and restored.purchased == legacy.purchased and restored.purchased.size() == 47, "old completed market schema4 save retains every village and original market rank")
 	check(restored.coins == 81 and restored.total_recruits == 421 and restored.available_recruits == 4 and restored.round_number == 23 and restored.encounter_stage == 4 and not restored.level_select_unlocked, "higher prices never retroactively charge existing market saves or change their history")
-	check(is_equal_approx(restored.run_multiplier(), village_speed + 1.05) and is_equal_approx(1.0 / restored.speech_interval(), village_frequency + 1.8) and restored.conviction_per_phrase() == village_conviction + 3.0 and restored.market_donation("guild", 12) == 22 and restored.market_donation("patron", 18) == 33 and restored.has_unlock("helper_unlock"), "all original market benefits and full village carry-over survive unchanged")
+	check(is_equal_approx(restored.run_multiplier(), village_speed + 1.05) and is_equal_approx(1.0 / restored.speech_interval(), village_frequency + 3.6) and restored.conviction_per_phrase() == village_conviction + 6.0 and restored.market_donation("guild", 12) == 22 and restored.market_donation("patron", 18) == 33 and restored.has_unlock("helper_unlock"), "original market ranks keep their (retuned) benefits and full village carry-over survives")
 	var new_ranks: int = 0
 	for branch in ["run", "talk", "persuade", "guild", "patron"]:
 		for tier in [4, 5, 6]:

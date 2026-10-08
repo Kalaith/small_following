@@ -131,7 +131,7 @@ func simulate_campaign(strategy: String, entry_bank: int) -> Dictionary:
 	}
 	check(purchases_ok and scene.progression.is_circle_complete() and purchase_index == planned.size(), label + ": real round earnings buy the whole market through validated purchases")
 	check(accounting_ok and scene.progression.coins == entry_bank + earned_gold - spent_gold and scene.progression.available_recruits == earned_recruits - spent_recruits and scene.progression.total_recruits == entry_history + earned_recruits, label + ": every round and purchase preserves both wallets and recruitment history")
-	check(first_round_purchases < planned.size() and rounds >= 25 and max_income * 20 < spent_gold, label + ": a single round cannot bankroll the circle even at the strongest observed income")
+	check(first_round_purchases < planned.size() and rounds >= 25 and max_income * 15 < spent_gold, label + ": a single round cannot bankroll the circle even at the strongest observed income")
 	check(frontier_ok and int(choice_histogram.get("5", 0)) > 0 and int(choice_histogram.get("4", 0)) > 0 and int(choice_histogram.get("3", 0)) > 0, label + ": each unfinished path retains an independent next step and actual purchases encounter three, four and five affordable choices")
 	check(entry_bank > 0 or first_purchase_round >= 2, label + ": zero-wallet full-village entry must earn across rounds before its first purchase")
 	print("MARKET CAMPAIGN SUMMARY: %s; first purchase after %d rounds; %d rounds to complete; gold +%d / -%d / %d remaining; recruits +%d / -%d / %d remaining; first-round gold %d; peak round gold %d; affordable-choice histogram %s" % [
