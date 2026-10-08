@@ -62,7 +62,6 @@
       "teal": {"walk_speed": 150.0, "phrase_seconds": 1.0, "conviction_per_phrase": 3.0},
       "amber": {"walk_speed": 230.0, "phrase_seconds": 1.0, "conviction_per_phrase": 8.0}
     },
-    "follower_price_step": 0.1,
     "wanderers": {
       "count": 6,
       "people": ["Shopper", "Courier", "Porter", "Artisan", "Cook", "Patron", "Baker", "Guildmaster", "Courier", "Collector"]

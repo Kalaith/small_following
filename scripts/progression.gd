@@ -214,19 +214,7 @@ func _definition_next_cost(upgrade: Dictionary, id: String) -> int:
 	var price: int = int(prices[rank(id)])
 	if upgrade.get("area", "bramblewick") == "bramblewick":
 		price = roundi(float(price) * resistance_price_multiplier())
-	elif upgrade.get("area", "bramblewick") == "bellmarket":
-		price = roundi(float(price) * market_price_multiplier())
 	return price
-
-
-## Helpers make Bellmarket easier, so every Followers rank owned raises every
-## market price by "market.follower_price_step".
-func market_price_multiplier() -> float:
-	var ranks: int = 0
-	for entry in catalog_for_area("bellmarket"):
-		if entry.branch == "market_follower":
-			ranks += rank(entry.id)
-	return 1.0 + Balance.number("market.follower_price_step") * float(ranks)
 
 
 ## Bramblewick resists harder as each debate opponent is convinced: 1.0 before

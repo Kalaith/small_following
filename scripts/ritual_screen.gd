@@ -164,8 +164,6 @@ func update_state(round_recruits: int = 0) -> void:
 	village_button.text = "Return to the market" if market_circle else "Return to the village"
 	if market_circle:
 		_subtitle_label.text = "BELLMARKET  /  %d NEW FOLLOWERS  /  FIVE PATHS, YOUR CHOICE" % _round_recruits
-		if is_instance_valid(_progression) and _progression.market_price_multiplier() > 1.0:
-			_subtitle_label.text += "  /  Followers: prices +%d%%" % roundi((_progression.market_price_multiplier() - 1.0) * 100.0)
 	elif is_instance_valid(_progression) and _progression.map_complete():
 		_subtitle_label.text = "BRAMBLEWICK COMPLETE / Priest convinced / %s: play again" % Keys.hint("next_round")
 	elif is_instance_valid(_progression) and _progression.has_unlock("encounter_unlock"):
