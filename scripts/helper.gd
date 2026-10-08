@@ -10,7 +10,7 @@ const MAX_STEP: float = 1.0 / 60.0
 ## Floating-point slack when comparing accumulated per-frame time to a fixed interval.
 const TIME_EPSILON: float = 0.000001
 
-## Tuning and robe colours; the market hand swaps these via configure_market().
+## Tuning (main retunes it per area and upgrades) and robe colours (wear_amber()).
 var walk_speed: float = Balance.number("helper.walk_speed")
 var phrase_seconds: float = Balance.number("helper.phrase_seconds")
 var conviction_per_phrase: float = Balance.number("helper.conviction_per_phrase")
@@ -41,12 +41,8 @@ var _search_exhausted: bool = false
 var search_attempts: int = 0
 
 
-## Bellmarket's second helper: an amber robe and a stronger pitch for the market's
-## harder listeners (balance data "market.helper").
-func configure_market() -> void:
-	walk_speed = Balance.number("market.helper.walk_speed")
-	phrase_seconds = Balance.number("market.helper.phrase_seconds")
-	conviction_per_phrase = Balance.number("market.helper.conviction_per_phrase")
+## Bellmarket's second helper, the Market Hand, in an amber robe.
+func wear_amber() -> void:
 	title = "Market hand"
 	robe = Color("b5793a")
 	hood = Color("d49a4c")

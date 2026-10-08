@@ -108,7 +108,7 @@ func _draw_glyph(canvas: Control, at: Vector2, branch: String, color: Color) -> 
 		"persuade", "market_persuade":
 			canvas.draw_polyline(PackedVector2Array([at + Vector2(0, -12) * scale, at + Vector2(9, 0) * scale, at + Vector2(0, 12) * scale, at + Vector2(-9, 0) * scale, at + Vector2(0, -12) * scale]), color, 1.6, true)
 			canvas.draw_line(at + Vector2(0, -6) * scale, at + Vector2(0, 6) * scale, color, 1.2, true)
-		"helper":
+		"helper", "market_follower":
 			canvas.draw_circle(at + Vector2(0, -7) * scale, 4.0 * scale, color)
 			canvas.draw_polyline(PackedVector2Array([at + Vector2(-8, 10) * scale, at + Vector2(0, -1) * scale, at + Vector2(8, 10) * scale]), color, 1.6, true)
 		"gather":

@@ -737,12 +737,29 @@ func _apply_helper() -> void:
 	var team: Array[Node2D] = helpers()
 	for each in team:
 		each.rivals.assign(team.filter(func(other: Node2D) -> bool: return other != each))
+	_tune_helpers()
+
+
+## Bramblewick's helper keeps its village stats. In Bellmarket the teal helper
+## and the amber Market Hand use "market.helper.teal" / ".amber" plus their own
+## Followers upgrades: teal gains conviction per phrase, amber speaks faster.
+func _tune_helpers() -> void:
+	if is_instance_valid(helper):
+		var market: bool = progression.active_area == "bellmarket"
+		var stats: String = "market.helper.teal." if market else "helper."
+		helper.walk_speed = Balance.number(stats + "walk_speed")
+		helper.phrase_seconds = Balance.number(stats + "phrase_seconds")
+		helper.conviction_per_phrase = Balance.number(stats + "conviction_per_phrase") + (progression.market_teal_conviction_bonus() if market else 0.0)
+	if is_instance_valid(market_helper):
+		market_helper.walk_speed = Balance.number("market.helper.amber.walk_speed")
+		market_helper.phrase_seconds = Balance.number("market.helper.amber.phrase_seconds") / (1.0 + progression.market_amber_speed_bonus())
+		market_helper.conviction_per_phrase = Balance.number("market.helper.amber.conviction_per_phrase")
 
 
 func _new_helper(market: bool) -> Node2D:
 	var created := Helper.new()
 	if market:
-		created.configure_market()
+		created.wear_amber()
 	$Actors.add_child(created)
 	created.configure_navigation($Actors)
 	created.reset_round(area_start_position())

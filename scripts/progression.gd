@@ -10,7 +10,7 @@ const AREA_IDS: Array[String] = ["bramblewick", "bellmarket"]
 ## access without them, so a player already there is not rejected; ordinary
 ## travel still requires the whole current circle.
 const POST_MARKET_VILLAGE_IDS: Array[String] = ["beckon_1"]
-const EFFECT_KEYS: Array[String] = ["beckon_add", "encounter_conviction_add", "skeptic_conviction_add", "guard_conviction_add", "zealot_conviction_add", "priest_conviction_add", "merchant_conviction_add", "merchant_donation_add", "speech_speed_add", "conviction_add", "run_speed_add", "meadow_unlock", "east_unlock", "helper_unlock", "merchant_unlock", "encounter_unlock", "market_guild_unlock", "market_patron_unlock", "market_guild_donation_add", "market_patron_donation_add", "market_beckon_add", "market_wanderer_add", "market_helper_unlock"]
+const EFFECT_KEYS: Array[String] = ["beckon_add", "encounter_conviction_add", "skeptic_conviction_add", "guard_conviction_add", "zealot_conviction_add", "priest_conviction_add", "merchant_conviction_add", "merchant_donation_add", "speech_speed_add", "conviction_add", "run_speed_add", "meadow_unlock", "east_unlock", "helper_unlock", "merchant_unlock", "encounter_unlock", "market_guild_unlock", "market_patron_unlock", "market_guild_donation_add", "market_patron_donation_add", "market_beckon_add", "market_wanderer_add", "market_helper_unlock", "market_teal_conviction_add", "market_amber_speed_add"]
 const UNLOCK_KEYS: Array[String] = ["meadow_unlock", "east_unlock", "helper_unlock", "merchant_unlock", "encounter_unlock", "market_guild_unlock", "market_patron_unlock", "market_helper_unlock"]
 
 
@@ -214,7 +214,19 @@ func _definition_next_cost(upgrade: Dictionary, id: String) -> int:
 	var price: int = int(prices[rank(id)])
 	if upgrade.get("area", "bramblewick") == "bramblewick":
 		price = roundi(float(price) * resistance_price_multiplier())
+	elif upgrade.get("area", "bramblewick") == "bellmarket":
+		price = roundi(float(price) * market_price_multiplier())
 	return price
+
+
+## Helpers make Bellmarket easier, so every Followers rank owned raises every
+## market price by "market.follower_price_step".
+func market_price_multiplier() -> float:
+	var ranks: int = 0
+	for entry in catalog_for_area("bellmarket"):
+		if entry.branch == "market_follower":
+			ranks += rank(entry.id)
+	return 1.0 + Balance.number("market.follower_price_step") * float(ranks)
 
 
 ## Bramblewick resists harder as each debate opponent is convinced: 1.0 before
@@ -346,6 +358,16 @@ func market_beckon_reach() -> float:
 	return Balance.number("village.wanderers.beckon_pixels_per_point") * _sum_effect("market_beckon_add")
 
 
+## Extra conviction per phrase for the teal helper in Bellmarket (Seasoned Helper).
+func market_teal_conviction_bonus() -> float:
+	return _sum_effect("market_teal_conviction_add")
+
+
+## Extra phrases per second, as a share of base, for the amber Market Hand (Quick Hands).
+func market_amber_speed_bonus() -> float:
+	return _sum_effect("market_amber_speed_add")
+
+
 ## Lone wanderers each Bellmarket round, capped by the people authored for them.
 func market_wanderer_count() -> int:
 	var people: int = Balance.list("market.wanderers.people").size()
@@ -449,6 +471,8 @@ func effect_preview(id: String) -> Dictionary:
 		"market_beckon_reach": Balance.number("village.wanderers.beckon_pixels_per_point") * float(totals.market_beckon_add),
 		"market_wanderers": Balance.integer("market.wanderers.count") + int(float(totals.market_wanderer_add)),
 		"market_helper_unlock": int(_unlocked(totals, "market_helper_unlock")),
+		"market_teal_conviction": Balance.number("market.helper.teal.conviction_per_phrase") + float(totals.market_teal_conviction_add),
+		"market_amber_phrases": (1.0 + float(totals.market_amber_speed_add)) / Balance.number("market.helper.amber.phrase_seconds"),
 	}
 	current.encounter_unlock = int(_unlocked(totals, "encounter_unlock"))
 	current.encounter_conviction_add = base_conviction + opponent_bonus
@@ -478,6 +502,8 @@ func effect_preview(id: String) -> Dictionary:
 	result.next.market_beckon_reach += Balance.number("village.wanderers.beckon_pixels_per_point") * float(effect.get("market_beckon_add", 0.0))
 	result.next.market_wanderers += int(effect.get("market_wanderer_add", 0))
 	result.next.market_helper_unlock += int(effect.get("market_helper_unlock", 0))
+	result.next.market_teal_conviction += float(effect.get("market_teal_conviction_add", 0.0))
+	result.next.market_amber_phrases += float(effect.get("market_amber_speed_add", 0.0)) / Balance.number("market.helper.amber.phrase_seconds")
 	return result
 
 

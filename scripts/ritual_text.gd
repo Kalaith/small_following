@@ -2,7 +2,7 @@ extends RefCounted
 ## Wording for the ritual's detail panel: branch headings and effect previews.
 
 const Progression = preload("res://scripts/progression.gd")
-const BRANCH_NAMES: Dictionary = {"talk": "THE VOICE", "persuade": "THE CONVICTION", "run": "THE PILGRIM", "gather": "THE VILLAGE", "helper": "THE COMPANION", "merchant": "THE MERCHANT", "trial": "THE TRIALS", "faith": "THE FAITH", "market_run": "THE MARKET ROUTES", "market_talk": "THE MARKET VOICE", "market_persuade": "THE COMMON CAUSE", "market_guild": "THE GUILD", "market_patron": "THE PATRONS"}
+const BRANCH_NAMES: Dictionary = {"talk": "THE VOICE", "persuade": "THE CONVICTION", "run": "THE PILGRIM", "gather": "THE VILLAGE", "helper": "THE COMPANION", "merchant": "THE MERCHANT", "trial": "THE TRIALS", "faith": "THE FAITH", "market_run": "THE MARKET ROUTES", "market_talk": "THE MARKET VOICE", "market_persuade": "THE COMMON CAUSE", "market_guild": "THE GUILD", "market_patron": "THE PATRONS", "market_follower": "THE FOLLOWERS"}
 
 
 static func branch_name(branch: String) -> String:
@@ -18,8 +18,8 @@ static func effect_text(progression: Progression, by_id: Dictionary, id: String,
 	if branch.begins_with("market_"):
 		var market_item: Dictionary = by_id[id]
 		var lines: PackedStringArray = []
-		var labels: Dictionary = {"speech_frequency": "Phrases / second", "conviction": "Conviction / phrase", "run_multiplier": "Running / base speed", "market_guild_unlock": "GUILD TRADERS", "market_guild_donation_add": "Extra donations / guild trader", "market_patron_unlock": "WEALTHY PATRONS", "market_patron_donation_add": "Extra donations / patron", "market_beckon_reach": "Wanderers walk to you within (px)", "market_wanderers": "Lone wanderers / round", "market_helper_unlock": "MARKET HAND"}
-		var keys: Dictionary = {"speech_speed_add": "speech_frequency", "conviction_add": "conviction", "run_speed_add": "run_multiplier", "market_beckon_add": "market_beckon_reach", "market_wanderer_add": "market_wanderers"}
+		var labels: Dictionary = {"speech_frequency": "Phrases / second", "conviction": "Conviction / phrase", "run_multiplier": "Running / base speed", "market_guild_unlock": "GUILD TRADERS", "market_guild_donation_add": "Extra donations / guild trader", "market_patron_unlock": "WEALTHY PATRONS", "market_patron_donation_add": "Extra donations / patron", "market_beckon_reach": "Wanderers walk to you within (px)", "market_wanderers": "Lone wanderers / round", "market_helper_unlock": "MARKET HAND", "market_teal_conviction": "Teal helper / conviction per phrase", "market_amber_phrases": "Market hand / phrases per second"}
+		var keys: Dictionary = {"speech_speed_add": "speech_frequency", "conviction_add": "conviction", "run_speed_add": "run_multiplier", "market_beckon_add": "market_beckon_reach", "market_wanderer_add": "market_wanderers", "market_teal_conviction_add": "market_teal_conviction", "market_amber_speed_add": "market_amber_phrases"}
 		for effect_key in market_item.get("effect", {}):
 			var key: String = str(keys.get(effect_key, effect_key))
 			if not current.has(key):

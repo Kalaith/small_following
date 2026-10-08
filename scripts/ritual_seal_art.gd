@@ -23,6 +23,8 @@ func arc(canvas: Control, center: Vector2, radius: float, color: Color, width: f
 func draw_backdrop(canvas: Control) -> void:
 	if screen.market_circle:
 		draw_market_seal(canvas)
+		for seal in Layout.satellite_seals(screen.catalog):
+			_draw_satellite(canvas, seal)
 		return
 	# These bands and satellites are ornament, never extra upgrade connections.
 	# Their contrast stays below the solid/dashed catalog edges drawn afterward.

@@ -7,7 +7,7 @@ const SECTOR_ANGLES: Dictionary = {"talk": -90.0, "run": 180.0, "persuade": 0.0,
 const BRANCH_TITLES: Dictionary = {"talk": "Words", "run": "Running", "persuade": "Creed", "gather": "Village", "helper": "Followers", "merchant": "Merchants", "trial": "Trials", "faith": "Faith"}
 const FAN_HALF_ANGLE: float = 15.0
 const MARKET_BRANCHES: Array[String] = ["market_run", "market_talk", "market_persuade", "market_guild", "market_patron"]
-const MARKET_TITLES: Dictionary = {"market_run": "Routes", "market_talk": "Voice", "market_persuade": "Creed", "market_guild": "Guild", "market_patron": "Patrons"}
+const MARKET_TITLES: Dictionary = {"market_follower": "Followers", "market_run": "Routes", "market_talk": "Voice", "market_persuade": "Creed", "market_guild": "Guild", "market_patron": "Patrons"}
 # The first three nodes retain their original petal positions. The next three
 # turn down the petal's spare side, keeping six real steps inside the same seal.
 const MARKET_TIER_ANGLES: Array[float] = [-13.0, 15.0, 0.0, -17.0, -24.0, -31.0]
@@ -56,7 +56,9 @@ const VILLAGE_POSITIONS: Dictionary = {
 const MARKET_POSITIONS: Dictionary = {
 	"market_beckon_1": Vector2(205, -325),
 	"market_crowd_1": Vector2(314, 102),
-	"market_helper_1": Vector2(25, 365),
+	"market_teal_1": Vector2(0, 498),
+	"market_helper_1": Vector2(-50, 580),
+	"market_amber_1": Vector2(50, 580),
 }
 
 # Cross-branch requirements remain the same directed edges. These sparse bends
@@ -93,6 +95,9 @@ static func satellite_seals(catalog: Array) -> Array[Dictionary]:
 		result.append({"center": Vector2(-335, -255), "radius": 112.0, "motif": "rings"})
 	if ids.has("run_1") and ids.has("run_6"):
 		result.append({"center": Vector2(-325, 150), "radius": 174.0, "motif": "spiral"})
+	if ids.has("market_teal_1"):
+		# Bellmarket's Followers sit in their own small seal below the market circle.
+		result.append({"center": Vector2(0, 552), "radius": 84.0, "motif": "petals"})
 	if ids.has("helper_1"):
 		result.append({"center": Vector2(-265, 385), "radius": 66.0, "motif": "petals"})
 	return result
