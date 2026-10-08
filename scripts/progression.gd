@@ -2,6 +2,7 @@ extends RefCounted
 ## Single owner for upgrade purchases and durable earnings. Definitions contain no code.
 ## Saves only progression: rounds always start fresh after relaunch; no offline accrual.
 
+const Balance = preload("res://scripts/balance.gd")
 const SAVE_VERSION: int = 4
 const MAX_COUNTER: int = 1000000000
 const AREA_IDS: Array[String] = ["bramblewick", "bellmarket"]
@@ -9,16 +10,9 @@ const AREA_IDS: Array[String] = ["bramblewick", "bellmarket"]
 ## access without them, so a player already there is not rejected; ordinary
 ## travel still requires the whole current circle.
 const POST_MARKET_VILLAGE_IDS: Array[String] = ["beckon_1"]
-## One beckon point draws wanderers from this many world pixels away.
-const BECKON_PIXELS_PER_POINT: float = 100.0
 const EFFECT_KEYS: Array[String] = ["beckon_add", "encounter_conviction_add", "skeptic_conviction_add", "guard_conviction_add", "zealot_conviction_add", "priest_conviction_add", "merchant_conviction_add", "merchant_donation_add", "speech_speed_add", "conviction_add", "run_speed_add", "meadow_unlock", "east_unlock", "helper_unlock", "merchant_unlock", "encounter_unlock", "market_guild_unlock", "market_patron_unlock", "market_guild_donation_add", "market_patron_donation_add"]
 const UNLOCK_KEYS: Array[String] = ["meadow_unlock", "east_unlock", "helper_unlock", "merchant_unlock", "encounter_unlock", "market_guild_unlock", "market_patron_unlock"]
 
-const BASE_MERCHANT_DONATION: int = 12
-## Bramblewick resists harder as each debate opponent is convinced: unbought
-## village ranks cost this fraction more per convinced opponent (stage 0-4).
-const RESISTANCE_PRICE_STEP: float = 0.3
-const ENCOUNTER_REWARDS: Array[int] = [30, 45, 60, 120]
 
 var encounter_stage: int = 0
 var coins: int = 0
@@ -223,9 +217,10 @@ func _definition_next_cost(upgrade: Dictionary, id: String) -> int:
 	return price
 
 
-## 1.0 before the first debate victory, rising RESISTANCE_PRICE_STEP per victory.
+## Bramblewick resists harder as each debate opponent is convinced: 1.0 before
+## the first victory, rising "village.resistance_price_step" per victory.
 func resistance_price_multiplier() -> float:
-	return 1.0 + RESISTANCE_PRICE_STEP * float(encounter_stage)
+	return 1.0 + Balance.number("village.resistance_price_step") * float(encounter_stage)
 
 
 func _definition_next_recruit_cost(upgrade: Dictionary, id: String) -> int:
@@ -343,7 +338,7 @@ func run_multiplier() -> float:
 
 ## World pixels within which lone wanderers walk toward the cultist; zero without Beckoning Call.
 func beckon_reach() -> float:
-	return BECKON_PIXELS_PER_POINT * _sum_effect("beckon_add")
+	return Balance.number("village.wanderers.beckon_pixels_per_point") * _sum_effect("beckon_add")
 
 
 func has_unlock(key: String) -> bool:
@@ -361,7 +356,7 @@ func encounter_conviction(kind: String) -> float:
 func complete_encounter(expected_stage: int) -> bool:
 	if expected_stage != encounter_stage or encounter_stage >= 4 or not has_unlock("encounter_unlock"):
 		return false
-	_add_earnings(ENCOUNTER_REWARDS[encounter_stage], 1)
+	_add_earnings(int(Balance.list("encounters.opponents")[encounter_stage].reward), 1)
 	encounter_stage += 1
 	# Like earned donations, victory stays in memory on failed storage; expose the error.
 	save_progress()
@@ -411,7 +406,7 @@ func try_travel(area_id: String, bypass_unlock: bool = false) -> bool:
 
 
 func merchant_donation() -> int:
-	return BASE_MERCHANT_DONATION + int(_sum_effect("merchant_donation_add"))
+	return Balance.integer("village.merchants.base_donation") + int(_sum_effect("merchant_donation_add"))
 
 
 func market_donation(npc_type: String, base_amount: int) -> int:
@@ -421,7 +416,7 @@ func market_donation(npc_type: String, base_amount: int) -> int:
 
 
 func gathering_count() -> int:
-	return 3 + int(has_unlock("meadow_unlock")) + int(has_unlock("east_unlock"))
+	return Balance.list("village.gatherings").size() + int(has_unlock("meadow_unlock")) + int(has_unlock("east_unlock"))
 
 
 func effect_preview(id: String) -> Dictionary:
@@ -434,12 +429,12 @@ func effect_preview(id: String) -> Dictionary:
 		"speech_frequency": 1.0 + float(totals.speech_speed_add),
 		"conviction": base_conviction,
 		"run_multiplier": 1.0 + float(totals.run_speed_add),
-		"gatherings": 3 + int(_unlocked(totals, "meadow_unlock")) + int(_unlocked(totals, "east_unlock")),
+		"gatherings": Balance.list("village.gatherings").size() + int(_unlocked(totals, "meadow_unlock")) + int(_unlocked(totals, "east_unlock")),
 		"merchant_unlock": int(_unlocked(totals, "merchant_unlock")),
 		"merchant_conviction_add": base_conviction + float(totals.merchant_conviction_add),
-		"merchant_donation_add": BASE_MERCHANT_DONATION + int(float(totals.merchant_donation_add)),
+		"merchant_donation_add": Balance.integer("village.merchants.base_donation") + int(float(totals.merchant_donation_add)),
 		"helpers": int(_unlocked(totals, "helper_unlock")),
-		"beckon_reach": BECKON_PIXELS_PER_POINT * float(totals.beckon_add),
+		"beckon_reach": Balance.number("village.wanderers.beckon_pixels_per_point") * float(totals.beckon_add),
 	}
 	current.encounter_unlock = int(_unlocked(totals, "encounter_unlock"))
 	current.encounter_conviction_add = base_conviction + opponent_bonus
@@ -465,7 +460,7 @@ func effect_preview(id: String) -> Dictionary:
 			var key: String = "market_" + kind + suffix
 			result.next[key] += float(effect.get(key, 0.0))
 	result.next.helpers += int(effect.get("helper_unlock", 0))
-	result.next.beckon_reach += BECKON_PIXELS_PER_POINT * float(effect.get("beckon_add", 0.0))
+	result.next.beckon_reach += Balance.number("village.wanderers.beckon_pixels_per_point") * float(effect.get("beckon_add", 0.0))
 	return result
 
 

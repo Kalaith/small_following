@@ -5,26 +5,17 @@ signal phrase_spoken
 
 const Progression = preload("res://scripts/progression.gd")
 const LISTENER_COUNT: int = 5
-const CONVICTION_REQUIRED: float = 3.0
-const DONATION: int = 3
-const MERCHANT_COUNT: int = 2
-const MERCHANT_CONVICTION: float = 9.0
 ## Floating-point slack when comparing accumulated per-frame time to a fixed interval.
 const TIME_EPSILON: float = 0.000001
-## Ordinary villagers who share a convinced opponent's habits. They join the
-## village after that opponent's victory. Rebuttals are phrases ignored at the
-## start of each visit; decay is conviction lost per second while unattended.
-const VILLAGE_TYPES: Dictionary = {
-	"doubter": {"conviction": 6.0, "donation": 6, "rebuttals": 0, "decay": 0.0, "coat": "7f95a3", "hint": "Each needs 6 conviction"},
-	"watch": {"conviction": 6.0, "donation": 8, "rebuttals": 2, "decay": 0.0, "coat": "62788f", "hint": "First 2 phrases each visit are answered"},
-	"devotee": {"conviction": 9.0, "donation": 10, "rebuttals": 0, "decay": 2.0, "coat": "b9705a", "hint": "Doubt returns at 2/s while you are away"},
-}
-## Time away from the player after which objections are ready again.
-const REBUTTAL_RESET_SECONDS: float = 0.5
+const Balance = preload("res://scripts/balance.gd")
+## Ordinary villagers who share a convinced opponent's habits join the village
+## after that opponent's victory (balance data "village.types"). Rebuttals are
+## phrases ignored at the start of each visit; decay is conviction lost per
+## second while unattended; objections reset after time away.
 
 var listener_count: int = LISTENER_COUNT
-var conviction_required: float = CONVICTION_REQUIRED
-var donation: int = DONATION
+var conviction_required: float = Balance.number("village.listener.conviction")
+var donation: int = Balance.integer("village.listener.donation")
 var npc_type: String = "villager"
 var rebuttals_per_visit: int = 0
 var decay_per_second: float = 0.0
@@ -179,9 +170,9 @@ func _ready() -> void:
 		listener.merchant = npc_type == "merchant"
 		listener.coat = colors[(i + coat_offset) % colors.size()]
 		listener.phase = float(i)
-		if VILLAGE_TYPES.has(npc_type):
+		if Balance.dict("village.types").has(npc_type):
 			listener.kind = npc_type
-			listener.coat = Color(String(VILLAGE_TYPES[npc_type].coat)).lerp(colors[(i + coat_offset) % colors.size()], 0.25)
+			listener.coat = Color(String(Balance.dict("village.types")[npc_type].coat)).lerp(colors[(i + coat_offset) % colors.size()], 0.25)
 		if not listener_profiles.is_empty():
 			listener.role = String(listener_profiles[i]["role"])
 			listener.profile_type = String(listener_profiles[i]["npc_type"])
@@ -192,7 +183,7 @@ func _ready() -> void:
 
 ## Applies a village type's thresholds, rewards and habits; call before _ready.
 func configure_village_type(type_id: String) -> void:
-	var rules: Dictionary = VILLAGE_TYPES[type_id]
+	var rules: Dictionary = Balance.dict("village.types")[type_id]
 	npc_type = type_id
 	conviction_required = float(rules.conviction)
 	donation = int(rules.donation)
@@ -240,7 +231,7 @@ func advance_unattended(delta: float) -> void:
 	if decay_per_second > 0.0 and progress > 0.0:
 		progress = maxf(0.0, progress - decay_per_second * delta)
 		queue_redraw()
-	if _unattended >= REBUTTAL_RESET_SECONDS and rebuttals_left != rebuttals_per_visit:
+	if _unattended >= Balance.number("village.rebuttal_reset_seconds") and rebuttals_left != rebuttals_per_visit:
 		rebuttals_left = rebuttals_per_visit
 		queue_redraw()
 
@@ -365,11 +356,6 @@ func _draw() -> void:
 	var caption: String = "%s  %d/%d" % [group_name, recruits, listener_count]
 	if rebuttals_left > 0 and first_unconverted() >= 0:
 		caption += "  /  %d objection%s" % [rebuttals_left, "" if rebuttals_left == 1 else "s"]
-	if VILLAGE_TYPES.has(npc_type) and is_listening:
-		var hint: String = String(VILLAGE_TYPES[npc_type].hint)
-		var hint_width: float = font.get_string_size(hint, HORIZONTAL_ALIGNMENT_LEFT, -1, 13).x
-		draw_style_box(_caption_style(), Rect2(-hint_width * 0.5 - 8, -108, hint_width + 16, 22))
-		draw_string(font, Vector2(-hint_width * 0.5, -92), hint, HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("e8d4a9"))
 	var width: float = font.get_string_size(caption, HORIZONTAL_ALIGNMENT_LEFT, -1, 16).x
 	var caption_top: float = -112.0 if lone else -142.0
 	draw_style_box(_caption_style(), Rect2(-width * 0.5 - 10, caption_top, width + 20, 30))

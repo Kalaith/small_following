@@ -5,7 +5,7 @@ extends RefCounted
 ## Placement checks the drawn prop art, not only collision, so nobody spawns
 ## hidden behind a roof or canopy.
 
-const COUNT: int = 5
+const Balance = preload("res://scripts/balance.gd")
 const TITLE: String = "Wanderer"
 ## Feet positions stay inside the fences and the helper's navigation grid.
 const AREA := Rect2(110, 170, 1340, 820)
@@ -17,8 +17,7 @@ const PROP_MARGIN: float = 12.0
 const GATHERING_CLEARANCE: float = 190.0
 const SPACING: float = 150.0
 const MAX_ATTEMPTS: int = 600
-## Pulled wanderers walk slower than the base run and stop inside speaking range.
-const PULL_SPEED: float = 110.0
+## Pulled wanderers walk at "village.wanderers.pull_speed" and stop inside speaking range.
 const PULL_STOP: float = 58.0
 const BODY_RADIUS: float = 10.0
 
@@ -62,7 +61,7 @@ static func pull(wanderers: Array[Node2D], toward: Vector2, reach: float, delta:
 		var distance: float = from.distance_to(toward)
 		if distance > reach or distance <= PULL_STOP:
 			continue
-		var step: Vector2 = from.direction_to(toward) * minf(PULL_SPEED * delta, distance - PULL_STOP)
+		var step: Vector2 = from.direction_to(toward) * minf(Balance.number("village.wanderers.pull_speed") * delta, distance - PULL_STOP)
 		for candidate in [step, Vector2(step.x, 0), Vector2(0, step.y)]:
 			if not _blocked(from + candidate, footprints):
 				wanderer.global_position = from + candidate

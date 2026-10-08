@@ -5,32 +5,28 @@ extends Node2D
 const Village = preload("res://scripts/village.gd")
 const WORLD_SIZE := Vector2(1560, 1100)
 const START_POSITION := Vector2(780, 680)
-const ORDINARY_CONVICTION: float = 24.0
-const ORDINARY_DONATION: int = 10
-const GUILD_CONVICTION: float = 48.0
-const GUILD_DONATION: int = 30
-const PATRON_CONVICTION: float = 60.0
-const PATRON_DONATION: int = 50
+const Balance = preload("res://scripts/balance.gd")
 
-const BAKER = {"role": "Baker", "npc_type": "ordinary", "conviction_required": ORDINARY_CONVICTION, "donation": ORDINARY_DONATION, "requires": ""}
-const PORTER = {"role": "Porter", "npc_type": "ordinary", "conviction_required": ORDINARY_CONVICTION, "donation": ORDINARY_DONATION, "requires": ""}
-const SHOPPER = {"role": "Shopper", "npc_type": "ordinary", "conviction_required": ORDINARY_CONVICTION, "donation": ORDINARY_DONATION, "requires": ""}
-const COOK = {"role": "Cook", "npc_type": "ordinary", "conviction_required": ORDINARY_CONVICTION, "donation": ORDINARY_DONATION, "requires": ""}
-const COURIER = {"role": "Courier", "npc_type": "ordinary", "conviction_required": ORDINARY_CONVICTION, "donation": ORDINARY_DONATION, "requires": ""}
-const ARTISAN = {"role": "Artisan", "npc_type": "guild", "conviction_required": GUILD_CONVICTION, "donation": GUILD_DONATION, "requires": "market_guild_unlock"}
-const GUILDER = {"role": "Guildmaster", "npc_type": "guild", "conviction_required": GUILD_CONVICTION, "donation": GUILD_DONATION, "requires": "market_guild_unlock"}
-const PATRON = {"role": "Patron", "npc_type": "patron", "conviction_required": PATRON_CONVICTION, "donation": PATRON_DONATION, "requires": "market_patron_unlock"}
-const COLLECTOR = {"role": "Collector", "npc_type": "patron", "conviction_required": PATRON_CONVICTION, "donation": PATRON_DONATION, "requires": "market_patron_unlock"}
 
-# The slot order deliberately intersperses introductions; a lock never blocks
-# the ordinary person behind it. Independent gates affect several districts.
-const GROUP_LAYOUT = [
-	{"title": "Bread Court", "position": Vector2(565, 690), "profiles": [BAKER, PORTER, SHOPPER, COOK, COURIER]},
-	{"title": "Cart Crossing", "position": Vector2(795, 470), "profiles": [PORTER, ARTISAN, SHOPPER, COURIER, BAKER]},
-	{"title": "Guild Row", "position": Vector2(480, 440), "profiles": [ARTISAN, COURIER, GUILDER, PORTER, COOK]},
-	{"title": "Silk Arcade", "position": Vector2(1045, 650), "profiles": [SHOPPER, PATRON, ARTISAN, PORTER, COURIER]},
-	{"title": "Patron Steps", "position": Vector2(1080, 370), "profiles": [PATRON, BAKER, COLLECTOR, SHOPPER, COOK]},
-]
+## One market listener's profile, from the role its person plays
+## (balance data "market.people" and "market.roles").
+static func profile(person: String) -> Dictionary:
+	var npc_type: String = String(Balance.dict("market.people")[person])
+	var role: Dictionary = Balance.dict("market.roles")[npc_type]
+	return {"role": person, "npc_type": npc_type, "conviction_required": float(role.conviction), "donation": int(role.donation), "requires": String(role.requires)}
+
+
+## The five districts. Slot order deliberately intersperses introductions; a
+## lock never blocks the ordinary person behind it.
+static func group_layout() -> Array[Dictionary]:
+	var layout: Array[Dictionary] = []
+	for group in Balance.list("market.groups"):
+		var profiles: Array[Dictionary] = []
+		for person in group.people:
+			profiles.append(profile(String(person)))
+		layout.append({"title": String(group.title), "position": Balance.vec(group.at), "profiles": profiles})
+	return layout
+
 
 # Every position is a feet origin. The square's center and district approaches
 # stay open; the reused props add real layer-2 collision at their bases.

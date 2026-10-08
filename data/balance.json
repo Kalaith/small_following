@@ -1,0 +1,67 @@
+{
+  "round": {
+    "seconds": 11.0,
+    "base_run_speed": 180.0,
+    "speaking_radius": 105.0
+  },
+  "village": {
+    "listener": {"conviction": 3.0, "donation": 3},
+    "rebuttal_reset_seconds": 0.5,
+    "gatherings": [
+      {"title": "Wellside neighbours", "at": [560, 540], "count": 4},
+      {"title": "Market regulars", "at": [1050, 480], "count": 3},
+      {"title": "Garden club", "at": [850, 850], "count": 4}
+    ],
+    "invited_gatherings": [
+      {"key": "meadow_unlock", "title": "Meadow neighbours", "at": [470, 800], "count": 4},
+      {"key": "east_unlock", "title": "East lane visitors", "at": [1250, 580], "count": 3}
+    ],
+    "merchants": {"title": "Travelling merchants", "at": [1020, 650], "count": 2, "conviction": 9.0, "base_donation": 12},
+    "types": {
+      "doubter": {"conviction": 6.0, "donation": 6, "rebuttals": 0, "decay": 0.0, "coat": "7f95a3"},
+      "watch": {"conviction": 6.0, "donation": 8, "rebuttals": 2, "decay": 0.0, "coat": "62788f"},
+      "devotee": {"conviction": 9.0, "donation": 10, "rebuttals": 0, "decay": 2.0, "coat": "b9705a"}
+    },
+    "stage_gatherings": [
+      {"stage": 1, "type": "doubter", "title": "Doubters", "at": [330, 580], "count": 3},
+      {"stage": 2, "type": "watch", "title": "Town watch", "at": [1290, 400], "count": 3},
+      {"stage": 3, "type": "devotee", "title": "Devotees", "at": [680, 960], "count": 3}
+    ],
+    "wanderers": {"count": 5, "pull_speed": 110.0, "beckon_pixels_per_point": 100.0},
+    "resistance_price_step": 0.3
+  },
+  "helper": {"walk_speed": 150.0, "phrase_seconds": 1.0, "conviction_per_phrase": 1.0},
+  "encounters": {
+    "walk_speed": 220.0,
+    "opponents": [
+      {"id": "skeptic", "title": "Skeptic", "conviction": 42.0, "rebuttals": 0, "decay": 0.0, "reward": 30, "coat": "728b98"},
+      {"id": "guard", "title": "Town Guard", "conviction": 72.0, "rebuttals": 2, "decay": 0.0, "reward": 45, "coat": "607590"},
+      {"id": "zealot", "title": "Zealot", "conviction": 108.0, "rebuttals": 0, "decay": 6.0, "reward": 60, "coat": "bb7454"},
+      {"id": "priest", "title": "Priest of Bramblewick", "conviction": 300.0, "rebuttals": 3, "decay": 9.0, "reward": 120, "coat": "e4d3a3"}
+    ]
+  },
+  "market": {
+    "roles": {
+      "ordinary": {"conviction": 24.0, "donation": 10, "requires": ""},
+      "guild": {"conviction": 48.0, "donation": 30, "requires": "market_guild_unlock"},
+      "patron": {"conviction": 60.0, "donation": 50, "requires": "market_patron_unlock"}
+    },
+    "people": {
+      "Baker": "ordinary", "Porter": "ordinary", "Shopper": "ordinary", "Cook": "ordinary", "Courier": "ordinary",
+      "Artisan": "guild", "Guildmaster": "guild",
+      "Patron": "patron", "Collector": "patron"
+    },
+    "groups": [
+      {"title": "Bread Court", "at": [565, 690], "people": ["Baker", "Porter", "Shopper", "Cook", "Courier"]},
+      {"title": "Cart Crossing", "at": [795, 470], "people": ["Porter", "Artisan", "Shopper", "Courier", "Baker"]},
+      {"title": "Guild Row", "at": [480, 440], "people": ["Artisan", "Courier", "Guildmaster", "Porter", "Cook"]},
+      {"title": "Silk Arcade", "at": [1045, 650], "people": ["Shopper", "Patron", "Artisan", "Porter", "Courier"]},
+      {"title": "Patron Steps", "at": [1080, 370], "people": ["Patron", "Baker", "Collector", "Shopper", "Cook"]}
+    ]
+  },
+  "targets": {
+    "village_campaign_rounds": [48, 62],
+    "market_entry_max_open_recruits": 9,
+    "market_round_share_of_circle": 15
+  }
+}

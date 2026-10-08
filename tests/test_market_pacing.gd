@@ -2,6 +2,7 @@ extends SceneTree
 ## Bellmarket balance assumes every village rank. A fresh password start is
 ## a separate accessibility diagnostic, not the normal second-level entry build.
 
+const Balance = preload("res://scripts/balance.gd")
 const Route = preload("res://tests/market_route_fixture.gd")
 const Market = preload("res://scripts/market.gd")
 const BRANCHES: Array[String] = ["run", "talk", "persuade", "guild", "patron"]
@@ -39,7 +40,7 @@ func simulate(label: String, order: Array[int] = Route.CIRCUIT, purchases: Array
 func _run() -> void:
 	var carried: Dictionary = await simulate("all village ranks / market entry")
 	check(carried.running_speed == 432.0 and carried.phrase_frequency == 3.5 and carried.conviction_per_phrase == 5.0 and carried.village_upgrade_spend == 2377, "normal market balancing uses ALL village ranks and their distinct carried stats")
-	check(carried.recruited_types.guild == 0 and carried.recruited_types.patron == 0 and carried.donations == carried.recruits * Market.ORDINARY_DONATION and carried.recruits <= 9 and carried.eligible_clear_seconds < 0.0, "full village entry reaches under half the open listeners without bypassing specialist introductions")
+	check(carried.recruited_types.guild == 0 and carried.recruited_types.patron == 0 and carried.donations == carried.recruits * Balance.integer("market.roles.ordinary.donation") and carried.recruits <= Balance.integer("targets.market_entry_max_open_recruits") and carried.eligible_clear_seconds < 0.0, "full village entry reaches under half the open listeners without bypassing specialist introductions")
 	var guild: Dictionary = await simulate("six guild ranks / Guild Row to carts", [2, 1, 0], Route.branch_purchases("guild"))
 	check(guild.recruited_types.guild >= 2 and guild.recruited_types.patron == 0 and guild.donations > carried.donations, "guild specialization pays through completed rich-trader conversations")
 	var patrons: Dictionary = await simulate("six patron ranks / steps to silk", [4, 3, 1], Route.branch_purchases("patron"))

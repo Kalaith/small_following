@@ -6,15 +6,27 @@ signal phrase_spoken
 const CENTER := Vector2(790, 570)
 const ENTRANCE := Vector2(1470, 630)
 const TURN := Vector2(1000, 630)
-const WALK_SPEED: float = 220.0
 ## Floating-point slack when comparing accumulated per-frame time to a fixed interval.
 const TIME_EPSILON: float = 0.000001
-const PROFILES: Array[Dictionary] = [
-	{"id": "skeptic", "title": "Skeptic", "conviction": 42.0, "rebuttals": 0, "decay": 0.0, "coat": "728b98", "hint": "A patient argument / 42 conviction"},
-	{"id": "guard", "title": "Town Guard", "conviction": 72.0, "rebuttals": 2, "decay": 0.0, "coat": "607590", "hint": "First 2 phrases answer objections"},
-	{"id": "zealot", "title": "Zealot", "conviction": 108.0, "rebuttals": 0, "decay": 6.0, "coat": "bb7454", "hint": "Loses 6 conviction/s when you leave"},
-	{"id": "priest", "title": "Priest of Bramblewick", "conviction": 300.0, "rebuttals": 3, "decay": 9.0, "coat": "e4d3a3", "hint": "3 objections / loses 9 conviction/s alone"},
-]
+const Balance = preload("res://scripts/balance.gd")
+
+
+## The four opponents in order; thresholds, habits and rewards are balance data.
+static func profiles() -> Array:
+	return Balance.list("encounters.opponents")
+
+
+## The arrival caption, written from the opponent's actual numbers.
+static func hint(profile: Dictionary) -> String:
+	var parts: Array[String] = []
+	var rebuttals: int = int(profile.rebuttals)
+	if rebuttals > 0:
+		parts.append("%d objection%s" % [rebuttals, "" if rebuttals == 1 else "s"])
+	if float(profile.decay) > 0.0:
+		parts.append("loses %s conviction/s alone" % String.num(float(profile.decay)))
+	parts.append("%s conviction" % String.num(float(profile.conviction)))
+	return " / ".join(parts)
+
 
 var stage: int = 0
 var progress: float = 0.0
@@ -28,14 +40,14 @@ var path: Array[Vector2] = [TURN, CENTER]
 
 func _ready() -> void:
 	position = ENTRANCE
-	rebuttals_left = int(PROFILES[stage].rebuttals)
+	rebuttals_left = int(profiles()[stage].rebuttals)
 
 
 func advance_arrival(delta: float) -> float:
 	var remaining: float = maxf(0.0, delta)
 	while not path.is_empty() and remaining > 0.0:
-		var used: float = minf(remaining, position.distance_to(path[0]) / WALK_SPEED)
-		position = position.move_toward(path[0], WALK_SPEED * used)
+		var used: float = minf(remaining, position.distance_to(path[0]) / Balance.number("encounters.walk_speed"))
+		position = position.move_toward(path[0], Balance.number("encounters.walk_speed") * used)
 		remaining -= used
 		if position.distance_to(path[0]) < 0.001:
 			path.remove_at(0)
@@ -53,7 +65,7 @@ func advance_speech(delta: float, in_range: bool, interval: float, conviction: f
 	if not arrived or defeated:
 		return
 	if not listening:
-		progress = maxf(0.0, progress - float(PROFILES[stage].decay) * delta)
+		progress = maxf(0.0, progress - float(profiles()[stage].decay) * delta)
 	else:
 		phrase_elapsed += maxf(0.0, delta)
 		while phrase_elapsed + TIME_EPSILON >= interval and not defeated:
@@ -62,15 +74,15 @@ func advance_speech(delta: float, in_range: bool, interval: float, conviction: f
 			if rebuttals_left > 0:
 				rebuttals_left -= 1
 			else:
-				progress = minf(float(PROFILES[stage].conviction), progress + maxf(0.0, conviction))
-				if progress >= float(PROFILES[stage].conviction):
+				progress = minf(float(profiles()[stage].conviction), progress + maxf(0.0, conviction))
+				if progress >= float(profiles()[stage].conviction):
 					defeated = true
 					convinced.emit(stage)
 	queue_redraw()
 
 
 func _draw() -> void:
-	var profile: Dictionary = PROFILES[stage]
+	var profile: Dictionary = profiles()[stage]
 	var color := Color("b49bd0") if defeated else Color(profile.coat)
 	draw_set_transform(Vector2.ZERO, 0, Vector2(1, 0.4))
 	draw_circle(Vector2.ZERO, 18, Color(0.22, 0.27, 0.2, 0.22))
@@ -109,14 +121,14 @@ func _draw() -> void:
 		detail = "%d / %d conviction" % [int(progress), int(profile.conviction)]
 		if rebuttals_left > 0:
 			detail += " / %d objections" % rebuttals_left
-	var hint: String = str(profile.hint) if arrived and not defeated else ""
+	var hint_text: String = hint(profile) if arrived and not defeated else ""
 	var width: float = maxf(font.get_string_size(title, HORIZONTAL_ALIGNMENT_LEFT, -1, 18).x, font.get_string_size(detail, HORIZONTAL_ALIGNMENT_LEFT, -1, 13).x)
-	width = maxf(width, font.get_string_size(hint, HORIZONTAL_ALIGNMENT_LEFT, -1, 12).x) + 24
-	draw_style_box(_style(), Rect2(-width * 0.5, -150, width, 66 if not hint.is_empty() else 46))
+	width = maxf(width, font.get_string_size(hint_text, HORIZONTAL_ALIGNMENT_LEFT, -1, 12).x) + 24
+	draw_style_box(_style(), Rect2(-width * 0.5, -150, width, 66 if not hint_text.is_empty() else 46))
 	draw_string(font, Vector2(-width * 0.5 + 12, -130), title, HORIZONTAL_ALIGNMENT_LEFT, -1, 18, Color("fff0ce"))
 	draw_string(font, Vector2(-width * 0.5 + 12, -111), detail, HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("e8d4a9"))
-	if not hint.is_empty():
-		draw_string(font, Vector2(-width * 0.5 + 12, -92), hint, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color("fff0ce"))
+	if not hint_text.is_empty():
+		draw_string(font, Vector2(-width * 0.5 + 12, -92), hint_text, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color("fff0ce"))
 	if arrived and not defeated:
 		draw_arc(Vector2.ZERO, 28, 0, TAU, 40, Color("e9cc8f"), 2, true)
 		draw_line(Vector2(-48, 17), Vector2(48, 17), Color("62634d"), 6)

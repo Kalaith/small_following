@@ -35,13 +35,13 @@ func _mechanics() -> void:
 		check(opponent.progress == 0 and not opponent.defeated, "cannot persuade walking opponent %d" % stage)
 		var remaining: float = opponent.advance_arrival(4.0)
 		check(opponent.arrived and opponent.position == Encounter.CENTER and remaining > 0.8 and remaining < 0.9, "arrival reaches center and consumes travel time %d" % stage)
-		for phrase in range(int(Encounter.PROFILES[stage].rebuttals)):
+		for phrase in range(int(Encounter.profiles()[stage].rebuttals)):
 			opponent.advance_speech(1.0, true, 1.0, 10)
 		check(opponent.progress == 0 and opponent.rebuttals_left == 0, "opening objections consume whole phrases %d" % stage)
 		opponent.advance_speech(1.0, true, 1.0, 10)
 		check(opponent.progress == 10, "completed phrase adds conviction %d" % stage)
 		opponent.advance_speech(1.0, false, 1.0, 10)
-		check(opponent.progress == maxf(0, 10 - float(Encounter.PROFILES[stage].decay)), "opponent-specific unattended conviction %d" % stage)
+		check(opponent.progress == maxf(0, 10 - float(Encounter.profiles()[stage].decay)), "opponent-specific unattended conviction %d" % stage)
 		opponent.advance_speech(100, true, 1.0, 10)
 		check(opponent.defeated, "ordinary phrases can convince opponent %d" % stage)
 		opponent.queue_free()
@@ -94,8 +94,8 @@ func _campaign() -> void:
 			steps += 1
 		check(scene.encounter.defeated and state.encounter_stage == stage + 1 and scene.seconds_left > 0, "convincing opponent advances exactly one saved stage %d" % stage)
 		var reward = scene.encounter.get_child(0)
-		check(reward is Label and reward.text == str(state.ENCOUNTER_REWARDS[stage]), "opponent displays its numeric victory payout %d" % stage)
-		print("CAMPAIGN: %s convinced in %.3fs / %.3fs left" % [Encounter.PROFILES[stage].title, steps * STEP, scene.seconds_left])
+		check(reward is Label and reward.text == str(int(Encounter.profiles()[stage].reward)), "opponent displays its numeric victory payout %d" % stage)
+		print("CAMPAIGN: %s convinced in %.3fs / %.3fs left" % [Encounter.profiles()[stage].title, steps * STEP, scene.seconds_left])
 		before = state.coins
 		check(not state.complete_encounter(stage) and state.coins == before, "duplicate victory cannot pay twice %d" % stage)
 		var loaded = Progression.new()

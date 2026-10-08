@@ -1,6 +1,7 @@
 extends SceneTree
 ## Lone wanderers and Beckoning Call against the real scene; never touches ordinary progression.
 ## Use --headless --fixed-fps 60 --path . --script res://tests/test_wanderers.gd
+const Balance = preload("res://scripts/balance.gd")
 const STEP: float = 1.0 / 60.0
 const Progression = preload("res://scripts/progression.gd")
 const Wanderers = preload("res://scripts/wanderers.gd")
@@ -52,7 +53,7 @@ func _run() -> void:
 
 
 func _check_placement(scene) -> void:
-	check(scene.wanderers.size() == Wanderers.COUNT, "the village scatters five lone wanderers")
+	check(scene.wanderers.size() == Balance.integer("village.wanderers.count"), "the village scatters five lone wanderers")
 	var all_clear: bool = true
 	for seed in range(1, 301):
 		scene._wanderer_rng.seed = seed

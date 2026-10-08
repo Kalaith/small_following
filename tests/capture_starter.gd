@@ -541,7 +541,7 @@ func capture_encounters(scene) -> void:
 			await save_frame("opponent-arrival.png")
 		scene.advance_round(2.9)
 		scene._update_hud()
-		await save_frame("opponent-%s.png" % scene.Encounter.PROFILES[stage].id)
+		await save_frame("opponent-%s.png" % scene.Encounter.profiles()[stage].id)
 		while scene.round_active and not scene.encounter.defeated:
 			scene.advance_round(1.0 / 60.0)
 		if not scene.encounter.defeated:

@@ -15,28 +15,11 @@ const Market = preload("res://scripts/market.gd")
 const Village = preload("res://scripts/village.gd")
 const TitleScreen = preload("res://scripts/title_screen.gd")
 const Wanderers = preload("res://scripts/wanderers.gd")
-const ROUND_SECONDS: float = 11.0
+const Balance = preload("res://scripts/balance.gd")
 const START_POSITION := Vector2(780, 680)
-const BASE_RUN_SPEED: float = 180.0
-## Bramblewick crowds are small huddles of three or four; lone wanderers fill
-## the spaces between. Indices of the opening three are stable for tests/tools.
-const VILLAGE_GATHERINGS: Array[Dictionary] = [
-	{"title": "Wellside neighbours", "at": Vector2(560, 540), "count": 4},
-	{"title": "Market regulars", "at": Vector2(1050, 480), "count": 3},
-	{"title": "Garden club", "at": Vector2(850, 850), "count": 4},
-]
-const INVITED_GATHERINGS: Array[Dictionary] = [
-	{"key": "meadow_unlock", "title": "Meadow neighbours", "at": Vector2(470, 800), "count": 4},
-	{"key": "east_unlock", "title": "East lane visitors", "at": Vector2(1250, 580), "count": 3},
-]
-const MERCHANT_POSITION := Vector2(1020, 650)
-## Each convinced debate opponent leaves ordinary villagers who share its habits;
-## they join from the next round. Sites sit clear of prop art and other groups.
-const STAGE_GATHERINGS: Array[Dictionary] = [
-	{"stage": 1, "type": "doubter", "title": "Doubters", "at": Vector2(330, 580), "count": 3},
-	{"stage": 2, "type": "watch", "title": "Town watch", "at": Vector2(1290, 400), "count": 3},
-	{"stage": 3, "type": "devotee", "title": "Devotees", "at": Vector2(680, 960), "count": 3},
-]
+## Gatherings, merchants, opponents' villagers and the round length are balance
+## data in data/balance.json; Bramblewick crowds are small huddles of three or
+## four. Indices of the opening three are stable for tests/tools.
 
 @export var show_title_on_start: bool = false
 var title_screen: Control
@@ -62,7 +45,7 @@ var _footprints: Array[Node] = []
 var added_gatherings: Dictionary = {}
 var encounter: Node2D = null
 var helper: Node2D = null
-var seconds_left: float = ROUND_SECONDS
+var seconds_left: float = Balance.number("round.seconds")
 var round_active: bool = true
 var round_recruits: int = 0
 var nearest_group: Node2D = null
@@ -156,7 +139,7 @@ func _rebuild_area() -> void:
 	world.build_props($Actors)
 	_footprints = _obstacle_footprints()
 	if progression.active_area == "bellmarket":
-		for entry in Market.GROUP_LAYOUT:
+		for entry in Market.group_layout():
 			var gathering := Gathering.new()
 			gathering.group_name = entry.title
 			gathering.position = entry.position
@@ -167,13 +150,13 @@ func _rebuild_area() -> void:
 			$Actors.add_child(gathering)
 			groups.append(gathering)
 	else:
-		for entry in VILLAGE_GATHERINGS:
-			_add_gathering(entry.title, entry.at, false, entry.count)
+		for entry in Balance.list("village.gatherings"):
+			_add_gathering(entry.title, Balance.vec(entry.at), false, int(entry.count))
 		if wanderer_seed != 0:
 			_wanderer_rng.seed = wanderer_seed
 		else:
 			_wanderer_rng.randomize()
-		for index in range(Wanderers.COUNT):
+		for index in range(Balance.integer("village.wanderers.count")):
 			var wanderer: Node2D = _new_gathering(Wanderers.TITLE, Vector2.ZERO, 1, false, index)
 			wanderer.show_caption = false
 			wanderers.append(wanderer)
@@ -191,7 +174,7 @@ func travel_to(area_id: String, bypass_unlock: bool = false) -> bool:
 	if round_active or not catalog_ready:
 		return false
 	if area_id == "bellmarket":
-		for entry in Market.GROUP_LAYOUT:
+		for entry in Market.group_layout():
 			var probe := Gathering.new()
 			probe.listener_profiles.assign(entry.profiles)
 			var error: String = probe.validate_profiles()
@@ -206,7 +189,7 @@ func travel_to(area_id: String, bypass_unlock: bool = false) -> bool:
 		_update_hud()
 		return false
 	_rebuild_area()
-	seconds_left = ROUND_SECONDS
+	seconds_left = Balance.number("round.seconds")
 	round_recruits = 0
 	apply_upgrades()
 	_reset_encounter()
@@ -309,7 +292,7 @@ func _start_selected_level(area_id: String) -> void:
 
 
 func _add_gathering(title: String, at: Vector2, merchant: bool = false, count: int = Gathering.LISTENER_COUNT, village_type: String = "") -> void:
-	var gathering := _new_gathering(title, at, Gathering.MERCHANT_COUNT if merchant else count, merchant, 0, village_type)
+	var gathering := _new_gathering(title, at, Balance.integer("village.merchants.count") if merchant else count, merchant, 0, village_type)
 	groups.append(gathering)
 
 
@@ -323,7 +306,7 @@ func _new_gathering(title: String, at: Vector2, count: int, merchant: bool = fal
 		gathering.configure_village_type(village_type)
 	if merchant:
 		gathering.npc_type = "merchant"
-		gathering.conviction_required = Gathering.MERCHANT_CONVICTION
+		gathering.conviction_required = Balance.number("village.merchants.conviction")
 		gathering.donation = progression.merchant_donation()
 	gathering.recruited.connect(_on_recruited)
 	gathering.phrase_spoken.connect(game_audio.on_phrase)
@@ -607,7 +590,7 @@ func advance_round(delta: float) -> void:
 	if is_instance_valid(encounter) and not encounter.defeated:
 		var speech_delta: float = encounter.advance_arrival(usable_delta)
 		speaking_to_opponent = encounter.arrived and player.global_position.distance_to(encounter.global_position) <= player.speaking_radius
-		encounter.advance_speech(speech_delta, speaking_to_opponent, progression.speech_interval(), progression.encounter_conviction(str(Encounter.PROFILES[encounter.stage].id)))
+		encounter.advance_speech(speech_delta, speaking_to_opponent, progression.speech_interval(), progression.encounter_conviction(str(Encounter.profiles()[encounter.stage].id)))
 	if speaking_to_opponent:
 		nearest_group = null
 	if is_instance_valid(nearest_group):
@@ -651,7 +634,7 @@ func _on_encounter_convinced(stage: int) -> void:
 	if round_active and progression.complete_encounter(stage):
 		round_recruits += 1
 		var popup = preload("res://scripts/donation_popup.gd").new()
-		popup.amount = progression.ENCOUNTER_REWARDS[stage]
+		popup.amount = int(Encounter.profiles()[stage].reward)
 		popup.position = Vector2(52, -80)
 		encounter.add_child(popup)
 
@@ -673,19 +656,20 @@ func purchase_upgrade(id: String, expected_rank: int = -1) -> bool:
 
 
 func apply_upgrades() -> void:
-	player.movement_speed = BASE_RUN_SPEED * progression.run_multiplier()
+	player.movement_speed = Balance.number("round.base_run_speed") * progression.run_multiplier()
 	if progression.active_area == "bellmarket":
 		for group in groups:
 			group.configure_market(progression)
 		_apply_helper()
 		return
 	var group_count: int = groups.size()
-	for entry in INVITED_GATHERINGS:
+	for entry in Balance.list("village.invited_gatherings"):
 		if progression.has_unlock(entry.key) and not added_gatherings.has(entry.key):
-			_add_gathering(entry.title, entry.at, false, entry.count)
+			_add_gathering(entry.title, Balance.vec(entry.at), false, int(entry.count))
 			added_gatherings[entry.key] = true
 	if progression.has_unlock("merchant_unlock") and not added_gatherings.has("merchant_unlock"):
-		_add_gathering("Travelling merchants", MERCHANT_POSITION, true)
+		var merchants: Dictionary = Balance.dict("village.merchants")
+		_add_gathering(merchants.title, Balance.vec(merchants.at), true)
 		added_gatherings["merchant_unlock"] = true
 	_add_stage_gatherings()
 	# Purchases happen between rounds, so moving wanderers off a new group is safe.
@@ -701,10 +685,10 @@ func apply_upgrades() -> void:
 func _add_stage_gatherings() -> void:
 	if progression.active_area != "bramblewick":
 		return
-	for entry in STAGE_GATHERINGS:
-		var key: String = "stage_%d" % entry.stage
-		if progression.encounter_stage >= entry.stage and not added_gatherings.has(key):
-			_add_gathering(entry.title, entry.at, false, entry.count, entry.type)
+	for entry in Balance.list("village.stage_gatherings"):
+		var key: String = "stage_%d" % int(entry.stage)
+		if progression.encounter_stage >= int(entry.stage) and not added_gatherings.has(key):
+			_add_gathering(entry.title, Balance.vec(entry.at), false, int(entry.count), entry.type)
 			added_gatherings[key] = true
 
 
@@ -735,7 +719,7 @@ func _begin_round(increment: bool) -> void:
 	if increment:
 		progression.round_number += 1
 	progression.save_progress()
-	seconds_left = ROUND_SECONDS
+	seconds_left = Balance.number("round.seconds")
 	round_recruits = 0
 	nearest_group = null
 	round_active = true
@@ -899,7 +883,7 @@ func _update_hud() -> void:
 	elif not round_active:
 		context_label.text = "Round complete - Tab: ritual / %s: next round" % Keys.hint("next_round")
 	elif is_instance_valid(encounter) and not encounter.defeated:
-		context_label.text = "Convince %s in the town center" % Encounter.PROFILES[encounter.stage].title
+		context_label.text = "Convince %s in the town center" % Encounter.profiles()[encounter.stage].title
 	elif is_instance_valid(nearest_group):
 		context_label.text = "Speaking with %s..." % nearest_group.group_name
 	else:

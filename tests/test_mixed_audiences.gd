@@ -131,13 +131,13 @@ func _run() -> void:
 	check(group.listeners[0].following and helper.completed_recruits == 1 and group.listeners[0].reward_label.text == "17", "helper uses the slot threshold and the same upgraded donation authority")
 	# Malformed rosters are rejected before an area can become active.
 	var invalid := Gathering.new()
-	invalid.listener_profiles.assign([Market.BAKER.duplicate(true)])
+	invalid.listener_profiles.assign([Market.profile("Baker")])
 	invalid.listener_profiles[0]["requires"] = "unknown_gate"
 	check(not invalid.validate_profiles().is_empty(), "unknown introduction is rejected before scene activation")
-	invalid.listener_profiles[0] = Market.BAKER.duplicate(true)
+	invalid.listener_profiles[0] = Market.profile("Baker")
 	invalid.listener_profiles[0]["conviction_required"] = INF
 	check(not invalid.validate_profiles().is_empty(), "nonfinite listener threshold is rejected")
-	invalid.listener_profiles[0] = Market.BAKER.duplicate(true)
+	invalid.listener_profiles[0] = Market.profile("Baker")
 	invalid.listener_profiles[0]["donation"] = -1
 	check(not invalid.validate_profiles().is_empty(), "negative listener reward is rejected")
 	invalid.free()
@@ -178,7 +178,7 @@ func _check_market_world(progression: MarketProgression) -> void:
 	var initially_open: int = 0
 	progression.guild = false
 	progression.patron = false
-	for entry in Market.GROUP_LAYOUT:
+	for entry in Market.group_layout():
 		var group := Gathering.new()
 		group.group_name = entry["title"]
 		group.position = entry["position"]

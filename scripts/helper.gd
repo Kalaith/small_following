@@ -1,9 +1,7 @@
 extends Node2D
 ## One visible, nonblocking recruiter. Main supplies only active-round time.
 ## A conservative grid uses the actual prop footprints, not decorative artwork.
-const WALK_SPEED: float = 150.0
-const PHRASE_SECONDS: float = 1.0
-const CONVICTION_PER_PHRASE: float = 1.0
+const Balance = preload("res://scripts/balance.gd")
 const CELL: float = 24.0
 const BODY_RADIUS: float = 7.0
 const START_OFFSET := Vector2(-24, 24)
@@ -108,8 +106,8 @@ func _advance_step(delta: float, groups: Array[Node2D]) -> void:
 	while not path.is_empty() and remaining > 0.0:
 		var distance: float = global_position.distance_to(path[0])
 		var movement: Vector2 = global_position.direction_to(path[0])
-		var used: float = minf(remaining, distance / WALK_SPEED)
-		global_position = global_position.move_toward(path[0], WALK_SPEED * used)
+		var used: float = minf(remaining, distance / Balance.number("helper.walk_speed"))
+		global_position = global_position.move_toward(path[0], Balance.number("helper.walk_speed") * used)
 		_cloth_trail = _cloth_trail.lerp(-movement * 5.0, 0.2)
 		remaining -= used
 		if global_position.distance_to(path[0]) < 0.001:
@@ -121,9 +119,9 @@ func _advance_step(delta: float, groups: Array[Node2D]) -> void:
 		return
 	_cloth_trail = _cloth_trail.move_toward(Vector2.ZERO, remaining * 25.0)
 	phrase_elapsed += remaining
-	if phrase_elapsed + TIME_EPSILON >= PHRASE_SECONDS:
-		phrase_elapsed = maxf(0.0, phrase_elapsed - PHRASE_SECONDS)
-		conviction += CONVICTION_PER_PHRASE
+	if phrase_elapsed + TIME_EPSILON >= Balance.number("helper.phrase_seconds"):
+		phrase_elapsed = maxf(0.0, phrase_elapsed - Balance.number("helper.phrase_seconds"))
+		conviction += Balance.number("helper.conviction_per_phrase")
 		if conviction >= target_group.listener_conviction_required(target_index):
 			if target_group.recruit_listener(target_index):
 				completed_recruits += 1
@@ -196,7 +194,7 @@ func _draw() -> void:
 		draw_arc(target, 14, 0, TAU, 24, Color("e5d3f5"), 1.5, true)
 		caption = "Helper / %d of %d" % [int(conviction), int(target_group.listener_conviction_required(target_index))]
 		draw_line(Vector2(-13, 9), Vector2(13, 9), Color("416b61"), 3)
-		draw_line(Vector2(-13, 9), Vector2(-13 + 26 * phrase_elapsed / PHRASE_SECONDS, 9), Color("dac5ee"), 3)
+		draw_line(Vector2(-13, 9), Vector2(-13 + 26 * phrase_elapsed / Balance.number("helper.phrase_seconds"), 9), Color("dac5ee"), 3)
 	var font := ThemeDB.fallback_font
 	var width: float = font.get_string_size(caption, HORIZONTAL_ALIGNMENT_LEFT, -1, 12).x
 	draw_rect(Rect2(-width * 0.5 - 5, -60, width + 10, 19), Color(0.16, 0.25, 0.22, 0.92))

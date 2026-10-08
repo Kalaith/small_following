@@ -18,8 +18,13 @@ These standards apply to this Godot 4.2.2 GDScript project.
   them.
 - Keep methods focused and extract cohesive responsibilities as scripts grow.
   Avoid unrelated refactors or splitting files merely to meet a line count.
-- Keep tunable balance in named constants or the catalog and explain it in
-  [PACING](PACING.md). Do not duplicate purchase formulas in UI code.
+- Keep tunable balance in data, not code: upgrade prices and effects in
+  `data/upgrades.json`, everything else (round length, thresholds, donations,
+  opponents, market roles, gathering sizes) in `data/balance.json`, read
+  through `scripts/balance.gd`. Explain it in [PACING](PACING.md). Do not
+  duplicate purchase formulas in UI code.
+- Tests never restate balance numbers. Derive expectations from the data via
+  `tests/expect.gd` (or `Balance`), so a retune changes only `data/`.
 
 ## 2. Scene and state ownership
 

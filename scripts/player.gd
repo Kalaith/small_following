@@ -4,7 +4,7 @@ signal moved(distance: float, delta: float)
 
 @export var movement_speed: float = 180.0
 @export var world_bounds: Rect2 = Rect2(55.0, 55.0, 1450.0, 990.0)
-@export var speaking_radius: float = 105.0
+@export var speaking_radius: float = preload("res://scripts/balance.gd").number("round.speaking_radius")
 @export var show_aura: bool = true
 
 var _trail_direction: Vector2 = Vector2.DOWN
