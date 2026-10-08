@@ -10,8 +10,8 @@ const AREA_IDS: Array[String] = ["bramblewick", "bellmarket"]
 ## access without them, so a player already there is not rejected; ordinary
 ## travel still requires the whole current circle.
 const POST_MARKET_VILLAGE_IDS: Array[String] = ["beckon_1"]
-const EFFECT_KEYS: Array[String] = ["beckon_add", "encounter_conviction_add", "skeptic_conviction_add", "guard_conviction_add", "zealot_conviction_add", "priest_conviction_add", "merchant_conviction_add", "merchant_donation_add", "speech_speed_add", "conviction_add", "run_speed_add", "meadow_unlock", "east_unlock", "helper_unlock", "merchant_unlock", "encounter_unlock", "market_guild_unlock", "market_patron_unlock", "market_guild_donation_add", "market_patron_donation_add", "market_beckon_add", "market_wanderer_add"]
-const UNLOCK_KEYS: Array[String] = ["meadow_unlock", "east_unlock", "helper_unlock", "merchant_unlock", "encounter_unlock", "market_guild_unlock", "market_patron_unlock"]
+const EFFECT_KEYS: Array[String] = ["beckon_add", "encounter_conviction_add", "skeptic_conviction_add", "guard_conviction_add", "zealot_conviction_add", "priest_conviction_add", "merchant_conviction_add", "merchant_donation_add", "speech_speed_add", "conviction_add", "run_speed_add", "meadow_unlock", "east_unlock", "helper_unlock", "merchant_unlock", "encounter_unlock", "market_guild_unlock", "market_patron_unlock", "market_guild_donation_add", "market_patron_donation_add", "market_beckon_add", "market_wanderer_add", "market_helper_unlock"]
+const UNLOCK_KEYS: Array[String] = ["meadow_unlock", "east_unlock", "helper_unlock", "merchant_unlock", "encounter_unlock", "market_guild_unlock", "market_patron_unlock", "market_helper_unlock"]
 
 
 var encounter_stage: int = 0
@@ -448,6 +448,7 @@ func effect_preview(id: String) -> Dictionary:
 		"beckon_reach": Balance.number("village.wanderers.beckon_pixels_per_point") * float(totals.beckon_add),
 		"market_beckon_reach": Balance.number("village.wanderers.beckon_pixels_per_point") * float(totals.market_beckon_add),
 		"market_wanderers": Balance.integer("market.wanderers.count") + int(float(totals.market_wanderer_add)),
+		"market_helper_unlock": int(_unlocked(totals, "market_helper_unlock")),
 	}
 	current.encounter_unlock = int(_unlocked(totals, "encounter_unlock"))
 	current.encounter_conviction_add = base_conviction + opponent_bonus
@@ -476,6 +477,7 @@ func effect_preview(id: String) -> Dictionary:
 	result.next.beckon_reach += Balance.number("village.wanderers.beckon_pixels_per_point") * float(effect.get("beckon_add", 0.0))
 	result.next.market_beckon_reach += Balance.number("village.wanderers.beckon_pixels_per_point") * float(effect.get("market_beckon_add", 0.0))
 	result.next.market_wanderers += int(effect.get("market_wanderer_add", 0))
+	result.next.market_helper_unlock += int(effect.get("market_helper_unlock", 0))
 	return result
 
 

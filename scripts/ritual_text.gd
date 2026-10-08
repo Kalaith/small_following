@@ -18,7 +18,7 @@ static func effect_text(progression: Progression, by_id: Dictionary, id: String,
 	if branch.begins_with("market_"):
 		var market_item: Dictionary = by_id[id]
 		var lines: PackedStringArray = []
-		var labels: Dictionary = {"speech_frequency": "Phrases / second", "conviction": "Conviction / phrase", "run_multiplier": "Running / base speed", "market_guild_unlock": "GUILD TRADERS", "market_guild_donation_add": "Extra donations / guild trader", "market_patron_unlock": "WEALTHY PATRONS", "market_patron_donation_add": "Extra donations / patron", "market_beckon_reach": "Wanderers walk to you within (px)", "market_wanderers": "Lone wanderers / round"}
+		var labels: Dictionary = {"speech_frequency": "Phrases / second", "conviction": "Conviction / phrase", "run_multiplier": "Running / base speed", "market_guild_unlock": "GUILD TRADERS", "market_guild_donation_add": "Extra donations / guild trader", "market_patron_unlock": "WEALTHY PATRONS", "market_patron_donation_add": "Extra donations / patron", "market_beckon_reach": "Wanderers walk to you within (px)", "market_wanderers": "Lone wanderers / round", "market_helper_unlock": "MARKET HAND"}
 		var keys: Dictionary = {"speech_speed_add": "speech_frequency", "conviction_add": "conviction", "run_speed_add": "run_multiplier", "market_beckon_add": "market_beckon_reach", "market_wanderer_add": "market_wanderers"}
 		for effect_key in market_item.get("effect", {}):
 			var key: String = str(keys.get(effect_key, effect_key))
@@ -26,7 +26,8 @@ static func effect_text(progression: Progression, by_id: Dictionary, id: String,
 				continue
 			var label: String = str(labels.get(key, key.replace("_", " ").capitalize()))
 			if key.ends_with("_unlock"):
-				lines.append(label + ("\nReady to listen" if complete else "\nSealed → ready to listen"))
+				var ready: String = "Recruits beside you" if key == "market_helper_unlock" else "Ready to listen"
+				lines.append(label + ("\n" + ready if complete else "\nSealed → " + ready.to_lower()))
 				continue
 			# Reach and head counts are whole numbers; rates keep two decimals.
 			var shown: String = "%d" if key in ["market_beckon_reach", "market_wanderers"] else "%.2f"

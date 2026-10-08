@@ -52,29 +52,20 @@ func draw_backdrop(canvas: Control) -> void:
 func draw_market_seal(canvas: Control) -> void:
 	# Five woven petals echo market awnings and coins. Real equal-weight branches
 	# sit over this quiet ornament and remain the only actionable connections.
+	# Kept deliberately sparse: one faint outline per petal, so the real edges
+	# and the nodes in the gaps between petals read clearly over it.
 	var center: Vector2 = _point(Vector2.ZERO)
-	for radius in [413.0, 425.0, 439.0]:
-		arc(canvas, center, radius, Color(Style.GOLD if radius == 425 else Style.LILAC, 0.22), 1)
+	arc(canvas, center, 425.0, Color(Style.GOLD, 0.20), 1)
+	arc(canvas, center, 439.0, Color(Style.LILAC, 0.16), 1)
 	_draw_runes(canvas, 432.0)
-	var pentagon := PackedVector2Array()
-	for index in range(6):
-		pentagon.append(_point(Vector2.from_angle(-PI / 2 + index * TAU / 5) * 405.0))
-	canvas.draw_polyline(pentagon, Color(Style.GOLD, 0.19), 1.0, true)
 	for index in range(5):
-		var angle: float = -PI / 2 + index * TAU / 5
-		var radial := Vector2.from_angle(angle)
+		var radial := Vector2.from_angle(-PI / 2 + index * TAU / 5)
 		var tangent := radial.orthogonal()
 		var petal := PackedVector2Array()
-		var inner_petal := PackedVector2Array()
 		for point_index in range(81):
 			var phase: float = point_index * TAU / 80.0
 			petal.append(_point(radial * (238.0 + cos(phase) * 153.0) + tangent * sin(phase) * 94.0))
-			inner_petal.append(_point(radial * (238.0 + cos(phase) * 143.0) + tangent * sin(phase) * 84.0))
-		canvas.draw_polyline(petal, Color(Style.VIOLET, 0.25), 1.2, true)
-		canvas.draw_polyline(inner_petal, Color(Style.GOLD, 0.10), 1, true)
-		var coin: Vector2 = radial.rotated(PI / 5) * 358.0
-		arc(canvas, _point(coin), 18.0, Color(Style.GOLD, 0.26), 1)
-		canvas.draw_line(_point(coin - radial * 8), _point(coin + radial * 8), Color(Style.GOLD, 0.20), 1, true)
+		canvas.draw_polyline(petal, Color(Style.VIOLET, 0.13), 1.0, true)
 	for index in range(60):
 		var radial := Vector2.from_angle(index * TAU / 60)
 		canvas.draw_line(_point(radial * 444), _point(radial * (455 if index % 6 == 0 else 449)), Color(Style.GOLD, 0.30 if index % 6 == 0 else 0.15), 1, true)

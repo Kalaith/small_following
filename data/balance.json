@@ -58,6 +58,7 @@
       {"title": "Silk Arcade", "at": [1045, 650], "people": ["Shopper", "Patron", "Courier"]},
       {"title": "Patron Steps", "at": [1080, 370], "people": ["Patron", "Collector", "Baker"]}
     ],
+    "helper": {"walk_speed": 170.0, "phrase_seconds": 1.0, "conviction_per_phrase": 8.0},
     "wanderers": {
       "count": 6,
       "people": ["Shopper", "Courier", "Porter", "Artisan", "Cook", "Patron", "Baker", "Guildmaster", "Courier", "Collector"]

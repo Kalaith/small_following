@@ -45,6 +45,8 @@ var _footprints: Array[Node] = []
 var added_gatherings: Dictionary = {}
 var encounter: Node2D = null
 var helper: Node2D = null
+## Bellmarket's second, amber-robed helper (Market Hand).
+var market_helper: Node2D = null
 var seconds_left: float = Balance.number("round.seconds")
 var round_active: bool = true
 var round_recruits: int = 0
@@ -126,6 +128,7 @@ func _rebuild_area() -> void:
 			actor.queue_free()
 	encounter = null
 	helper = null
+	market_helper = null
 	# No authored placeholder survives to _rebuild_area's second call (area
 	# travel); only a prior script-built world needs removing there.
 	var previous: Node = get_node_or_null("Village")
@@ -253,8 +256,8 @@ func show_title() -> void:
 	set_settings_visible(false)
 	progression.save_progress()
 	round_active = false
-	if is_instance_valid(helper):
-		helper.set_active(false)
+	for each in helpers():
+		each.set_active(false)
 	game_audio.stop_speech()
 	player.clear_walk_target()
 	player.set_physics_process(false)
@@ -632,15 +635,15 @@ func advance_round(delta: float) -> void:
 	for group in all_audiences:
 		if group != nearest_group:
 			group.advance_unattended(usable_delta)
-	if is_instance_valid(helper):
-		helper.set_active(true)
-		helper.advance(usable_delta, all_audiences)
+	for each in helpers():
+		each.set_active(true)
+		each.advance(usable_delta, all_audiences)
 	seconds_left = maxf(0.0, seconds_left - usable_delta)
 	if seconds_left <= 0.0:
 		round_active = false
 		game_audio.stop_speech()
-		if is_instance_valid(helper):
-			helper.set_active(false)
+		for each in helpers():
+			each.set_active(false)
 		for group in all_audiences:
 			group.set_listening(false)
 		progression.save_progress()
@@ -728,10 +731,31 @@ func _add_stage_gatherings() -> void:
 
 func _apply_helper() -> void:
 	if progression.has_unlock("helper_unlock") and not is_instance_valid(helper):
-		helper = Helper.new()
-		$Actors.add_child(helper)
-		helper.configure_navigation($Actors)
-		helper.reset_round(area_start_position())
+		helper = _new_helper(false)
+	if progression.has_unlock("market_helper_unlock") and not is_instance_valid(market_helper):
+		market_helper = _new_helper(true)
+	var team: Array[Node2D] = helpers()
+	for each in team:
+		each.rivals.assign(team.filter(func(other: Node2D) -> bool: return other != each))
+
+
+func _new_helper(market: bool) -> Node2D:
+	var created := Helper.new()
+	if market:
+		created.configure_market()
+	$Actors.add_child(created)
+	created.configure_navigation($Actors)
+	created.reset_round(area_start_position())
+	return created
+
+
+## Every helper present in this area, original first.
+func helpers() -> Array[Node2D]:
+	var result: Array[Node2D] = []
+	for each in [helper, market_helper]:
+		if is_instance_valid(each):
+			result.append(each)
+	return result
 
 
 func set_ritual_visible(value: bool) -> void:
@@ -767,8 +791,8 @@ func _begin_round(increment: bool) -> void:
 	player.position = area_start_position()
 	game_audio.reset_motion()
 	game_audio.stop_speech()
-	if is_instance_valid(helper):
-		helper.reset_round(area_start_position())
+	for each in helpers():
+		each.reset_round(area_start_position())
 	_reset_encounter()
 	player.get_node("Camera2D").reset_smoothing()
 	set_ritual_visible(false)

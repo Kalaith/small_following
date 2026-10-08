@@ -56,6 +56,7 @@ const VILLAGE_POSITIONS: Dictionary = {
 const MARKET_POSITIONS: Dictionary = {
 	"market_beckon_1": Vector2(205, -325),
 	"market_crowd_1": Vector2(314, 102),
+	"market_helper_1": Vector2(25, 365),
 }
 
 # Cross-branch requirements remain the same directed edges. These sparse bends
