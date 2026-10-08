@@ -52,6 +52,12 @@ const VILLAGE_POSITIONS: Dictionary = {
 	"helper_1": Vector2(-265, 385),
 }
 
+# Bellmarket's wanderer nodes sit in the gaps beside their parent petals.
+const MARKET_POSITIONS: Dictionary = {
+	"market_beckon_1": Vector2(205, -325),
+	"market_crowd_1": Vector2(314, 102),
+}
+
 # Cross-branch requirements remain the same directed edges. These sparse bends
 # keep their visible paths off unrelated upgrade icons and the central seal.
 const EDGE_WAYPOINTS: Dictionary = {
@@ -139,6 +145,8 @@ static func build(catalog: Array) -> Dictionary:
 	for id in positions:
 		if VILLAGE_POSITIONS.has(id):
 			positions[id] = VILLAGE_POSITIONS[id]
+		elif MARKET_POSITIONS.has(id):
+			positions[id] = MARKET_POSITIONS[id]
 		else:
 			for branch_index in range(MARKET_BRANCHES.size()):
 				for tier in range(1, MARKET_TIER_ANGLES.size() + 1):

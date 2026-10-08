@@ -10,7 +10,7 @@ const AREA_IDS: Array[String] = ["bramblewick", "bellmarket"]
 ## access without them, so a player already there is not rejected; ordinary
 ## travel still requires the whole current circle.
 const POST_MARKET_VILLAGE_IDS: Array[String] = ["beckon_1"]
-const EFFECT_KEYS: Array[String] = ["beckon_add", "encounter_conviction_add", "skeptic_conviction_add", "guard_conviction_add", "zealot_conviction_add", "priest_conviction_add", "merchant_conviction_add", "merchant_donation_add", "speech_speed_add", "conviction_add", "run_speed_add", "meadow_unlock", "east_unlock", "helper_unlock", "merchant_unlock", "encounter_unlock", "market_guild_unlock", "market_patron_unlock", "market_guild_donation_add", "market_patron_donation_add"]
+const EFFECT_KEYS: Array[String] = ["beckon_add", "encounter_conviction_add", "skeptic_conviction_add", "guard_conviction_add", "zealot_conviction_add", "priest_conviction_add", "merchant_conviction_add", "merchant_donation_add", "speech_speed_add", "conviction_add", "run_speed_add", "meadow_unlock", "east_unlock", "helper_unlock", "merchant_unlock", "encounter_unlock", "market_guild_unlock", "market_patron_unlock", "market_guild_donation_add", "market_patron_donation_add", "market_beckon_add", "market_wanderer_add"]
 const UNLOCK_KEYS: Array[String] = ["meadow_unlock", "east_unlock", "helper_unlock", "merchant_unlock", "encounter_unlock", "market_guild_unlock", "market_patron_unlock"]
 
 
@@ -341,6 +341,17 @@ func beckon_reach() -> float:
 	return Balance.number("village.wanderers.beckon_pixels_per_point") * _sum_effect("beckon_add")
 
 
+## Bellmarket's wanderers answer only the market's own call, never the village's.
+func market_beckon_reach() -> float:
+	return Balance.number("village.wanderers.beckon_pixels_per_point") * _sum_effect("market_beckon_add")
+
+
+## Lone wanderers each Bellmarket round, capped by the people authored for them.
+func market_wanderer_count() -> int:
+	var people: int = Balance.list("market.wanderers.people").size()
+	return mini(Balance.integer("market.wanderers.count") + int(_sum_effect("market_wanderer_add")), people)
+
+
 func has_unlock(key: String) -> bool:
 	return key in UNLOCK_KEYS and _sum_effect(key) >= 1.0
 
@@ -435,6 +446,8 @@ func effect_preview(id: String) -> Dictionary:
 		"merchant_donation_add": Balance.integer("village.merchants.base_donation") + int(float(totals.merchant_donation_add)),
 		"helpers": int(_unlocked(totals, "helper_unlock")),
 		"beckon_reach": Balance.number("village.wanderers.beckon_pixels_per_point") * float(totals.beckon_add),
+		"market_beckon_reach": Balance.number("village.wanderers.beckon_pixels_per_point") * float(totals.market_beckon_add),
+		"market_wanderers": Balance.integer("market.wanderers.count") + int(float(totals.market_wanderer_add)),
 	}
 	current.encounter_unlock = int(_unlocked(totals, "encounter_unlock"))
 	current.encounter_conviction_add = base_conviction + opponent_bonus
@@ -461,6 +474,8 @@ func effect_preview(id: String) -> Dictionary:
 			result.next[key] += float(effect.get(key, 0.0))
 	result.next.helpers += int(effect.get("helper_unlock", 0))
 	result.next.beckon_reach += Balance.number("village.wanderers.beckon_pixels_per_point") * float(effect.get("beckon_add", 0.0))
+	result.next.market_beckon_reach += Balance.number("village.wanderers.beckon_pixels_per_point") * float(effect.get("market_beckon_add", 0.0))
+	result.next.market_wanderers += int(effect.get("market_wanderer_add", 0))
 	return result
 
 

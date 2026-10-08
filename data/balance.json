@@ -52,13 +52,16 @@
       "Patron": "patron", "Collector": "patron"
     },
     "groups": [
-      {"title": "Bread Court", "at": [565, 690], "people": ["Baker", "Porter", "Shopper", "Cook", "Courier"]},
-      {"title": "Cart Crossing", "at": [795, 470], "people": ["Porter", "Artisan", "Shopper", "Courier", "Baker"]},
-      {"title": "Guild Row", "at": [480, 440], "people": ["Artisan", "Courier", "Guildmaster", "Porter", "Cook"]},
-      {"title": "Silk Arcade", "at": [1045, 650], "people": ["Shopper", "Patron", "Artisan", "Porter", "Courier"]},
-      {"title": "Patron Steps", "at": [1080, 370], "people": ["Patron", "Baker", "Collector", "Shopper", "Cook"]}
-    ]
-  },
+      {"title": "Bread Court", "at": [565, 690], "people": ["Baker", "Porter", "Cook"]},
+      {"title": "Cart Crossing", "at": [795, 470], "people": ["Porter", "Artisan", "Shopper"]},
+      {"title": "Guild Row", "at": [480, 440], "people": ["Artisan", "Guildmaster", "Courier"]},
+      {"title": "Silk Arcade", "at": [1045, 650], "people": ["Shopper", "Patron", "Courier"]},
+      {"title": "Patron Steps", "at": [1080, 370], "people": ["Patron", "Collector", "Baker"]}
+    ],
+    "wanderers": {
+      "count": 6,
+      "people": ["Shopper", "Courier", "Porter", "Artisan", "Cook", "Patron", "Baker", "Guildmaster", "Courier", "Collector"]
+    }  },
   "targets": {
     "village_campaign_rounds": [48, 62],
     "market_entry_max_open_recruits": 9,

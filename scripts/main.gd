@@ -149,13 +149,12 @@ func _rebuild_area() -> void:
 			gathering.phrase_spoken.connect(game_audio.on_phrase)
 			$Actors.add_child(gathering)
 			groups.append(gathering)
+		_seed_wanderers()
+		_sync_market_wanderers()
 	else:
 		for entry in Balance.list("village.gatherings"):
 			_add_gathering(entry.title, Balance.vec(entry.at), false, int(entry.count))
-		if wanderer_seed != 0:
-			_wanderer_rng.seed = wanderer_seed
-		else:
-			_wanderer_rng.randomize()
+		_seed_wanderers()
 		for index in range(Balance.integer("village.wanderers.count")):
 			var wanderer: Node2D = _new_gathering(Wanderers.TITLE, Vector2.ZERO, 1, false, index)
 			wanderer.show_caption = false
@@ -164,6 +163,33 @@ func _rebuild_area() -> void:
 	player.clear_walk_target()
 	player.position = area_start_position()
 	player.get_node("Camera2D").reset_smoothing()
+
+
+func _seed_wanderers() -> void:
+	if wanderer_seed != 0:
+		_wanderer_rng.seed = wanderer_seed
+	else:
+		_wanderer_rng.randomize()
+
+
+## Adds lone market wanderers up to the count Busy Stalls allows, then scatters
+## everyone afresh.
+func _sync_market_wanderers() -> void:
+	var profiles: Array[Dictionary] = Market.wanderer_profiles(progression.market_wanderer_count())
+	if profiles.size() <= wanderers.size():
+		return
+	for index in range(wanderers.size(), profiles.size()):
+		var wanderer := Gathering.new()
+		wanderer.group_name = Wanderers.TITLE
+		wanderer.show_caption = false
+		wanderer.coat_offset = index
+		wanderer.listener_profiles.assign([profiles[index]])
+		wanderer.configure_market(progression)
+		wanderer.recruited.connect(_on_recruited)
+		wanderer.phrase_spoken.connect(game_audio.on_phrase)
+		$Actors.add_child(wanderer)
+		wanderers.append(wanderer)
+	scatter_wanderers()
 
 
 func area_start_position() -> Vector2:
@@ -326,7 +352,9 @@ func audiences() -> Array[Node2D]:
 func scatter_wanderers() -> void:
 	if wanderers.is_empty():
 		return
-	var avoid: Array[Vector2] = [START_POSITION, Encounter.CENTER]
+	var avoid: Array[Vector2] = [area_start_position()]
+	if progression.active_area == "bramblewick":
+		avoid.append(Encounter.CENTER)
 	for group in groups:
 		avoid.append(group.position)
 	var spots: Array[Vector2] = Wanderers.scatter(_wanderer_rng, _village_props(), avoid, wanderers.size())
@@ -339,7 +367,8 @@ func scatter_wanderers() -> void:
 func _village_props() -> Array[Node]:
 	var props: Array[Node] = []
 	for child in $Actors.get_children():
-		if child is Village.VillageProp:
+		# Village props plus Bellmarket's bell and district signs.
+		if child.has_method("visual_rect"):
 			props.append(child)
 	return props
 
@@ -564,8 +593,10 @@ func advance_round(delta: float) -> void:
 		return
 	nearest_group = null
 	if round_active and not wanderers.is_empty():
-		# Beckoning Call draws lone wanderers in during the round's usable time only.
-		Wanderers.pull(wanderers, player.global_position, progression.beckon_reach(), minf(maxf(delta, 0.0), seconds_left), _footprints)
+		# Beckoning Call (Market Call in Bellmarket) draws lone wanderers in during
+		# the round's usable time only.
+		var reach: float = progression.market_beckon_reach() if progression.active_area == "bellmarket" else progression.beckon_reach()
+		Wanderers.pull(wanderers, player.global_position, reach, minf(maxf(delta, 0.0), seconds_left), _footprints)
 	var closest_distance: float = player.speaking_radius
 	var nearby_group: Node2D = null
 	var nearby_distance: float = player.speaking_radius + 30.0
@@ -660,6 +691,9 @@ func apply_upgrades() -> void:
 	if progression.active_area == "bellmarket":
 		for group in groups:
 			group.configure_market(progression)
+		for wanderer in wanderers:
+			wanderer.configure_market(progression)
+		_sync_market_wanderers()
 		_apply_helper()
 		return
 	var group_count: int = groups.size()

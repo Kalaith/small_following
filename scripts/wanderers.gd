@@ -1,6 +1,6 @@
 extends RefCounted
-## Lone Bramblewick villagers, scattered afresh each round, and the Beckoning
-## Call pull that walks nearby ones toward the cultist. Each wanderer is an
+## Lone villagers and market-goers, scattered afresh each round, and the
+## Beckoning Call / Market Call pull that walks nearby ones toward the cultist. Each wanderer is an
 ## ordinary one-listener gathering, so speech, helpers and payouts are unchanged.
 ## Placement checks the drawn prop art, not only collision, so nobody spawns
 ## hidden behind a roof or canopy.
@@ -50,12 +50,13 @@ static func is_clear(at: Vector2, props: Array[Node], avoid: Array[Vector2], pla
 
 
 ## Walks unconverted wanderers within `reach` toward `toward`, sliding along
-## prop footprints instead of entering them. Converted wanderers stay put.
+## prop footprints instead of entering them. Converted wanderers, and market
+## wanderers still awaiting an introduction, stay put.
 static func pull(wanderers: Array[Node2D], toward: Vector2, reach: float, delta: float, footprints: Array[Node]) -> void:
 	if reach <= 0.0 or delta <= 0.0:
 		return
 	for wanderer in wanderers:
-		if wanderer.recruits > 0:
+		if wanderer.recruits > 0 or wanderer.first_unconverted() < 0:
 			continue
 		var from: Vector2 = wanderer.global_position
 		var distance: float = from.distance_to(toward)

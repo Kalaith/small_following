@@ -28,6 +28,16 @@ static func group_layout() -> Array[Dictionary]:
 	return layout
 
 
+## One-listener profiles for the lone wanderers, in authored order
+## (balance data "market.wanderers.people"); locks show on the wanderer itself.
+static func wanderer_profiles(count: int) -> Array[Dictionary]:
+	var profiles: Array[Dictionary] = []
+	var people: Array = Balance.list("market.wanderers.people")
+	for index in range(mini(count, people.size())):
+		profiles.append(profile(String(people[index])))
+	return profiles
+
+
 # Every position is a feet origin. The square's center and district approaches
 # stay open; the reused props add real layer-2 collision at their bases.
 const PROP_LAYOUT = [
@@ -126,6 +136,10 @@ class DistrictSign extends Node2D:
 	var caption: String = ""
 	var tint := Color("577e85")
 
+	## Drawn art around the feet origin, so wanderers never spawn behind the board.
+	func visual_rect() -> Rect2:
+		return Rect2(-60, -70, 120, 74)
+
 	func _draw() -> void:
 		draw_line(Vector2.ZERO, Vector2(0, -63), Color("7c674e"), 6, true)
 		var font := ThemeDB.fallback_font
@@ -135,6 +149,9 @@ class DistrictSign extends Node2D:
 
 
 class MarketBell extends Node2D:
+	func visual_rect() -> Rect2:
+		return Rect2(-44, -120, 88, 132)
+
 	func add_footprint() -> void:
 		var body := StaticBody2D.new()
 		body.collision_layer = 2

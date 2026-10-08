@@ -345,11 +345,14 @@ func _draw() -> void:
 	if not is_listening and not is_nearby:
 		return
 	if not listener_profiles.is_empty():
-		_draw_market_details()
+		if show_caption:
+			_draw_market_details()
+		else:
+			_draw_lone_market()
 		return
 	var lone: bool = listener_count == 1
 	draw_arc(Vector2.ZERO, 34 if lone else 69, 0, TAU, 56, Color(1, 0.93, 0.62, 0.7), 2, true)
-	_draw_progress()
+	_draw_progress(conviction_required)
 	if not show_caption:
 		return
 	var font := ThemeDB.fallback_font
@@ -362,11 +365,11 @@ func _draw() -> void:
 	draw_string(font, Vector2(-width * 0.5, caption_top + 21), caption, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("#fff1d0"))
 
 
-func _draw_progress() -> void:
+func _draw_progress(required: float) -> void:
 	draw_line(Vector2(-38, 58), Vector2(38, 58), Color("#55654e"), 5)
-	draw_line(Vector2(-38, 58), Vector2(-38 + 76 * minf(progress / conviction_required, 1.0), 58), Color("#f3d98c"), 5)
+	draw_line(Vector2(-38, 58), Vector2(-38 + 76 * minf(progress / required, 1.0), 58), Color("#f3d98c"), 5)
 	for i in range(3):
-		var filled: bool = progress >= conviction_required * float(i + 1) / 3.0
+		var filled: bool = progress >= required * float(i + 1) / 3.0
 		draw_circle(Vector2(-14 + i * 14, 69), 3, Color("#f3d98c") if filled else Color("#6d7353"))
 	draw_line(Vector2(-22, 78), Vector2(22, 78), Color("#6d7353"), 2)
 	draw_line(Vector2(-22, 78), Vector2(-22 + 44 * minf(phrase_elapsed / last_phrase_interval, 1.0), 78), Color("#c4b1df"), 2)
@@ -387,8 +390,7 @@ func _draw_market_details() -> void:
 			roles.append(listener_profiles[index]["role"])
 			locked_roles[key] = roles
 	for requirement in locked_roles:
-		var introduction: String = "Guild Introduction" if requirement == "market_guild_unlock" else "Patron's Introduction"
-		lines.append("%s: %s required" % [", ".join(locked_roles[requirement]), introduction])
+		lines.append("%s: %s required" % [", ".join(locked_roles[requirement]), _introduction_name(requirement)])
 	var font := ThemeDB.fallback_font
 	var width: float = 0.0
 	for line in lines:
@@ -404,6 +406,27 @@ func _draw_market_details() -> void:
 	draw_line(Vector2(-38, 58), Vector2(-38 + 76 * minf(progress / listener_conviction_required(next), 1.0), 58), Color("f3d98c"), 5)
 	draw_line(Vector2(-22, 72), Vector2(22, 72), Color("6d7353"), 2)
 	draw_line(Vector2(-22, 72), Vector2(-22 + 44 * minf(phrase_elapsed / last_phrase_interval, 1.0), 72), Color("c4b1df"), 2)
+
+
+## A lone market wanderer shows only its ring and bar, like Bramblewick's; one
+## still waiting on an introduction names it instead.
+func _draw_lone_market() -> void:
+	var next: int = first_unconverted()
+	if next >= 0:
+		draw_arc(Vector2.ZERO, 34, 0, TAU, 56, Color(1, 0.93, 0.62, 0.7), 2, true)
+		_draw_progress(listener_conviction_required(next))
+		return
+	if recruits > 0:
+		return
+	var font := ThemeDB.fallback_font
+	var line: String = "%s required" % _introduction_name(String(listener_profiles[0].get("requires", "")))
+	var width: float = font.get_string_size(line, HORIZONTAL_ALIGNMENT_LEFT, -1, 14).x
+	draw_style_box(_caption_style(), Rect2(-width * 0.5 - 10, -98, width + 20, 28))
+	draw_string(font, Vector2(-width * 0.5, -79), line, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("fff1d0"))
+
+
+func _introduction_name(requirement: String) -> String:
+	return "Guild Introduction" if requirement == "market_guild_unlock" else "Patron's Introduction"
 
 
 func _caption_style() -> StyleBoxFlat:
