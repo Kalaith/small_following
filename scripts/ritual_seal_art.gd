@@ -21,6 +21,9 @@ func arc(canvas: Control, center: Vector2, radius: float, color: Color, width: f
 
 
 func draw_backdrop(canvas: Control) -> void:
+	if screen.rose_circle:
+		draw_rose_seal(canvas)
+		return
 	if screen.uni_circle:
 		draw_uni_seal(canvas)
 		return
@@ -121,6 +124,33 @@ func draw_uni_seal(canvas: Control) -> void:
 		arc(canvas, center, radius, Color(Style.VIOLET, 0.08), 1.0)
 
 
+func draw_rose_seal(canvas: Control) -> void:
+	# A rose window: a thorned rim, six petal outlines behind the six paths and
+	# a ring of small leaves. Ornament only; the nodes carry every link.
+	var center: Vector2 = _point(Vector2.ZERO)
+	var outer: float = screen.max_radius + 40.0
+	arc(canvas, center, outer, Color(Style.LILAC, 0.30), 1.0)
+	arc(canvas, center, outer - 10.0, Color(Style.VIOLET, 0.18), 1.0)
+	_draw_runes(canvas, outer + 9.0)
+	for index in range(48):
+		var radial := Vector2.from_angle(index * TAU / 48.0)
+		var tangent: Vector2 = radial.orthogonal()
+		var at: Vector2 = radial * (outer - 5.0)
+		canvas.draw_colored_polygon(PackedVector2Array([_point(at + tangent * 3.0), _point(at - tangent * 3.0), _point(at - radial * 8.0)]), Color(Style.VIOLET, 0.16))
+	for petal in range(6):
+		var axis: float = -PI * 0.5 + petal * TAU / 6.0
+		var outline := PackedVector2Array()
+		for index in range(33):
+			var t: float = float(index) / 32.0
+			var reach: float = lerpf(outer * 0.18, outer * 0.92, sin(t * PI))
+			outline.append(_point(Vector2.from_angle(axis + (t - 0.5) * 0.62) * reach))
+		canvas.draw_polyline(outline, Color(Style.VIOLET, 0.13), 1.0, true)
+		var leaf: Vector2 = Vector2.from_angle(axis + TAU / 12.0) * outer * 0.60
+		canvas.draw_circle(_point(leaf), 3.0 * screen.zoom, Color(Style.LILAC, 0.16))
+	for radius in [outer * 0.32, outer * 0.70]:
+		arc(canvas, center, radius, Color(Style.VIOLET, 0.08), 1.0)
+
+
 func _draw_satellite(canvas: Control, seal: Dictionary) -> void:
 	var origin: Vector2 = seal.center
 	var center: Vector2 = _point(origin)
@@ -184,6 +214,16 @@ func draw_core(canvas: Control) -> void:
 	for index in range(20):
 		var radial: Vector2 = Vector2.from_angle(-PI * 0.5 + index * TAU / 20.0)
 		canvas.draw_line(_point(radial * (Style.CORE_RADIUS + 4.0)), _point(radial * (Style.CORE_ORNAMENT_RADIUS - (6.0 if index % 4 == 0 else 10.0))), Color(Style.LILAC, 0.80 if complete else 0.30), 1.0, true)
+	if screen.rose_circle:
+		# Rosecourt's centre is a five-petalled rose under a small crown.
+		var ink: Color = Style.GOLD if complete else Color(Style.GOLD, 0.5)
+		for index in range(5):
+			var petal_at: Vector2 = center + Vector2(0, radius * 0.08) + Vector2.from_angle(-PI / 2 + index * TAU / 5) * radius * 0.22
+			canvas.draw_arc(petal_at, radius * 0.24, 0, TAU, 28, ink, 1.2, true)
+		canvas.draw_circle(center + Vector2(0, radius * 0.08), radius * 0.1, ink)
+		var crown := PackedVector2Array([center + Vector2(-radius * 0.3, -radius * 0.42), center + Vector2(-radius * 0.3, -radius * 0.62), center + Vector2(-radius * 0.15, -radius * 0.5), center + Vector2(0, -radius * 0.68), center + Vector2(radius * 0.15, -radius * 0.5), center + Vector2(radius * 0.3, -radius * 0.62), center + Vector2(radius * 0.3, -radius * 0.42), center + Vector2(-radius * 0.3, -radius * 0.42)])
+		canvas.draw_polyline(crown, ink, 1.2, true)
+		return
 	if screen.uni_circle:
 		# Quillmoor's centre is an open book under a single star.
 		var ink: Color = Style.GOLD if complete else Color(Style.GOLD, 0.5)

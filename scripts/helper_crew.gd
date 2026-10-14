@@ -6,6 +6,7 @@ const Helper = preload("res://scripts/helper.gd")
 const Balance = preload("res://scripts/balance.gd")
 const Fair = preload("res://scripts/fair.gd")
 const University = preload("res://scripts/university.gd")
+const Rosecourt = preload("res://scripts/rosecourt.gd")
 
 var game: Node2D
 
@@ -40,7 +41,8 @@ func _tune() -> void:
 		var market: bool = progression.active_area == "bellmarket"
 		var fair: bool = progression.active_area == Fair.AREA_ID
 		var university: bool = progression.active_area == University.AREA_ID
-		var stats: String = "market.helper.teal." if market else "fair.helper.teal." if fair else "university.helper.teal." if university else "helper."
+		var rosecourt: bool = progression.active_area == Rosecourt.AREA_ID
+		var stats: String = "market.helper.teal." if market else "fair.helper.teal." if fair else "university.helper.teal." if university else "rosecourt.helper.teal." if rosecourt else "helper."
 		helper.walk_speed = Balance.number(stats + "walk_speed")
 		helper.phrase_seconds = Balance.number(stats + "phrase_seconds")
 		helper.conviction_per_phrase = Balance.number(stats + "conviction_per_phrase") + (progression.market_teal_conviction_bonus() if market else 0.0)
@@ -49,6 +51,10 @@ func _tune() -> void:
 			helper.walk_speed *= 1.0 + progression.uni_helper_walk_bonus()
 			helper.phrase_seconds /= 1.0 + progression.uni_helper_speed_bonus()
 			helper.conviction_per_phrase += progression.uni_helper_conviction_bonus()
+		if rosecourt:
+			# Trusted Name ranks; its conversions whisper like the cultist's.
+			helper.walk_speed *= 1.0 + progression.rose_helper_walk_bonus()
+			helper.conviction_per_phrase += progression.rose_helper_conviction_bonus()
 		# At the fair the teal helper obeys the same hearing rule, with its own Interest.
 		helper.interest = progression.fair_teal_interest() if fair else -1
 	var fair_helper: Node2D = game.fair_helper

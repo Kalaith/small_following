@@ -97,6 +97,8 @@ static func parse(p: RefCounted, raw: Variant) -> Variant:
 					return "Interest and Distraction effects must be whole numbers: " + entry.id
 				if effect in p.WHOLE_UNI_KEYS and not p._integer_between(rank_effect[effect], 1, 100):
 					return "Argument slots and Quillmoor donations must be whole numbers: " + entry.id
+				if effect in p.WHOLE_ROSE_KEYS and not p._integer_between(rank_effect[effect], 1, 100):
+					return "Rosecourt threads, trusted nobles and donations must be whole numbers: " + entry.id
 				if effect in p.UNLOCK_KEYS:
 					if entry.max_rank != 1 or rank_effect[effect] != 1 or unlocks.has(effect):
 						return "Unlocks must appear once, at one rank and value 1: " + entry.id

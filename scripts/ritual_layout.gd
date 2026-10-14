@@ -9,6 +9,12 @@ const FAN_HALF_ANGLE: float = 15.0
 const MARKET_BRANCHES: Array[String] = ["market_run", "market_talk", "market_persuade", "market_guild", "market_patron"]
 const FAIR_TITLES: Dictionary = {"fair_show": "Showmanship", "fair_stage": "Stagecraft", "fair_captivate": "Captivating", "fair_follower": "Fair Followers", "fair_steal": "Showstopper", "fair_run": "Paths", "fair_talk": "Patter", "fair_persuade": "Spellbinding"}
 const UNI_TITLES: Dictionary = {"uni_book": "Commonplace Book", "uni_mastery": "Mastery", "uni_assistant": "Teaching Assistant", "uni_run": "Cloisters", "uni_talk": "Cadence", "uni_persuade": "Learned Creed"}
+const ROSE_TITLES: Dictionary = {"rose_talk": "Small Talk", "rose_wide": "Wide Circles", "rose_persuade": "Court Manners", "rose_linger": "Lingering Whispers", "rose_run": "Garden Stroll", "rose_trusted": "Trusted Name"}
+## Rosecourt's six petals in seal order, a petal every 60 degrees from the top.
+const ROSE_BRANCHES: Array[String] = ["rose_talk", "rose_wide", "rose_persuade", "rose_linger", "rose_run", "rose_trusted"]
+## One petal's six steps in its own frame (its axis along +x): out along one
+## edge, round the tip and back along the other, so each petal reads as a rose petal.
+const ROSE_PETAL: Array[Vector2] = [Vector2(150, -30), Vector2(240, -54), Vector2(332, -48), Vector2(394, 0), Vector2(332, 48), Vector2(240, 54)]
 const MARKET_TITLES: Dictionary = {"market_follower": "Followers", "market_run": "Routes", "market_talk": "Voice", "market_persuade": "Creed", "market_guild": "Guild", "market_patron": "Patrons"}
 # The first three nodes retain their original petal positions. The next three
 # turn down the petal's spare side, keeping six real steps inside the same seal.
@@ -119,7 +125,7 @@ static func satellite_seals(catalog: Array) -> Array[Dictionary]:
 
 
 static func branch_title(branch: String) -> String:
-	return str(UNI_TITLES.get(branch, FAIR_TITLES.get(branch, MARKET_TITLES.get(branch, BRANCH_TITLES.get(branch, branch.replace("_", " ").capitalize())))))
+	return str(ROSE_TITLES.get(branch, UNI_TITLES.get(branch, FAIR_TITLES.get(branch, MARKET_TITLES.get(branch, BRANCH_TITLES.get(branch, branch.replace("_", " ").capitalize()))))))
 
 
 static func build(catalog: Array) -> Dictionary:
@@ -170,6 +176,12 @@ static func build(catalog: Array) -> Dictionary:
 			positions[id] = MARKET_POSITIONS[id]
 		elif UNI_POSITIONS.has(id):
 			positions[id] = UNI_POSITIONS[id]
+		elif id.begins_with("rose_"):
+			var branch: String = id.substr(0, id.rfind("_"))
+			var step: int = int(id.substr(id.rfind("_") + 1)) - 1
+			if branch in ROSE_BRANCHES and step >= 0 and step < ROSE_PETAL.size():
+				var axis: float = deg_to_rad(-90.0 + ROSE_BRANCHES.find(branch) * 60.0)
+				positions[id] = ROSE_PETAL[step].rotated(axis)
 		else:
 			for branch_index in range(MARKET_BRANCHES.size()):
 				for tier in range(1, MARKET_TIER_ANGLES.size() + 1):

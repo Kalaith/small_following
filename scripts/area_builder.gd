@@ -11,6 +11,7 @@ const Fair = preload("res://scripts/fair.gd")
 const FairBoss = preload("res://scripts/fair_boss.gd")
 const University = preload("res://scripts/university.gd")
 const UniBoss = preload("res://scripts/uni_boss.gd")
+const Rosecourt = preload("res://scripts/rosecourt.gd")
 
 var game: Node2D
 
@@ -48,6 +49,8 @@ func rebuild() -> void:
 		world = Fair.new()
 	elif game.progression.active_area == University.AREA_ID:
 		world = University.new()
+	elif game.progression.active_area == Rosecourt.AREA_ID:
+		world = Rosecourt.new()
 	else:
 		world = Village.new()
 	world.name = "Village"
@@ -92,6 +95,16 @@ func rebuild() -> void:
 		var people: Array = Balance.list("university.wanderers.people")
 		for index in range(people.size()):
 			var wanderer := _new_uni_group({"title": Wanderers.TITLE, "people": [people[index]]}, index)
+			wanderer.show_caption = false
+			game.wanderers.append(wanderer)
+		scatter_wanderers()
+	elif game.progression.active_area == Rosecourt.AREA_ID:
+		for entry in Balance.list("rosecourt.salons"):
+			game.groups.append(_new_rose_group(entry))
+		_seed_wanderers()
+		var strollers: Array = Balance.list("rosecourt.wanderers.people")
+		for index in range(strollers.size()):
+			var wanderer := _new_rose_group({"title": Wanderers.TITLE, "people": [strollers[index]]}, index)
 			wanderer.show_caption = false
 			game.wanderers.append(wanderer)
 		scatter_wanderers()
@@ -165,6 +178,23 @@ func _new_uni_group(entry: Dictionary, coat_offset: int = 0) -> Node2D:
 	gathering.coat_offset = coat_offset
 	gathering.zone = String(entry.get("zone", ""))
 	gathering.listener_profiles.assign(University.profiles(entry.people))
+	gathering.configure_market(game.progression)
+	gathering.recruited.connect(game._on_recruited)
+	gathering.phrase_spoken.connect(game.game_audio.on_phrase)
+	game.actors().add_child(gathering)
+	return gathering
+
+
+## One Rosecourt salon from balance data; its reserved guests wait for whispers.
+func _new_rose_group(entry: Dictionary, coat_offset: int = 0) -> Node2D:
+	var gathering := Gathering.new()
+	gathering.group_name = String(entry.title)
+	gathering.position = Balance.vec(entry.at) if entry.has("at") else Vector2.ZERO
+	gathering.coat_offset = coat_offset
+	gathering.zone = String(entry.get("zone", ""))
+	gathering.listener_profiles.assign(Rosecourt.profiles(entry.people))
+	# No text over the garden's guests: rings, bars and icons only; the HUD explains.
+	gathering.show_caption = false
 	gathering.configure_market(game.progression)
 	gathering.recruited.connect(game._on_recruited)
 	gathering.phrase_spoken.connect(game.game_audio.on_phrase)

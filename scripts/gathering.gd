@@ -10,6 +10,8 @@ const TIME_EPSILON: float = 0.000001
 const Balance = preload("res://scripts/balance.gd")
 const ArgumentBadge = preload("res://scripts/argument_badge.gd")
 const Listener = preload("res://scripts/listener.gd")
+## Rosecourt guests; their salons carry no text over their heads.
+const COURT_TYPES: Array[String] = ["servant", "courtier", "noble", "grandee"]
 ## Ordinary villagers who share a convinced opponent's habits join the village
 ## after that opponent's victory (balance data "village.types"). Rebuttals are
 ## phrases ignored at the start of each visit; decay is conviction lost per
@@ -289,7 +291,7 @@ func validate_profiles() -> String:
 	for profile in listener_profiles:
 		if not profile.get("role", "") is String or String(profile.get("role", "")).strip_edges().is_empty():
 			return "A market listener needs a role name."
-		if not profile.get("npc_type", "") in ["ordinary", "guild", "patron", "fairgoer", "stallholder", "performer", "fan", "student", "staff", "academic", "pupil"]:
+		if not profile.get("npc_type", "") in ["ordinary", "guild", "patron", "fairgoer", "stallholder", "performer", "fan", "student", "staff", "academic", "pupil", "servant", "courtier", "noble", "grandee"]:
 			return "A market listener has an unsupported audience type."
 		var argument: Variant = profile.get("argument", "")
 		if not argument is String or (not argument.is_empty() and not argument in Progression.argument_ids()):
@@ -454,10 +456,11 @@ func _draw_market_details() -> void:
 func _draw_lone_market() -> void:
 	var next: int = first_unconverted()
 	if next >= 0:
-		draw_arc(Vector2.ZERO, 34, 0, TAU, 56, Color(1, 0.93, 0.62, 0.7), 2, true)
+		# A captionless salon keeps the full ring around all of its guests.
+		draw_arc(Vector2.ZERO, 34 if listener_count == 1 else 69, 0, TAU, 56, Color(1, 0.93, 0.62, 0.7), 2, true)
 		_draw_progress(listener_conviction_required(next))
 		return
-	if recruits > 0:
+	if recruits > 0 or String(listener_profiles[0].get("npc_type", "")) in COURT_TYPES:
 		return
 	var font := ThemeDB.fallback_font
 	var line: String = "%s required" % _introduction_name(String(listener_profiles[0].get("requires", "")))

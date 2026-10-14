@@ -18,6 +18,7 @@ const FairBoss = preload("res://scripts/fair_boss.gd")
 const FairDirector = preload("res://scripts/fair_director.gd")
 const University = preload("res://scripts/university.gd")
 const UniBoss = preload("res://scripts/uni_boss.gd")
+const Rosecourt = preload("res://scripts/rosecourt.gd")
 const VillageHud = preload("res://scripts/village_hud.gd")
 const AreaBuilder = preload("res://scripts/area_builder.gd")
 const HelperCrew = preload("res://scripts/helper_crew.gd")
@@ -135,6 +136,8 @@ func area_start_position() -> Vector2:
 		return Fair.start_position()
 	if progression.active_area == University.AREA_ID:
 		return University.start_position()
+	if progression.active_area == Rosecourt.AREA_ID:
+		return Rosecourt.start_position()
 	return Market.START_POSITION if progression.active_area == "bellmarket" else START_POSITION
 
 
@@ -150,6 +153,9 @@ func travel_to(area_id: String, bypass_unlock: bool = false) -> bool:
 	elif area_id == University.AREA_ID:
 		for entry in Balance.list("university.groups") + Balance.list("university.follower_groups"):
 			layouts.append({"profiles": University.profiles(entry.people)})
+	elif area_id == Rosecourt.AREA_ID:
+		for entry in Balance.list("rosecourt.salons"):
+			layouts.append({"profiles": Rosecourt.profiles(entry.people)})
 	if not layouts.is_empty():
 		for entry in layouts:
 			var probe := Gathering.new()
@@ -221,7 +227,7 @@ func show_title() -> void:
 	hud_layout.hide()
 	settings_button.hide()
 	title_screen.unlocked = title_screen.unlocked or progression.level_select_unlocked
-	title_screen.configure(progression.active_area, progression.is_area_unlocked("bellmarket"), progression.has_progress(), progression.is_area_unlocked(Fair.AREA_ID), progression.is_area_unlocked(University.AREA_ID))
+	title_screen.configure(progression.active_area, progression.is_area_unlocked("bellmarket"), progression.has_progress(), progression.is_area_unlocked(Fair.AREA_ID), progression.is_area_unlocked(University.AREA_ID), progression.is_area_unlocked(Rosecourt.AREA_ID))
 	title_screen.show()
 	if not progression.last_error.is_empty():
 		title_screen.show_error(progression.last_error)
@@ -591,6 +597,12 @@ func apply_upgrades() -> void:
 			area.scatter_wanderers()
 		# A new slot never changes the loadout, but locks are re-read anyway.
 		_refresh_faculty_rule()
+		_apply_helper()
+		return
+	if progression.active_area == Rosecourt.AREA_ID:
+		# Ranks change head starts and who is trusted, so locks are re-read.
+		for group in audiences():
+			group.configure_market(progression)
 		_apply_helper()
 		return
 	if progression.active_area == "bellmarket":

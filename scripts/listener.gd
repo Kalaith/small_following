@@ -17,6 +17,8 @@ var locked: bool = false
 var argument: String = ""
 ## Phrases fall on deaf ears: a "..." and a glance away.
 var deaf: bool = false
+## A Rosecourt guest someone they trust has whispered to this round.
+var whispered: bool = false
 var performing: bool = false
 var reward_label: Label
 
@@ -67,10 +69,14 @@ func _draw() -> void:
 		if locked and not following:
 			# An unprepared academic rebuts everything: a struck-through bubble.
 			Badge.draw_rebuttal(self, Vector2(2, -76), argument)
+	elif locked and not following and profile_type in ["noble", "grandee"]:
+		_draw_closed_fan()
 	elif locked and not following:
 		draw_rect(Rect2(-5, -60, 10, 9), Color("#f3ddb0"))
 		draw_arc(Vector2(0, -60), 4, PI, TAU, 10, Color("#f3ddb0"), 2, true)
 		draw_circle(Vector2(0, -56), 1.2, Color("#514b58"))
+	if whispered and not following:
+		_draw_whisper_rose()
 	if following:
 		draw_line(Vector2(-4, -45), Vector2(-1, -42), Color("#fbf1b6"), 2)
 		draw_line(Vector2(-1, -42), Vector2(5, -49), Color("#fbf1b6"), 2)
@@ -104,6 +110,8 @@ func _draw_role(bob: float) -> void:
 		_draw_fair_role(bob)
 	elif profile_type in ["student", "staff", "academic", "pupil"]:
 		_draw_university_role(bob)
+	elif profile_type in ["servant", "courtier", "noble", "grandee"]:
+		_draw_court_role(bob)
 	elif profile_type == "guild":
 		# A square cap, apron and tool belt identify guild tradespeople.
 		draw_rect(Rect2(-10, -41 + bob, 20, 6), Color("#466d75"))
@@ -206,3 +214,62 @@ func _draw_university_role(bob: float) -> void:
 			draw_rect(Rect2(-2, -22 + bob, 4, 10), Color("f2e6c8"))
 		"Orator", "Debater", "Debating student":
 			draw_line(Vector2(10, -20 + bob), Vector2(17, -33 + bob), Color("eac49a"), 3)
+
+
+## Rosecourt dress: livery and work clothes for servants, artists' berets and
+## fans for courtiers, sashes and plumes for nobles, coronets and ermine for
+## the grandees who stand beside the King.
+func _draw_court_role(bob: float) -> void:
+	match profile_type:
+		"noble":
+			draw_line(Vector2(-8, -22 + bob), Vector2(9, -8), Color("c9a24f"), 3)
+			draw_rect(Rect2(-11, -41 + bob, 22, 5), Color("5a2a4a"))
+			draw_line(Vector2(6, -41 + bob), Vector2(14, -54 + bob), Color("f4eee2"), 3)
+		"grandee":
+			draw_rect(Rect2(-12, -24 + bob, 24, 5), Color("f4f0e8"))
+			for dot in [-7, 0, 7]:
+				draw_circle(Vector2(dot, -22 + bob), 1.0, Color("2a2233"))
+			draw_colored_polygon(PackedVector2Array([Vector2(-9, -37 + bob), Vector2(-9, -45 + bob), Vector2(-4, -40 + bob), Vector2(0, -47 + bob), Vector2(4, -40 + bob), Vector2(9, -45 + bob), Vector2(9, -37 + bob)]), Color("d9b45a"))
+	match role:
+		"Footman":
+			draw_circle(Vector2(0, -37 + bob), 7, Color("f2eee6"))
+			draw_rect(Rect2(8, -22, 14, 3), Color("c9c4b8"))
+		"Maid":
+			draw_rect(Rect2(-6, -22 + bob, 12, 15), Color("f4f0e8"))
+			draw_rect(Rect2(-8, -40 + bob, 16, 4), Color("f4f0e8"))
+		"Gardener":
+			draw_rect(Rect2(-13, -38 + bob, 26, 3), Color("d8b860"))
+			draw_rect(Rect2(-7, -44 + bob, 14, 7), Color("d8b860"))
+			draw_line(Vector2(12, -6), Vector2(16, -20), Color("8a6a43"), 2)
+		"Musician":
+			draw_colored_polygon(PackedVector2Array([Vector2(8, -24), Vector2(16, -26), Vector2(18, -12), Vector2(10, -10)]), Color("9a5a2e"))
+			draw_line(Vector2(4, -30), Vector2(20, -8), Color("e6d8bc"), 1)
+		"Poet", "Painter":
+			draw_colored_polygon(PackedVector2Array([Vector2(-10, -37 + bob), Vector2(10, -41 + bob), Vector2(8, -34 + bob), Vector2(-10, -33 + bob)]), Color("3c4c78") if role == "Poet" else Color("8a3b46"))
+			if role == "Poet":
+				draw_line(Vector2(10, -10), Vector2(18, -28), Color("f4eee2"), 2)
+			else:
+				draw_line(Vector2(10, -8), Vector2(16, -24), Color("8a6a43"), 2)
+				draw_circle(Vector2(16, -25), 2.0, Color("e05b4f"))
+		"Companion":
+			draw_colored_polygon(PackedVector2Array([Vector2(10, -14), Vector2(4, -26), Vector2(20, -24)]), Color("e3a0b4"))
+		"Cousin":
+			draw_line(Vector2(-6, -38 + bob), Vector2(6, -38 + bob), Color("e98aa0"), 3)
+		"Lord Chancellor":
+			draw_circle(Vector2(-7, -31 + bob), 5, Color("f2eee6"))
+			draw_circle(Vector2(7, -31 + bob), 5, Color("f2eee6"))
+			draw_arc(Vector2(0, -20 + bob), 7, 0.2, PI - 0.2, 10, Color("d9b45a"), 2, true)
+
+
+## A reserved noble's closed fan: they will not listen until introduced.
+func _draw_closed_fan() -> void:
+	draw_colored_polygon(PackedVector2Array([Vector2(-2, -50), Vector2(2, -50), Vector2(5, -70), Vector2(-5, -70)]), Color("f3ddb0"))
+	draw_line(Vector2(0, -50), Vector2(0, -70), Color("8a6a43"), 1)
+	draw_circle(Vector2(0, -50), 2.0, Color("c9a24f"))
+
+
+## A small rose over a guest someone has whispered to this round.
+func _draw_whisper_rose() -> void:
+	draw_circle(Vector2(-12, -52), 4.5, Color("c2486a"))
+	draw_circle(Vector2(-12, -52), 2.0, Color("f0a0b4"))
+	draw_line(Vector2(-12, -47), Vector2(-12, -41), Color("5f8a4a"), 1.5)

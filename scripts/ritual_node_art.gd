@@ -179,7 +179,28 @@ func _draw_glyph(canvas: Control, at: Vector2, branch: String, color: Color) -> 
 		"uni_persuade":
 			canvas.draw_polyline(PackedVector2Array([at + Vector2(0, -12) * scale, at + Vector2(9, 0) * scale, at + Vector2(0, 12) * scale, at + Vector2(-9, 0) * scale, at + Vector2(0, -12) * scale]), color, 1.6, true)
 			canvas.draw_line(at + Vector2(0, -6) * scale, at + Vector2(0, 6) * scale, color, 1.2, true)
-		"run", "market_run", "fair_run", "uni_run":
+		"rose_talk":
+			canvas.draw_line(at + Vector2(-5, -10) * scale, at + Vector2(-5, 10) * scale, color, 1.7, true)
+			canvas.draw_arc(at + Vector2(-6, 0) * scale, 9 * scale, -PI * 0.42, PI * 0.42, 18, color, 1.3, true)
+			canvas.draw_arc(at + Vector2(-6, 0) * scale, 15 * scale, -PI * 0.35, PI * 0.35, 18, color, 1.3, true)
+		"rose_persuade":
+			canvas.draw_polyline(PackedVector2Array([at + Vector2(0, -12) * scale, at + Vector2(9, 0) * scale, at + Vector2(0, 12) * scale, at + Vector2(-9, 0) * scale, at + Vector2(0, -12) * scale]), color, 1.6, true)
+			canvas.draw_line(at + Vector2(0, -6) * scale, at + Vector2(0, 6) * scale, color, 1.2, true)
+		"rose_linger":
+			# A whisper that lingers: a curl of breath around a small rose.
+			canvas.draw_arc(at, 11 * scale, -PI * 0.2, PI * 1.3, 20, color, 1.4, true)
+			canvas.draw_arc(at + Vector2(1, 1) * scale, 6 * scale, PI * 0.6, PI * 2.2, 14, color, 1.2, true)
+			canvas.draw_circle(at, 2.5 * scale, color)
+		"rose_wide":
+			# Two salons joined by a thread.
+			canvas.draw_arc(at + Vector2(-6, 2) * scale, 6 * scale, 0, TAU, 16, color, 1.4, true)
+			canvas.draw_arc(at + Vector2(7, -3) * scale, 6 * scale, 0, TAU, 16, color, 1.4, true)
+			canvas.draw_line(at + Vector2(-1, 0) * scale, at + Vector2(2, -1) * scale, color, 1.6, true)
+		"rose_trusted":
+			# A closed fan: the reserved noble who already knows your name.
+			canvas.draw_polyline(PackedVector2Array([at + Vector2(-2, 10) * scale, at + Vector2(-6, -11) * scale, at + Vector2(6, -11) * scale, at + Vector2(2, 10) * scale, at + Vector2(-2, 10) * scale]), color, 1.5, true)
+			canvas.draw_line(at + Vector2(0, 10) * scale, at + Vector2(0, -11) * scale, color, 1.0, true)
+		"run", "market_run", "fair_run", "uni_run", "rose_run":
 			for x in [-5, 4]:
 				canvas.draw_polyline(PackedVector2Array([at + Vector2(x - 4, -10) * scale, at + Vector2(x + 3, 0) * scale, at + Vector2(x - 4, 10) * scale]), color, 1.7, true)
 		_:

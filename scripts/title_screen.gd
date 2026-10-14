@@ -18,6 +18,7 @@ var current_area: String = "bramblewick"
 var market_available: bool = false
 var fair_available: bool = false
 var university_available: bool = false
+var rosecourt_available: bool = false
 ## Whether a save holds anything a new game would discard; it asks first if so.
 var has_progress: bool = false
 var continue_button: Button
@@ -31,6 +32,7 @@ var level_one_button: Button
 var level_two_button: Button
 var level_three_button: Button
 var level_four_button: Button
+var level_five_button: Button
 var feedback_label: Label
 var _level_choices: VBoxContainer
 ## The password prompt and its row; both go once the seal is open.
@@ -52,11 +54,12 @@ func _ready() -> void:
 	_refresh()
 
 
-func configure(area_id: String, available: bool, progress: bool = false, fair_open: bool = false, university_open: bool = false) -> void:
+func configure(area_id: String, available: bool, progress: bool = false, fair_open: bool = false, university_open: bool = false, rosecourt_open: bool = false) -> void:
 	current_area = area_id
 	market_available = available
 	fair_available = fair_open
 	university_available = university_open
+	rosecourt_available = rosecourt_open
 	has_progress = progress
 	if is_instance_valid(continue_button):
 		_new_game_confirm.hide()
@@ -109,8 +112,10 @@ func show_error(message: String) -> void:
 
 func _refresh() -> void:
 	continue_button.text = "Play / Continue"
-	_journey_label.text = "Continue in " + {"bellmarket": "Bellmarket", "lantern_fair": "the Lantern Fair", "university": "Quillmoor"}.get(current_area, "Bramblewick")
-	if university_available and current_area != "university":
+	_journey_label.text = "Continue in " + {"bellmarket": "Bellmarket", "lantern_fair": "the Lantern Fair", "university": "Quillmoor", "rosecourt": "Rosecourt"}.get(current_area, "Bramblewick")
+	if rosecourt_available and current_area != "rosecourt":
+		_journey_label.text += " · Rosecourt is open"
+	elif university_available and current_area != "university":
 		_journey_label.text += " · Quillmoor is open"
 	elif fair_available and current_area != "lantern_fair":
 		_journey_label.text += " · The fair is open"
@@ -203,6 +208,7 @@ func _build_controls() -> void:
 	level_two_button = _level_button(level_grid, "2 · Bellmarket", "bellmarket")
 	level_three_button = _level_button(level_grid, "3 · Lantern Fair", "lantern_fair")
 	level_four_button = _level_button(level_grid, "4 · Quillmoor", "university")
+	level_five_button = _level_button(level_grid, "5 · Rosecourt", "rosecourt")
 	var note: Label = _label("Your existing upgrades are kept. Each place has its own circle.", 13, MUTED)
 	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_level_choices.add_child(note)
@@ -218,7 +224,7 @@ func _level_button(grid: GridContainer, caption: String, area_id: String) -> But
 
 
 func _request_level(area_id: String) -> void:
-	if unlocked and area_id in ["bramblewick", "bellmarket", "lantern_fair", "university"]:
+	if unlocked and area_id in ["bramblewick", "bellmarket", "lantern_fair", "university", "rosecourt"]:
 		level_requested.emit(area_id)
 
 

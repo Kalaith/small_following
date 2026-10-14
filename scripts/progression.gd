@@ -5,26 +5,29 @@ extends RefCounted
 const Balance = preload("res://scripts/balance.gd")
 const ProgressionSave = preload("res://scripts/progression_save.gd")
 const ProgressionCatalog = preload("res://scripts/progression_catalog.gd")
-const SAVE_VERSION: int = 6
+const SAVE_VERSION: int = 7
 const MAX_COUNTER: int = 1000000000
 ## Travel order. An area's earned effects carry into every later area, never back.
-const AREA_IDS: Array[String] = ["bramblewick", "bellmarket", "lantern_fair", "university"]
-const AREA_TITLES: Dictionary = {"bramblewick": "Bramblewick", "bellmarket": "Bellmarket", "lantern_fair": "the Lantern Fair", "university": "Quillmoor"}
+const AREA_IDS: Array[String] = ["bramblewick", "bellmarket", "lantern_fair", "university", "rosecourt"]
+const AREA_TITLES: Dictionary = {"bramblewick": "Bramblewick", "bellmarket": "Bellmarket", "lantern_fair": "the Lantern Fair", "university": "Quillmoor", "rosecourt": "Rosecourt"}
 ## Effect keys a circle may hold only in its own area, by prefix.
-const AREA_EFFECT_PREFIXES: Dictionary = {"bellmarket": "market_", "lantern_fair": "fair_", "university": "uni_"}
+const AREA_EFFECT_PREFIXES: Dictionary = {"bellmarket": "market_", "lantern_fair": "fair_", "university": "uni_", "rosecourt": "rose_"}
 const FAIR_BOSS_COUNT: int = 4
 const UNI_AREA: String = "university"
 const UNI_BOSS_COUNT: int = 4
+const ROSE_AREA: String = "rosecourt"
 ## Village nodes added after Bellmarket shipped. Saves validate earned market
 ## access without them, so a player already there is not rejected; ordinary
 ## travel still requires the whole current circle.
 const POST_MARKET_VILLAGE_IDS: Array[String] = ["beckon_1"]
-const EFFECT_KEYS: Array[String] = ["beckon_add", "encounter_conviction_add", "skeptic_conviction_add", "guard_conviction_add", "zealot_conviction_add", "priest_conviction_add", "merchant_conviction_add", "merchant_donation_add", "speech_speed_add", "conviction_add", "run_speed_add", "meadow_unlock", "east_unlock", "helper_unlock", "merchant_unlock", "encounter_unlock", "market_guild_unlock", "market_patron_unlock", "market_guild_donation_add", "market_patron_donation_add", "market_beckon_add", "market_wanderer_add", "market_helper_unlock", "market_teal_conviction_add", "market_amber_speed_add", "fair_interest_add", "fair_stage_bonus_add", "fair_stage_reach_add", "fair_drain_cut_add", "fair_barker_unlock", "fair_barker_speed_add", "fair_barker_cut_add", "fair_teal_interest_add", "fair_steal_window_add", "fair_crowd_radius_add", "uni_slot_add", "uni_academic_conviction_add", "uni_proof_conviction_add", "uni_evidence_conviction_add", "uni_scripture_conviction_add", "uni_eloquence_conviction_add", "uni_proof_donation_add", "uni_evidence_donation_add", "uni_scripture_donation_add", "uni_eloquence_donation_add", "uni_ta_conviction_add", "uni_ta_walk_add", "uni_ta_speed_add"]
+const EFFECT_KEYS: Array[String] = ["beckon_add", "encounter_conviction_add", "skeptic_conviction_add", "guard_conviction_add", "zealot_conviction_add", "priest_conviction_add", "merchant_conviction_add", "merchant_donation_add", "speech_speed_add", "conviction_add", "run_speed_add", "meadow_unlock", "east_unlock", "helper_unlock", "merchant_unlock", "encounter_unlock", "market_guild_unlock", "market_patron_unlock", "market_guild_donation_add", "market_patron_donation_add", "market_beckon_add", "market_wanderer_add", "market_helper_unlock", "market_teal_conviction_add", "market_amber_speed_add", "fair_interest_add", "fair_stage_bonus_add", "fair_stage_reach_add", "fair_drain_cut_add", "fair_barker_unlock", "fair_barker_speed_add", "fair_barker_cut_add", "fair_teal_interest_add", "fair_steal_window_add", "fair_crowd_radius_add", "uni_slot_add", "uni_academic_conviction_add", "uni_proof_conviction_add", "uni_evidence_conviction_add", "uni_scripture_conviction_add", "uni_eloquence_conviction_add", "uni_proof_donation_add", "uni_evidence_donation_add", "uni_scripture_donation_add", "uni_eloquence_donation_add", "uni_ta_conviction_add", "uni_ta_walk_add", "uni_ta_speed_add", "rose_head_start_add", "rose_noble_donation_add", "rose_reach_add", "rose_whisper_conviction_add", "rose_trusted_add", "rose_helper_conviction_add", "rose_helper_walk_add"]
 const UNLOCK_KEYS: Array[String] = ["meadow_unlock", "east_unlock", "helper_unlock", "merchant_unlock", "encounter_unlock", "market_guild_unlock", "market_patron_unlock", "market_helper_unlock", "fair_barker_unlock"]
 ## Whole-number fair effects (Interest and Distraction are counted in whole lanterns).
 const WHOLE_FAIR_KEYS: Array[String] = ["fair_interest_add", "fair_stage_bonus_add", "fair_barker_cut_add", "fair_teal_interest_add"]
 ## Whole-number Quillmoor effects: argument slots and gold.
 const WHOLE_UNI_KEYS: Array[String] = ["uni_slot_add", "uni_proof_donation_add", "uni_evidence_donation_add", "uni_scripture_donation_add", "uni_eloquence_donation_add"]
+## Whole-number Rosecourt effects: threads, trusted nobles and gold.
+const WHOLE_ROSE_KEYS: Array[String] = ["rose_reach_add", "rose_trusted_add", "rose_noble_donation_add"]
 
 
 var encounter_stage: int = 0
@@ -36,6 +39,8 @@ var uni_stage: int = 0
 ## Arguments prepared for the next Quillmoor round, in the order chosen. Never
 ## longer than the owned slots; academics of any other faculty rebut everything.
 var uni_loadout: Array[String] = []
+## The King of Rosecourt has given his approval; a lasting victory, like the Priest's.
+var rose_king_won: bool = false
 var coins: int = 0
 # Recruitment events are lifetime history; assigning supporters spends only availability.
 var total_recruits: int = 0
@@ -450,6 +455,35 @@ func uni_complete() -> bool:
 	return uni_stage >= UNI_BOSS_COUNT
 
 
+## Share of a whispered guest's threshold already filled: the base
+## "rosecourt.whispers.head_start" plus Lingering Whispers, capped.
+func rose_head_start() -> float:
+	return minf(Balance.number("rosecourt.whispers.head_start") + _sum_effect("rose_head_start_add"), Balance.number("rosecourt.whispers.head_start_max"))
+
+
+## Wide Circles: how many of each thread's extra guests also hear the whisper.
+func rose_reach() -> int:
+	return int(_sum_effect("rose_reach_add"))
+
+
+## Trusted Name: nobles already whispered to when each round begins.
+func rose_trusted_count() -> int:
+	return int(_sum_effect("rose_trusted_add"))
+
+
+## Extra conviction per phrase against a guest someone has whispered to.
+func rose_whisper_conviction() -> float:
+	return _sum_effect("rose_whisper_conviction_add")
+
+
+func rose_helper_conviction_bonus() -> float:
+	return _sum_effect("rose_helper_conviction_add")
+
+
+func rose_helper_walk_bonus() -> float:
+	return _sum_effect("rose_helper_walk_add")
+
+
 func has_unlock(key: String) -> bool:
 	return key in UNLOCK_KEYS and _sum_effect(key) >= 1.0
 
@@ -524,6 +558,8 @@ func merchant_donation() -> int:
 func market_donation(npc_type: String, base_amount: int) -> int:
 	if npc_type in ["guild", "patron"]:
 		return base_amount + int(_sum_effect("market_" + npc_type + "_donation_add"))
+	if npc_type in ["noble", "grandee"]:
+		return base_amount + int(_sum_effect("rose_noble_donation_add"))
 	return base_amount
 
 
@@ -602,7 +638,7 @@ func load_progress() -> bool:
 
 
 func has_progress() -> bool:
-	return coins > 0 or total_recruits > 0 or round_number > 1 or not purchased.is_empty() or encounter_stage > 0 or fair_stage > 0 or uni_stage > 0 or active_area != "bramblewick" or level_select_unlocked
+	return coins > 0 or total_recruits > 0 or round_number > 1 or not purchased.is_empty() or encounter_stage > 0 or fair_stage > 0 or uni_stage > 0 or rose_king_won or active_area != "bramblewick" or level_select_unlocked
 
 
 ## Called every frame for speech and conviction, so this stays allocation-free.

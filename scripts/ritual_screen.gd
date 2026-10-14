@@ -39,6 +39,7 @@ const Pointer = preload("res://scripts/ritual_pointer.gd")
 const BranchNav = preload("res://scripts/ritual_branch_nav.gd")
 const ArgumentCards = preload("res://scripts/ritual_argument_cards.gd")
 const Frame = preload("res://scripts/ritual_frame.gd")
+const AreaText = preload("res://scripts/ritual_area_text.gd")
 
 class GraphCanvas extends Control:
 	var screen: Control
@@ -82,6 +83,9 @@ var core_hovered: bool = false
 var market_circle: bool = false
 var fair_circle: bool = false
 var uni_circle: bool = false
+var rose_circle: bool = false
+## The area whose circle is shown; its wording comes from ritual_area_text.gd.
+var circle_area: String = "bramblewick"
 var argument_cards: ArgumentCards
 ## Any circle after Bramblewick's: it offers a road back and a compact legend.
 var away_circle: bool = false
@@ -141,7 +145,9 @@ func configure(new_catalog: Array, progression: Progression) -> void:
 	market_circle = area == "bellmarket"
 	fair_circle = area == "lantern_fair"
 	uni_circle = area == "university"
-	away_circle = market_circle or fair_circle or uni_circle
+	rose_circle = area == "rosecourt"
+	circle_area = area
+	away_circle = market_circle or fair_circle or uni_circle or rose_circle
 	_progression = progression
 	by_id.clear()
 	node_positions = Layout.build(catalog)
@@ -187,27 +193,14 @@ func update_state(round_recruits: int = 0) -> void:
 		return
 	_hint_label.text = "%s%s%s%s / D-pad: select   ·   %s: inscribe" % [Keys.hint("ritual_nav_up"), Keys.hint("ritual_nav_down"), Keys.hint("ritual_nav_left"), Keys.hint("ritual_nav_right"), Keys.hint("buy_upgrade")]
 	_demo_hint.text = "Esc: dismiss / Tab: village / %s: next round" % Keys.hint("next_round")
-	_subtitle_label.text = "ROUND COMPLETE  /  %d NEW FOLLOWERS" % _round_recruits
-	_title_label.text = "Quillmoor's circle." if uni_circle else "The fair's circle." if fair_circle else "Bellmarket's circle." if market_circle else "The circle grows."
+	_subtitle_label.text = AreaText.subtitle(circle_area, _progression, _round_recruits)
+	_title_label.text = AreaText.words(circle_area, "title")
 	return_area_button.visible = not _return_id.is_empty()
-	village_button.text = ("Return to the university" if uni_circle else "Return to the fair" if fair_circle else "Return to the market" if market_circle else "Return to the village") + "  ·  Tab"
+	village_button.text = AreaText.words(circle_area, "back") + "  ·  Tab"
 	next_button.text = "Begin next round  ·  " + Keys.hint("next_round")
 	argument_cards.visible = uni_circle
 	if uni_circle and is_instance_valid(_progression):
 		argument_cards.refresh(_progression)
-		var debaters: Array[String] = ["Debate Captain", "Logician", "Astronomer", "Rector"]
-		_subtitle_label.text = "QUILLMOOR  /  %d NEW FOLLOWERS  /  " % _round_recruits
-		if _progression.uni_complete():
-			_subtitle_label.text += "RECTOR CONVINCED"
-		else:
-			_subtitle_label.text += "DEBATES %d/4 / Next: %s" % [_progression.uni_stage, debaters[_progression.uni_stage]]
-	elif fair_circle:
-		var headliners: Array[String] = ["Performer", "Head Clown", "Mime", "Ringmaster"]
-		_subtitle_label.text = "THE LANTERN FAIR  /  %d NEW FOLLOWERS  /  " % _round_recruits
-		if is_instance_valid(_progression) and _progression.fair_complete():
-			_subtitle_label.text += "RINGMASTER CONVINCED"
-		elif is_instance_valid(_progression):
-			_subtitle_label.text += "HEADLINERS %d/4 / Next: %s / Interest %d" % [_progression.fair_stage, headliners[_progression.fair_stage], _progression.fair_interest()]
 	elif market_circle:
 		_subtitle_label.text = "BELLMARKET  /  %d NEW FOLLOWERS  /  FIVE PATHS, YOUR CHOICE" % _round_recruits
 	elif is_instance_valid(_progression) and _progression.map_complete():
@@ -275,8 +268,8 @@ func update_state(round_recruits: int = 0) -> void:
 	if not _destination_id.is_empty() and complete:
 		completion_button.text = "Circle complete / Travel"
 		completion_button.tooltip_text = "Open the route to " + _destination_title + "."
-	demo_message_label.text = "The road to %s is open" % _destination_title if not _destination_id.is_empty() else "Quillmoor's circle is complete" if uni_circle else "The fair's circle is complete" if fair_circle else "Bellmarket's circle is complete" if market_circle else "This is the end of the demo"
-	_demo_description.text = "Visit its separate circle and new listeners. Your progress in both towns is kept." if not _destination_id.is_empty() else "Every inscription is yours. Keep debating at Quillmoor or return to the fair." if uni_circle else "Every inscription is yours. Keep enjoying the fair or return to Bellmarket." if fair_circle else "Every inscription is yours. Keep exploring the market or return to Bramblewick." if market_circle else "Every inscription is yours. You can keep playing in this village."
+	demo_message_label.text = "The road to %s is open" % _destination_title if not _destination_id.is_empty() else AreaText.words(circle_area, "complete")
+	_demo_description.text = "Visit its separate circle and new listeners. Your progress in both towns is kept." if not _destination_id.is_empty() else AreaText.words(circle_area, "after")
 	destination_button.visible = not _destination_id.is_empty()
 	destination_button.text = "Travel to " + _destination_title
 	if not complete:

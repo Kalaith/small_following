@@ -7,6 +7,7 @@ const Fair = preload("res://scripts/fair.gd")
 const FairHud = preload("res://scripts/fair_hud.gd")
 const University = preload("res://scripts/university.gd")
 const UniHud = preload("res://scripts/uni_hud.gd")
+const Rosecourt = preload("res://scripts/rosecourt.gd")
 const ArgumentBadge = preload("res://scripts/argument_badge.gd")
 ## Village HUD frame: screen margin, gap between cards and the corner settings button.
 const HUD_MARGIN: float = 26.0
@@ -186,8 +187,25 @@ func _uni_context() -> String:
 	return "Find someone your prepared arguments can win."
 
 
+func _rose_context() -> String:
+	if not game.round_active:
+		if game.progression.rose_king_won:
+			return "The King's approval is yours!"
+		return "Round complete."
+	if is_instance_valid(game.nearest_group):
+		# Salons carry no text in the garden, so the guest being won is named here.
+		var group: Node2D = game.nearest_group
+		var next: int = group.first_unconverted()
+		if next >= 0:
+			return "%s: %s, %.0f conviction / %d gold" % [group.group_name, group.listener_profiles[next].role, group.listener_conviction_required(next), group.listener_donation(next)]
+		return "Speaking with %s..." % group.group_name
+	if game.progression.rose_king_won:
+		return "The King's approval is yours.  Enjoy the garden party."
+	return "Win guests in the right order: who you talk to first opens who listens next."
+
+
 func refresh() -> void:
-	area_label.text = {"bellmarket": "BELLMARKET", Fair.AREA_ID: "THE LANTERN FAIR", University.AREA_ID: "QUILLMOOR"}.get(game.progression.active_area, "BRAMBLEWICK")
+	area_label.text = {"bellmarket": "BELLMARKET", Fair.AREA_ID: "THE LANTERN FAIR", University.AREA_ID: "QUILLMOOR", Rosecourt.AREA_ID: "ROSECOURT"}.get(game.progression.active_area, "BRAMBLEWICK")
 	fair_hud.visible = game.progression.active_area == Fair.AREA_ID
 	uni_hud.visible = game.progression.active_area == University.AREA_ID
 	if uni_hud.visible:
@@ -205,6 +223,8 @@ func refresh() -> void:
 		context_label.text = _fair_context()
 	elif game.progression.active_area == University.AREA_ID:
 		context_label.text = _uni_context()
+	elif game.progression.active_area == Rosecourt.AREA_ID:
+		context_label.text = _rose_context()
 	elif game.progression.active_area == "bellmarket" and game.progression.is_circle_complete():
 		context_label.text = "Bellmarket circle complete!  Keep exploring or return to Bramblewick."
 	elif game.progression.active_area == "bramblewick" and game.progression.map_complete():
