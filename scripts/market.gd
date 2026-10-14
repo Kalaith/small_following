@@ -5,7 +5,7 @@ extends Node2D
 const Village = preload("res://scripts/village.gd")
 const WORLD_SIZE := Vector2(1560, 1100)
 const START_POSITION := Vector2(780, 680)
-const Balance = preload("res://scripts/balance.gd")
+const Balance = preload("res://addons/hatchery/core/balance.gd")
 
 
 ## One market listener's profile, from the role its person plays

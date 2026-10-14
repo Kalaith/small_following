@@ -2,7 +2,7 @@ extends RefCounted
 ## Places the active area's boss each round (Bramblewick's debate opponent, a
 ## fair headliner, a Quillmoor boss or Rosecourt's King) and pays out when one
 ## is convinced. The bosses themselves stay on main, where area travel clears them.
-const Balance = preload("res://scripts/balance.gd")
+const Balance = preload("res://addons/hatchery/core/balance.gd")
 const DonationPopup = preload("res://scripts/donation_popup.gd")
 const Encounter = preload("res://scripts/encounter.gd")
 const FairBoss = preload("res://scripts/fair_boss.gd")

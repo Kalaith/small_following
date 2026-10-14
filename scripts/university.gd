@@ -7,8 +7,8 @@ extends Node2D
 ## ("university.*"); academics hear only a prepared argument.
 
 const Village = preload("res://scripts/village.gd")
-const DrawShapes = preload("res://scripts/draw_shapes.gd")
-const Balance = preload("res://scripts/balance.gd")
+const DrawShapes = preload("res://addons/hatchery/draw/shapes.gd")
+const Balance = preload("res://addons/hatchery/core/balance.gd")
 const WORLD_SIZE := Vector2(1560, 1100)
 const AREA_ID: String = "university"
 
@@ -147,7 +147,7 @@ func _draw_paving(area: Rect2, edge: Color, stone: Color) -> void:
 
 
 class UniversityProp extends Node2D:
-	const DrawShapes = preload("res://scripts/draw_shapes.gd")
+	const DrawShapes = preload("res://addons/hatchery/draw/shapes.gd")
 	var kind: String = "shelf"
 
 	func visual_rect() -> Rect2:

@@ -5,7 +5,7 @@ extends RefCounted
 ## Placement checks the drawn prop art, not only collision, so nobody spawns
 ## hidden behind a roof or canopy.
 
-const Balance = preload("res://scripts/balance.gd")
+const Balance = preload("res://addons/hatchery/core/balance.gd")
 const TITLE: String = "Wanderer"
 ## Feet positions stay inside the fences and the helper's navigation grid.
 const AREA := Rect2(110, 170, 1340, 820)

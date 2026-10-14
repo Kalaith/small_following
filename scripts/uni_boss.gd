@@ -8,8 +8,8 @@ extends Node2D
 signal convinced(stage: int)
 signal phrase_spoken
 
-const Balance = preload("res://scripts/balance.gd")
-const DrawShapes = preload("res://scripts/draw_shapes.gd")
+const Balance = preload("res://addons/hatchery/core/balance.gd")
+const DrawShapes = preload("res://addons/hatchery/draw/shapes.gd")
 const ArgumentBadge = preload("res://scripts/argument_badge.gd")
 ## Floating-point slack when comparing accumulated per-frame time to a fixed interval.
 const TIME_EPSILON: float = 0.000001

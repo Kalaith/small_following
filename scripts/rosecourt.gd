@@ -7,8 +7,8 @@ extends Node2D
 ## original procedural geometry. Guests are balance data ("rosecourt.*").
 
 const Village = preload("res://scripts/village.gd")
-const DrawShapes = preload("res://scripts/draw_shapes.gd")
-const Balance = preload("res://scripts/balance.gd")
+const DrawShapes = preload("res://addons/hatchery/draw/shapes.gd")
+const Balance = preload("res://addons/hatchery/core/balance.gd")
 const WORLD_SIZE := Vector2(1560, 1100)
 const AREA_ID: String = "rosecourt"
 
@@ -128,7 +128,7 @@ func _draw() -> void:
 
 
 class GardenProp extends Node2D:
-	const DrawShapes = preload("res://scripts/draw_shapes.gd")
+	const DrawShapes = preload("res://addons/hatchery/draw/shapes.gd")
 	var kind: String = "hedge"
 	## A hedge row's width in pixels; other props ignore it.
 	var length: float = 0.0

@@ -1,7 +1,7 @@
 extends Node2D
 ## One visible, nonblocking recruiter. Main supplies only active-round time.
 ## A conservative grid uses the actual prop footprints, not decorative artwork.
-const Balance = preload("res://scripts/balance.gd")
+const Balance = preload("res://addons/hatchery/core/balance.gd")
 const CELL: float = 24.0
 const BODY_RADIUS: float = 7.0
 const START_OFFSET := Vector2(-24, 24)

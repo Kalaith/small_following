@@ -1,6 +1,8 @@
 extends Node
 signal preferences_changed
 ## Presentation only: never advances speech, movement, currency or progression.
+const Levels = preload("res://addons/hatchery/audio/levels.gd")
+const Display = preload("res://addons/hatchery/settings/display.gd")
 const MUSIC = preload("res://assets/audio/village-score.ogg")
 const STEPS: Array[AudioStream] = [
 	preload("res://assets/audio/step-1.wav"), preload("res://assets/audio/step-2.wav"),
@@ -23,7 +25,7 @@ var footsteps := AudioStreamPlayer.new()
 var voice := AudioStreamPlayer.new()
 # Godot 4.2's headless Dummy driver retains unconsumed playback instances.
 # Keep cue scheduling testable there without creating playback voices.
-var output_enabled: bool = DisplayServer.get_name() != "headless"
+var output_enabled: bool = not Display.is_headless()
 var muted: bool = false
 var voice_muted: bool = false
 var volumes: Dictionary = {"master": 1.0, "music": 1.0, "footsteps": 1.0, "speech": 1.0}
@@ -137,8 +139,7 @@ func _apply_levels() -> void:
 
 
 func _level(channel: String, base_db: float, silent: bool) -> float:
-	var gain: float = volumes.master * volumes[channel]
-	return -80.0 if silent or gain <= 0.0 else maxf(-80.0, base_db + linear_to_db(gain))
+	return Levels.db(base_db, Levels.gain([volumes.master, volumes[channel]]), silent)
 
 
 func _play(output: AudioStreamPlayer) -> void:

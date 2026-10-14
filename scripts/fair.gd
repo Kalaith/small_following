@@ -5,8 +5,8 @@ extends Node2D
 ## People, Distraction and shows are balance data ("fair.*").
 
 const Village = preload("res://scripts/village.gd")
-const DrawShapes = preload("res://scripts/draw_shapes.gd")
-const Balance = preload("res://scripts/balance.gd")
+const DrawShapes = preload("res://addons/hatchery/draw/shapes.gd")
+const Balance = preload("res://addons/hatchery/core/balance.gd")
 const WORLD_SIZE := Vector2(1560, 1100)
 const AREA_ID: String = "lantern_fair"
 
@@ -240,7 +240,7 @@ func _draw_bunting(start: Vector2, end: Vector2) -> void:
 
 
 class FairProp extends Node2D:
-	const DrawShapes = preload("res://scripts/draw_shapes.gd")
+	const DrawShapes = preload("res://addons/hatchery/draw/shapes.gd")
 	var kind: String = "stall"
 	var tint := Color("c9705a")
 	var _phase: float = 0.0

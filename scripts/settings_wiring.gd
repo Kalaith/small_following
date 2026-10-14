@@ -3,9 +3,11 @@ extends Node
 ## key and gamepad rebinding, fullscreen and reduced motion.
 const SettingsScreen = preload("res://scripts/settings_screen.gd")
 const VillageHud = preload("res://scripts/village_hud.gd")
-const Keys = preload("res://scripts/key_bindings.gd")
-const Pad = preload("res://scripts/pad_bindings.gd")
+const Keys = preload("res://addons/hatchery/input/key_bindings.gd")
+const Pad = preload("res://addons/hatchery/input/pad_bindings.gd")
+const SettingsStore = preload("res://scripts/settings_store.gd")
 const DonationPopup = preload("res://scripts/donation_popup.gd")
+const Display = preload("res://addons/hatchery/settings/display.gd")
 
 var game: Node2D
 var settings_timer: Timer
@@ -17,13 +19,13 @@ func _init(owner_game: Node2D) -> void:
 
 
 func is_fullscreen() -> bool:
-	return get_window().mode in [Window.MODE_FULLSCREEN, Window.MODE_EXCLUSIVE_FULLSCREEN]
+	return Display.is_fullscreen()
 
 
 func set_fullscreen(enabled: bool) -> void:
-	if DisplayServer.get_name() == "headless":
+	if Display.is_headless():
 		return
-	get_window().mode = Window.MODE_FULLSCREEN if enabled else Window.MODE_WINDOWED
+	Display.set_fullscreen(enabled)
 	game.settings.values.fullscreen = is_fullscreen()
 	queue_save()
 
@@ -105,10 +107,10 @@ func build() -> void:
 func _rebind_key(action: String, slot: int, code: int) -> void:
 	var error: String = game.settings.rebind(action, slot, code)
 	if not error.is_empty():
-		game.settings_screen.binding_message.text = error
+		game.settings_screen.binding_message.text = game.settings.describe_binding_error(error)
 		return
 	game.settings_screen.cancel_capture()
-	game.settings_screen.binding_message.text = "%s: %s" % [Keys.ACTIONS[action], Keys.key_name(code)]
+	game.settings_screen.binding_message.text = "%s: %s" % [SettingsStore.KEY_ACTIONS[action], Keys.key_name(code)]
 	_keys_changed()
 
 
@@ -121,10 +123,10 @@ func _reset_keys() -> void:
 func _rebind_pad(action: String, button: int) -> void:
 	var error: String = game.settings.rebind_pad(action, button)
 	if not error.is_empty():
-		game.settings_screen.binding_message.text = error
+		game.settings_screen.binding_message.text = game.settings.describe_binding_error(error)
 		return
 	game.settings_screen.cancel_capture()
-	game.settings_screen.binding_message.text = "%s: %s" % [Pad.ACTIONS[action], Pad.button_name(button)]
+	game.settings_screen.binding_message.text = "%s: %s" % [SettingsStore.PAD_ACTIONS[action], Pad.button_name(button)]
 	_keys_changed()
 
 

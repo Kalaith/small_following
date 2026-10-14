@@ -3,7 +3,7 @@ extends RefCounted
 ## them from balance data and that area's upgrades. The helpers themselves stay
 ## on main (`helper`, `market_helper`, `fair_helper`), where area travel clears them.
 const Helper = preload("res://scripts/helper.gd")
-const Balance = preload("res://scripts/balance.gd")
+const Balance = preload("res://addons/hatchery/core/balance.gd")
 const Fair = preload("res://scripts/fair.gd")
 const University = preload("res://scripts/university.gd")
 const Rosecourt = preload("res://scripts/rosecourt.gd")

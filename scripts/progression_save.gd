@@ -1,16 +1,44 @@
 extends RefCounted
-## Progression's save file: new game, load with backup recovery, validation and
-## the staged write. Progression owns the numbers; this owns the file.
+## Progression's save file: new game, the validation and migration of older
+## schemas, and how saved state reaches progression. Progression owns the
+## numbers; the shared toolkit's JsonSave owns the file (staged writes, backup
+## recovery, damaged files kept as .corrupt, newer versions left untouched).
+const JsonSave = preload("res://addons/hatchery/storage/json_save.gd")
 
 ## Weak, because progression holds this helper; a strong pair would never be freed.
 var _owner: WeakRef
 var progression: RefCounted:
 	get:
 		return _owner.get_ref()
+var _file: JsonSave
 
 
 func _init(owner_progression: RefCounted) -> void:
 	_owner = weakref(owner_progression)
+	# Method callables, not lambdas: a lambda would hold this helper strongly
+	# from its own file and never be freed.
+	_file = JsonSave.new("", owner_progression.SAVE_VERSION, _accepts)
+	_file.schema_key = "schema_version"
+	_file.noun = "progression"
+	_file.migrate = _migrated
+
+
+func _accepts(data: Dictionary) -> bool:
+	return not validated(data).is_empty()
+
+
+## Every older schema is brought up to date by validation itself; one it
+## rejects keeps its old version, so the file reads as damaged.
+func _migrated(data: Dictionary) -> Dictionary:
+	var current: Dictionary = validated(data)
+	return current if not current.is_empty() else data
+
+
+## The file, following progression's current path and persistence switch.
+func file() -> JsonSave:
+	_file.path = progression.save_path
+	_file.enabled = progression.save_enabled
+	return _file
 
 
 ## Replaces progression with a fresh first-round village save. The old save is
@@ -18,9 +46,8 @@ func _init(owner_progression: RefCounted) -> void:
 ## the next rounds' writes. A failed copy or write changes nothing.
 func start_new_game() -> bool:
 	progression.last_error = ""
-	if progression.save_enabled and not progression._write_blocked and FileAccess.file_exists(progression.save_path):
-		if DirAccess.copy_absolute(progression.save_path, progression.save_path + ".previous") != OK:
-			return progression._fail("Cannot keep a copy of the current save, so it was not replaced.")
+	if not file().writes_blocked and not _file.keep_previous():
+		return progression._fail("Cannot keep a copy of the current save, so it was not replaced.")
 	var fresh: Dictionary = {"schema_version": progression.SAVE_VERSION, "coins": 0, "total_recruits": 0, "available_recruits": 0, "round_number": 1, "purchased": {}, "encounter_stage": 0, "fair_stage": 0, "uni_stage": 0, "uni_loadout": [], "rose_king_won": false, "active_area": "bramblewick", "level_select_unlocked": false}
 	if not write(fresh):
 		return false
@@ -34,41 +61,17 @@ func save() -> bool:
 
 func load_file() -> bool:
 	progression.last_error = ""
-	progression._write_blocked = false
-	progression._archive_corrupt_on_save = false
-	if not progression.save_enabled:
+	var data: Dictionary = file().load_data()
+	if not data.is_empty():
+		apply(validated(data))
+		progression.last_error = _file.last_error
 		return true
-	if not progression.save_path.begins_with("user://"):
-		progression._write_blocked = true
-		return progression._fail("Save path must be under user://.")
-	if not FileAccess.file_exists(progression.save_path):
-		# A missing canonical file plus backup can result from interrupted replacement.
-		if FileAccess.file_exists(progression.save_path + ".bak"):
-			var backup: Dictionary = read(progression.save_path + ".bak")
-			if not backup.is_empty():
-				apply(backup)
-				progression.last_error = "Recovered progression from backup after an interrupted save."
-				return true
-			progression._write_blocked = true
-			return progression._fail("The save backup is invalid; preserved it without overwriting.")
+	if _file.last_error.is_empty():
 		return true
-	var raw: Variant = progression._parse_json(FileAccess.get_file_as_string(progression.save_path))
-	if raw is Dictionary and progression._finite_number(raw.get("schema_version")) and raw.schema_version > progression.SAVE_VERSION:
-		progression._write_blocked = true
-		return progression._fail("Save uses a newer version; it is preserved and saving is disabled.")
-	var current: Dictionary = validated(raw)
-	if not current.is_empty():
-		apply(current)
-		return true
-	progression._archive_corrupt_on_save = true
-	var recovered: Dictionary = read(progression.save_path + ".bak")
-	if not recovered.is_empty():
-		apply(recovered)
-		progression.last_error = "Save was damaged. Recovered its backup; damaged original will be preserved as .corrupt."
-		return true
-	# Start clean in memory, but preserve the bad file on the first successful save.
-	apply({"coins": 0, "total_recruits": 0, "available_recruits": 0, "round_number": 1, "purchased": {}})
-	return progression._fail("Save was damaged. Fresh progression started; damaged original will be preserved as .corrupt.")
+	if not _file.writes_blocked:
+		# Start clean in memory; the damaged file is kept as .corrupt on the first save.
+		apply({"coins": 0, "total_recruits": 0, "available_recruits": 0, "round_number": 1, "purchased": {}})
+	return progression._fail(_file.last_error)
 
 
 func snapshot() -> Dictionary:
@@ -204,49 +207,10 @@ func _market_gate_definitions() -> Array[Dictionary]:
 	return result
 
 
-func read(path: String) -> Dictionary:
-	if not FileAccess.file_exists(path):
-		return {}
-	return validated(progression._parse_json(FileAccess.get_file_as_string(path)))
-
-
 func write(state: Dictionary) -> bool:
 	progression.last_error = ""
 	if validated(state).is_empty():
 		return progression._fail("Progression is invalid; it was not saved.")
-	if not progression.save_enabled:
-		return true
-	if progression._write_blocked:
-		return progression._fail("Saving is disabled to preserve an incompatible or damaged save.")
-	if not progression.save_path.begins_with("user://"):
-		return progression._fail("Save path must be under user://.")
-	var temp: String = progression.save_path + ".tmp"
-	var backup: String = progression.save_path + ".bak"
-	var output: FileAccess = FileAccess.open(temp, FileAccess.WRITE)
-	if output == null:
-		return progression._fail("Cannot write progression; earnings remain in memory. Storage error " + str(FileAccess.get_open_error()) + ".")
-	output.store_string(JSON.stringify(state, "\t"))
-	output.flush()
-	var write_error: Error = output.get_error()
-	output.close()
-	if write_error != OK or read(temp).is_empty():
-		return progression._fail("Progression write did not verify; previous save was preserved.")
-	if progression._archive_corrupt_on_save and FileAccess.file_exists(progression.save_path):
-		if FileAccess.file_exists(progression.save_path + ".corrupt"):
-			return progression._fail("A previous .corrupt recovery file already exists; damaged save preserved. Move it aside before saving again.")
-		if DirAccess.rename_absolute(progression.save_path, progression.save_path + ".corrupt") != OK:
-			return progression._fail("Cannot preserve the damaged save; saving stopped.")
-		progression._archive_corrupt_on_save = false
-	elif FileAccess.file_exists(progression.save_path):
-		# A backup is replaced only with a known-valid canonical save.
-		if read(progression.save_path).is_empty():
-			return progression._fail("Save changed or is damaged; reload before saving again.")
-		if FileAccess.file_exists(backup) and DirAccess.remove_absolute(backup) != OK:
-			return progression._fail("Cannot rotate the progression backup.")
-		if DirAccess.rename_absolute(progression.save_path, backup) != OK:
-			return progression._fail("Cannot preserve the previous save.")
-	if DirAccess.rename_absolute(temp, progression.save_path) != OK:
-		if not FileAccess.file_exists(progression.save_path) and FileAccess.file_exists(backup):
-			DirAccess.copy_absolute(backup, progression.save_path)
-		return progression._fail("Cannot finish progression save; previous progress preserved.")
+	if not file().save_data(state):
+		return progression._fail(_file.last_error + " Earnings remain in memory.")
 	return true

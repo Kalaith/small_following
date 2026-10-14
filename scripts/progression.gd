@@ -2,8 +2,10 @@ extends RefCounted
 ## Single owner for upgrade purchases and durable earnings. Definitions contain no code.
 ## Saves only progression: rounds always start fresh after relaunch; no offline accrual.
 
-const Balance = preload("res://scripts/balance.gd")
+const Balance = preload("res://addons/hatchery/core/balance.gd")
 const ProgressionSave = preload("res://scripts/progression_save.gd")
+const JsonIO = preload("res://addons/hatchery/core/json_io.gd")
+const DataRules = preload("res://addons/hatchery/core/data_rules.gd")
 const ProgressionCatalog = preload("res://scripts/progression_catalog.gd")
 const SAVE_VERSION: int = 7
 const MAX_COUNTER: int = 1000000000
@@ -56,8 +58,6 @@ var level_select_unlocked: bool = false
 var save_path: String = "user://progression.json"
 var last_error: String = ""
 var save_enabled: bool = true
-var _write_blocked: bool = false
-var _archive_corrupt_on_save: bool = false
 ## The save file itself: loading, validation and staged writes.
 var save_file: ProgressionSave = ProgressionSave.new(self)
 
@@ -705,16 +705,15 @@ func _rank_effect(upgrade: Dictionary, index: int) -> Dictionary:
 
 
 func _finite_number(value: Variant) -> bool:
-	return (value is int or value is float) and is_finite(float(value))
+	return DataRules.finite(value)
 
 
 func _parse_json(contents: String) -> Variant:
-	var parser: JSON = JSON.new()
-	return parser.data if parser.parse(contents) == OK else null
+	return JsonIO.parse(contents)
 
 
 func _integer_between(value: Variant, minimum: int, maximum: int) -> bool:
-	return _finite_number(value) and float(value) == floorf(float(value)) and value >= minimum and value <= maximum
+	return DataRules.integer_in(value, minimum, maximum)
 
 
 func _fail(message: String) -> bool:

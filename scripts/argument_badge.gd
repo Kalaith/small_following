@@ -3,7 +3,7 @@ extends RefCounted
 ## bosses, the HUD and the ritual screen's cards. Each argument has its own
 ## shape (scroll, star, candle, quill) so colour is never the only cue.
 
-const Balance = preload("res://scripts/balance.gd")
+const Balance = preload("res://addons/hatchery/core/balance.gd")
 const COLORS: Dictionary = {"proof": Color("8fb3e0"), "evidence": Color("f0d36a"), "scripture": Color("f2e6c8"), "eloquence": Color("e39aa8")}
 const INK := Color("2a2233")
 

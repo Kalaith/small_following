@@ -2,7 +2,7 @@ extends Node2D
 ## Editable, hand-drawn placeholder village. No mockup image is used in the scene.
 ## Main calls build_props(actors) so props and characters share one Y-sort parent.
 
-const DrawShapes = preload("res://scripts/draw_shapes.gd")
+const DrawShapes = preload("res://addons/hatchery/draw/shapes.gd")
 const WORLD_SIZE: Vector2 = Vector2(1560.0, 1100.0)
 const GRASS: Color = Color("a7b976")
 const GRASS_LIGHT: Color = Color("b6c58a")

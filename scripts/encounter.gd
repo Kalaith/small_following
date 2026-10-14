@@ -8,7 +8,7 @@ const ENTRANCE := Vector2(1470, 630)
 const TURN := Vector2(1000, 630)
 ## Floating-point slack when comparing accumulated per-frame time to a fixed interval.
 const TIME_EPSILON: float = 0.000001
-const Balance = preload("res://scripts/balance.gd")
+const Balance = preload("res://addons/hatchery/core/balance.gd")
 
 
 ## The four opponents in order; thresholds, habits and rewards are balance data.

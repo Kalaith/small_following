@@ -7,7 +7,7 @@ const Progression = preload("res://scripts/progression.gd")
 const LISTENER_COUNT: int = 5
 ## Floating-point slack when comparing accumulated per-frame time to a fixed interval.
 const TIME_EPSILON: float = 0.000001
-const Balance = preload("res://scripts/balance.gd")
+const Balance = preload("res://addons/hatchery/core/balance.gd")
 const ArgumentBadge = preload("res://scripts/argument_badge.gd")
 const Listener = preload("res://scripts/listener.gd")
 ## Rosecourt guests; their salons carry no text over their heads.

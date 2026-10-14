@@ -5,7 +5,7 @@ extends RefCounted
 ## progression (base, Showmanship, headliners) plus the stage underfoot.
 ## Presentation state (stage glow, show rings, hoops) is pushed to the world.
 
-const Balance = preload("res://scripts/balance.gd")
+const Balance = preload("res://addons/hatchery/core/balance.gd")
 const Fair = preload("res://scripts/fair.gd")
 const Wanderers = preload("res://scripts/wanderers.gd")
 

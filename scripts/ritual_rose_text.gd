@@ -2,7 +2,7 @@ extends RefCounted
 ## Rosecourt inscriptions, read like Quillmoor's: the current value from
 ## progression and, before the rank is bought, the value it would reach.
 
-const Balance = preload("res://scripts/balance.gd")
+const Balance = preload("res://addons/hatchery/core/balance.gd")
 
 
 static func effect_text(progression: RefCounted, by_id: Dictionary, id: String, current: Dictionary, complete: bool) -> String:

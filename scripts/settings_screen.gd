@@ -13,8 +13,10 @@ signal reset_keys_requested
 signal pad_binding_requested(action: String, button: int)
 signal reset_pad_requested
 
-const Keys = preload("res://scripts/key_bindings.gd")
-const Pad = preload("res://scripts/pad_bindings.gd")
+const Keys = preload("res://addons/hatchery/input/key_bindings.gd")
+const Pad = preload("res://addons/hatchery/input/pad_bindings.gd")
+const SettingsStore = preload("res://scripts/settings_store.gd")
+const Display = preload("res://addons/hatchery/settings/display.gd")
 const GameAudio = preload("res://scripts/game_audio.gd")
 const FOCUS_RING := Color("d7b9ff")
 
@@ -183,7 +185,7 @@ func _ready() -> void:
 	_style_secondary(exit_button)
 	exit_button.add_theme_font_size_override("font_size", 16)
 	# A browser owns its tab's lifetime; SceneTree.quit cannot close it.
-	exit_button.disabled = OS.has_feature("web")
+	exit_button.disabled = not Display.can_quit()
 	exit_button.tooltip_text = "Close the browser tab to exit." if exit_button.disabled else "Save preferences and close Small Following."
 	actions.add_child(exit_button)
 	resized.connect(_layout)
@@ -207,7 +209,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	var step: int = 0
 	if event is InputEventJoypadButton and event.pressed:
-		for action in Pad.ACTIONS:
+		for action in SettingsStore.PAD_ACTIONS:
 			if event.is_action(action):
 				return
 		match event.button_index:
@@ -272,8 +274,8 @@ func _build_key_mapping() -> void:
 	holder.add_child(grid)
 	for title in ["Action", "Primary", "Alternate", ""]:
 		grid.add_child(_label(title, 14, Color("d7b9ff")))
-	for action in Keys.ACTIONS:
-		var label := _label(Keys.ACTIONS[action], 16)
+	for action in SettingsStore.KEY_ACTIONS:
+		var label := _label(SettingsStore.KEY_ACTIONS[action], 16)
 		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		grid.add_child(label)
 		var buttons: Array[Button] = []
@@ -288,7 +290,7 @@ func _build_key_mapping() -> void:
 			buttons.append(button)
 		binding_buttons[action] = buttons
 		var clear := _key_button("Clear")
-		clear.tooltip_text = "Clear the alternate key for " + Keys.ACTIONS[action]
+		clear.tooltip_text = "Clear the alternate key for " + SettingsStore.KEY_ACTIONS[action]
 		clear.pressed.connect(func() -> void:
 			cancel_capture()
 			binding_requested.emit(action, 1, 0))
@@ -300,8 +302,8 @@ func _build_key_mapping() -> void:
 	pad_grid.add_theme_constant_override("h_separation", 12)
 	pad_grid.add_theme_constant_override("v_separation", 6)
 	holder.add_child(pad_grid)
-	for action in Pad.ACTIONS:
-		var label := _label(Pad.ACTIONS[action], 16)
+	for action in SettingsStore.PAD_ACTIONS:
+		var label := _label(SettingsStore.PAD_ACTIONS[action], 16)
 		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		pad_grid.add_child(label)
 		var button := _key_button("")
@@ -386,7 +388,7 @@ func refresh_bindings(mapping: Dictionary) -> void:
 		for slot in range(2):
 			var button: Button = binding_buttons[action][slot]
 			button.text = "Press a key…" if capture_action == action and capture_slot == slot and not capture_pad else Keys.key_name(int(mapping[action][slot]))
-			button.tooltip_text = "%s: %s" % [Keys.ACTIONS[action], button.text]
+			button.tooltip_text = "%s: %s" % [SettingsStore.KEY_ACTIONS[action], button.text]
 
 
 func refresh_pad(mapping: Dictionary) -> void:
@@ -394,13 +396,13 @@ func refresh_pad(mapping: Dictionary) -> void:
 	for action in pad_buttons:
 		var button: Button = pad_buttons[action]
 		button.text = "Press a button…" if capture_action == action and capture_pad else Pad.button_name(int(mapping[action]))
-		button.tooltip_text = "%s: %s" % [Pad.ACTIONS[action], button.text]
+		button.tooltip_text = "%s: %s" % [SettingsStore.PAD_ACTIONS[action], button.text]
 
 
 func begin_pad_capture(action: String) -> void:
 	capture_action = action
 	capture_pad = true
-	binding_message.text = "Press a gamepad button for %s. Esc cancels." % Pad.ACTIONS[action]
+	binding_message.text = "Press a gamepad button for %s. Esc cancels." % SettingsStore.PAD_ACTIONS[action]
 	cancel_button.show()
 	refresh_bindings(current_bindings)
 	refresh_pad(current_pad)
@@ -410,7 +412,7 @@ func begin_capture(action: String, slot: int) -> void:
 	capture_action = action
 	capture_slot = slot
 	capture_pad = false
-	binding_message.text = "Press a new key for %s. Esc cancels." % Keys.ACTIONS[action]
+	binding_message.text = "Press a new key for %s. Esc cancels." % SettingsStore.KEY_ACTIONS[action]
 	cancel_button.show()
 	refresh_bindings(current_bindings)
 

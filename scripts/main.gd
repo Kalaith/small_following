@@ -6,13 +6,11 @@ const RitualScreen = preload("res://scripts/ritual_screen.gd")
 const Encounter = preload("res://scripts/encounter.gd")
 const GameAudio = preload("res://scripts/game_audio.gd")
 const SettingsStore = preload("res://scripts/settings_store.gd")
-const Keys = preload("res://scripts/key_bindings.gd")
-const Pad = preload("res://scripts/pad_bindings.gd")
 const DonationPopup = preload("res://scripts/donation_popup.gd")
 const Market = preload("res://scripts/market.gd")
 const TitleScreen = preload("res://scripts/title_screen.gd")
 const Wanderers = preload("res://scripts/wanderers.gd")
-const Balance = preload("res://scripts/balance.gd")
+const Balance = preload("res://addons/hatchery/core/balance.gd")
 const Fair = preload("res://scripts/fair.gd")
 const FairBoss = preload("res://scripts/fair_boss.gd")
 const FairDirector = preload("res://scripts/fair_director.gd")
@@ -102,8 +100,7 @@ func _ready() -> void:
 	if not settings_path_override.is_empty():
 		settings.path = settings_path_override
 	settings.load_settings()
-	Keys.apply(settings.key_bindings)
-	Pad.apply(settings.pad_bindings)
+	settings.apply_bindings()
 	game_audio.apply_preferences(settings.values)
 	DonationPopup.reduce_motion = settings.values.reduce_motion
 	player.reduce_motion = settings.values.reduce_motion

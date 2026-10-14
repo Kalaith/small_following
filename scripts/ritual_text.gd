@@ -2,7 +2,7 @@ extends RefCounted
 ## Wording for the ritual's detail panel: branch headings and effect previews.
 
 const Progression = preload("res://scripts/progression.gd")
-const Balance = preload("res://scripts/balance.gd")
+const Balance = preload("res://addons/hatchery/core/balance.gd")
 const RoseText = preload("res://scripts/ritual_rose_text.gd")
 const BRANCH_NAMES: Dictionary = {"talk": "THE VOICE", "persuade": "THE CONVICTION", "run": "THE PILGRIM", "gather": "THE VILLAGE", "helper": "THE COMPANION", "merchant": "THE MERCHANT", "trial": "THE TRIALS", "faith": "THE FAITH", "market_run": "THE MARKET ROUTES", "market_talk": "THE MARKET VOICE", "market_persuade": "THE COMMON CAUSE", "market_guild": "THE GUILD", "market_patron": "THE PATRONS", "market_follower": "THE FOLLOWERS", "fair_show": "THE SHOWMANSHIP", "fair_stage": "THE STAGECRAFT", "fair_captivate": "THE CAPTIVATION", "fair_follower": "THE FAIR FOLLOWERS", "fair_steal": "THE SHOWSTOPPER", "fair_run": "THE FAIRGROUND PATHS", "fair_talk": "THE PATTER", "fair_persuade": "THE SPELLBINDING", "uni_book": "THE COMMONPLACE BOOK", "uni_mastery": "THE MASTERY", "uni_assistant": "THE TEACHING ASSISTANT", "uni_run": "THE CLOISTERS", "uni_talk": "THE CADENCE", "uni_persuade": "THE LEARNED CREED", "rose_talk": "THE SMALL TALK", "rose_wide": "THE WIDE CIRCLES", "rose_persuade": "THE COURT MANNERS", "rose_linger": "THE LINGERING WHISPERS", "rose_run": "THE GARDEN STROLL", "rose_trusted": "THE TRUSTED NAME"}
 

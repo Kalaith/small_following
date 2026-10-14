@@ -8,7 +8,7 @@ extends Node2D
 
 signal king_whispered
 
-const Balance = preload("res://scripts/balance.gd")
+const Balance = preload("res://addons/hatchery/core/balance.gd")
 ## Seconds a whisper takes to run along its thread; presentation only.
 const PULSE_SECONDS: float = 0.7
 const THREAD := Color("c2486a")

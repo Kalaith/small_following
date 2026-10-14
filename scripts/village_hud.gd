@@ -1,14 +1,14 @@
 extends Control
 ## The village HUD: one status card top-right, the context card bottom-left and
 ## the between-round buttons. Main owns the round; this only shows it.
-const Keys = preload("res://scripts/key_bindings.gd")
+const Keys = preload("res://addons/hatchery/input/key_bindings.gd")
 const Encounter = preload("res://scripts/encounter.gd")
 const Fair = preload("res://scripts/fair.gd")
 const FairHud = preload("res://scripts/fair_hud.gd")
 const University = preload("res://scripts/university.gd")
 const UniHud = preload("res://scripts/uni_hud.gd")
 const Rosecourt = preload("res://scripts/rosecourt.gd")
-const Balance = preload("res://scripts/balance.gd")
+const Balance = preload("res://addons/hatchery/core/balance.gd")
 const ArgumentBadge = preload("res://scripts/argument_badge.gd")
 ## Village HUD frame: screen margin, gap between cards and the corner settings button.
 const HUD_MARGIN: float = 26.0
