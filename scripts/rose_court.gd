@@ -4,7 +4,8 @@ extends Node2D
 ## helper, whispers along each thread. A whispered guest starts part-way won
 ## (Lingering Whispers) and a reserved noble listens only once whispered to.
 ## Everything resets each round. The court lives on the garden's floor, so its
-## threads are drawn on the ground beneath every guest.
+## threads are drawn on the ground beneath every guest, but only those touching
+## a salon the cultist is talking to, fading out once the talk ends.
 
 signal king_whispered
 
@@ -12,6 +13,10 @@ const Balance = preload("res://addons/hatchery/core/balance.gd")
 ## Seconds a whisper takes to run along its thread; presentation only.
 const PULSE_SECONDS: float = 0.7
 const THREAD := Color("c2486a")
+## Seconds a salon's threads stay at full strength after the talk stops, then
+## the seconds they take to fade; presentation only.
+const REVEAL_HOLD_SECONDS: float = 1.5
+const REVEAL_FADE_SECONDS: float = 1.5
 
 var progression: RefCounted = null
 ## Salon id -> its gathering, and gathering instance id -> salon id.
@@ -24,6 +29,8 @@ var king_whispers: int = 0
 ## Whether the King sits on his throne; until then his threads are not drawn.
 var king_present: bool = false
 var _pulses: Array[Dictionary] = []
+## Salon id -> seconds left before its threads are hidden again.
+var _reveals: Dictionary = {}
 
 
 func bind(groups: Dictionary, owner_progression: RefCounted) -> void:
@@ -42,6 +49,7 @@ func reset_round() -> void:
 	whispered.clear()
 	king_whispers = 0
 	_pulses.clear()
+	_reveals.clear()
 	if progression != null:
 		var trusted: Array = Balance.list("rosecourt.trusted")
 		for index in range(mini(progression.rose_trusted_count(), trusted.size())):
@@ -108,6 +116,21 @@ func introducers(group: Node2D, index: int) -> PackedStringArray:
 	return names
 
 
+## The cultist is talking to this salon: show its threads, both ways.
+func reveal(group: Node2D) -> void:
+	var id: Variant = _salon_of.get(group.get_instance_id())
+	if id == null:
+		return
+	if not _reveals.has(id):
+		queue_redraw()
+	_reveals[id] = REVEAL_HOLD_SECONDS + REVEAL_FADE_SECONDS
+
+
+func _visibility(endpoint: String) -> float:
+	var left: float = float(_reveals.get(endpoint.split(":")[0], 0.0))
+	return clampf(left / REVEAL_FADE_SECONDS, 0.0, 1.0)
+
+
 func _refresh() -> void:
 	for id in salons:
 		var group: Node2D = salons[id]
@@ -119,8 +142,12 @@ func _refresh() -> void:
 
 
 func _process(delta: float) -> void:
-	if _pulses.is_empty():
+	if _pulses.is_empty() and _reveals.is_empty():
 		return
+	for id in _reveals.keys():
+		_reveals[id] = float(_reveals[id]) - delta
+		if float(_reveals[id]) <= 0.0:
+			_reveals.erase(id)
 	for pulse in _pulses:
 		pulse.t += delta / PULSE_SECONDS
 	_pulses = _pulses.filter(func(pulse: Dictionary) -> bool: return float(pulse.t) < 1.0)
@@ -140,21 +167,28 @@ func _end(endpoint: String) -> Variant:
 
 ## Rose threads on the ground: bright toward a reserved noble, quieter toward
 ## an open guest (a head start only) and faded once spent (the source has joined).
+## Hidden unless a salon at either end was talked to just now.
 func _draw() -> void:
+	if _reveals.is_empty() and _pulses.is_empty():
+		return
 	for thread in Balance.list("rosecourt.threads"):
 		var source: String = String(thread.from)
 		var from: Variant = _end(source)
 		if from == null:
 			continue
+		var shown_from: float = _visibility(source)
 		var ends: PackedStringArray = source.split(":")
 		var spent: bool = salons[ends[0]].listeners[int(ends[1])].following
 		for target in targets_of(source):
 			var to: Variant = _end(target)
 			if to == null or (target == "king" and not king_present):
 				continue
+			var shown: float = maxf(shown_from, 0.0 if target == "king" else _visibility(target))
+			if shown <= 0.0:
+				continue
 			# Threads that open a reserved noble matter most; head starts are quieter.
 			var opens: bool = target == "king" or _reserved(target)
-			var color := Color(THREAD, 0.1 if spent else 0.6 if opens else 0.28)
+			var color := Color(THREAD, (0.1 if spent else 0.6 if opens else 0.28) * shown)
 			_draw_thread(from, to, color, 1.5 if spent else 2.6 if opens else 1.8)
 	for pulse in _pulses:
 		var from: Variant = _end(String(pulse.from))

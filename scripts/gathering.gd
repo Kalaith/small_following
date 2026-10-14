@@ -144,6 +144,8 @@ func tick_persuasion(delta: float, phrase_interval: float, conviction: float, in
 	if first_unconverted() < 0:
 		return
 	_unattended = 0.0
+	if court != null:
+		court.reveal(self)
 	last_phrase_interval = maxf(phrase_interval, 0.05)
 	# The rhythm never passes twenty phrases a second. At Rosecourt speech beyond
 	# it still counts: each phrase carries the conviction of the ones it stands for.
