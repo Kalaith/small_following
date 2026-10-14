@@ -1,6 +1,6 @@
 # Small Following project guidance
 
-This branch (`game-only`) contains only the game itself: `project.godot`, `scenes/`, `scripts/`, `data/`, `assets/` and the export presets. Documentation, tests, tooling and publishing scripts were deliberately removed. Work only inside this project unless the user explicitly broadens the task. Preserve any user changes.
+This branch (`game-only`) contains only the game itself: `project.godot`, `scenes/`, `scripts/`, `data/`, `assets/` and the export presets. Tests and most documentation were deliberately removed. The exception is `docs/`, which holds only the plans for new maps (start with `docs/MAP_ROADMAP.md`); read the relevant plan before building a map. Work only inside this project unless the user explicitly broadens the task. Preserve any user changes.
 
 ## Tests
 
