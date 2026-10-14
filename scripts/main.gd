@@ -4,7 +4,6 @@ const Gathering = preload("res://scripts/gathering.gd")
 const Progression = preload("res://scripts/progression.gd")
 const RitualScreen = preload("res://scripts/ritual_screen.gd")
 const Encounter = preload("res://scripts/encounter.gd")
-const Helper = preload("res://scripts/helper.gd")
 const GameAudio = preload("res://scripts/game_audio.gd")
 const SettingsStore = preload("res://scripts/settings_store.gd")
 const Keys = preload("res://scripts/key_bindings.gd")
@@ -21,6 +20,7 @@ const University = preload("res://scripts/university.gd")
 const UniBoss = preload("res://scripts/uni_boss.gd")
 const VillageHud = preload("res://scripts/village_hud.gd")
 const AreaBuilder = preload("res://scripts/area_builder.gd")
+const HelperCrew = preload("res://scripts/helper_crew.gd")
 const SettingsWiring = preload("res://scripts/settings_wiring.gd")
 const START_POSITION := Vector2(780, 680)
 ## Gatherings, merchants, opponents' villagers and the round length are balance
@@ -43,6 +43,8 @@ var settings_button: Button
 var settings_wiring: Node
 ## Builds each area's world and audiences into the lists below.
 var area: AreaBuilder
+## Hires, places and tunes the helpers for the active area.
+var crew: HelperCrew
 var groups: Array[Node2D] = []
 ## One-listener gatherings kept apart from `groups` so group indices stay stable.
 var wanderers: Array[Node2D] = []
@@ -84,6 +86,7 @@ var village_input: Node
 
 func _ready() -> void:
 	area = AreaBuilder.new(self)
+	crew = HelperCrew.new(self)
 	settings_wiring = SettingsWiring.new(self)
 	# Existing isolated scene tests must also avoid the normal preferences file.
 	settings.save_enabled = persistence_enabled and (save_path_override.is_empty() or not settings_path_override.is_empty())
@@ -618,70 +621,12 @@ func apply_upgrades() -> void:
 
 
 func _apply_helper() -> void:
-	if progression.has_unlock("helper_unlock") and not is_instance_valid(helper):
-		helper = _new_helper("teal")
-	# The Market Hand's upgrades are Bellmarket's own, so it stays there; the
-	# Barker works only the fair. The teal helper travels everywhere.
-	if progression.active_area == "bellmarket" and progression.has_unlock("market_helper_unlock") and not is_instance_valid(market_helper):
-		market_helper = _new_helper("amber")
-	if progression.active_area == Fair.AREA_ID and progression.has_unlock("fair_barker_unlock") and not is_instance_valid(fair_helper):
-		fair_helper = _new_helper("moss")
-	var team: Array[Node2D] = helpers()
-	for each in team:
-		each.rivals.assign(team.filter(func(other: Node2D) -> bool: return other != each))
-	_tune_helpers()
-
-
-## Bramblewick's helper keeps its village stats. In Bellmarket the teal helper
-## and the amber Market Hand use "market.helper.teal" / ".amber" plus their own
-## Followers upgrades: teal gains conviction per phrase, amber speaks faster.
-func _tune_helpers() -> void:
-	if is_instance_valid(helper):
-		var market: bool = progression.active_area == "bellmarket"
-		var fair: bool = progression.active_area == Fair.AREA_ID
-		var university: bool = progression.active_area == University.AREA_ID
-		var stats: String = "market.helper.teal." if market else "fair.helper.teal." if fair else "university.helper.teal." if university else "helper."
-		helper.walk_speed = Balance.number(stats + "walk_speed")
-		helper.phrase_seconds = Balance.number(stats + "phrase_seconds")
-		helper.conviction_per_phrase = Balance.number(stats + "conviction_per_phrase") + (progression.market_teal_conviction_bonus() if market else 0.0)
-		if university:
-			# Teaching Assistant ranks; the faculty rule still limits whom it can win.
-			helper.walk_speed *= 1.0 + progression.uni_helper_walk_bonus()
-			helper.phrase_seconds /= 1.0 + progression.uni_helper_speed_bonus()
-			helper.conviction_per_phrase += progression.uni_helper_conviction_bonus()
-		# At the fair the teal helper obeys the same hearing rule, with its own Interest.
-		helper.interest = progression.fair_teal_interest() if fair else -1
-	if is_instance_valid(fair_helper):
-		fair_helper.walk_speed = Balance.number("fair.helper.moss.walk_speed")
-		fair_helper.phrase_seconds = Balance.number("fair.helper.moss.phrase_seconds") / (1.0 + progression.fair_barker_speed_bonus())
-		fair_helper.conviction_per_phrase = Balance.number("fair.helper.moss.conviction_per_phrase")
-		fair_helper.interest = Balance.integer("fair.helper.moss.interest")
-		fair_helper.distraction_cut = progression.fair_barker_cut()
-	if is_instance_valid(market_helper):
-		market_helper.walk_speed = Balance.number("market.helper.amber.walk_speed")
-		market_helper.phrase_seconds = Balance.number("market.helper.amber.phrase_seconds") / (1.0 + progression.market_amber_speed_bonus())
-		market_helper.conviction_per_phrase = Balance.number("market.helper.amber.conviction_per_phrase")
-
-
-func _new_helper(robe: String) -> Node2D:
-	var created := Helper.new()
-	if robe == "amber":
-		created.wear_amber()
-	elif robe == "moss":
-		created.wear_moss()
-	$Actors.add_child(created)
-	created.configure_navigation($Actors)
-	created.reset_round(area_start_position())
-	return created
+	crew.apply()
 
 
 ## Every helper present in this area, original first.
 func helpers() -> Array[Node2D]:
-	var result: Array[Node2D] = []
-	for each in [helper, market_helper, fair_helper]:
-		if is_instance_valid(each):
-			result.append(each)
-	return result
+	return crew.members()
 
 
 func set_ritual_visible(value: bool) -> void:

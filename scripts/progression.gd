@@ -4,6 +4,7 @@ extends RefCounted
 
 const Balance = preload("res://scripts/balance.gd")
 const ProgressionSave = preload("res://scripts/progression_save.gd")
+const ProgressionCatalog = preload("res://scripts/progression_catalog.gd")
 const SAVE_VERSION: int = 6
 const MAX_COUNTER: int = 1000000000
 ## Travel order. An area's earned effects carry into every later area, never back.
@@ -58,126 +59,10 @@ var save_file: ProgressionSave = ProgressionSave.new(self)
 
 func load_catalog(path: String = "res://data/upgrades.json") -> bool:
 	last_error = ""
-	var raw: Variant = _parse_json(FileAccess.get_file_as_string(path))
-	if not raw is Dictionary or raw.get("schema_version") != 1 or not raw.get("upgrades") is Array:
-		return _fail("Upgrade catalog is missing or has an unsupported format.")
-	var candidate: Array[Dictionary] = []
-	var ids: Dictionary = {}
-	for entry in raw.upgrades:
-		if not entry is Dictionary:
-			return _fail("Upgrade entry must be an object.")
-		for key in ["id", "title", "description", "branch"]:
-			if not entry.get(key) is String or entry[key].strip_edges().is_empty():
-				return _fail("Upgrade entry needs a nonempty " + key + ".")
-		if ids.has(entry.id):
-			return _fail("Duplicate upgrade ID: " + entry.id)
-		var area: Variant = entry.get("area", "bramblewick")
-		if not area is String or not area in AREA_IDS:
-			return _fail("Unknown upgrade area: " + entry.id)
-		if not _integer_between(entry.get("ring"), 1, 10000) or not _finite_number(entry.get("angle_degrees")):
-			return _fail("Invalid ritual coordinate: " + entry.id)
-		if not _integer_between(entry.get("cost"), 1, MAX_COUNTER):
-			return _fail("Invalid upgrade cost: " + entry.id)
-		var rank_limit: Variant = entry.get("max_rank", 1)
-		if not _integer_between(rank_limit, 1, 100):
-			return _fail("Invalid upgrade rank limit: " + entry.id)
-		var prices: Variant = entry.get("rank_costs", [entry.cost])
-		if not prices is Array or prices.size() != int(rank_limit):
-			return _fail("Upgrade needs one price per rank: " + entry.id)
-		for price in prices:
-			if not _integer_between(price, 1, MAX_COUNTER):
-				return _fail("Invalid upgrade rank price: " + entry.id)
-		if int(prices[0]) != int(entry.cost):
-			return _fail("First rank price must match cost: " + entry.id)
-		var recruit_prices: Variant = entry.get("rank_recruit_costs", [])
-		if not recruit_prices is Array:
-			return _fail("Recruit prices must be an array: " + entry.id)
-		if not entry.has("rank_recruit_costs"):
-			for index in range(int(rank_limit)):
-				recruit_prices.append(0)
-		if recruit_prices.size() != int(rank_limit):
-			return _fail("Upgrade needs one recruit price per rank: " + entry.id)
-		for price in recruit_prices:
-			if not _integer_between(price, 0, MAX_COUNTER):
-				return _fail("Invalid upgrade recruit price: " + entry.id)
-		if entry.has("support_description") and not entry.support_description is String:
-			return _fail("Support description must be text: " + entry.id)
-		if not entry.get("requires") is Array or not entry.get("effect") is Dictionary or entry.effect.is_empty():
-			return _fail("Invalid prerequisites/effects: " + entry.id)
-		for effect in entry.effect:
-			if not effect in EFFECT_KEYS or not _finite_number(entry.effect[effect]) or entry.effect[effect] <= 0.0 or entry.effect[effect] > 100.0:
-				return _fail("Unsupported effect: " + entry.id)
-		var effects: Variant = entry.get("rank_effects", [])
-		if not effects is Array:
-			return _fail("Rank effects must be an array: " + entry.id)
-		if not entry.has("rank_effects"):
-			for index in range(int(rank_limit)):
-				effects.append(entry.effect.duplicate(true))
-		if effects.size() != int(rank_limit):
-			return _fail("Upgrade needs one effect per rank: " + entry.id)
-		for rank_effect in effects:
-			if not rank_effect is Dictionary or rank_effect.is_empty():
-				return _fail("Rank effect must be a nonempty object: " + entry.id)
-			for effect in rank_effect:
-				if not effect in EFFECT_KEYS or not _finite_number(rank_effect[effect]) or rank_effect[effect] <= 0.0 or rank_effect[effect] > 100.0:
-					return _fail("Unsupported rank effect: " + entry.id)
-		if effects[0] != entry.effect:
-			return _fail("First rank effect must match effect: " + entry.id)
-		var movement_upgrade: bool = entry.branch == "run"
-		for rank_effect in effects:
-			movement_upgrade = movement_upgrade or rank_effect.has("run_speed_add")
-		if movement_upgrade:
-			for price in recruit_prices:
-				if price != 0:
-					return _fail("Running upgrades must remain gold-only: " + entry.id)
-		var normalized: Dictionary = entry.duplicate(true)
-		normalized.area = area
-		normalized.max_rank = int(rank_limit)
-		normalized.rank_costs = prices.duplicate()
-		normalized.rank_recruit_costs = recruit_prices.duplicate()
-		normalized.rank_effects = effects.duplicate(true)
-		ids[entry.id] = normalized
-		candidate.append(normalized)
-	var unlocks: Dictionary = {}
-	for entry in candidate:
-		for rank_effect in entry.rank_effects:
-			for effect in rank_effect:
-				if effect in ["merchant_donation_add", "market_guild_donation_add", "market_patron_donation_add"] and not _integer_between(rank_effect[effect], 1, 100):
-					return _fail("Donation bonuses must be whole numbers: " + entry.id)
-				for owner in AREA_EFFECT_PREFIXES:
-					if effect.begins_with(AREA_EFFECT_PREFIXES[owner]) and entry.area != owner:
-						return _fail("Effects named %s* belong to %s: %s" % [AREA_EFFECT_PREFIXES[owner], AREA_TITLES[owner], entry.id])
-				if effect in WHOLE_FAIR_KEYS and not _integer_between(rank_effect[effect], 1, 100):
-					return _fail("Interest and Distraction effects must be whole numbers: " + entry.id)
-				if effect in WHOLE_UNI_KEYS and not _integer_between(rank_effect[effect], 1, 100):
-					return _fail("Argument slots and Quillmoor donations must be whole numbers: " + entry.id)
-				if effect in UNLOCK_KEYS:
-					if entry.max_rank != 1 or rank_effect[effect] != 1 or unlocks.has(effect):
-						return _fail("Unlocks must appear once, at one rank and value 1: " + entry.id)
-					unlocks[effect] = true
-		var seen: Dictionary = {}
-		for requirement in entry.requires:
-			if not requirement is String or not ids.has(requirement) or requirement == entry.id or seen.has(requirement):
-				return _fail("Invalid prerequisite: " + entry.id)
-			if ids[requirement].area != entry.area:
-				return _fail("Circle prerequisites must stay within their area: " + entry.id)
-			seen[requirement] = true
-	# Iterative topological validation avoids recursion limits for future large catalogs.
-	var resolved: Dictionary = {}
-	while resolved.size() < candidate.size():
-		var previous_size: int = resolved.size()
-		for entry in candidate:
-			if resolved.has(entry.id):
-				continue
-			var ready: bool = true
-			for requirement in entry.requires:
-				if not resolved.has(requirement):
-					ready = false
-			if ready:
-				resolved[entry.id] = true
-		if resolved.size() == previous_size:
-			return _fail("Upgrade prerequisite cycle detected.")
-	all_catalog = candidate
+	var result: Variant = ProgressionCatalog.parse(self, _parse_json(FileAccess.get_file_as_string(path)))
+	if result is String:
+		return _fail(result)
+	all_catalog.assign(result)
 	catalog = catalog_for_area(active_area)
 	return true
 
