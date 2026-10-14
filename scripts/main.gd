@@ -7,29 +7,22 @@ const Encounter = preload("res://scripts/encounter.gd")
 const Helper = preload("res://scripts/helper.gd")
 const GameAudio = preload("res://scripts/game_audio.gd")
 const SettingsStore = preload("res://scripts/settings_store.gd")
-const SettingsScreen = preload("res://scripts/settings_screen.gd")
 const Keys = preload("res://scripts/key_bindings.gd")
 const Pad = preload("res://scripts/pad_bindings.gd")
 const DonationPopup = preload("res://scripts/donation_popup.gd")
 const Market = preload("res://scripts/market.gd")
-const Village = preload("res://scripts/village.gd")
 const TitleScreen = preload("res://scripts/title_screen.gd")
 const Wanderers = preload("res://scripts/wanderers.gd")
 const Balance = preload("res://scripts/balance.gd")
 const Fair = preload("res://scripts/fair.gd")
 const FairBoss = preload("res://scripts/fair_boss.gd")
 const FairDirector = preload("res://scripts/fair_director.gd")
-const FairHud = preload("res://scripts/fair_hud.gd")
 const University = preload("res://scripts/university.gd")
 const UniBoss = preload("res://scripts/uni_boss.gd")
-const UniHud = preload("res://scripts/uni_hud.gd")
-const ArgumentBadge = preload("res://scripts/argument_badge.gd")
+const VillageHud = preload("res://scripts/village_hud.gd")
+const AreaBuilder = preload("res://scripts/area_builder.gd")
+const SettingsWiring = preload("res://scripts/settings_wiring.gd")
 const START_POSITION := Vector2(780, 680)
-## Village HUD frame: screen margin, gap between cards and the corner settings button.
-const HUD_MARGIN: float = 26.0
-const HUD_GAP: float = 10.0
-const HUD_BUTTON_WIDTH: float = 214.0
-const SETTINGS_SIZE: float = 48.0
 ## Gatherings, merchants, opponents' villagers and the round length are balance
 ## data in data/balance.json; Bramblewick crowds are small huddles of three or
 ## four. Indices of the opening three are stable for tests/tools.
@@ -37,7 +30,6 @@ const SETTINGS_SIZE: float = 48.0
 @export var show_title_on_start: bool = false
 var title_screen: Control
 var title_active: bool = false
-var area_label: Label
 var persistence_enabled: bool = true
 var save_path_override: String = ""
 var catalog_ready: bool = false
@@ -47,7 +39,10 @@ var settings = SettingsStore.new()
 var settings_path_override: String = ""
 var settings_screen: Control
 var settings_button: Button
-var settings_timer: Timer
+## Settings screen signals, the debounced preferences save and rebinding.
+var settings_wiring: Node
+## Builds each area's world and audiences into the lists below.
+var area: AreaBuilder
 var groups: Array[Node2D] = []
 ## One-listener gatherings kept apart from `groups` so group indices stay stable.
 var wanderers: Array[Node2D] = []
@@ -65,10 +60,8 @@ var fair_helper: Node2D = null
 ## The fair's round state (shows, stages, Distraction) and current headliner.
 var fair_director = FairDirector.new()
 var fair_boss: Node2D = null
-var fair_hud: Control
 ## Quillmoor's current boss and the HUD strip of prepared arguments.
 var uni_boss: Node2D = null
-var uni_hud: Control
 var seconds_left: float = Balance.number("round.seconds")
 var round_active: bool = true
 var round_recruits: int = 0
@@ -84,20 +77,14 @@ var round_number: int:
 		return progression.round_number
 
 @onready var player = $Actors/Player
-var stats_label: Label
-var round_label: Label
-var context_label: Label
-var walk_hint_label: Label
-var save_label: Label
-var hud_layout: Control
+var hud_layout: VillageHud
 var ritual_screen: Control
 var village_input: Node
-var ritual_button: Button
-var next_round_button: Button
-var _village_blockers: Array[Control] = []
 
 
 func _ready() -> void:
+	area = AreaBuilder.new(self)
+	settings_wiring = SettingsWiring.new(self)
 	# Existing isolated scene tests must also avoid the normal preferences file.
 	settings.save_enabled = persistence_enabled and (save_path_override.is_empty() or not settings_path_override.is_empty())
 	if not settings_path_override.is_empty():
@@ -110,7 +97,7 @@ func _ready() -> void:
 	player.reduce_motion = settings.values.reduce_motion
 	game_audio.name = "GameAudio"
 	add_child(game_audio)
-	game_audio.preferences_changed.connect(_audio_preferences_changed)
+	game_audio.preferences_changed.connect(settings_wiring.audio_preferences_changed)
 	player.moved.connect(game_audio.on_motion)
 	progression.save_enabled = persistence_enabled
 	if not save_path_override.is_empty():
@@ -121,15 +108,15 @@ func _ready() -> void:
 	if not catalog_ready:
 		progression.save_enabled = false
 		round_active = false
-	_rebuild_area()
+	area.rebuild()
 	_build_hud()
 	_build_ritual()
-	_build_settings()
+	settings_wiring.build()
 	_build_title()
 	village_input = preload("res://scripts/village_input.gd").new()
 	add_child(village_input)
 	if settings.values.fullscreen and not OS.has_feature("web"):
-		set_fullscreen(true)
+		settings_wiring.set_fullscreen(true)
 	apply_upgrades()
 	_reset_encounter()
 	_update_hud()
@@ -138,159 +125,6 @@ func _ready() -> void:
 	if show_title_on_start:
 		show_title()
 	print("Small Following: starter scene ready.")
-
-
-func _rebuild_area() -> void:
-	nearest_group = null
-	groups.clear()
-	wanderers.clear()
-	added_gatherings.clear()
-	for actor in $Actors.get_children():
-		if actor != player:
-			$Actors.remove_child(actor)
-			actor.queue_free()
-	encounter = null
-	fair_boss = null
-	uni_boss = null
-	helper = null
-	market_helper = null
-	fair_helper = null
-	# No authored placeholder survives to _rebuild_area's second call (area
-	# travel); only a prior script-built world needs removing there.
-	var previous: Node = get_node_or_null("Village")
-	if previous:
-		remove_child(previous)
-		previous.queue_free()
-	# Only the needed world is built; a discarded spare would leak unfreed.
-	var world: Node2D
-	if progression.active_area == "bellmarket":
-		world = Market.new()
-	elif progression.active_area == Fair.AREA_ID:
-		world = Fair.new()
-	elif progression.active_area == University.AREA_ID:
-		world = University.new()
-	else:
-		world = Village.new()
-	world.name = "Village"
-	add_child(world)
-	move_child(world, 0)
-	world.build_props($Actors)
-	_footprints = _obstacle_footprints()
-	if progression.active_area == "bellmarket":
-		for entry in Market.group_layout():
-			var gathering := Gathering.new()
-			gathering.group_name = entry.title
-			gathering.position = entry.position
-			gathering.listener_profiles.assign(entry.profiles)
-			gathering.configure_market(progression)
-			gathering.recruited.connect(_on_recruited)
-			gathering.phrase_spoken.connect(game_audio.on_phrase)
-			$Actors.add_child(gathering)
-			groups.append(gathering)
-		_seed_wanderers()
-		_sync_market_wanderers()
-	elif progression.active_area == Fair.AREA_ID:
-		for entry in Balance.list("fair.groups"):
-			groups.append(_new_fair_group(entry))
-		_add_stage_gatherings()
-		_seed_wanderers()
-		var lone: Dictionary = Balance.dict("fair.wanderers")
-		var people: Array = lone.people.duplicate()
-		for index in range(int(lone.stilts.count)):
-			people.append("Stilt-walker")
-		for index in range(people.size()):
-			var stilt: bool = String(people[index]) == "Stilt-walker"
-			var wanderer := _new_fair_group({"title": Wanderers.TITLE, "zone": lone.zone, "distraction": int(lone.stilts.distraction) if stilt else int(lone.distraction), "people": [people[index]]}, index)
-			wanderer.show_caption = false
-			wanderers.append(wanderer)
-		scatter_wanderers()
-		fair_director.reset_round()
-	elif progression.active_area == University.AREA_ID:
-		for entry in Balance.list("university.groups"):
-			groups.append(_new_uni_group(entry))
-		_add_stage_gatherings()
-		_seed_wanderers()
-		var people: Array = Balance.list("university.wanderers.people")
-		for index in range(people.size()):
-			var wanderer := _new_uni_group({"title": Wanderers.TITLE, "people": [people[index]]}, index)
-			wanderer.show_caption = false
-			wanderers.append(wanderer)
-		scatter_wanderers()
-	else:
-		for entry in Balance.list("village.gatherings"):
-			_add_gathering(entry.title, Balance.vec(entry.at), false, int(entry.count))
-		_seed_wanderers()
-		for index in range(Balance.integer("village.wanderers.count")):
-			var wanderer: Node2D = _new_gathering(Wanderers.TITLE, Vector2.ZERO, 1, false, index)
-			wanderer.show_caption = false
-			wanderers.append(wanderer)
-		scatter_wanderers()
-	player.clear_walk_target()
-	player.position = area_start_position()
-	player.get_node("Camera2D").reset_smoothing()
-
-
-func _seed_wanderers() -> void:
-	if wanderer_seed != 0:
-		_wanderer_rng.seed = wanderer_seed
-	else:
-		_wanderer_rng.randomize()
-
-
-## Adds lone market wanderers up to the count Busy Stalls allows, then scatters
-## everyone afresh.
-func _sync_market_wanderers() -> void:
-	var profiles: Array[Dictionary] = Market.wanderer_profiles(progression.market_wanderer_count())
-	if profiles.size() <= wanderers.size():
-		return
-	for index in range(wanderers.size(), profiles.size()):
-		var wanderer := Gathering.new()
-		wanderer.group_name = Wanderers.TITLE
-		wanderer.show_caption = false
-		wanderer.coat_offset = index
-		wanderer.listener_profiles.assign([profiles[index]])
-		wanderer.configure_market(progression)
-		wanderer.recruited.connect(_on_recruited)
-		wanderer.phrase_spoken.connect(game_audio.on_phrase)
-		$Actors.add_child(wanderer)
-		wanderers.append(wanderer)
-	scatter_wanderers()
-
-
-## One fair audience from balance data: its people, Distraction, zone and any show.
-func _new_fair_group(entry: Dictionary, coat_offset: int = 0) -> Node2D:
-	var gathering := Gathering.new()
-	gathering.group_name = String(entry.title)
-	gathering.position = Balance.vec(entry.at) if entry.has("at") else Vector2.ZERO
-	gathering.coat_offset = coat_offset
-	gathering.listener_profiles.assign(Fair.profiles(entry.people))
-	gathering.distraction = int(entry.distraction)
-	gathering.zone = String(entry.zone)
-	gathering.act_show = entry.get("show", {})
-	gathering.still_only = bool(entry.get("still_only", false))
-	gathering.rebuttals_per_visit = int(entry.get("rebuttals", 0))
-	gathering.rebuttals_left = gathering.rebuttals_per_visit
-	gathering.configure_market(progression)
-	gathering.recruited.connect(_on_recruited)
-	gathering.phrase_spoken.connect(game_audio.on_phrase)
-	$Actors.add_child(gathering)
-	return gathering
-
-
-## One Quillmoor audience from balance data: students mixed with academics who
-## hear only their own faculty's argument (the eligibility rule in gathering.gd).
-func _new_uni_group(entry: Dictionary, coat_offset: int = 0) -> Node2D:
-	var gathering := Gathering.new()
-	gathering.group_name = String(entry.title)
-	gathering.position = Balance.vec(entry.at) if entry.has("at") else Vector2.ZERO
-	gathering.coat_offset = coat_offset
-	gathering.zone = String(entry.get("zone", ""))
-	gathering.listener_profiles.assign(University.profiles(entry.people))
-	gathering.configure_market(progression)
-	gathering.recruited.connect(_on_recruited)
-	gathering.phrase_spoken.connect(game_audio.on_phrase)
-	$Actors.add_child(gathering)
-	return gathering
 
 
 func area_start_position() -> Vector2:
@@ -328,7 +162,7 @@ func travel_to(area_id: String, bypass_unlock: bool = false) -> bool:
 		ritual_screen.update_state(round_recruits)
 		_update_hud()
 		return false
-	_rebuild_area()
+	area.rebuild()
 	seconds_left = Balance.number("round.seconds")
 	round_recruits = 0
 	apply_upgrades()
@@ -417,7 +251,7 @@ func start_new_game() -> void:
 	if not catalog_ready or not progression.start_new_game():
 		title_screen.show_error(progression.last_error)
 		return
-	_rebuild_area()
+	area.rebuild()
 	round_recruits = 0
 	apply_upgrades()
 	ritual_screen.configure(progression.catalog, progression)
@@ -438,29 +272,6 @@ func _start_selected_level(area_id: String) -> void:
 	_begin_round(false)
 
 
-func _add_gathering(title: String, at: Vector2, merchant: bool = false, count: int = Gathering.LISTENER_COUNT, village_type: String = "") -> void:
-	var gathering := _new_gathering(title, at, Balance.integer("village.merchants.count") if merchant else count, merchant, 0, village_type)
-	groups.append(gathering)
-
-
-func _new_gathering(title: String, at: Vector2, count: int, merchant: bool = false, coat_offset: int = 0, village_type: String = "") -> Node2D:
-	var gathering := Gathering.new()
-	gathering.group_name = title
-	gathering.position = at
-	gathering.listener_count = count
-	gathering.coat_offset = coat_offset
-	if not village_type.is_empty():
-		gathering.configure_village_type(village_type)
-	if merchant:
-		gathering.npc_type = "merchant"
-		gathering.conviction_required = Balance.number("village.merchants.conviction")
-		gathering.donation = progression.merchant_donation()
-	gathering.recruited.connect(_on_recruited)
-	gathering.phrase_spoken.connect(game_audio.on_phrase)
-	$Actors.add_child(gathering)
-	return gathering
-
-
 ## Every speakable audience: fixed groups first, then lone wanderers.
 func audiences() -> Array[Node2D]:
 	var result: Array[Node2D] = groups.duplicate()
@@ -468,56 +279,14 @@ func audiences() -> Array[Node2D]:
 	return result
 
 
-## Moves every wanderer to a fresh spot clear of prop art, the groups present
-## now, the entrance and the debate centre. Invitations re-scatter on arrival.
-func scatter_wanderers() -> void:
-	if wanderers.is_empty():
-		return
-	var avoid: Array[Vector2] = [area_start_position()]
-	if progression.active_area == "bramblewick":
-		avoid.append(Encounter.CENTER)
-	elif progression.active_area == Fair.AREA_ID:
-		for stage in Balance.list("fair.stages"):
-			avoid.append(Balance.vec(stage.at))
-		for boss in FairBoss.profiles():
-			avoid.append(Balance.vec(boss.at))
-	elif progression.active_area == University.AREA_ID:
-		for boss in UniBoss.profiles():
-			avoid.append(Balance.vec(boss.at))
-	for group in groups:
-		avoid.append(group.position)
-	var spots: Array[Vector2] = Wanderers.scatter(_wanderer_rng, _village_props(), avoid, wanderers.size())
-	for index in range(wanderers.size()):
-		# A crowded map leaves surplus wanderers out of the round rather than overlapping art.
-		wanderers[index].visible = index < spots.size()
-		wanderers[index].position = spots[index] if index < spots.size() else Vector2(-10000, -10000)
-
-
-func _village_props() -> Array[Node]:
-	var props: Array[Node] = []
-	for child in $Actors.get_children():
-		# Village props plus Bellmarket's bell and district signs.
-		if child.has_method("visual_rect"):
-			props.append(child)
-	return props
-
-
-func _obstacle_footprints() -> Array[Node]:
-	var footprints: Array[Node] = []
-	for shape_node in $Actors.find_children("*", "CollisionShape2D", true, false):
-		if shape_node.is_in_group("helper_obstacle_shape"):
-			footprints.append(shape_node)
-	return footprints
-
-
 func _process(delta: float) -> void:
 	advance_round(delta)
 	_update_hud()
-	if DisplayServer.get_name() != "headless" and settings.values.fullscreen != is_fullscreen():
-		settings.values.fullscreen = is_fullscreen()
-		_queue_settings_save()
+	if DisplayServer.get_name() != "headless" and settings.values.fullscreen != settings_wiring.is_fullscreen():
+		settings.values.fullscreen = settings_wiring.is_fullscreen()
+		settings_wiring.queue_save()
 	if settings_screen.visible:
-		_refresh_settings()
+		settings_wiring.refresh()
 
 
 func _input(event: InputEvent) -> void:
@@ -536,7 +305,7 @@ func _input(event: InputEvent) -> void:
 			set_settings_visible(not settings_screen.visible)
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("toggle_fullscreen"):
-		set_fullscreen(not is_fullscreen())
+		settings_wiring.set_fullscreen(not settings_wiring.is_fullscreen())
 		get_viewport().set_input_as_handled()
 	elif settings_screen.visible and event.is_action_pressed("toggle_ritual") and not round_active:
 		set_settings_visible(false)
@@ -563,25 +332,6 @@ func _unhandled_input(event: InputEvent) -> void:
 		set_ritual_visible(not ritual_screen.visible)
 
 
-func is_fullscreen() -> bool:
-	return get_window().mode in [Window.MODE_FULLSCREEN, Window.MODE_EXCLUSIVE_FULLSCREEN]
-
-
-func set_fullscreen(enabled: bool) -> void:
-	if DisplayServer.get_name() == "headless":
-		return
-	get_window().mode = Window.MODE_FULLSCREEN if enabled else Window.MODE_WINDOWED
-	settings.values.fullscreen = is_fullscreen()
-	_queue_settings_save()
-
-
-func set_reduce_motion(enabled: bool) -> void:
-	settings.values.reduce_motion = enabled
-	player.reduce_motion = enabled
-	DonationPopup.reduce_motion = enabled
-	_queue_settings_save()
-
-
 func set_settings_visible(value: bool) -> void:
 	if is_instance_valid(village_input):
 		village_input.cancel_gesture()
@@ -592,127 +342,23 @@ func set_settings_visible(value: bool) -> void:
 	settings_screen.visible = value
 	settings_button.visible = not value and not title_active
 	if value:
-		_refresh_settings()
+		settings_wiring.refresh()
 		settings_screen.focus_first()
-	elif not settings_timer.is_stopped():
-		_save_settings()
-
-
-func _audio_preferences_changed() -> void:
-	for channel in game_audio.volumes:
-		settings.values[channel] = game_audio.volumes[channel]
-	settings.values.muted = game_audio.muted
-	settings.values.voice_muted = game_audio.voice_muted
-	_queue_settings_save()
-
-
-func _queue_settings_save() -> void:
-	settings_timer.start()
-	_refresh_settings()
-
-
-func _save_settings() -> void:
-	settings_timer.stop()
-	settings.save_settings()
-	_refresh_settings()
-
-
-func _refresh_settings() -> void:
-	settings_screen.refresh(game_audio, is_fullscreen(), settings.last_error, settings.values.reduce_motion)
-	settings_screen.refresh_bindings(settings.key_bindings)
-	settings_screen.refresh_pad(settings.pad_bindings)
+	elif not settings_wiring.settings_timer.is_stopped():
+		settings_wiring.save_now()
 
 
 func _exit_tree() -> void:
-	if is_instance_valid(settings_timer) and not settings_timer.is_stopped():
+	if is_instance_valid(settings_wiring.settings_timer) and not settings_wiring.settings_timer.is_stopped():
 		settings.save_settings()
 
 
 func exit_game() -> void:
 	if OS.has_feature("web"):
 		return
-	_save_settings()
+	settings_wiring.save_now()
 	progression.save_progress()
 	get_tree().quit()
-
-
-func _build_settings() -> void:
-	settings_timer = Timer.new()
-	settings_timer.one_shot = true
-	settings_timer.wait_time = 0.4
-	settings_timer.timeout.connect(_save_settings)
-	add_child(settings_timer)
-	var canvas := CanvasLayer.new()
-	canvas.name = "Settings"
-	canvas.layer = 10
-	add_child(canvas)
-	# A small corner button: the village HUD and the ritual screen both keep this
-	# square free, so it never covers their text.
-	settings_button = SettingsScreen.MenuButtonIcon.new()
-	settings_button.tooltip_text = "Settings (Esc)"
-	settings_button.focus_mode = Control.FOCUS_NONE
-	canvas.add_child(settings_button)
-	settings_button.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
-	settings_button.offset_left = -HUD_MARGIN - SETTINGS_SIZE
-	settings_button.offset_right = -HUD_MARGIN
-	settings_button.offset_top = HUD_MARGIN
-	settings_button.offset_bottom = HUD_MARGIN + SETTINGS_SIZE
-	settings_button.pressed.connect(set_settings_visible.bind(true))
-	settings_screen = SettingsScreen.new()
-	canvas.add_child(settings_screen)
-	for state in ["normal", "hover", "pressed"]:
-		settings_button.add_theme_stylebox_override(state, settings_screen.close_button.get_theme_stylebox(state))
-	settings_screen.close_requested.connect(set_settings_visible.bind(false))
-	settings_screen.exit_requested.connect(exit_game)
-	settings_screen.title_requested.connect(show_title)
-	settings_screen.volume_changed.connect(game_audio.set_volume)
-	settings_screen.mute_requested.connect(game_audio.toggle_mute)
-	settings_screen.voice_mute_requested.connect(game_audio.toggle_voice)
-	settings_screen.fullscreen_requested.connect(set_fullscreen)
-	settings_screen.reduce_motion_requested.connect(set_reduce_motion)
-	settings_screen.binding_requested.connect(_rebind_key)
-	settings_screen.reset_keys_requested.connect(_reset_keys)
-	settings_screen.pad_binding_requested.connect(_rebind_pad)
-	settings_screen.reset_pad_requested.connect(_reset_pad)
-	_refresh_settings()
-
-
-func _rebind_key(action: String, slot: int, code: int) -> void:
-	var error: String = settings.rebind(action, slot, code)
-	if not error.is_empty():
-		settings_screen.binding_message.text = error
-		return
-	settings_screen.cancel_capture()
-	settings_screen.binding_message.text = "%s: %s" % [Keys.ACTIONS[action], Keys.key_name(code)]
-	_keys_changed()
-
-
-func _reset_keys() -> void:
-	settings.reset_keys()
-	settings_screen.binding_message.text = "Default keys restored."
-	_keys_changed()
-
-
-func _rebind_pad(action: String, button: int) -> void:
-	var error: String = settings.rebind_pad(action, button)
-	if not error.is_empty():
-		settings_screen.binding_message.text = error
-		return
-	settings_screen.cancel_capture()
-	settings_screen.binding_message.text = "%s: %s" % [Pad.ACTIONS[action], Pad.button_name(button)]
-	_keys_changed()
-
-
-func _reset_pad() -> void:
-	settings.reset_pad()
-	settings_screen.binding_message.text = "Default gamepad buttons restored."
-	_keys_changed()
-
-
-func _keys_changed() -> void:
-	_queue_settings_save()
-	ritual_screen.update_state(round_recruits)
-	_update_hud()
 
 
 func advance_round(delta: float) -> void:
@@ -730,7 +376,7 @@ func advance_round(delta: float) -> void:
 		fair_director.update_speaker(progression, player.global_position, player.speaking_radius)
 		speak_radius = fair_director.reach
 		fair_director.advance(usable_delta, progression, all_audiences, fair_boss, _footprints, get_node_or_null("Village"))
-		fair_hud.show_interest(fair_director.interest, fair_director.interest - progression.fair_interest(), fair_director.stage_title())
+		hud_layout.fair_hud.show_interest(fair_director.interest, fair_director.interest - progression.fair_interest(), fair_director.stage_title())
 	elif round_active and not wanderers.is_empty():
 		# Beckoning Call (Market Call in Bellmarket) draws lone wanderers in during
 		# the round's usable time only.
@@ -930,16 +576,16 @@ func apply_upgrades() -> void:
 	player.movement_speed = Balance.number("round.base_run_speed") * progression.run_multiplier()
 	if progression.active_area == Fair.AREA_ID:
 		var group_count: int = groups.size()
-		_add_stage_gatherings()
+		area.add_stage_gatherings()
 		if groups.size() != group_count:
-			scatter_wanderers()
+			area.scatter_wanderers()
 		_apply_helper()
 		return
 	if progression.active_area == University.AREA_ID:
 		var group_count: int = groups.size()
-		_add_stage_gatherings()
+		area.add_stage_gatherings()
 		if groups.size() != group_count:
-			scatter_wanderers()
+			area.scatter_wanderers()
 		# A new slot never changes the loadout, but locks are re-read anyway.
 		_refresh_faculty_rule()
 		_apply_helper()
@@ -949,52 +595,26 @@ func apply_upgrades() -> void:
 			group.configure_market(progression)
 		for wanderer in wanderers:
 			wanderer.configure_market(progression)
-		_sync_market_wanderers()
+		area.sync_market_wanderers()
 		_apply_helper()
 		return
 	var group_count: int = groups.size()
 	for entry in Balance.list("village.invited_gatherings"):
 		if progression.has_unlock(entry.key) and not added_gatherings.has(entry.key):
-			_add_gathering(entry.title, Balance.vec(entry.at), false, int(entry.count))
+			area.add_gathering(entry.title, Balance.vec(entry.at), false, int(entry.count))
 			added_gatherings[entry.key] = true
 	if progression.has_unlock("merchant_unlock") and not added_gatherings.has("merchant_unlock"):
 		var merchants: Dictionary = Balance.dict("village.merchants")
-		_add_gathering(merchants.title, Balance.vec(merchants.at), true)
+		area.add_gathering(merchants.title, Balance.vec(merchants.at), true)
 		added_gatherings["merchant_unlock"] = true
-	_add_stage_gatherings()
+	area.add_stage_gatherings()
 	# Purchases happen between rounds, so moving wanderers off a new group is safe.
 	if groups.size() != group_count:
-		scatter_wanderers()
+		area.scatter_wanderers()
 	for group in groups:
 		if group.npc_type == "merchant":
 			group.donation = progression.merchant_donation()
 	_apply_helper()
-
-
-## Adds the villagers of every opponent convinced so far (at the fair, each
-## headliner's new fans); never duplicates.
-func _add_stage_gatherings() -> void:
-	if progression.active_area == Fair.AREA_ID:
-		for entry in Balance.list("fair.fan_groups"):
-			var fan_key: String = "fans_%d" % int(entry.stage)
-			if progression.fair_stage >= int(entry.stage) and not added_gatherings.has(fan_key):
-				groups.append(_new_fair_group(entry))
-				added_gatherings[fan_key] = true
-		return
-	if progression.active_area == University.AREA_ID:
-		for entry in Balance.list("university.follower_groups"):
-			var follower_key: String = "followers_%d" % int(entry.stage)
-			if progression.uni_stage >= int(entry.stage) and not added_gatherings.has(follower_key):
-				groups.append(_new_uni_group(entry))
-				added_gatherings[follower_key] = true
-		return
-	if progression.active_area != "bramblewick":
-		return
-	for entry in Balance.list("village.stage_gatherings"):
-		var key: String = "stage_%d" % int(entry.stage)
-		if progression.encounter_stage >= int(entry.stage) and not added_gatherings.has(key):
-			_add_gathering(entry.title, Balance.vec(entry.at), false, int(entry.count), entry.type)
-			added_gatherings[key] = true
 
 
 func _apply_helper() -> void:
@@ -1088,11 +708,11 @@ func _begin_round(increment: bool) -> void:
 	nearest_group = null
 	round_active = true
 	# Opponents convinced last round send their villagers from this round on.
-	_add_stage_gatherings()
+	area.add_stage_gatherings()
 	for group in audiences():
 		group.reset_round()
 	fair_director.reset_round()
-	scatter_wanderers()
+	area.scatter_wanderers()
 	# Every round uses the same entrance; walking in menus does not grant a head start.
 	player.clear_walk_target()
 	player.position = area_start_position()
@@ -1128,85 +748,18 @@ func _build_hud() -> void:
 	var canvas := CanvasLayer.new()
 	canvas.name = "HUD"
 	add_child(canvas)
-	hud_layout = Control.new()
-	hud_layout.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	hud_layout.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hud_layout = VillageHud.new()
 	canvas.add_child(hud_layout)
-	# One status card in the top-right corner, left of the settings button; the
-	# top-left stays clear for the map's own signs.
-	var status := _panel()
-	_village_blockers.append(status)
-	hud_layout.add_child(status)
-	status.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
-	status.grow_horizontal = Control.GROW_DIRECTION_BEGIN
-	status.offset_left = -HUD_MARGIN - SETTINGS_SIZE - HUD_GAP
-	status.offset_right = status.offset_left
-	status.offset_top = HUD_MARGIN
-	var status_rows := VBoxContainer.new()
-	status_rows.add_theme_constant_override("separation", 2)
-	status.add_child(status_rows)
-	area_label = _label("", 12, Color("#c9d6b4"))
-	stats_label = _label("", 19)
-	round_label = _label("", 14, Color("#d9dfc2"))
-	status_rows.add_child(area_label)
-	status_rows.add_child(stats_label)
-	status_rows.add_child(round_label)
-	fair_hud = FairHud.new()
-	status_rows.add_child(fair_hud)
-	uni_hud = UniHud.new()
-	status_rows.add_child(uni_hud)
-	var help_panel := _panel()
-	_village_blockers.append(help_panel)
-	hud_layout.add_child(help_panel)
-	help_panel.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
-	help_panel.grow_vertical = Control.GROW_DIRECTION_BEGIN
-	help_panel.offset_left = HUD_MARGIN
-	help_panel.offset_top = -HUD_MARGIN
-	help_panel.offset_bottom = -HUD_MARGIN
-	var help_rows := VBoxContainer.new()
-	help_rows.add_theme_constant_override("separation", 2)
-	help_panel.add_child(help_rows)
-	context_label = _label("", 17)
-	help_rows.add_child(context_label)
-	# Shown only until the first recruit; after that the player knows how to walk.
-	walk_hint_label = _label("Tap / click to walk; tap yourself to stop. Keys / stick also work.", 13, Color("#d9dfc2"))
-	help_rows.add_child(walk_hint_label)
-	save_label = _label("", 13, Color("#ffe4a1"))
-	help_rows.add_child(save_label)
-	next_round_button = _village_button(true)
-	next_round_button.offset_right = -HUD_MARGIN
-	next_round_button.pressed.connect(start_next_round)
-	ritual_button = _village_button(false)
-	ritual_button.offset_right = -HUD_MARGIN - HUD_BUTTON_WIDTH - HUD_GAP
-	ritual_button.pressed.connect(set_ritual_visible.bind(true))
-	for button in [next_round_button, ritual_button]:
-		button.offset_left = button.offset_right - HUD_BUTTON_WIDTH
+	hud_layout.build(self)
 
 
-func _village_button(primary: bool) -> Button:
-	var button := Button.new()
-	button.focus_mode = Control.FOCUS_NONE
-	button.add_theme_font_size_override("font_size", 17)
-	button.add_theme_color_override("font_color", Color("#fff1d0"))
-	button.add_theme_color_override("font_hover_color", Color("#ffffff"))
-	for state in ["normal", "hover", "pressed"]:
-		var style := StyleBoxFlat.new()
-		style.bg_color = Color(0.31, 0.22, 0.42, 0.96) if primary else Color(0.19, 0.26, 0.21, 0.94)
-		style.border_color = Color("#c6a6ea") if primary else Color("#8fa483")
-		if state == "hover":
-			style.bg_color = style.bg_color.lightened(0.12)
-			style.border_color = Color("#fff1d0")
-		elif state == "pressed":
-			style.bg_color = style.bg_color.darkened(0.15)
-		style.set_border_width_all(1)
-		style.set_corner_radius_all(12)
-		button.add_theme_stylebox_override(state, style)
-	hud_layout.add_child(button)
-	button.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
-	button.offset_top = -HUD_MARGIN - 56
-	button.offset_bottom = -HUD_MARGIN
-	_village_blockers.append(button)
-	return button
+func _update_hud() -> void:
+	hud_layout.refresh()
+
+
+## The node every actor, prop and audience lives under.
+func actors() -> Node2D:
+	return $Actors
 
 
 func village_tap_available(at: Vector2) -> bool:
@@ -1214,116 +767,7 @@ func village_tap_available(at: Vector2) -> bool:
 		return false
 	if settings_button.is_visible_in_tree() and settings_button.get_global_rect().has_point(at):
 		return false
-	for control in _village_blockers:
-		if control.is_visible_in_tree() and control.get_global_rect().has_point(at):
-			return false
+	if hud_layout.blocks(at):
+		return false
 	return get_viewport().get_visible_rect().has_point(at)
 
-
-func _panel() -> PanelContainer:
-	var panel := PanelContainer.new()
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.19, 0.26, 0.21, 0.94)
-	style.set_corner_radius_all(12)
-	style.content_margin_left = 16
-	style.content_margin_right = 16
-	style.content_margin_top = 11
-	style.content_margin_bottom = 11
-	panel.add_theme_stylebox_override("panel", style)
-	panel.mouse_filter = Control.MOUSE_FILTER_PASS
-	return panel
-
-
-func _label(value: String, font_size: int, color: Color = Color("#fff1d0")) -> Label:
-	var label := Label.new()
-	label.text = value
-	label.add_theme_font_size_override("font_size", font_size)
-	label.add_theme_color_override("font_color", color)
-	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	return label
-
-
-func _fair_context() -> String:
-	if not round_active:
-		if progression.fair_complete():
-			return "The Lantern Fair is won!"
-		return "Round complete."
-	if is_instance_valid(fair_boss) and not fair_boss.defeated and fair_boss.listening:
-		var boss: Dictionary = fair_boss.profile()
-		if fair_boss.deaf:
-			if fair_director.interest < fair_boss.distraction():
-				return "%s can't hear you: Distraction %d, your Interest %d" % [boss.title, fair_boss.distraction(), fair_director.interest]
-			if fair_boss.show_on:
-				return "%s is performing - wait for the act to end" % boss.title
-			if boss.has("hoops"):
-				return "Run through the lit hoop for a Bravo!"
-			return "%s only listens while you stand completely still" % boss.title
-		return "Convincing %s..." % boss.title
-	if is_instance_valid(nearest_group):
-		if nearest_group.deaf:
-			return "Deaf ears: %s Distraction %d, your Interest %d" % [nearest_group.group_name, nearest_group.effective_distraction(), fair_director.interest]
-		return "Speaking with %s..." % nearest_group.group_name
-	if fair_director.on_stage >= 0:
-		return "On the %s: +%d Interest and a longer reach" % [fair_director.stage_title(), fair_director.interest - progression.fair_interest()]
-	if progression.fair_complete():
-		return "The Lantern Fair is won!  Enjoy the fair."
-	if is_instance_valid(fair_boss):
-		return "%s waits at the fair - Distraction %d" % [fair_boss.profile().title, fair_boss.distraction()]
-	return "Find someone who can hear you over the fair."
-
-
-func _uni_context() -> String:
-	if not round_active:
-		if progression.uni_complete():
-			return "Quillmoor is won!"
-		return "Round complete. Prepare arguments in the ritual circle."
-	if is_instance_valid(uni_boss) and not uni_boss.defeated and uni_boss.listening:
-		var boss: Dictionary = uni_boss.profile()
-		if uni_boss.rebutting:
-			var missing: PackedStringArray = []
-			for argument in uni_boss.missing:
-				missing.append(ArgumentBadge.title(String(argument)))
-			return "%s rebuts everything: prepare %s" % [boss.title, " and ".join(missing)]
-		return "Debating %s..." % boss.title
-	if is_instance_valid(nearest_group):
-		return "Speaking with %s..." % nearest_group.group_name
-	if progression.uni_loadout.is_empty():
-		return "No arguments prepared: only students and staff will listen."
-	if progression.uni_complete():
-		return "Quillmoor is won!  Enjoy the cloisters."
-	if is_instance_valid(uni_boss):
-		return "%s waits in the %s" % [uni_boss.profile().title, University.zone_title(String(uni_boss.profile().zone))]
-	return "Find someone your prepared arguments can win."
-
-
-func _update_hud() -> void:
-	area_label.text = {"bellmarket": "BELLMARKET", Fair.AREA_ID: "THE LANTERN FAIR", University.AREA_ID: "QUILLMOOR"}.get(progression.active_area, "BRAMBLEWICK")
-	fair_hud.visible = progression.active_area == Fair.AREA_ID
-	uni_hud.visible = progression.active_area == University.AREA_ID
-	if uni_hud.visible:
-		uni_hud.show_loadout(progression.uni_loadout, progression.argument_slots())
-	ritual_button.visible = not round_active
-	next_round_button.visible = not round_active
-	ritual_button.text = "Ritual circle  ·  Tab"
-	next_round_button.text = "Next round  ·  %s" % Keys.hint("next_round")
-	stats_label.text = "%d donations / %d recruits available" % [coins, progression.available_recruits]
-	round_label.text = "Round %d   ·   %.1fs left" % [round_number, seconds_left]
-	walk_hint_label.visible = progression.total_recruits == 0
-	save_label.text = "Progress notice: see the ritual screen." if not progression.last_error.is_empty() else ""
-	save_label.visible = not save_label.text.is_empty()
-	if progression.active_area == Fair.AREA_ID:
-		context_label.text = _fair_context()
-	elif progression.active_area == University.AREA_ID:
-		context_label.text = _uni_context()
-	elif progression.active_area == "bellmarket" and progression.is_circle_complete():
-		context_label.text = "Bellmarket circle complete!  Keep exploring or return to Bramblewick."
-	elif progression.active_area == "bramblewick" and progression.map_complete():
-		context_label.text = "Bramblewick complete!" + ("" if not round_active else "  Enjoy the village.")
-	elif not round_active:
-		context_label.text = "Round complete."
-	elif is_instance_valid(encounter) and not encounter.defeated:
-		context_label.text = "Convince %s in the town center" % Encounter.profiles()[encounter.stage].title
-	elif is_instance_valid(nearest_group):
-		context_label.text = "Speaking with %s..." % nearest_group.group_name
-	else:
-		context_label.text = "Walk around props; stand near a gathering to speak."

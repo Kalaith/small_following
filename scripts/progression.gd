@@ -3,6 +3,7 @@ extends RefCounted
 ## Saves only progression: rounds always start fresh after relaunch; no offline accrual.
 
 const Balance = preload("res://scripts/balance.gd")
+const ProgressionSave = preload("res://scripts/progression_save.gd")
 const SAVE_VERSION: int = 6
 const MAX_COUNTER: int = 1000000000
 ## Travel order. An area's earned effects carry into every later area, never back.
@@ -51,6 +52,8 @@ var last_error: String = ""
 var save_enabled: bool = true
 var _write_blocked: bool = false
 var _archive_corrupt_on_save: bool = false
+## The save file itself: loading, validation and staged writes.
+var save_file: ProgressionSave = ProgressionSave.new(self)
 
 
 func load_catalog(path: String = "res://data/upgrades.json") -> bool:
@@ -324,15 +327,15 @@ func try_purchase(id: String, expected_rank: int = -1) -> bool:
 	var state: Dictionary = purchase_state(id)
 	if state.status != "affordable":
 		return _fail(state.message)
-	var candidate: Dictionary = _snapshot()
+	var candidate: Dictionary = save_file.snapshot()
 	# The affordable state already priced this rank against the same definition.
 	candidate.coins -= int(state.gold_cost)
 	candidate.available_recruits -= int(state.recruit_cost)
 	candidate.purchased[id] = rank(id) + 1
 	# Persist the candidate first: failed writes never charge or grant the upgrade.
-	if not _write_snapshot(candidate):
+	if not save_file.write(candidate):
 		return false
-	_apply_snapshot(candidate)
+	save_file.apply(candidate)
 	return true
 
 
@@ -619,13 +622,13 @@ func try_travel(area_id: String, bypass_unlock: bool = false) -> bool:
 	if not bypass_unlock and not is_area_unlocked(area_id):
 		var previous: String = AREA_IDS[maxi(0, AREA_IDS.find(area_id) - 1)]
 		return _fail("Complete %s's ritual circle to reach %s." % [AREA_TITLES[previous], AREA_TITLES[area_id]])
-	var candidate: Dictionary = _snapshot()
+	var candidate: Dictionary = save_file.snapshot()
 	candidate.active_area = area_id
 	candidate.level_select_unlocked = level_select_unlocked or bypass_unlock
 	# Main prepares the destination before requesting this durable transition.
-	if not _write_snapshot(candidate):
+	if not save_file.write(candidate):
 		return false
-	_apply_snapshot(candidate)
+	save_file.apply(candidate)
 	return true
 
 
@@ -698,87 +701,23 @@ func effect_preview(id: String) -> Dictionary:
 	return result
 
 
-func has_progress() -> bool:
-	return coins > 0 or total_recruits > 0 or round_number > 1 or not purchased.is_empty() or encounter_stage > 0 or fair_stage > 0 or uni_stage > 0 or active_area != "bramblewick" or level_select_unlocked
-
-
 ## Replaces progression with a fresh first-round village save. The old save is
 ## first copied to `.previous`, which ordinary saves never rotate, so it outlives
 ## the next rounds' writes. A failed copy or write changes nothing.
 func start_new_game() -> bool:
-	last_error = ""
-	if save_enabled and not _write_blocked and FileAccess.file_exists(save_path):
-		if DirAccess.copy_absolute(save_path, save_path + ".previous") != OK:
-			return _fail("Cannot keep a copy of the current save, so it was not replaced.")
-	var fresh: Dictionary = {"schema_version": SAVE_VERSION, "coins": 0, "total_recruits": 0, "available_recruits": 0, "round_number": 1, "purchased": {}, "encounter_stage": 0, "fair_stage": 0, "uni_stage": 0, "uni_loadout": [], "active_area": "bramblewick", "level_select_unlocked": false}
-	if not _write_snapshot(fresh):
-		return false
-	_apply_snapshot(fresh)
-	return true
+	return save_file.start_new_game()
 
 
 func save_progress() -> bool:
-	return _write_snapshot(_snapshot())
+	return save_file.save()
 
 
 func load_progress() -> bool:
-	last_error = ""
-	_write_blocked = false
-	_archive_corrupt_on_save = false
-	if not save_enabled:
-		return true
-	if not save_path.begins_with("user://"):
-		_write_blocked = true
-		return _fail("Save path must be under user://.")
-	if not FileAccess.file_exists(save_path):
-		# A missing canonical file plus backup can result from interrupted replacement.
-		if FileAccess.file_exists(save_path + ".bak"):
-			var backup: Dictionary = _read_snapshot(save_path + ".bak")
-			if not backup.is_empty():
-				_apply_snapshot(backup)
-				last_error = "Recovered progression from backup after an interrupted save."
-				return true
-			_write_blocked = true
-			return _fail("The save backup is invalid; preserved it without overwriting.")
-		return true
-	var raw: Variant = _parse_json(FileAccess.get_file_as_string(save_path))
-	if raw is Dictionary and _finite_number(raw.get("schema_version")) and raw.schema_version > SAVE_VERSION:
-		_write_blocked = true
-		return _fail("Save uses a newer version; it is preserved and saving is disabled.")
-	var current: Dictionary = _validated_snapshot(raw)
-	if not current.is_empty():
-		_apply_snapshot(current)
-		return true
-	_archive_corrupt_on_save = true
-	var recovered: Dictionary = _read_snapshot(save_path + ".bak")
-	if not recovered.is_empty():
-		_apply_snapshot(recovered)
-		last_error = "Save was damaged. Recovered its backup; damaged original will be preserved as .corrupt."
-		return true
-	# Start clean in memory, but preserve the bad file on the first successful save.
-	_apply_snapshot({"coins": 0, "total_recruits": 0, "available_recruits": 0, "round_number": 1, "purchased": {}})
-	return _fail("Save was damaged. Fresh progression started; damaged original will be preserved as .corrupt.")
+	return save_file.load_file()
 
 
-func _snapshot() -> Dictionary:
-	return {"schema_version": SAVE_VERSION, "coins": coins, "total_recruits": total_recruits, "available_recruits": available_recruits, "round_number": round_number, "purchased": purchased.duplicate(true), "encounter_stage": encounter_stage, "fair_stage": fair_stage, "uni_stage": uni_stage, "uni_loadout": uni_loadout.duplicate(), "active_area": active_area, "level_select_unlocked": level_select_unlocked}
-
-
-func _apply_snapshot(state: Dictionary) -> void:
-	var next_area: String = str(state.get("active_area", "bramblewick"))
-	if next_area != active_area:
-		active_area = next_area
-		catalog = catalog_for_area(active_area)
-	level_select_unlocked = bool(state.get("level_select_unlocked", false))
-	encounter_stage = int(state.get("encounter_stage", 0))
-	fair_stage = int(state.get("fair_stage", 0))
-	uni_stage = int(state.get("uni_stage", 0))
-	uni_loadout.assign(state.get("uni_loadout", []))
-	coins = int(state.coins)
-	total_recruits = int(state.total_recruits)
-	available_recruits = int(state.available_recruits)
-	round_number = int(state.round_number)
-	purchased = state.purchased.duplicate(true)
+func has_progress() -> bool:
+	return coins > 0 or total_recruits > 0 or round_number > 1 or not purchased.is_empty() or encounter_stage > 0 or fair_stage > 0 or uni_stage > 0 or active_area != "bramblewick" or level_select_unlocked
 
 
 ## Called every frame for speech and conviction, so this stays allocation-free.
@@ -824,152 +763,6 @@ func _unlocked(totals: Dictionary, key: String) -> bool:
 
 func _rank_effect(upgrade: Dictionary, index: int) -> Dictionary:
 	return upgrade.rank_effects[index] if upgrade.has("rank_effects") else upgrade.effect
-
-
-func _validated_snapshot(raw: Variant) -> Dictionary:
-	if not raw is Dictionary or not _integer_between(raw.get("schema_version"), 1, SAVE_VERSION):
-		return {}
-	for key in ["coins", "total_recruits"]:
-		if not _integer_between(raw.get(key), 0, MAX_COUNTER):
-			return {}
-	if int(raw.schema_version) >= 3 and not _integer_between(raw.get("available_recruits"), 0, int(raw.total_recruits)):
-		return {}
-	if not _integer_between(raw.get("round_number"), 1, MAX_COUNTER) or not raw.get("purchased") is Dictionary:
-		return {}
-	if not _integer_between(raw.get("encounter_stage", 0), 0, 4):
-		return {}
-	if not _integer_between(raw.get("fair_stage", 0), 0, FAIR_BOSS_COUNT if int(raw.schema_version) >= 5 else 0):
-		return {}
-	if not _integer_between(raw.get("uni_stage", 0), 0, UNI_BOSS_COUNT if int(raw.schema_version) >= 6 else 0):
-		return {}
-	var unlock_id: String = _encounter_unlock_id()
-	if int(raw.get("encounter_stage", 0)) > 0 and (unlock_id.is_empty() or not raw.purchased.has(unlock_id)):
-		return {}
-	if int(raw.schema_version) >= 4:
-		if not raw.get("active_area") is String or not raw.active_area in AREA_IDS:
-			return {}
-		# The fair arrived with schema 5; an older save cannot already stand there.
-		if int(raw.schema_version) < 5 and raw.active_area == "lantern_fair":
-			return {}
-		# Quillmoor arrived with schema 6.
-		if int(raw.schema_version) < 6 and raw.active_area == UNI_AREA:
-			return {}
-		if catalog_for_area(raw.active_area).is_empty() or not raw.get("level_select_unlocked") is bool:
-			return {}
-	var normalized: Dictionary = raw.duplicate(true)
-	# Old saves never spent recruits. Preserve all prior ranks without charging them.
-	normalized.available_recruits = int(raw.available_recruits) if int(raw.schema_version) >= 3 else int(raw.total_recruits)
-	normalized.encounter_stage = int(raw.get("encounter_stage", 0))
-	normalized.fair_stage = int(raw.get("fair_stage", 0))
-	normalized.uni_stage = int(raw.get("uni_stage", 0))
-	normalized.active_area = raw.active_area if int(raw.schema_version) >= 4 else "bramblewick"
-	normalized.level_select_unlocked = raw.level_select_unlocked if int(raw.schema_version) >= 4 else false
-	normalized.schema_version = SAVE_VERSION
-	for id in raw.purchased:
-		if not id is String:
-			return {}
-		var definition: Dictionary = find_upgrade(id)
-		if definition.is_empty():
-			return {}
-		if int(raw.schema_version) < 4 and definition.get("area", "bramblewick") != "bramblewick":
-			return {}
-		if int(raw.schema_version) < 5 and definition.get("area", "bramblewick") == "lantern_fair":
-			return {}
-		if int(raw.schema_version) < 6 and definition.get("area", "bramblewick") == UNI_AREA:
-			return {}
-		if int(raw.schema_version) == 1:
-			if not raw.purchased[id] is bool or raw.purchased[id] != true:
-				return {}
-			normalized.purchased[id] = 1
-		else:
-			if not _integer_between(raw.purchased[id], 1, max_rank(id)):
-				return {}
-			normalized.purchased[id] = int(raw.purchased[id])
-		for requirement in definition.requires:
-			if not raw.purchased.has(requirement):
-				return {}
-	# Neither a saved active area nor off-area purchases may bypass the normal gate.
-	var furthest: int = AREA_IDS.find(normalized.active_area)
-	for id in normalized.purchased:
-		furthest = maxi(furthest, AREA_IDS.find(str(find_upgrade(id).get("area", "bramblewick"))))
-	if normalized.fair_stage > 0:
-		furthest = maxi(furthest, AREA_IDS.find("lantern_fair"))
-	if normalized.uni_stage > 0:
-		furthest = maxi(furthest, AREA_IDS.find(UNI_AREA))
-	if not normalized.level_select_unlocked:
-		if furthest >= 1 and not _ranks_complete(_market_gate_definitions(), normalized.purchased):
-			return {}
-		if furthest >= 2 and not _ranks_complete(catalog_for_area("bellmarket"), normalized.purchased):
-			return {}
-		if furthest >= 3 and not _ranks_complete(catalog_for_area("lantern_fair"), normalized.purchased):
-			return {}
-	# The loadout is trimmed, never a reason to reject a save: unknown or repeated
-	# arguments are dropped, then any beyond the owned slots.
-	var loadout: Array[String] = []
-	var saved_loadout: Variant = raw.get("uni_loadout", [])
-	if saved_loadout is Array:
-		var known: Array[String] = argument_ids()
-		for id in saved_loadout:
-			if id is String and id in known and not id in loadout:
-				loadout.append(id)
-	normalized.uni_loadout = loadout.slice(0, _slots_for(normalized.purchased))
-	return normalized
-
-
-func _market_gate_definitions() -> Array[Dictionary]:
-	var result: Array[Dictionary] = []
-	for entry in catalog_for_area("bramblewick"):
-		if not entry.id in POST_MARKET_VILLAGE_IDS:
-			result.append(entry)
-	return result
-
-
-func _read_snapshot(path: String) -> Dictionary:
-	if not FileAccess.file_exists(path):
-		return {}
-	return _validated_snapshot(_parse_json(FileAccess.get_file_as_string(path)))
-
-
-func _write_snapshot(state: Dictionary) -> bool:
-	last_error = ""
-	if _validated_snapshot(state).is_empty():
-		return _fail("Progression is invalid; it was not saved.")
-	if not save_enabled:
-		return true
-	if _write_blocked:
-		return _fail("Saving is disabled to preserve an incompatible or damaged save.")
-	if not save_path.begins_with("user://"):
-		return _fail("Save path must be under user://.")
-	var temp: String = save_path + ".tmp"
-	var backup: String = save_path + ".bak"
-	var output: FileAccess = FileAccess.open(temp, FileAccess.WRITE)
-	if output == null:
-		return _fail("Cannot write progression; earnings remain in memory. Storage error " + str(FileAccess.get_open_error()) + ".")
-	output.store_string(JSON.stringify(state, "\t"))
-	output.flush()
-	var write_error: Error = output.get_error()
-	output.close()
-	if write_error != OK or _read_snapshot(temp).is_empty():
-		return _fail("Progression write did not verify; previous save was preserved.")
-	if _archive_corrupt_on_save and FileAccess.file_exists(save_path):
-		if FileAccess.file_exists(save_path + ".corrupt"):
-			return _fail("A previous .corrupt recovery file already exists; damaged save preserved. Move it aside before saving again.")
-		if DirAccess.rename_absolute(save_path, save_path + ".corrupt") != OK:
-			return _fail("Cannot preserve the damaged save; saving stopped.")
-		_archive_corrupt_on_save = false
-	elif FileAccess.file_exists(save_path):
-		# A backup is replaced only with a known-valid canonical save.
-		if _read_snapshot(save_path).is_empty():
-			return _fail("Save changed or is damaged; reload before saving again.")
-		if FileAccess.file_exists(backup) and DirAccess.remove_absolute(backup) != OK:
-			return _fail("Cannot rotate the progression backup.")
-		if DirAccess.rename_absolute(save_path, backup) != OK:
-			return _fail("Cannot preserve the previous save.")
-	if DirAccess.rename_absolute(temp, save_path) != OK:
-		if not FileAccess.file_exists(save_path) and FileAccess.file_exists(backup):
-			DirAccess.copy_absolute(backup, save_path)
-		return _fail("Cannot finish progression save; previous progress preserved.")
-	return true
 
 
 func _finite_number(value: Variant) -> bool:

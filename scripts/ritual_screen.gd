@@ -38,8 +38,7 @@ const Labels = preload("res://scripts/ritual_labels.gd")
 const Pointer = preload("res://scripts/ritual_pointer.gd")
 const BranchNav = preload("res://scripts/ritual_branch_nav.gd")
 const ArgumentCards = preload("res://scripts/ritual_argument_cards.gd")
-## Height of the argument card row the graph gives up at Quillmoor.
-const CARD_ROW: float = 84.0
+const Frame = preload("res://scripts/ritual_frame.gd")
 
 class GraphCanvas extends Control:
 	var screen: Control
@@ -77,6 +76,7 @@ var branch_nav: BranchNav = BranchNav.new(self, branch_bar)
 var seal_art: SealArt = SealArt.new(self)
 var node_art: NodeArt = NodeArt.new(self)
 var labels: Labels = Labels.new(self)
+var frame: Frame = Frame.new(self)
 var hovered_id: String = ""
 var core_hovered: bool = false
 var market_circle: bool = false
@@ -647,54 +647,7 @@ func _build_controls() -> void:
 	argument_cards.toggled.connect(func(argument: String) -> void: argument_toggled.emit(argument))
 	argument_cards.hide()
 	add_child(argument_cards)
-	_build_demo_message()
-
-
-func _build_demo_message() -> void:
-	_demo_overlay = Control.new()
-	_demo_overlay.name = "DemoCompletion"
-	_demo_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	_demo_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
-	add_child(_demo_overlay)
-	var shade := ColorRect.new()
-	shade.color = Color(0.025, 0.01, 0.045, 0.82)
-	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_demo_overlay.add_child(shade)
-	var centering := CenterContainer.new()
-	centering.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	_demo_overlay.add_child(centering)
-	_demo_panel = PanelContainer.new()
-	centering.add_child(_demo_panel)
-	var style := StyleBoxFlat.new()
-	style.bg_color = PANEL
-	style.border_color = VIOLET
-	style.set_border_width_all(2)
-	style.set_corner_radius_all(16)
-	style.content_margin_left = 32
-	style.content_margin_right = 32
-	style.content_margin_top = 30
-	style.content_margin_bottom = 30
-	_demo_panel.add_theme_stylebox_override("panel", style)
-	var body := VBoxContainer.new()
-	body.add_theme_constant_override("separation", 20)
-	_demo_panel.add_child(body)
-	_centered_label(body, "THE CIRCLE IS COMPLETE", 13, VIOLET)
-	demo_message_label = _centered_label(body, "This is the end of the demo", 30, WHITE)
-	_demo_description = _centered_label(body, "Every inscription is yours. You can keep playing in this village.", 17, LILAC)
-	destination_button = _button("Travel", true, body)
-	destination_button.custom_minimum_size.y = 46
-	destination_button.pressed.connect(func() -> void:
-		if is_circle_complete() and not _destination_id.is_empty():
-			travel_requested.emit(_destination_id)
-	)
-	destination_button.hide()
-	demo_continue_button = _button("Keep playing", true, body)
-	demo_continue_button.custom_minimum_size.y = 46
-	demo_continue_button.pressed.connect(dismiss_demo_message)
-	_demo_hint = _label("", 12, MUTED, body)
-	_demo_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_demo_overlay.hide()
+	frame.build_completion()
 
 
 func _detail_gap(height: float) -> void:
@@ -702,13 +655,6 @@ func _detail_gap(height: float) -> void:
 	gap.custom_minimum_size.y = height
 	gap.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_detail_box.add_child(gap)
-
-
-func _centered_label(parent: Node, value: String, font_size: int, color: Color) -> Label:
-	var label: Label = _label(value, font_size, color, parent)
-	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	return label
 
 
 func _label(value: String, font_size: int, color: Color, parent: Node = null) -> Label:
@@ -722,46 +668,7 @@ func _button(value: String, primary: bool, parent: Node = null) -> Button:
 func _layout() -> void:
 	if not is_instance_valid(graph):
 		return
-	var margin: float = 40.0
-	var detail_width: float = clampf(size.x * 0.245, 255.0, 330.0)
-	_detail_x = size.x - detail_width - margin
-	_column_right = _detail_x - 48.0
-	graph.position = Vector2(24, 184)
-	graph.size = Vector2(maxf(280.0, _column_right - 24.0), maxf(280.0, size.y - 304.0 - (CARD_ROW if uni_circle else 0.0)))
-	# Quillmoor's argument cards sit directly under the circle they change.
-	argument_cards.position = Vector2(margin, graph.position.y + graph.size.y + 4.0)
-	argument_cards.size = Vector2(_column_right - margin, CARD_ROW - 8.0)
-	zoom_in_button.position = Vector2(_column_right - 52, 122)
-	zoom_in_button.size = Vector2(52, 52)
-	zoom_out_button.position = Vector2(_column_right - 112, 122)
-	zoom_out_button.size = Vector2(52, 52)
-	branch_bar.position = Vector2(margin, 122)
-	branch_bar.size = Vector2(_column_right - 124 - margin, 52)
-	branch_picker.position = branch_bar.position
-	branch_picker.size = Vector2(minf(430, branch_bar.size.x), 52)
-	completion_button.position = Vector2(_column_right - 226, size.y - 112)
-	completion_button.size = Vector2(226, 52)
-	node_picker.position = Vector2(margin, size.y - 112)
-	node_picker.size = Vector2(minf(440, completion_button.position.x - 12 - margin), 52)
-	_title_label.position = Vector2(margin, 43)
-	_subtitle_label.position = Vector2(margin + 2.0, 23)
-	recenter_button.position = Vector2(_column_right - 100, 52)
-	recenter_button.size = Vector2(100, 46)
-	focus_button.position = Vector2(_column_right - 248, 52)
-	focus_button.size = Vector2(140, 46)
-	_coins_label.position = Vector2(_detail_x, 41)
-	_recruits_label.position = Vector2(_detail_x, 69)
-	_lifetime_label.position = Vector2(_detail_x, 98)
-	next_button.position = Vector2(_detail_x, size.y - 170)
-	next_button.size = Vector2(detail_width, 50)
-	village_button.position = Vector2(_detail_x, size.y - 112)
-	village_button.size = Vector2(detail_width, 50)
-	_hint_label.position = Vector2(_detail_x, size.y - 50)
-	_hint_label.size = Vector2(detail_width, 36)
-	_hint_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_detail_box.position = Vector2(_detail_x, 150)
-	_detail_box.size = Vector2(detail_width, 0)
-	_layout_footer()
+	frame.place()
 	branch_nav.fit()
 	if not _view_adjusted:
 		reset_view()
@@ -769,15 +676,7 @@ func _layout() -> void:
 
 
 func _layout_footer() -> void:
-	if not is_instance_valid(return_area_button):
-		return
-	return_area_button.position = Vector2(40, size.y - 50)
-	return_area_button.size = Vector2(200, 36)
-	_legend_label.text = "Diamond: locked   /   Hollow: needs resources   /   +: ready   /   Check: complete"
-	_legend_label.position = Vector2(256 if away_circle else 40, size.y - 50)
-	_legend_label.size = Vector2(_column_right - _legend_label.position.x, 36)
-	var message_height: float = 390 if not _destination_id.is_empty() else 332
-	_demo_panel.custom_minimum_size = Vector2(minf(600, size.x - 80), message_height)
+	frame.place_footer()
 
 
 func _purchase_selected() -> void:

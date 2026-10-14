@@ -26,3 +26,10 @@ This branch (`game-only`) contains only the game itself: `project.godot`, `scene
 - Store runtime progression under `user://`, using schema validation, staged writes and backup recovery. Purchases must not deduct currency if saving fails.
 - Do not overwrite original art.
 - Make regular local commits after complete, working changes. Publishing requires separate authorization.
+
+## File size limit (hard rule)
+
+- **No `.gd` file may exceed 800 lines.** Check with `wc -l scripts/*.gd` before every commit.
+- When a change would push a file past 800 lines, or a file is already over, **refactor it below 800 in the same change**: move a cohesive responsibility (HUD, settings wiring, area building, save validation, layout, etc.) into its own script and have the original delegate to it.
+- **Never shrink a file by deleting blank lines, joining statements, removing comments or otherwise compressing formatting.** Blank lines between functions and the existing comment density stay as they are. Line count must come down by moving code, not by squeezing it.
+- Keep public members that other scripts use (for example `main.gd`'s `player` and `village_tap_available`) working, either in place or through a delegating function.
