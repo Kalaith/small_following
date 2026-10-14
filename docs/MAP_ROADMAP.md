@@ -1,17 +1,18 @@
 # Map roadmap
 
 The order of maps and the one new mechanic each one teaches. Bramblewick,
-Bellmarket, the Lantern Fair, Quillmoor and Rosecourt are implemented. The rest are proposals, confirmed with the user
-on 2026-10-14. Each plan holds the detail; numbers in them are starting
-values, tuned by playing.
+Bellmarket, the Lantern Fair, Quillmoor and Rosecourt are implemented. The abbey is
+next and not yet planned. The plans for the implemented maps were retired
+once built (they remain in Git history); `data/balance.json` and
+`data/upgrades.json` are the source of truth for their numbers.
 
-| # | Map | New mechanic | Final person to convince | Plan |
+| # | Map | New mechanic | Final person to convince | State |
 | --- | --- | --- | --- | --- |
 | 1 | Bramblewick (village) | Debate opponents and their villagers | Priest of Bramblewick | Implemented |
 | 2 | Bellmarket (market) | Locked listeners opened by introductions; the amber Market Hand | - | Implemented |
-| 3 | The Lantern Fair | Interest against Distraction: a hard threshold with many ways over it, fast drain, stolen audiences; the moss-green Barker | The Ringmaster | Implemented ([LANTERN_FAIR_PLAN](LANTERN_FAIR_PLAN.md)) |
-| 4 | Quillmoor University | Prepared arguments: academics only hear their own faculty's argument | The Rector | Implemented ([UNIVERSITY_PLAN](UNIVERSITY_PLAN.md)) |
-| 5 | Rosecourt (the King's garden) | Whispered introductions: who you win first opens who listens next | The King | Implemented ([ROSECOURT_PLAN](ROSECOURT_PLAN.md)) |
+| 3 | The Lantern Fair | Interest against Distraction: a hard threshold with many ways over it, fast drain, stolen audiences; the moss-green Barker | The Ringmaster | Implemented |
+| 4 | Quillmoor University | Prepared arguments: academics only hear their own faculty's argument | The Rector | Implemented |
+| 5 | Rosecourt (the King's garden) | Whispered introductions: who you win first opens who listens next | The King | Implemented |
 | 6 | The hilltop abbey (final map) | Not yet planned | The Pope | - |
 
 Each map asks a different question:
@@ -34,3 +35,8 @@ Shared rules for every new map:
 - **Local effects.** The map's effects apply only on that map.
 - **Access.** A map opens from the previous map's completed circle. The
   password list shows every implemented area.
+
+Open question for the user: every gathering and boss caps speech at 20
+phrases a second. Rosecourt alone turns speech above the cap into heavier
+phrases; earlier maps keep the plain cap, so Quillmoor's last talk ranks
+are still partly clipped.

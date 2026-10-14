@@ -1,6 +1,6 @@
 # Small Following project guidance
 
-This project contains only the game itself: `project.godot`, `scenes/`, `scripts/`, `data/`, `assets/` and the export presets. Tests and most documentation were deliberately removed. The exception is `docs/`, which holds only the plans for new maps (start with `docs/MAP_ROADMAP.md`); read the relevant plan before building a map. The shared standards at the end of this file apply as well as everything here.
+This project contains only the game itself: `project.godot`, `scenes/`, `scripts/`, `data/`, `assets/` and the export presets. Tests and most documentation were deliberately removed. The exception is `docs/MAP_ROADMAP.md`: the order of maps, the mechanic each one teaches and the shared rules every new map follows. Read it before planning or building a map. A new map's plan may live in `docs/` while it is being built; delete it once the map is in. The shared standards at the end of this file apply as well as everything here.
 
 ## Product invariants
 
@@ -14,7 +14,7 @@ This project contains only the game itself: `project.godot`, `scenes/`, `scripts
 ## Project engineering
 
 - **Compatibility** renderer.
-- The shared WebHatchery Godot toolkit (`../godot_toolkit`) is linked in as `res://addons/hatchery/` by `..\godot_toolkit	ools\Link-Toolkit.ps1 -ProjectDir .` (a junction, ignored by Git). It is plain preloaded GDScript, not an editor plugin. Small Following uses its balance facade (`core/balance.gd`), JSON and data-rule helpers, key and pad bindings, the settings store, `JsonSave` for the progression file, the pointer tap behind tap-to-walk, display and audio-level helpers, and the placeholder shapes. The game keeps its policy in `scripts/` (`settings_store.gd`: settings and rebindable actions; `progression_save.gd`: the save schema, validation and migration; `village_input.gd`: where a tap may walk) and keeps its own settings screen and ritual styling. Change toolkit code in `../godot_toolkit` under its own AGENTS.md.
+- The shared WebHatchery Godot toolkit (`../godot_toolkit`) is linked in as `res://addons/hatchery/` by `..\godot_toolkit\tools\Link-Toolkit.ps1 -ProjectDir .` (a junction, ignored by Git). It is plain preloaded GDScript, not an editor plugin. Small Following uses its balance facade (`core/balance.gd`), JSON and data-rule helpers, key and pad bindings, the settings store, `JsonSave` for the progression file, the pointer tap behind tap-to-walk, display and audio-level helpers, and the placeholder shapes. The game keeps its policy in `scripts/` (`settings_store.gd`: settings and rebindable actions; `progression_save.gd`: the save schema, validation and migration; `village_input.gd`: where a tap may walk) and keeps its own settings screen and ritual styling. Change toolkit code in `../godot_toolkit` under its own AGENTS.md.
 - Use feet origins and Y sorting for 2D actors/props. World collision is layer 2; player is layer 1.
 - Keep movement independent of earning, rounds, upgrade UI and automation.
 - Balance numbers live in `data/balance.json`; upgrade definitions live in `data/upgrades.json` with stable IDs and supported effect types. Keep purchase validation in the progression owner, never only in button state.
