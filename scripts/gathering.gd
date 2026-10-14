@@ -145,6 +145,9 @@ func tick_persuasion(delta: float, phrase_interval: float, conviction: float, in
 		return
 	_unattended = 0.0
 	last_phrase_interval = maxf(phrase_interval, 0.05)
+	# The rhythm never passes twenty phrases a second. At Rosecourt speech beyond
+	# it still counts: each phrase carries the conviction of the ones it stands for.
+	var burst: float = last_phrase_interval / phrase_interval if court != null and phrase_interval > 0.0 else 1.0
 	phrase_elapsed += maxf(delta, 0.0)
 	var heard: bool = hears(interest) and (still or not still_only)
 	set_deaf(not heard)
@@ -160,7 +163,7 @@ func tick_persuasion(delta: float, phrase_interval: float, conviction: float, in
 			rebuttals_left -= 1
 			continue
 		# At Quillmoor a phrase also carries the faculty bonus of whoever it reaches.
-		progress += maxf(0.0, conviction) + listener_conviction_bonus(first_unconverted())
+		progress += (maxf(0.0, conviction) + listener_conviction_bonus(first_unconverted())) * burst
 		var next: int = first_unconverted()
 		while next >= 0 and progress + TIME_EPSILON >= listener_conviction_required(next):
 			progress = maxf(0.0, progress - listener_conviction_required(next))

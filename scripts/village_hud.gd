@@ -8,6 +8,7 @@ const FairHud = preload("res://scripts/fair_hud.gd")
 const University = preload("res://scripts/university.gd")
 const UniHud = preload("res://scripts/uni_hud.gd")
 const Rosecourt = preload("res://scripts/rosecourt.gd")
+const Balance = preload("res://scripts/balance.gd")
 const ArgumentBadge = preload("res://scripts/argument_badge.gd")
 ## Village HUD frame: screen margin, gap between cards and the corner settings button.
 const HUD_MARGIN: float = 26.0
@@ -190,8 +191,13 @@ func _uni_context() -> String:
 func _rose_context() -> String:
 	if not game.round_active:
 		if game.progression.rose_king_won:
-			return "The King's approval is yours!"
+			return "The King's approval is yours: the Pope will receive you."
 		return "Round complete."
+	var king: Node2D = game.rose_king
+	if is_instance_valid(king) and king.listening:
+		if king.reserved():
+			return "The King listens only once every grandee is won this round (%d/%d whispered)" % [king.whispers, king.whispers_needed]
+		return "Winning the King's approval... %d%%" % floori(100.0 * king.progress / king.conviction())
 	if is_instance_valid(game.nearest_group):
 		# Salons carry no text in the garden, so the guest being won is named here.
 		var group: Node2D = game.nearest_group
@@ -205,6 +211,8 @@ func _rose_context() -> String:
 		return waiting
 	if game.progression.rose_king_won:
 		return "The King's approval is yours.  Enjoy the garden party."
+	if is_instance_valid(king) and not king.present and game.player.global_position.distance_to(king.global_position) <= game.player.speaking_radius + 60.0:
+		return "The throne is empty: the King arrives once %d rose ranks are yours" % Balance.integer("rosecourt.king.arrive_ranks")
 	return "Win guests in the right order: who you talk to first opens who listens next."
 
 

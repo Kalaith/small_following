@@ -476,6 +476,24 @@ func rose_whisper_conviction() -> float:
 	return _sum_effect("rose_whisper_conviction_add")
 
 
+## The King takes his throne once "rosecourt.king.arrive_ranks" rose ranks are owned.
+func rose_king_present() -> bool:
+	var owned: int = 0
+	for entry in catalog_for_area(ROSE_AREA):
+		owned += rank(entry.id)
+	return rose_king_won or owned >= Balance.integer("rosecourt.king.arrive_ranks")
+
+
+## The King's approval: his reward once, then a lasting victory.
+func complete_rose_king() -> bool:
+	if active_area != ROSE_AREA or rose_king_won:
+		return false
+	_add_earnings(Balance.integer("rosecourt.king.reward"), 1)
+	rose_king_won = true
+	save_progress()
+	return true
+
+
 func rose_helper_conviction_bonus() -> float:
 	return _sum_effect("rose_helper_conviction_add")
 

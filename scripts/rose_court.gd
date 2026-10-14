@@ -21,6 +21,8 @@ var _salon_of: Dictionary = {}
 var whispered: Dictionary = {}
 ## High nobles whose whisper has reached the King this round.
 var king_whispers: int = 0
+## Whether the King sits on his throne; until then his threads are not drawn.
+var king_present: bool = false
 var _pulses: Array[Dictionary] = []
 
 
@@ -148,7 +150,7 @@ func _draw() -> void:
 		var spent: bool = salons[ends[0]].listeners[int(ends[1])].following
 		for target in targets_of(source):
 			var to: Variant = _end(target)
-			if to == null:
+			if to == null or (target == "king" and not king_present):
 				continue
 			# Threads that open a reserved noble matter most; head starts are quieter.
 			var opens: bool = target == "king" or _reserved(target)

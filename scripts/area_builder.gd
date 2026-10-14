@@ -34,6 +34,7 @@ func rebuild() -> void:
 	game.fair_boss = null
 	game.uni_boss = null
 	game.rose_court = null
+	game.rose_king = null
 	game.helper = null
 	game.market_helper = null
 	game.fair_helper = null

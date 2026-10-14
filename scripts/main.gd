@@ -22,6 +22,7 @@ const Rosecourt = preload("res://scripts/rosecourt.gd")
 const VillageHud = preload("res://scripts/village_hud.gd")
 const AreaBuilder = preload("res://scripts/area_builder.gd")
 const HelperCrew = preload("res://scripts/helper_crew.gd")
+const BossRoster = preload("res://scripts/boss_roster.gd")
 const SettingsWiring = preload("res://scripts/settings_wiring.gd")
 const START_POSITION := Vector2(780, 680)
 ## Gatherings, merchants, opponents' villagers and the round length are balance
@@ -46,6 +47,8 @@ var settings_wiring: Node
 var area: AreaBuilder
 ## Hires, places and tunes the helpers for the active area.
 var crew: HelperCrew
+## Places each round's boss and pays out when one is convinced.
+var bosses: BossRoster
 var groups: Array[Node2D] = []
 ## One-listener gatherings kept apart from `groups` so group indices stay stable.
 var wanderers: Array[Node2D] = []
@@ -67,6 +70,8 @@ var fair_boss: Node2D = null
 var uni_boss: Node2D = null
 ## Rosecourt's whispered introductions (threads, reserved nobles, head starts).
 var rose_court: Node2D = null
+## The King of Rosecourt, on his throne once he has arrived.
+var rose_king: Node2D = null
 var seconds_left: float = Balance.number("round.seconds")
 var round_active: bool = true
 var round_recruits: int = 0
@@ -90,6 +95,7 @@ var village_input: Node
 func _ready() -> void:
 	area = AreaBuilder.new(self)
 	crew = HelperCrew.new(self)
+	bosses = BossRoster.new(self)
 	settings_wiring = SettingsWiring.new(self)
 	# Existing isolated scene tests must also avoid the normal preferences file.
 	settings.save_enabled = persistence_enabled and (save_path_override.is_empty() or not settings_path_override.is_empty())
@@ -441,6 +447,12 @@ func advance_round(delta: float) -> void:
 		var boss_in_range: bool = uni_boss.arrived() and player.global_position.distance_to(uni_boss.global_position) <= speak_radius
 		speaking_to_opponent = boss_in_range and (uni_boss.prepared or not is_instance_valid(nearest_group))
 		uni_boss.advance(usable_delta, speaking_to_opponent, progression.speech_interval(), progression.conviction_per_phrase() + progression.uni_argument_conviction(uni_boss.needs()))
+	if is_instance_valid(rose_king) and rose_king.present and not rose_king.defeated:
+		# A reserved King yields to any guest you can win; with none nearby he
+		# still takes your phrases, and ignores them until his grandees whisper.
+		var king_in_range: bool = player.global_position.distance_to(rose_king.global_position) <= speak_radius
+		speaking_to_opponent = king_in_range and (not rose_king.reserved() or not is_instance_valid(nearest_group))
+		rose_king.advance(usable_delta, speaking_to_opponent, progression.speech_interval(), progression.conviction_per_phrase())
 	if speaking_to_opponent:
 		nearest_group = null
 	if is_instance_valid(nearest_group):
@@ -482,69 +494,7 @@ func _apply_barker_cut(all_audiences: Array[Node2D]) -> void:
 
 
 func _reset_encounter() -> void:
-	if is_instance_valid(encounter):
-		encounter.get_parent().remove_child(encounter)
-		encounter.queue_free()
-	encounter = null
-	if is_instance_valid(fair_boss):
-		fair_boss.get_parent().remove_child(fair_boss)
-		fair_boss.queue_free()
-	fair_boss = null
-	if is_instance_valid(uni_boss):
-		uni_boss.get_parent().remove_child(uni_boss)
-		uni_boss.queue_free()
-	uni_boss = null
-	if progression.active_area == University.AREA_ID:
-		if not progression.uni_complete():
-			uni_boss = UniBoss.new()
-			uni_boss.stage = progression.uni_stage
-			uni_boss.prepared_from(progression)
-			uni_boss.convinced.connect(_on_uni_boss_convinced)
-			uni_boss.phrase_spoken.connect(game_audio.on_phrase)
-			$Actors.add_child(uni_boss)
-		return
-	if progression.active_area == Fair.AREA_ID:
-		if not progression.fair_complete():
-			fair_boss = FairBoss.new()
-			fair_boss.stage = progression.fair_stage
-			fair_boss.convinced.connect(_on_fair_boss_convinced)
-			fair_boss.phrase_spoken.connect(game_audio.on_phrase)
-			$Actors.add_child(fair_boss)
-		return
-	if progression.active_area != "bramblewick" or not progression.has_unlock("encounter_unlock") or progression.map_complete():
-		return
-	encounter = Encounter.new()
-	encounter.stage = progression.encounter_stage
-	encounter.convinced.connect(_on_encounter_convinced)
-	encounter.phrase_spoken.connect(game_audio.on_phrase)
-	$Actors.add_child(encounter)
-
-
-func _on_encounter_convinced(stage: int) -> void:
-	if round_active and progression.complete_encounter(stage):
-		round_recruits += 1
-		var popup = preload("res://scripts/donation_popup.gd").new()
-		popup.amount = int(Encounter.profiles()[stage].reward)
-		popup.position = Vector2(52, -80)
-		encounter.add_child(popup)
-
-
-func _on_fair_boss_convinced(stage: int) -> void:
-	if round_active and progression.complete_fair_boss(stage):
-		round_recruits += 1
-		var popup = DonationPopup.new()
-		popup.amount = int(FairBoss.profiles()[stage].reward)
-		popup.position = Vector2(52, -80)
-		fair_boss.add_child(popup)
-
-
-func _on_uni_boss_convinced(stage: int) -> void:
-	if round_active and progression.complete_uni_boss(stage):
-		round_recruits += 1
-		var popup = DonationPopup.new()
-		popup.amount = int(UniBoss.profiles()[stage].reward)
-		popup.position = Vector2(52, -80)
-		uni_boss.add_child(popup)
+	bosses.reset()
 
 
 ## A tapped argument card between rounds. Progression decides the loadout; the
