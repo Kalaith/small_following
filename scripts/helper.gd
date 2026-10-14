@@ -72,8 +72,9 @@ func can_hear_me(group: Node2D) -> bool:
 	return interest < 0 or group.hears(interest, extra_cut(group))
 
 
-func configure_navigation(actors: Node2D) -> void:
-	navigation.region = Rect2i(2, 2, 61, 41)
+## The grid keeps at least two cells clear of every edge of the map.
+func configure_navigation(actors: Node2D, world_size: Vector2) -> void:
+	navigation.region = Rect2i(Vector2i(2, 2), Vector2i((world_size / CELL).floor()) - Vector2i(4, 4))
 	navigation.cell_size = Vector2(CELL, CELL)
 	navigation.offset = Vector2(CELL * 0.5, CELL * 0.5)
 	navigation.diagonal_mode = AStarGrid2D.DIAGONAL_MODE_ONLY_IF_NO_OBSTACLES

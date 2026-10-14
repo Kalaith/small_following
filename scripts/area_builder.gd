@@ -60,6 +60,7 @@ func rebuild() -> void:
 	game.add_child(world)
 	game.move_child(world, 0)
 	world.build_props(game.actors())
+	_apply_world_size(world.WORLD_SIZE)
 	game._footprints = _obstacle_footprints()
 	if game.progression.active_area == "bellmarket":
 		for entry in Market.group_layout():
@@ -202,6 +203,7 @@ func _new_rose_group(entry: Dictionary, coat_offset: int = 0) -> Node2D:
 	gathering.group_name = String(entry.title)
 	gathering.position = Balance.vec(entry.at) if entry.has("at") else Vector2.ZERO
 	gathering.coat_offset = coat_offset
+	gathering.spread = Rosecourt.HUDDLE
 	gathering.zone = String(entry.get("zone", ""))
 	gathering.listener_profiles.assign(Rosecourt.profiles(entry.people))
 	# No text over the garden's guests: rings, bars and icons only; the HUD explains.
@@ -254,11 +256,20 @@ func scatter_wanderers() -> void:
 			avoid.append(Balance.vec(boss.at))
 	for group in game.groups:
 		avoid.append(group.position)
-	var spots: Array[Vector2] = Wanderers.scatter(game._wanderer_rng, _village_props(), avoid, game.wanderers.size())
+	var spots: Array[Vector2] = Wanderers.scatter(game._wanderer_rng, _village_props(), avoid, game.wanderers.size(), Wanderers.area_for(game.world_size))
 	for index in range(game.wanderers.size()):
 		# A crowded map leaves surplus wanderers out of the round rather than overlapping art.
 		game.wanderers[index].visible = index < spots.size()
 		game.wanderers[index].position = spots[index] if index < spots.size() else Vector2(-10000, -10000)
+
+
+## Fits the camera and the player's walkable area to the map just built.
+func _apply_world_size(size: Vector2) -> void:
+	game.world_size = size
+	game.player.world_bounds = Rect2(Vector2(55, 55), size - Vector2(110, 110))
+	var camera: Camera2D = game.player.get_node("Camera2D")
+	camera.limit_right = int(size.x)
+	camera.limit_bottom = int(size.y)
 
 
 func _village_props() -> Array[Node]:

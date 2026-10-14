@@ -78,7 +78,7 @@ func _hire(robe: String) -> Node2D:
 	elif robe == "moss":
 		created.wear_moss()
 	game.actors().add_child(created)
-	created.configure_navigation(game.actors())
+	created.configure_navigation(game.actors(), game.world_size)
 	created.reset_round(game.area_start_position())
 	return created
 

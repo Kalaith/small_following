@@ -70,6 +70,9 @@ var uni_boss: Node2D = null
 var rose_court: Node2D = null
 ## The King of Rosecourt, on his throne once he has arrived.
 var rose_king: Node2D = null
+## The current map's size, from its world script's WORLD_SIZE; bounds the
+## camera, the player, the helpers' grid and the wanderers.
+var world_size := Vector2(1560, 1100)
 var seconds_left: float = Balance.number("round.seconds")
 var round_active: bool = true
 var round_recruits: int = 0
@@ -395,7 +398,7 @@ func advance_round(delta: float) -> void:
 		# Beckoning Call (Market Call in Bellmarket) draws lone wanderers in during
 		# the round's usable time only.
 		var reach: float = progression.market_beckon_reach() if progression.active_area == "bellmarket" else progression.beckon_reach()
-		Wanderers.pull(wanderers, player.global_position, reach, usable_delta, _footprints)
+		Wanderers.pull(wanderers, player.global_position, reach, usable_delta, _footprints, Wanderers.PULL_STOP, -1.0, Wanderers.area_for(world_size))
 	var closest_distance: float = speak_radius
 	var nearby_group: Node2D = null
 	var nearby_distance: float = speak_radius + 30.0

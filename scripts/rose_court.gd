@@ -15,8 +15,8 @@ const PULSE_SECONDS: float = 0.7
 const THREAD := Color("c2486a")
 ## Seconds a salon's threads stay at full strength after the talk stops, then
 ## the seconds they take to fade; presentation only.
-const REVEAL_HOLD_SECONDS: float = 1.5
-const REVEAL_FADE_SECONDS: float = 1.5
+const REVEAL_HOLD_SECONDS: float = 0.5
+const REVEAL_FADE_SECONDS: float = 0.5
 
 var progression: RefCounted = null
 ## Salon id -> its gathering, and gathering instance id -> salon id.

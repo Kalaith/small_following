@@ -7,8 +7,11 @@ extends RefCounted
 
 const Balance = preload("res://addons/hatchery/core/balance.gd")
 const TITLE: String = "Wanderer"
-## Feet positions stay inside the fences and the helper's navigation grid.
-const AREA := Rect2(110, 170, 1340, 820)
+## Feet positions stay inside the fences and the helper's navigation grid:
+## this far in from the map's left, top, right and bottom edges.
+const MARGINS := [110.0, 170.0, 110.0, 110.0]
+## area_for() the 1560 x 1100 maps every area but Rosecourt shares.
+const STANDARD_AREA := Rect2(110, 170, 1340, 820)
 ## Listener body around its feet origin, grown by PROP_MARGIN against prop art.
 const BODY := Rect2(-14, -42, 28, 46)
 const PROP_MARGIN: float = 12.0
@@ -22,13 +25,18 @@ const PULL_STOP: float = 58.0
 const BODY_RADIUS: float = 10.0
 
 
-## Returns up to `count` feet positions; fewer only if the map is too crowded.
-static func scatter(rng: RandomNumberGenerator, props: Array[Node], avoid: Array[Vector2], count: int) -> Array[Vector2]:
+static func area_for(world_size: Vector2) -> Rect2:
+	var top_left := Vector2(MARGINS[0], MARGINS[1])
+	return Rect2(top_left, world_size - top_left - Vector2(MARGINS[2], MARGINS[3]))
+
+
+## Returns up to `count` feet positions inside `area`; fewer only if the map is too crowded.
+static func scatter(rng: RandomNumberGenerator, props: Array[Node], avoid: Array[Vector2], count: int, area: Rect2) -> Array[Vector2]:
 	var placed: Array[Vector2] = []
 	var attempts: int = 0
 	while placed.size() < count and attempts < MAX_ATTEMPTS:
 		attempts += 1
-		var at := Vector2(rng.randf_range(AREA.position.x, AREA.end.x), rng.randf_range(AREA.position.y, AREA.end.y))
+		var at := Vector2(rng.randf_range(area.position.x, area.end.x), rng.randf_range(area.position.y, area.end.y))
 		if is_clear(at, props, avoid, placed):
 			placed.append(at)
 	return placed
@@ -53,7 +61,7 @@ static func is_clear(at: Vector2, props: Array[Node], avoid: Array[Vector2], pla
 ## prop footprints instead of entering them. Converted wanderers, and market
 ## wanderers still awaiting an introduction, stay put.
 ## A fair show's bell uses the same walk with its own ring distance and pace.
-static func pull(wanderers: Array[Node2D], toward: Vector2, reach: float, delta: float, footprints: Array[Node], stop: float = PULL_STOP, speed: float = -1.0) -> void:
+static func pull(wanderers: Array[Node2D], toward: Vector2, reach: float, delta: float, footprints: Array[Node], stop: float = PULL_STOP, speed: float = -1.0, area: Rect2 = STANDARD_AREA) -> void:
 	if reach <= 0.0 or delta <= 0.0:
 		return
 	var pace: float = speed if speed > 0.0 else Balance.number("village.wanderers.pull_speed")
@@ -66,13 +74,13 @@ static func pull(wanderers: Array[Node2D], toward: Vector2, reach: float, delta:
 			continue
 		var step: Vector2 = from.direction_to(toward) * minf(pace * delta, distance - stop)
 		for candidate in [step, Vector2(step.x, 0), Vector2(0, step.y)]:
-			if not _blocked(from + candidate, footprints):
+			if not _blocked(from + candidate, footprints, area):
 				wanderer.global_position = from + candidate
 				break
 
 
-static func _blocked(at: Vector2, footprints: Array[Node]) -> bool:
-	if not AREA.grow(40.0).has_point(at):
+static func _blocked(at: Vector2, footprints: Array[Node], area: Rect2) -> bool:
+	if not area.grow(40.0).has_point(at):
 		return true
 	for footprint in footprints:
 		var shape: Shape2D = footprint.shape

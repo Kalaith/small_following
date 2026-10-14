@@ -9,38 +9,48 @@ extends Node2D
 const Village = preload("res://scripts/village.gd")
 const DrawShapes = preload("res://addons/hatchery/draw/shapes.gd")
 const Balance = preload("res://addons/hatchery/core/balance.gd")
-const WORLD_SIZE := Vector2(1560, 1100)
+## Larger than the other maps, so the salons stand well apart.
+const WORLD_SIZE := Vector2(2240, 1560)
 const AREA_ID: String = "rosecourt"
+## Salon huddles stand this much tighter than other maps' crowds.
+const HUDDLE: float = 0.7
 
 ## Hedges are long rows; the gaps between them are the routes up the garden,
 ## each wide enough for the helper's grid.
 const PROP_LAYOUT = [
-	{"kind": "pavilion", "at": Vector2(780, 170)},
-	{"kind": "fountain", "at": Vector2(780, 585)},
-	{"kind": "orangery", "at": Vector2(200, 520)},
-	{"kind": "arch", "at": Vector2(1290, 560)},
-	{"kind": "hedge", "at": Vector2(395, 810), "length": 470},
-	{"kind": "hedge", "at": Vector2(1165, 810), "length": 470},
-	{"kind": "hedge", "at": Vector2(470, 410), "length": 300},
-	{"kind": "hedge", "at": Vector2(1090, 410), "length": 300},
-	{"kind": "topiary", "at": Vector2(680, 790)},
-	{"kind": "topiary", "at": Vector2(880, 790)},
-	{"kind": "topiary", "at": Vector2(660, 400)},
-	{"kind": "topiary", "at": Vector2(900, 400)},
-	{"kind": "roses", "at": Vector2(690, 900)},
-	{"kind": "roses", "at": Vector2(870, 900)},
-	{"kind": "roses", "at": Vector2(1300, 700)},
-	{"kind": "roses", "at": Vector2(160, 300)},
-	{"kind": "statue", "at": Vector2(1400, 360)},
-	{"kind": "tree", "at": Vector2(80, 140), "variant": 0},
-	{"kind": "tree", "at": Vector2(1480, 150), "variant": 1},
-	{"kind": "tree", "at": Vector2(70, 1010), "variant": 1},
-	{"kind": "tree", "at": Vector2(1490, 1000), "variant": 0},
-	{"kind": "tree", "at": Vector2(1470, 640), "variant": 1},
-	{"kind": "bench", "at": Vector2(1220, 760)},
-	{"kind": "flowers", "at": Vector2(560, 1040), "variant": 0},
-	{"kind": "flowers", "at": Vector2(1000, 1040), "variant": 1},
-	{"kind": "flowers", "at": Vector2(380, 200), "variant": 1},
+	{"kind": "pavilion", "at": Vector2(1120, 240)},
+	{"kind": "fountain", "at": Vector2(1120, 830)},
+	{"kind": "orangery", "at": Vector2(290, 740)},
+	{"kind": "arch", "at": Vector2(1850, 795)},
+	{"kind": "hedge", "at": Vector2(565, 1150), "length": 670},
+	{"kind": "hedge", "at": Vector2(1675, 1150), "length": 670},
+	{"kind": "hedge", "at": Vector2(675, 580), "length": 430},
+	{"kind": "hedge", "at": Vector2(1565, 580), "length": 430},
+	{"kind": "topiary", "at": Vector2(1020, 1120)},
+	{"kind": "topiary", "at": Vector2(1220, 1120)},
+	{"kind": "topiary", "at": Vector2(1000, 567)},
+	{"kind": "topiary", "at": Vector2(1240, 567)},
+	{"kind": "topiary", "at": Vector2(380, 1420)},
+	{"kind": "roses", "at": Vector2(1030, 1276)},
+	{"kind": "roses", "at": Vector2(1210, 1276)},
+	{"kind": "roses", "at": Vector2(1867, 993)},
+	{"kind": "roses", "at": Vector2(230, 425)},
+	{"kind": "roses", "at": Vector2(1900, 1420)},
+	{"kind": "roses", "at": Vector2(1500, 330)},
+	{"kind": "statue", "at": Vector2(2010, 510)},
+	{"kind": "statue", "at": Vector2(300, 1040)},
+	{"kind": "tree", "at": Vector2(115, 200), "variant": 0},
+	{"kind": "tree", "at": Vector2(2125, 213), "variant": 1},
+	{"kind": "tree", "at": Vector2(100, 1432), "variant": 1},
+	{"kind": "tree", "at": Vector2(2140, 1418), "variant": 0},
+	{"kind": "tree", "at": Vector2(2110, 908), "variant": 1},
+	{"kind": "tree", "at": Vector2(110, 1020), "variant": 0},
+	{"kind": "bench", "at": Vector2(1752, 1078)},
+	{"kind": "bench", "at": Vector2(300, 1260)},
+	{"kind": "flowers", "at": Vector2(804, 1475), "variant": 0},
+	{"kind": "flowers", "at": Vector2(1436, 1475), "variant": 1},
+	{"kind": "flowers", "at": Vector2(546, 284), "variant": 1},
+	{"kind": "flowers", "at": Vector2(1780, 300), "variant": 0},
 ]
 
 var _props_built: bool = false
@@ -93,37 +103,37 @@ func build_props(actors: Node2D) -> void:
 func _draw() -> void:
 	# The top terrace is pale gravel; the middle terrace and the Lower Lawn are mown grass.
 	draw_rect(Rect2(Vector2.ZERO, WORLD_SIZE), Color("8fa66c"))
-	draw_rect(Rect2(0, 0, 1560, 400), Color("cfc4a8"))
-	for row in range(0, 400, 40):
-		draw_line(Vector2(0, row), Vector2(1560, row), Color("c6baa0"), 1.0)
-	draw_rect(Rect2(0, 400, 1560, 410), Color("94ad70"))
-	draw_rect(Rect2(0, 810, 1560, 290), Color("9ab575"))
-	for stripe in range(0, 1560, 130):
-		draw_rect(Rect2(stripe, 810, 65, 290), Color("a3bd7e"))
+	draw_rect(Rect2(0, 0, WORLD_SIZE.x, 570), Color("cfc4a8"))
+	for row in range(0, 570, 40):
+		draw_line(Vector2(0, row), Vector2(WORLD_SIZE.x, row), Color("c6baa0"), 1.0)
+	draw_rect(Rect2(0, 570, WORLD_SIZE.x, 580), Color("94ad70"))
+	draw_rect(Rect2(0, 1150, WORLD_SIZE.x, 410), Color("9ab575"))
+	for stripe in range(0, int(WORLD_SIZE.x), 130):
+		draw_rect(Rect2(stripe, 1150, 65, 410), Color("a3bd7e"))
 	# The Rose Walk: a gravel path from the gate to the fountain and on up to the pavilion.
-	draw_rect(Rect2(710, 400, 140, 700), Color("b8a98a"))
-	draw_rect(Rect2(720, 400, 120, 700), Color("d6c9a8"))
-	for y in range(420, 1100, 46):
-		draw_circle(Vector2(712, y), 7.0, Color("c2486a"))
-		draw_circle(Vector2(848, y + 23), 7.0, Color("c2486a"))
+	draw_rect(Rect2(1050, 570, 140, 990), Color("b8a98a"))
+	draw_rect(Rect2(1060, 570, 120, 990), Color("d6c9a8"))
+	for y in range(590, 1560, 46):
+		draw_circle(Vector2(1052, y), 7.0, Color("c2486a"))
+		draw_circle(Vector2(1188, y + 23), 7.0, Color("c2486a"))
 	# The Fountain Terrace: a round of flagstones.
-	DrawShapes.oval(self, Vector2(780, 585), Vector2(250, 150), Color("b4a88c"))
-	DrawShapes.oval(self, Vector2(780, 585), Vector2(238, 140), Color("d2c7ac"))
+	DrawShapes.oval(self, Vector2(1120, 830), Vector2(270, 160), Color("b4a88c"))
+	DrawShapes.oval(self, Vector2(1120, 830), Vector2(258, 150), Color("d2c7ac"))
 	# Paths out to the Orangery and the Rose arbour.
-	draw_rect(Rect2(330, 630, 400, 60), Color("d6c9a8"))
-	draw_rect(Rect2(830, 610, 420, 60), Color("d6c9a8"))
+	draw_rect(Rect2(450, 890, 420, 60), Color("d6c9a8"))
+	draw_rect(Rect2(1370, 870, 470, 60), Color("d6c9a8"))
 	# The pavilion's stair and the red carpet up to the throne.
-	draw_rect(Rect2(690, 200, 180, 210), Color("e2d9c2"))
+	draw_rect(Rect2(1030, 280, 180, 290), Color("e2d9c2"))
 	for step in range(5):
-		draw_line(Vector2(690, 230 + step * 36), Vector2(870, 230 + step * 36), Color("c9bea4"), 2.0)
-	draw_rect(Rect2(755, 200, 50, 210), Color("9b2f45"))
+		draw_line(Vector2(1030, 310 + step * 52), Vector2(1210, 310 + step * 52), Color("c9bea4"), 2.0)
+	draw_rect(Rect2(1095, 280, 50, 290), Color("9b2f45"))
 	# The garden gate.
-	for x in [680.0, 880.0]:
-		draw_rect(Rect2(x - 16, 1040, 32, 60), Color("8d826e"))
-		DrawShapes.oval(self, Vector2(x, 1036), Vector2(20, 8), Color("c9a24f"))
+	for x in [1020.0, 1220.0]:
+		draw_rect(Rect2(x - 16, 1500, 32, 60), Color("8d826e"))
+		DrawShapes.oval(self, Vector2(x, 1496), Vector2(20, 8), Color("c9a24f"))
 	var font := ThemeDB.fallback_font
-	draw_string(font, Vector2(700, 1092), "ROSECOURT", HORIZONTAL_ALIGNMENT_LEFT, -1, 26, Color("5a2a3a"))
-	for zone in [["LOWER LAWN", Vector2(60, 845)], ["ORANGERY", Vector2(60, 590)], ["FOUNTAIN TERRACE", Vector2(990, 470)], ["THE KING'S PAVILION", Vector2(140, 40)]]:
+	draw_string(font, Vector2(1040, 1552), "ROSECOURT", HORIZONTAL_ALIGNMENT_LEFT, -1, 26, Color("5a2a3a"))
+	for zone in [["LOWER LAWN", Vector2(80, 1200)], ["ORANGERY", Vector2(80, 850)], ["FOUNTAIN TERRACE", Vector2(1420, 680)], ["THE KING'S PAVILION", Vector2(200, 50)]]:
 		draw_string(font, zone[1], zone[0], HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("5d4a44"))
 
 

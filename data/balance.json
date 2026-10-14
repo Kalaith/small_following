@@ -210,7 +210,7 @@
     }
   },
   "rosecourt": {
-    "start": [780, 975],
+    "start": [1120, 1430],
     "whispers": {"head_start": 0.4, "head_start_max": 0.85},
     "roles": {
       "servant": {"conviction": 1400.0, "donation": 150, "reserved": false},
@@ -221,12 +221,12 @@
     "people": {"Gardener": "servant", "Footman": "servant", "Musician": "servant", "Maid": "servant", "Cousin": "courtier", "Poet": "courtier", "Companion": "courtier", "Painter": "courtier", "Baroness": "noble", "Heir": "noble", "Dowager": "noble", "Duke": "grandee", "Duchess": "grandee", "Lord Chancellor": "grandee"},
     "zones": {"lawn": "Lower Lawn", "walk": "Rose Walk", "terrace": "Fountain Terrace", "orangery": "Orangery", "pavilion": "King's Pavilion"},
     "salons": [
-      {"id": "potting", "title": "Potting shed", "zone": "lawn", "at": [380, 940], "people": ["Gardener", "Maid", "Gardener", "Footman"]},
-      {"id": "bandstand", "title": "Bandstand", "zone": "lawn", "at": [1180, 940], "people": ["Musician", "Footman", "Cousin", "Musician"]},
-      {"id": "orangery", "title": "Orangery tea", "zone": "orangery", "at": [400, 650], "people": ["Painter", "Gardener", "Baroness", "Poet"]},
-      {"id": "terrace", "title": "Fountain salon", "zone": "terrace", "at": [570, 500], "people": ["Poet", "Companion", "Dowager", "Painter"]},
-      {"id": "arbour", "title": "Rose arbour", "zone": "walk", "at": [1060, 640], "people": ["Companion", "Cousin", "Heir", "Maid"]},
-      {"id": "pavilion", "title": "The King's circle", "zone": "pavilion", "at": [780, 370], "people": ["Duke", "Duchess", "Lord Chancellor", "Footman"]}
+      {"id": "potting", "title": "Potting shed", "zone": "lawn", "at": [545, 1333], "people": ["Gardener", "Maid", "Gardener", "Footman"]},
+      {"id": "bandstand", "title": "Bandstand", "zone": "lawn", "at": [1695, 1333], "people": ["Musician", "Footman", "Cousin", "Musician"]},
+      {"id": "orangery", "title": "Orangery tea", "zone": "orangery", "at": [575, 922], "people": ["Painter", "Gardener", "Baroness", "Poet"]},
+      {"id": "terrace", "title": "Fountain salon", "zone": "terrace", "at": [818, 709], "people": ["Poet", "Companion", "Dowager", "Painter"]},
+      {"id": "arbour", "title": "Rose arbour", "zone": "walk", "at": [1522, 908], "people": ["Companion", "Cousin", "Heir", "Maid"]},
+      {"id": "pavilion", "title": "The King's circle", "zone": "pavilion", "at": [1120, 525], "people": ["Duke", "Duchess", "Lord Chancellor", "Footman"]}
     ],
     "threads": [
       {"from": "potting:0", "to": ["orangery:0"], "wide": ["terrace:1"]},
@@ -245,7 +245,7 @@
       {"from": "pavilion:2", "to": ["king"], "wide": []}
     ],
     "trusted": ["orangery:2", "terrace:2", "arbour:2"],
-    "king": {"at": [780, 205], "arrive_ranks": 30, "conviction": 66000.0, "whisper_share": 0.15, "reward": 8000, "coat": "7a2234"},
+    "king": {"at": [1120, 275], "arrive_ranks": 30, "conviction": 66000.0, "whisper_share": 0.15, "reward": 8000, "coat": "7a2234"},
     "wanderers": {"people": ["Footman", "Maid", "Gardener", "Musician"]},
     "helper": {"teal": {"walk_speed": 150.0, "phrase_seconds": 1.0, "conviction_per_phrase": 250.0}}
   },

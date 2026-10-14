@@ -37,6 +37,9 @@ var group_name: String = "Neighbours"
 var show_caption: bool = true
 ## Rotates the coat palette so lone wanderers do not all wear the same colour.
 var coat_offset: int = 0
+## How far the huddle stands apart: scales the listeners' offsets, the ring
+## and the bar beneath. Set before _ready.
+var spread: float = 1.0
 var recruits: int = 0
 var progress: float = 0.0
 var phrase_elapsed: float = 0.0
@@ -98,7 +101,7 @@ func _ready() -> void:
 		listener_count = offsets.size()
 	for i in range(listener_count):
 		var listener := Listener.new()
-		listener.position = offsets[i]
+		listener.position = offsets[i] * spread
 		listener.merchant = npc_type == "merchant"
 		listener.coat = colors[(i + coat_offset) % colors.size()]
 		listener.phase = float(i)
@@ -398,7 +401,7 @@ func _draw() -> void:
 			_draw_lone_market()
 		return
 	var lone: bool = listener_count == 1
-	draw_arc(Vector2.ZERO, 34 if lone else 69, 0, TAU, 56, Color(1, 0.93, 0.62, 0.7), 2, true)
+	draw_arc(Vector2.ZERO, 34 if lone else 69 * spread, 0, TAU, 56, Color(1, 0.93, 0.62, 0.7), 2, true)
 	_draw_progress(conviction_required)
 	if not show_caption:
 		return
@@ -413,6 +416,8 @@ func _draw() -> void:
 
 
 func _draw_progress(required: float) -> void:
+	# A tighter huddle keeps its bar as close beneath it.
+	draw_set_transform(Vector2(0, -58.0 * (1.0 - spread)))
 	draw_line(Vector2(-38, 58), Vector2(38, 58), Color("#55654e"), 5)
 	draw_line(Vector2(-38, 58), Vector2(-38 + 76 * minf(progress / required, 1.0), 58), Color("#f3d98c"), 5)
 	for i in range(3):
@@ -420,6 +425,7 @@ func _draw_progress(required: float) -> void:
 		draw_circle(Vector2(-14 + i * 14, 69), 3, Color("#f3d98c") if filled else Color("#6d7353"))
 	draw_line(Vector2(-22, 78), Vector2(22, 78), Color("#6d7353"), 2)
 	draw_line(Vector2(-22, 78), Vector2(-22 + 44 * minf(phrase_elapsed / last_phrase_interval, 1.0), 78), Color("#c4b1df"), 2)
+	draw_set_transform(Vector2.ZERO)
 
 
 func _draw_market_details() -> void:
@@ -475,7 +481,7 @@ func _draw_lone_market() -> void:
 	var next: int = first_unconverted()
 	if next >= 0:
 		# A captionless salon keeps the full ring around all of its guests.
-		draw_arc(Vector2.ZERO, 34 if listener_count == 1 else 69, 0, TAU, 56, Color(1, 0.93, 0.62, 0.7), 2, true)
+		draw_arc(Vector2.ZERO, 34 if listener_count == 1 else 69 * spread, 0, TAU, 56, Color(1, 0.93, 0.62, 0.7), 2, true)
 		_draw_progress(listener_conviction_required(next))
 		return
 	if recruits > 0 or String(listener_profiles[0].get("npc_type", "")) in COURT_TYPES:
