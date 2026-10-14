@@ -203,9 +203,9 @@ func update_state(round_recruits: int = 0) -> void:
 		argument_cards.refresh(_progression)
 	elif market_circle:
 		_subtitle_label.text = "BELLMARKET  /  %d NEW FOLLOWERS  /  FIVE PATHS, YOUR CHOICE" % _round_recruits
-	elif is_instance_valid(_progression) and _progression.map_complete():
+	elif circle_area == "bramblewick" and is_instance_valid(_progression) and _progression.map_complete():
 		_subtitle_label.text = "BRAMBLEWICK COMPLETE  /  PRIEST CONVINCED"
-	elif is_instance_valid(_progression) and _progression.has_unlock("encounter_unlock"):
+	elif circle_area == "bramblewick" and is_instance_valid(_progression) and _progression.has_unlock("encounter_unlock"):
 		var opponents: Array[String] = ["Skeptic", "Town Guard", "Zealot", "Priest"]
 		_subtitle_label.text = "TOWN DEBATE %d/4  /  Next: %s" % [_progression.encounter_stage, opponents[_progression.encounter_stage]]
 		if _progression.encounter_stage > 0:
