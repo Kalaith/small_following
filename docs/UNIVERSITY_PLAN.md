@@ -195,7 +195,38 @@ maps must play as before.
 - **Library evidence:** books picked up in the stacks clear objections.
   Rejected because of the risk of fetch-quest chores.
 
-## 9. Open decisions
+## 9. As built (2026-10-14)
+
+All slices are implemented: `scripts/university.gd` (campus, props, people),
+`uni_boss.gd` (the four bosses), `uni_hud.gd` (the prepared arguments),
+`argument_badge.gd` (scroll, star, candle and quill badges),
+`ritual_argument_cards.gd` (the cards), the faculty rule in `gathering.gd`,
+schema 6 with `uni_stage` and `uni_loadout` in `progression.gd`, and 36
+`university` nodes in `upgrades.json`. Where the build differs from the text
+above:
+
+- **Loadout:** it starts empty, so a first round with nothing prepared
+  reaches only students and staff. Tapping a card while every slot is full
+  replaces the earliest choice. Keys 1-4 toggle a card; a pad's bumpers move
+  the highlight and Y toggles it. A key or button the player has bound to an
+  action keeps that action.
+- **Bosses** stand at their own spots from the first round, in order; no
+  circle node unlocks them. A boss whose arguments are not all prepared
+  rebuts everything, and gives way to any group the cultist can win nearby.
+  The Rector arrives 3 seconds into the round.
+- **Mastery** (one conviction node and one endowment node per faculty) also
+  adds to the bosses who need that argument; the Commonplace Book's
+  conviction nodes apply to everyone who needs a prepared argument.
+- **Teaching Assistant** tunes the teal helper only (conviction, walking
+  speed, phrase speed); no new helper joins at Quillmoor.
+- **Opening tuning:** with the full village, market and fair build, a
+  one-slot round earns about 720-830 donations and 23-24 recruits whichever
+  argument is prepared (measured headlessly). The Debate Captain falls to
+  the carried build in one round; the Rector was only tested with the full
+  circle. The whole circle costs 59,800 donations. Pacing against
+  Bellmarket has not been judged by playing yet.
+
+## 10. Open decisions
 
 None from the user at present. Faculty mixes per group, slot prices and boss
 thresholds are settled in playtests.

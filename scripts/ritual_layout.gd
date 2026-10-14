@@ -8,6 +8,7 @@ const BRANCH_TITLES: Dictionary = {"talk": "Words", "run": "Running", "persuade"
 const FAN_HALF_ANGLE: float = 15.0
 const MARKET_BRANCHES: Array[String] = ["market_run", "market_talk", "market_persuade", "market_guild", "market_patron"]
 const FAIR_TITLES: Dictionary = {"fair_show": "Showmanship", "fair_stage": "Stagecraft", "fair_captivate": "Captivating", "fair_follower": "Fair Followers", "fair_steal": "Showstopper", "fair_run": "Paths", "fair_talk": "Patter", "fair_persuade": "Spellbinding"}
+const UNI_TITLES: Dictionary = {"uni_book": "Commonplace Book", "uni_mastery": "Mastery", "uni_assistant": "Teaching Assistant", "uni_run": "Cloisters", "uni_talk": "Cadence", "uni_persuade": "Learned Creed"}
 const MARKET_TITLES: Dictionary = {"market_follower": "Followers", "market_run": "Routes", "market_talk": "Voice", "market_persuade": "Creed", "market_guild": "Guild", "market_patron": "Patrons"}
 # The first three nodes retain their original petal positions. The next three
 # turn down the petal's spare side, keeping six real steps inside the same seal.
@@ -62,6 +63,19 @@ const MARKET_POSITIONS: Dictionary = {
 	"market_amber_1": Vector2(50, 580),
 }
 
+# Quillmoor's four Masteries are equal choices, so they fan out side by side:
+# each faculty's conviction rank, with its endowment just beyond it.
+const UNI_POSITIONS: Dictionary = {
+	"uni_mastery_proof_1": Vector2(122.5, -188.7),
+	"uni_mastery_evidence_1": Vector2(174.9, -141.6),
+	"uni_mastery_scripture_1": Vector2(210.1, -80.6),
+	"uni_mastery_eloquence_1": Vector2(224.7, -11.8),
+	"uni_mastery_proof_2": Vector2(187.9, -289.3),
+	"uni_mastery_evidence_2": Vector2(268.1, -217.1),
+	"uni_mastery_scripture_2": Vector2(322.1, -123.6),
+	"uni_mastery_eloquence_2": Vector2(344.5, -18.1),
+}
+
 # Cross-branch requirements remain the same directed edges. These sparse bends
 # keep their visible paths off unrelated upgrade icons and the central seal.
 const EDGE_WAYPOINTS: Dictionary = {
@@ -105,7 +119,7 @@ static func satellite_seals(catalog: Array) -> Array[Dictionary]:
 
 
 static func branch_title(branch: String) -> String:
-	return str(FAIR_TITLES.get(branch, MARKET_TITLES.get(branch, BRANCH_TITLES.get(branch, branch.replace("_", " ").capitalize()))))
+	return str(UNI_TITLES.get(branch, FAIR_TITLES.get(branch, MARKET_TITLES.get(branch, BRANCH_TITLES.get(branch, branch.replace("_", " ").capitalize())))))
 
 
 static func build(catalog: Array) -> Dictionary:
@@ -154,6 +168,8 @@ static func build(catalog: Array) -> Dictionary:
 			positions[id] = VILLAGE_POSITIONS[id]
 		elif MARKET_POSITIONS.has(id):
 			positions[id] = MARKET_POSITIONS[id]
+		elif UNI_POSITIONS.has(id):
+			positions[id] = UNI_POSITIONS[id]
 		else:
 			for branch_index in range(MARKET_BRANCHES.size()):
 				for tier in range(1, MARKET_TIER_ANGLES.size() + 1):

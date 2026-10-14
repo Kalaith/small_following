@@ -3,7 +3,7 @@ extends RefCounted
 
 const Progression = preload("res://scripts/progression.gd")
 const Balance = preload("res://scripts/balance.gd")
-const BRANCH_NAMES: Dictionary = {"talk": "THE VOICE", "persuade": "THE CONVICTION", "run": "THE PILGRIM", "gather": "THE VILLAGE", "helper": "THE COMPANION", "merchant": "THE MERCHANT", "trial": "THE TRIALS", "faith": "THE FAITH", "market_run": "THE MARKET ROUTES", "market_talk": "THE MARKET VOICE", "market_persuade": "THE COMMON CAUSE", "market_guild": "THE GUILD", "market_patron": "THE PATRONS", "market_follower": "THE FOLLOWERS", "fair_show": "THE SHOWMANSHIP", "fair_stage": "THE STAGECRAFT", "fair_captivate": "THE CAPTIVATION", "fair_follower": "THE FAIR FOLLOWERS", "fair_steal": "THE SHOWSTOPPER", "fair_run": "THE FAIRGROUND PATHS", "fair_talk": "THE PATTER", "fair_persuade": "THE SPELLBINDING"}
+const BRANCH_NAMES: Dictionary = {"talk": "THE VOICE", "persuade": "THE CONVICTION", "run": "THE PILGRIM", "gather": "THE VILLAGE", "helper": "THE COMPANION", "merchant": "THE MERCHANT", "trial": "THE TRIALS", "faith": "THE FAITH", "market_run": "THE MARKET ROUTES", "market_talk": "THE MARKET VOICE", "market_persuade": "THE COMMON CAUSE", "market_guild": "THE GUILD", "market_patron": "THE PATRONS", "market_follower": "THE FOLLOWERS", "fair_show": "THE SHOWMANSHIP", "fair_stage": "THE STAGECRAFT", "fair_captivate": "THE CAPTIVATION", "fair_follower": "THE FAIR FOLLOWERS", "fair_steal": "THE SHOWSTOPPER", "fair_run": "THE FAIRGROUND PATHS", "fair_talk": "THE PATTER", "fair_persuade": "THE SPELLBINDING", "uni_book": "THE COMMONPLACE BOOK", "uni_mastery": "THE MASTERY", "uni_assistant": "THE TEACHING ASSISTANT", "uni_run": "THE CLOISTERS", "uni_talk": "THE CADENCE", "uni_persuade": "THE LEARNED CREED"}
 
 
 static func branch_name(branch: String) -> String:
@@ -18,6 +18,8 @@ static func effect_text(progression: Progression, by_id: Dictionary, id: String,
 	var next: Dictionary = preview.get("next", {})
 	if branch.begins_with("fair_"):
 		return fair_effect_text(progression, by_id, id, current, complete)
+	if branch.begins_with("uni_"):
+		return uni_effect_text(progression, by_id, id, current, complete)
 	if branch.begins_with("market_"):
 		var market_item: Dictionary = by_id[id]
 		var lines: PackedStringArray = []
@@ -104,6 +106,46 @@ static func fair_effect_text(progression: Progression, by_id: Dictionary, id: St
 				lines.append(_pair("Conviction / phrase", float(current.get("conviction", 0.0)), step, "%.2f"))
 			"run_speed_add":
 				lines.append(_pair("Running / base speed", float(current.get("run_multiplier", 0.0)), step, "%.2f"))
+	return "\n".join(lines)
+
+
+## Quillmoor inscriptions, read the same way as the fair's: the current value
+## from progression plus the next rank's own effect.
+static func uni_effect_text(progression: Progression, by_id: Dictionary, id: String, current: Dictionary, complete: bool) -> String:
+	var item: Dictionary = by_id.get(id, {})
+	var rank: int = progression.rank(id)
+	var next_effect: Dictionary = {} if complete or rank >= int(item.get("max_rank", 1)) else item.rank_effects[rank]
+	var lines: PackedStringArray = []
+	var teal: String = "university.helper.teal."
+	for key in item.get("effect", {}):
+		var step: float = float(next_effect.get(key, 0.0))
+		match key:
+			"uni_slot_add":
+				lines.append(_pair("Argument slots", progression.argument_slots(), step, "%d"))
+			"uni_academic_conviction_add":
+				lines.append(_pair("Faculty bonus / phrase", progression.effect_total(key), step, "+%.0f"))
+			"uni_ta_conviction_add":
+				lines.append(_pair("Teal helper / conviction per phrase", Balance.number(teal + "conviction_per_phrase") + progression.uni_helper_conviction_bonus(), step, "%.0f"))
+			"uni_ta_walk_add":
+				var walk: float = Balance.number(teal + "walk_speed")
+				lines.append(_pair("Teal helper / walking (px/s)", walk * (1.0 + progression.uni_helper_walk_bonus()), walk * step, "%.0f"))
+			"uni_ta_speed_add":
+				var base: float = 1.0 / Balance.number(teal + "phrase_seconds")
+				lines.append(_pair("Teal helper / phrases per second", base * (1.0 + progression.uni_helper_speed_bonus()), base * step, "%.2f"))
+			"speech_speed_add":
+				lines.append(_pair("Phrases / second", float(current.get("speech_frequency", 0.0)), step, "%.2f"))
+			"conviction_add":
+				lines.append(_pair("Conviction / phrase", float(current.get("conviction", 0.0)), step, "%.2f"))
+			"run_speed_add":
+				lines.append(_pair("Running / base speed", float(current.get("run_multiplier", 0.0)), step, "%.2f"))
+			_:
+				# A faculty's Mastery: "uni_<argument>_conviction_add" or "_donation_add".
+				var argument: String = String(key).trim_prefix("uni_").get_slice("_", 0)
+				var title: String = argument.capitalize()
+				if String(key).ends_with("_donation_add"):
+					lines.append(_pair("Extra gold / %s listener" % title, progression.uni_argument_donation(argument), step, "+%d"))
+				else:
+					lines.append(_pair("%s bonus / phrase" % title, progression.effect_total(key), step, "+%.0f"))
 	return "\n".join(lines)
 
 

@@ -21,6 +21,9 @@ func arc(canvas: Control, center: Vector2, radius: float, color: Color, width: f
 
 
 func draw_backdrop(canvas: Control) -> void:
+	if screen.uni_circle:
+		draw_uni_seal(canvas)
+		return
 	if screen.fair_circle:
 		draw_fair_seal(canvas)
 		return
@@ -95,6 +98,29 @@ func draw_fair_seal(canvas: Control) -> void:
 		arc(canvas, center, radius, Color(Style.VIOLET, 0.09), 1.0)
 
 
+func draw_uni_seal(canvas: Control) -> void:
+	# An astrolabe: a degree-ticked limb, an hour ring of numerals and a pierced
+	# rete of star pointers. Ornament only; the nodes carry every link.
+	var center: Vector2 = _point(Vector2.ZERO)
+	var outer: float = screen.max_radius + 40.0
+	arc(canvas, center, outer, Color(Style.GOLD, 0.24), 1)
+	arc(canvas, center, outer + 12.0, Color(Style.LILAC, 0.16), 1)
+	_draw_runes(canvas, outer + 6.0)
+	for index in range(120):
+		var radial := Vector2.from_angle(index * TAU / 120.0)
+		var major: bool = index % 10 == 0
+		canvas.draw_line(_point(radial * (outer - 3.0)), _point(radial * (outer - (14.0 if major else 7.0))), Color(Style.GOLD, 0.30 if major else 0.13), 1.0, true)
+	# The rete: an off-centre ecliptic ring and a few star pointers.
+	canvas.draw_arc(_point(Vector2(0, -outer * 0.16)), outer * 0.62 * screen.zoom, 0, TAU, 120, Color(Style.VIOLET, 0.12), 1.0, true)
+	for index in range(7):
+		var angle: float = -PI * 0.5 + index * TAU / 7.0 + 0.3
+		var tip: Vector2 = Vector2.from_angle(angle) * outer * 0.84
+		var side: Vector2 = Vector2.from_angle(angle).orthogonal() * 9.0
+		canvas.draw_colored_polygon(PackedVector2Array([_point(tip), _point(tip * 0.9 + side), _point(tip * 0.9 - side)]), Color(Style.VIOLET, 0.10))
+	for radius in [outer * 0.45, outer * 0.72]:
+		arc(canvas, center, radius, Color(Style.VIOLET, 0.08), 1.0)
+
+
 func _draw_satellite(canvas: Control, seal: Dictionary) -> void:
 	var origin: Vector2 = seal.center
 	var center: Vector2 = _point(origin)
@@ -158,6 +184,21 @@ func draw_core(canvas: Control) -> void:
 	for index in range(20):
 		var radial: Vector2 = Vector2.from_angle(-PI * 0.5 + index * TAU / 20.0)
 		canvas.draw_line(_point(radial * (Style.CORE_RADIUS + 4.0)), _point(radial * (Style.CORE_ORNAMENT_RADIUS - (6.0 if index % 4 == 0 else 10.0))), Color(Style.LILAC, 0.80 if complete else 0.30), 1.0, true)
+	if screen.uni_circle:
+		# Quillmoor's centre is an open book under a single star.
+		var ink: Color = Style.GOLD if complete else Color(Style.GOLD, 0.5)
+		var page := PackedVector2Array([center + Vector2(0, radius * 0.40), center + Vector2(-radius * 0.58, radius * 0.24), center + Vector2(-radius * 0.58, -radius * 0.18), center + Vector2(0, -radius * 0.02), center + Vector2(radius * 0.58, -radius * 0.18), center + Vector2(radius * 0.58, radius * 0.24), center + Vector2(0, radius * 0.40), center + Vector2(0, -radius * 0.02)])
+		canvas.draw_polyline(page, ink, 1.4, true)
+		for line in range(3):
+			var y: float = radius * (0.02 + line * 0.1)
+			canvas.draw_line(center + Vector2(-radius * 0.48, y), center + Vector2(-radius * 0.1, y + radius * 0.08), Color(ink, ink.a * 0.7), 1.0, true)
+			canvas.draw_line(center + Vector2(radius * 0.1, y + radius * 0.08), center + Vector2(radius * 0.48, y), Color(ink, ink.a * 0.7), 1.0, true)
+		var star := PackedVector2Array()
+		for index in range(11):
+			var reach: float = radius * (0.2 if index % 2 == 0 else 0.08)
+			star.append(center + Vector2(0, -radius * 0.48) + Vector2.from_angle(-PI * 0.5 + index * PI / 5.0) * reach)
+		canvas.draw_polyline(star, ink, 1.2, true)
+		return
 	if screen.fair_circle:
 		# The fair's centre is a carousel crown: a striped cone over a ring of lights.
 		var tip: Vector2 = center + Vector2(0, -radius * 0.62)

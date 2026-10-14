@@ -3,28 +3,37 @@ extends RefCounted
 ## Saves only progression: rounds always start fresh after relaunch; no offline accrual.
 
 const Balance = preload("res://scripts/balance.gd")
-const SAVE_VERSION: int = 5
+const SAVE_VERSION: int = 6
 const MAX_COUNTER: int = 1000000000
 ## Travel order. An area's earned effects carry into every later area, never back.
-const AREA_IDS: Array[String] = ["bramblewick", "bellmarket", "lantern_fair"]
-const AREA_TITLES: Dictionary = {"bramblewick": "Bramblewick", "bellmarket": "Bellmarket", "lantern_fair": "the Lantern Fair"}
+const AREA_IDS: Array[String] = ["bramblewick", "bellmarket", "lantern_fair", "university"]
+const AREA_TITLES: Dictionary = {"bramblewick": "Bramblewick", "bellmarket": "Bellmarket", "lantern_fair": "the Lantern Fair", "university": "Quillmoor"}
 ## Effect keys a circle may hold only in its own area, by prefix.
-const AREA_EFFECT_PREFIXES: Dictionary = {"bellmarket": "market_", "lantern_fair": "fair_"}
+const AREA_EFFECT_PREFIXES: Dictionary = {"bellmarket": "market_", "lantern_fair": "fair_", "university": "uni_"}
 const FAIR_BOSS_COUNT: int = 4
+const UNI_AREA: String = "university"
+const UNI_BOSS_COUNT: int = 4
 ## Village nodes added after Bellmarket shipped. Saves validate earned market
 ## access without them, so a player already there is not rejected; ordinary
 ## travel still requires the whole current circle.
 const POST_MARKET_VILLAGE_IDS: Array[String] = ["beckon_1"]
-const EFFECT_KEYS: Array[String] = ["beckon_add", "encounter_conviction_add", "skeptic_conviction_add", "guard_conviction_add", "zealot_conviction_add", "priest_conviction_add", "merchant_conviction_add", "merchant_donation_add", "speech_speed_add", "conviction_add", "run_speed_add", "meadow_unlock", "east_unlock", "helper_unlock", "merchant_unlock", "encounter_unlock", "market_guild_unlock", "market_patron_unlock", "market_guild_donation_add", "market_patron_donation_add", "market_beckon_add", "market_wanderer_add", "market_helper_unlock", "market_teal_conviction_add", "market_amber_speed_add", "fair_interest_add", "fair_stage_bonus_add", "fair_stage_reach_add", "fair_drain_cut_add", "fair_barker_unlock", "fair_barker_speed_add", "fair_barker_cut_add", "fair_teal_interest_add", "fair_steal_window_add", "fair_crowd_radius_add"]
+const EFFECT_KEYS: Array[String] = ["beckon_add", "encounter_conviction_add", "skeptic_conviction_add", "guard_conviction_add", "zealot_conviction_add", "priest_conviction_add", "merchant_conviction_add", "merchant_donation_add", "speech_speed_add", "conviction_add", "run_speed_add", "meadow_unlock", "east_unlock", "helper_unlock", "merchant_unlock", "encounter_unlock", "market_guild_unlock", "market_patron_unlock", "market_guild_donation_add", "market_patron_donation_add", "market_beckon_add", "market_wanderer_add", "market_helper_unlock", "market_teal_conviction_add", "market_amber_speed_add", "fair_interest_add", "fair_stage_bonus_add", "fair_stage_reach_add", "fair_drain_cut_add", "fair_barker_unlock", "fair_barker_speed_add", "fair_barker_cut_add", "fair_teal_interest_add", "fair_steal_window_add", "fair_crowd_radius_add", "uni_slot_add", "uni_academic_conviction_add", "uni_proof_conviction_add", "uni_evidence_conviction_add", "uni_scripture_conviction_add", "uni_eloquence_conviction_add", "uni_proof_donation_add", "uni_evidence_donation_add", "uni_scripture_donation_add", "uni_eloquence_donation_add", "uni_ta_conviction_add", "uni_ta_walk_add", "uni_ta_speed_add"]
 const UNLOCK_KEYS: Array[String] = ["meadow_unlock", "east_unlock", "helper_unlock", "merchant_unlock", "encounter_unlock", "market_guild_unlock", "market_patron_unlock", "market_helper_unlock", "fair_barker_unlock"]
 ## Whole-number fair effects (Interest and Distraction are counted in whole lanterns).
 const WHOLE_FAIR_KEYS: Array[String] = ["fair_interest_add", "fair_stage_bonus_add", "fair_barker_cut_add", "fair_teal_interest_add"]
+## Whole-number Quillmoor effects: argument slots and gold.
+const WHOLE_UNI_KEYS: Array[String] = ["uni_slot_add", "uni_proof_donation_add", "uni_evidence_donation_add", "uni_scripture_donation_add", "uni_eloquence_donation_add"]
 
 
 var encounter_stage: int = 0
 ## Fair headliners convinced so far: Performer, Head Clown, Mime, Ringmaster.
 ## Their Interest bonus is derived from this count, never stored on its own.
 var fair_stage: int = 0
+## Quillmoor bosses convinced so far: Debate Captain, Logician, Astronomer, Rector.
+var uni_stage: int = 0
+## Arguments prepared for the next Quillmoor round, in the order chosen. Never
+## longer than the owned slots; academics of any other faculty rebut everything.
+var uni_loadout: Array[String] = []
 var coins: int = 0
 # Recruitment events are lifetime history; assigning supporters spends only availability.
 var total_recruits: int = 0
@@ -137,6 +146,8 @@ func load_catalog(path: String = "res://data/upgrades.json") -> bool:
 						return _fail("Effects named %s* belong to %s: %s" % [AREA_EFFECT_PREFIXES[owner], AREA_TITLES[owner], entry.id])
 				if effect in WHOLE_FAIR_KEYS and not _integer_between(rank_effect[effect], 1, 100):
 					return _fail("Interest and Distraction effects must be whole numbers: " + entry.id)
+				if effect in WHOLE_UNI_KEYS and not _integer_between(rank_effect[effect], 1, 100):
+					return _fail("Argument slots and Quillmoor donations must be whole numbers: " + entry.id)
 				if effect in UNLOCK_KEYS:
 					if entry.max_rank != 1 or rank_effect[effect] != 1 or unlocks.has(effect):
 						return _fail("Unlocks must appear once, at one rank and value 1: " + entry.id)
@@ -449,6 +460,108 @@ func fair_complete() -> bool:
 	return fair_stage >= FAIR_BOSS_COUNT
 
 
+## Argument IDs in card order, from "university.arguments".
+static func argument_ids() -> Array[String]:
+	var ids: Array[String] = []
+	for entry in Balance.list("university.arguments"):
+		ids.append(String(entry.id))
+	return ids
+
+
+## Argument slots owned: the base slot plus every Commonplace Book slot, capped.
+func argument_slots() -> int:
+	return _slots_for(purchased)
+
+
+func _slots_for(ranks: Dictionary) -> int:
+	var extra: int = 0
+	for entry in catalog_for_area(UNI_AREA):
+		for index in range(mini(int(ranks.get(entry.id, 0)), int(entry.get("max_rank", 1)))):
+			extra += int(_rank_effect(entry, index).get("uni_slot_add", 0))
+	return mini(Balance.integer("university.slots.base") + extra, Balance.integer("university.slots.max"))
+
+
+func is_prepared(argument: String) -> bool:
+	return argument in uni_loadout
+
+
+## The only way the loadout changes. Unknown, repeated or too many arguments are
+## refused; the choice is kept in memory even if storage fails, like earnings.
+func set_loadout(ids: Array) -> bool:
+	last_error = ""
+	if active_area != UNI_AREA:
+		return _fail("Arguments are prepared only at Quillmoor.")
+	var known: Array[String] = argument_ids()
+	var next: Array[String] = []
+	for id in ids:
+		if not id is String or not id in known or id in next:
+			return _fail("That is not an argument you can prepare.")
+		next.append(id)
+	if next.size() > argument_slots():
+		return _fail("You have only %d argument slot%s." % [argument_slots(), "" if argument_slots() == 1 else "s"])
+	uni_loadout = next
+	save_progress()
+	return true
+
+
+## A card tap: a prepared argument is put away; another one is prepared, and
+## when every slot is full the earliest choice makes room for it.
+func toggle_argument(id: String) -> bool:
+	var next: Array = uni_loadout.duplicate()
+	if id in next:
+		next.erase(id)
+	else:
+		if next.size() >= argument_slots() and not next.is_empty():
+			next.remove_at(0)
+		next.append(id)
+	return set_loadout(next)
+
+
+## Extra conviction per phrase against a listener or boss who needs these
+## arguments: the Commonplace Book once, plus each argument's own Mastery.
+func uni_argument_conviction(arguments: Array) -> float:
+	if arguments.is_empty():
+		return 0.0
+	var bonus: float = _sum_effect("uni_academic_conviction_add")
+	for argument in arguments:
+		bonus += _sum_effect("uni_" + String(argument) + "_conviction_add")
+	return bonus
+
+
+func uni_argument_donation(argument: String) -> int:
+	return int(_sum_effect("uni_" + argument + "_donation_add")) if not argument.is_empty() else 0
+
+
+## The summed effect behind an inscription's preview line.
+func effect_total(key: String) -> float:
+	return _sum_effect(key)
+
+
+func uni_helper_conviction_bonus() -> float:
+	return _sum_effect("uni_ta_conviction_add")
+
+
+func uni_helper_walk_bonus() -> float:
+	return _sum_effect("uni_ta_walk_add")
+
+
+func uni_helper_speed_bonus() -> float:
+	return _sum_effect("uni_ta_speed_add")
+
+
+func complete_uni_boss(expected_stage: int) -> bool:
+	if active_area != UNI_AREA or expected_stage != uni_stage or uni_stage >= UNI_BOSS_COUNT:
+		return false
+	_add_earnings(int(Balance.list("university.bosses")[uni_stage].reward), 1)
+	uni_stage += 1
+	save_progress()
+	return true
+
+
+func uni_complete() -> bool:
+	return uni_stage >= UNI_BOSS_COUNT
+
+
 func has_unlock(key: String) -> bool:
 	return key in UNLOCK_KEYS and _sum_effect(key) >= 1.0
 
@@ -586,7 +699,7 @@ func effect_preview(id: String) -> Dictionary:
 
 
 func has_progress() -> bool:
-	return coins > 0 or total_recruits > 0 or round_number > 1 or not purchased.is_empty() or encounter_stage > 0 or fair_stage > 0 or active_area != "bramblewick" or level_select_unlocked
+	return coins > 0 or total_recruits > 0 or round_number > 1 or not purchased.is_empty() or encounter_stage > 0 or fair_stage > 0 or uni_stage > 0 or active_area != "bramblewick" or level_select_unlocked
 
 
 ## Replaces progression with a fresh first-round village save. The old save is
@@ -597,7 +710,7 @@ func start_new_game() -> bool:
 	if save_enabled and not _write_blocked and FileAccess.file_exists(save_path):
 		if DirAccess.copy_absolute(save_path, save_path + ".previous") != OK:
 			return _fail("Cannot keep a copy of the current save, so it was not replaced.")
-	var fresh: Dictionary = {"schema_version": SAVE_VERSION, "coins": 0, "total_recruits": 0, "available_recruits": 0, "round_number": 1, "purchased": {}, "encounter_stage": 0, "fair_stage": 0, "active_area": "bramblewick", "level_select_unlocked": false}
+	var fresh: Dictionary = {"schema_version": SAVE_VERSION, "coins": 0, "total_recruits": 0, "available_recruits": 0, "round_number": 1, "purchased": {}, "encounter_stage": 0, "fair_stage": 0, "uni_stage": 0, "uni_loadout": [], "active_area": "bramblewick", "level_select_unlocked": false}
 	if not _write_snapshot(fresh):
 		return false
 	_apply_snapshot(fresh)
@@ -648,7 +761,7 @@ func load_progress() -> bool:
 
 
 func _snapshot() -> Dictionary:
-	return {"schema_version": SAVE_VERSION, "coins": coins, "total_recruits": total_recruits, "available_recruits": available_recruits, "round_number": round_number, "purchased": purchased.duplicate(true), "encounter_stage": encounter_stage, "fair_stage": fair_stage, "active_area": active_area, "level_select_unlocked": level_select_unlocked}
+	return {"schema_version": SAVE_VERSION, "coins": coins, "total_recruits": total_recruits, "available_recruits": available_recruits, "round_number": round_number, "purchased": purchased.duplicate(true), "encounter_stage": encounter_stage, "fair_stage": fair_stage, "uni_stage": uni_stage, "uni_loadout": uni_loadout.duplicate(), "active_area": active_area, "level_select_unlocked": level_select_unlocked}
 
 
 func _apply_snapshot(state: Dictionary) -> void:
@@ -659,6 +772,8 @@ func _apply_snapshot(state: Dictionary) -> void:
 	level_select_unlocked = bool(state.get("level_select_unlocked", false))
 	encounter_stage = int(state.get("encounter_stage", 0))
 	fair_stage = int(state.get("fair_stage", 0))
+	uni_stage = int(state.get("uni_stage", 0))
+	uni_loadout.assign(state.get("uni_loadout", []))
 	coins = int(state.coins)
 	total_recruits = int(state.total_recruits)
 	available_recruits = int(state.available_recruits)
@@ -725,6 +840,8 @@ func _validated_snapshot(raw: Variant) -> Dictionary:
 		return {}
 	if not _integer_between(raw.get("fair_stage", 0), 0, FAIR_BOSS_COUNT if int(raw.schema_version) >= 5 else 0):
 		return {}
+	if not _integer_between(raw.get("uni_stage", 0), 0, UNI_BOSS_COUNT if int(raw.schema_version) >= 6 else 0):
+		return {}
 	var unlock_id: String = _encounter_unlock_id()
 	if int(raw.get("encounter_stage", 0)) > 0 and (unlock_id.is_empty() or not raw.purchased.has(unlock_id)):
 		return {}
@@ -734,6 +851,9 @@ func _validated_snapshot(raw: Variant) -> Dictionary:
 		# The fair arrived with schema 5; an older save cannot already stand there.
 		if int(raw.schema_version) < 5 and raw.active_area == "lantern_fair":
 			return {}
+		# Quillmoor arrived with schema 6.
+		if int(raw.schema_version) < 6 and raw.active_area == UNI_AREA:
+			return {}
 		if catalog_for_area(raw.active_area).is_empty() or not raw.get("level_select_unlocked") is bool:
 			return {}
 	var normalized: Dictionary = raw.duplicate(true)
@@ -741,6 +861,7 @@ func _validated_snapshot(raw: Variant) -> Dictionary:
 	normalized.available_recruits = int(raw.available_recruits) if int(raw.schema_version) >= 3 else int(raw.total_recruits)
 	normalized.encounter_stage = int(raw.get("encounter_stage", 0))
 	normalized.fair_stage = int(raw.get("fair_stage", 0))
+	normalized.uni_stage = int(raw.get("uni_stage", 0))
 	normalized.active_area = raw.active_area if int(raw.schema_version) >= 4 else "bramblewick"
 	normalized.level_select_unlocked = raw.level_select_unlocked if int(raw.schema_version) >= 4 else false
 	normalized.schema_version = SAVE_VERSION
@@ -753,6 +874,8 @@ func _validated_snapshot(raw: Variant) -> Dictionary:
 		if int(raw.schema_version) < 4 and definition.get("area", "bramblewick") != "bramblewick":
 			return {}
 		if int(raw.schema_version) < 5 and definition.get("area", "bramblewick") == "lantern_fair":
+			return {}
+		if int(raw.schema_version) < 6 and definition.get("area", "bramblewick") == UNI_AREA:
 			return {}
 		if int(raw.schema_version) == 1:
 			if not raw.purchased[id] is bool or raw.purchased[id] != true:
@@ -771,11 +894,25 @@ func _validated_snapshot(raw: Variant) -> Dictionary:
 		furthest = maxi(furthest, AREA_IDS.find(str(find_upgrade(id).get("area", "bramblewick"))))
 	if normalized.fair_stage > 0:
 		furthest = maxi(furthest, AREA_IDS.find("lantern_fair"))
+	if normalized.uni_stage > 0:
+		furthest = maxi(furthest, AREA_IDS.find(UNI_AREA))
 	if not normalized.level_select_unlocked:
 		if furthest >= 1 and not _ranks_complete(_market_gate_definitions(), normalized.purchased):
 			return {}
 		if furthest >= 2 and not _ranks_complete(catalog_for_area("bellmarket"), normalized.purchased):
 			return {}
+		if furthest >= 3 and not _ranks_complete(catalog_for_area("lantern_fair"), normalized.purchased):
+			return {}
+	# The loadout is trimmed, never a reason to reject a save: unknown or repeated
+	# arguments are dropped, then any beyond the owned slots.
+	var loadout: Array[String] = []
+	var saved_loadout: Variant = raw.get("uni_loadout", [])
+	if saved_loadout is Array:
+		var known: Array[String] = argument_ids()
+		for id in saved_loadout:
+			if id is String and id in known and not id in loadout:
+				loadout.append(id)
+	normalized.uni_loadout = loadout.slice(0, _slots_for(normalized.purchased))
 	return normalized
 
 

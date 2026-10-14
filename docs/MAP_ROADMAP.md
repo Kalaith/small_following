@@ -1,7 +1,7 @@
 # Map roadmap
 
 The order of maps and the one new mechanic each one teaches. Bramblewick,
-Bellmarket and the Lantern Fair are implemented. The rest are proposals, confirmed with the user
+Bellmarket, the Lantern Fair and Quillmoor are implemented. The rest are proposals, confirmed with the user
 on 2026-10-14. Each plan holds the detail; numbers in them are starting
 values, tuned by playing.
 
@@ -10,7 +10,7 @@ values, tuned by playing.
 | 1 | Bramblewick (village) | Debate opponents and their villagers | Priest of Bramblewick | Implemented |
 | 2 | Bellmarket (market) | Locked listeners opened by introductions; the amber Market Hand | - | Implemented |
 | 3 | The Lantern Fair | Interest against Distraction: a hard threshold with many ways over it, fast drain, stolen audiences; the moss-green Barker | The Ringmaster | Implemented ([LANTERN_FAIR_PLAN](LANTERN_FAIR_PLAN.md)) |
-| 4 | Quillmoor University | Prepared arguments: academics only hear their own faculty's argument | The Rector | [UNIVERSITY_PLAN](UNIVERSITY_PLAN.md) |
+| 4 | Quillmoor University | Prepared arguments: academics only hear their own faculty's argument | The Rector | Implemented ([UNIVERSITY_PLAN](UNIVERSITY_PLAN.md)) |
 | 5 | Rosecourt (the King's garden) | Whispered introductions: who you win first opens who listens next | The King | [ROSECOURT_PLAN](ROSECOURT_PLAN.md) |
 | 6 | The hilltop abbey (final map) | Not yet planned | The Pope | - |
 

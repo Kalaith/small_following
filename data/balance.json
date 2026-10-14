@@ -142,6 +142,73 @@
       "moss": {"walk_speed": 210.0, "phrase_seconds": 0.5, "conviction_per_phrase": 45.0, "interest": 6, "cut": 1}
     }
   },
+  "university": {
+    "start": [780, 960],
+    "slots": {"base": 1, "max": 4},
+    "arguments": [
+      {"id": "proof", "title": "Proof", "faculty": "Logic"},
+      {"id": "evidence", "title": "Evidence", "faculty": "Natural Philosophy"},
+      {"id": "scripture", "title": "Scripture", "faculty": "Theology"},
+      {"id": "eloquence", "title": "Eloquence", "faculty": "Rhetoric"}
+    ],
+    "roles": {
+      "student": {"conviction": 120.0, "donation": 20},
+      "staff": {"conviction": 150.0, "donation": 30},
+      "academic": {"conviction": 320.0, "donation": 70},
+      "pupil": {"conviction": 240.0, "donation": 50}
+    },
+    "people": {
+      "Student": {"role": "student", "argument": ""},
+      "Porter": {"role": "staff", "argument": ""},
+      "Bookseller": {"role": "staff", "argument": ""},
+      "Logician": {"role": "academic", "argument": "proof"},
+      "Mathematician": {"role": "academic", "argument": "proof"},
+      "Astronomer": {"role": "academic", "argument": "evidence"},
+      "Alchemist": {"role": "academic", "argument": "evidence"},
+      "Chaplain": {"role": "academic", "argument": "scripture"},
+      "Theologian": {"role": "academic", "argument": "scripture"},
+      "Orator": {"role": "academic", "argument": "eloquence"},
+      "Debater": {"role": "academic", "argument": "eloquence"},
+      "Debating student": {"role": "pupil", "argument": "eloquence"},
+      "Logic student": {"role": "pupil", "argument": "proof"},
+      "Stargazer": {"role": "pupil", "argument": "evidence"}
+    },
+    "zones": {
+      "gate": "Gatehouse Lawn", "old": "Old Court", "library": "Library Walk",
+      "new": "New Court", "chamber": "Debating chamber", "observatory": "Observatory"
+    },
+    "groups": [
+      {"title": "Freshers", "zone": "gate", "at": [500, 900], "people": ["Student", "Student", "Porter", "Student"]},
+      {"title": "Bookseller's cart", "zone": "gate", "at": [1060, 900], "people": ["Bookseller", "Student", "Student"]},
+      {"title": "Porters' lodge", "zone": "gate", "at": [1290, 1000], "people": ["Porter", "Student", "Porter"]},
+      {"title": "Logic lecture", "zone": "old", "at": [330, 560], "people": ["Logician", "Mathematician", "Student", "Logician"]},
+      {"title": "Rhetoric tutorial", "zone": "old", "at": [520, 720], "people": ["Orator", "Student", "Orator"]},
+      {"title": "Old Court steps", "zone": "old", "at": [210, 760], "people": ["Mathematician", "Orator", "Student", "Logician"]},
+      {"title": "Debating society", "zone": "chamber", "at": [520, 360], "people": ["Debater", "Orator", "Debater", "Student"]},
+      {"title": "Reading room", "zone": "library", "at": [780, 700], "people": ["Student", "Logician", "Chaplain", "Student"]},
+      {"title": "Library stacks", "zone": "library", "at": [780, 470], "people": ["Astronomer", "Orator", "Student"]},
+      {"title": "Chapel steps", "zone": "new", "at": [1150, 440], "people": ["Chaplain", "Theologian", "Student"]},
+      {"title": "Laboratory bench", "zone": "new", "at": [1290, 660], "people": ["Alchemist", "Astronomer", "Student", "Alchemist"]},
+      {"title": "Theology seminar", "zone": "new", "at": [1010, 760], "people": ["Theologian", "Chaplain", "Student"]},
+      {"title": "Herb garden", "zone": "new", "at": [1400, 830], "people": ["Alchemist", "Chaplain", "Student"]},
+      {"title": "Stargazing club", "zone": "observatory", "at": [1000, 300], "people": ["Astronomer", "Astronomer", "Student"]}
+    ],
+    "follower_groups": [
+      {"stage": 1, "title": "Debating students", "zone": "chamber", "at": [600, 240], "people": ["Debating student", "Debating student", "Debating student"]},
+      {"stage": 2, "title": "Logic students", "zone": "old", "at": [170, 920], "people": ["Logic student", "Logic student", "Logic student"]},
+      {"stage": 3, "title": "Stargazers", "zone": "observatory", "at": [1120, 190], "people": ["Stargazer", "Stargazer", "Stargazer"]}
+    ],
+    "wanderers": {"people": ["Student", "Porter", "Student", "Student", "Bookseller", "Student"]},
+    "bosses": [
+      {"id": "captain", "title": "The Debate Captain", "zone": "chamber", "at": [300, 340], "needs": ["eloquence"], "conviction": 2400.0, "rebuttals": 3, "decay": 0.0, "reward": 300, "coat": "8a3b46"},
+      {"id": "logician", "title": "The Logician", "zone": "old", "at": [180, 470], "needs": ["proof"], "conviction": 3600.0, "rebuttals": 6, "decay": 0.0, "reward": 450, "coat": "3f5a7a"},
+      {"id": "astronomer", "title": "The Astronomer", "zone": "observatory", "at": [780, 300], "needs": ["evidence", "proof"], "conviction": 5000.0, "rebuttals": 0, "decay": 500.0, "reward": 650, "coat": "2f3f6e"},
+      {"id": "rector", "title": "The Rector", "zone": "observatory", "at": [780, 300], "needs": ["proof", "evidence", "scripture", "eloquence"], "conviction": 9000.0, "rebuttals": 6, "decay": 700.0, "arrive_seconds": 3.0, "reward": 1200, "coat": "5a2a6e"}
+    ],
+    "helper": {
+      "teal": {"walk_speed": 150.0, "phrase_seconds": 1.0, "conviction_per_phrase": 60.0}
+    }
+  },
   "targets": {
     "village_campaign_rounds": [48, 62],
     "market_entry_max_open_recruits": 9,

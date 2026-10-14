@@ -8,6 +8,8 @@ signal purchase_requested(id: String, expected_rank: int)
 signal next_round_requested
 signal return_to_village_requested
 signal travel_requested(area_id: String)
+## A Quillmoor argument card was chosen; progression decides the loadout.
+signal argument_toggled(argument: String)
 
 const Style = preload("res://scripts/ritual_style.gd")
 const INK := Style.INK
@@ -35,6 +37,9 @@ const NodeArt = preload("res://scripts/ritual_node_art.gd")
 const Labels = preload("res://scripts/ritual_labels.gd")
 const Pointer = preload("res://scripts/ritual_pointer.gd")
 const BranchNav = preload("res://scripts/ritual_branch_nav.gd")
+const ArgumentCards = preload("res://scripts/ritual_argument_cards.gd")
+## Height of the argument card row the graph gives up at Quillmoor.
+const CARD_ROW: float = 84.0
 
 class GraphCanvas extends Control:
 	var screen: Control
@@ -77,6 +82,8 @@ var hovered_id: String = ""
 var core_hovered: bool = false
 var market_circle: bool = false
 var fair_circle: bool = false
+var uni_circle: bool = false
+var argument_cards: ArgumentCards
 ## Any circle after Bramblewick's: it offers a road back and a compact legend.
 var away_circle: bool = false
 var max_radius: float = FIRST_RING
@@ -130,7 +137,8 @@ func configure(new_catalog: Array, progression: Progression) -> void:
 	var area: String = str(catalog[0].get("area", "bramblewick")) if not catalog.is_empty() else "bramblewick"
 	market_circle = area == "bellmarket"
 	fair_circle = area == "lantern_fair"
-	away_circle = market_circle or fair_circle
+	uni_circle = area == "university"
+	away_circle = market_circle or fair_circle or uni_circle
 	_progression = progression
 	by_id.clear()
 	node_positions = Layout.build(catalog)
@@ -147,6 +155,8 @@ func configure(new_catalog: Array, progression: Progression) -> void:
 		selected_id = str(catalog[0].get("id", "")) if not catalog.is_empty() else ""
 	if _built:
 		branch_nav.rebuild()
+		# The card row comes and goes with Quillmoor's circle.
+		_layout()
 		reset_view()
 		update_state()
 
@@ -172,13 +182,22 @@ func update_state(round_recruits: int = 0) -> void:
 	_round_recruits = round_recruits
 	if not _built:
 		return
-	_hint_label.text = "Tab: %s / %s: next round\n%s%s%s%s or D-pad: move selection / %s: inscribe\nMovement stays active." % ["fair" if fair_circle else "market" if market_circle else "village", Keys.hint("next_round"), Keys.hint("ritual_nav_up"), Keys.hint("ritual_nav_down"), Keys.hint("ritual_nav_left"), Keys.hint("ritual_nav_right"), Keys.hint("buy_upgrade")]
+	_hint_label.text = "Tab: %s / %s: next round\n%s%s%s%s or D-pad: move selection / %s: inscribe\nMovement stays active." % ["university" if uni_circle else "fair" if fair_circle else "market" if market_circle else "village", Keys.hint("next_round"), Keys.hint("ritual_nav_up"), Keys.hint("ritual_nav_down"), Keys.hint("ritual_nav_left"), Keys.hint("ritual_nav_right"), Keys.hint("buy_upgrade")]
 	_demo_hint.text = "Esc: dismiss / Tab: village / %s: next round" % Keys.hint("next_round")
 	_subtitle_label.text = "ROUND COMPLETE  /  %d NEW FOLLOWERS" % _round_recruits
-	_title_label.text = "The fair's circle." if fair_circle else "Bellmarket's circle." if market_circle else "The circle grows."
+	_title_label.text = "Quillmoor's circle." if uni_circle else "The fair's circle." if fair_circle else "Bellmarket's circle." if market_circle else "The circle grows."
 	return_area_button.visible = not _return_id.is_empty()
-	village_button.text = "Return to the fair" if fair_circle else "Return to the market" if market_circle else "Return to the village"
-	if fair_circle:
+	village_button.text = "Return to the university" if uni_circle else "Return to the fair" if fair_circle else "Return to the market" if market_circle else "Return to the village"
+	argument_cards.visible = uni_circle
+	if uni_circle and is_instance_valid(_progression):
+		argument_cards.refresh(_progression)
+		var debaters: Array[String] = ["Debate Captain", "Logician", "Astronomer", "Rector"]
+		_subtitle_label.text = "QUILLMOOR  /  %d NEW FOLLOWERS  /  " % _round_recruits
+		if _progression.uni_complete():
+			_subtitle_label.text += "RECTOR CONVINCED"
+		else:
+			_subtitle_label.text += "DEBATES %d/4 / Next: %s" % [_progression.uni_stage, debaters[_progression.uni_stage]]
+	elif fair_circle:
 		var headliners: Array[String] = ["Performer", "Head Clown", "Mime", "Ringmaster"]
 		_subtitle_label.text = "THE LANTERN FAIR  /  %d NEW FOLLOWERS  /  " % _round_recruits
 		if is_instance_valid(_progression) and _progression.fair_complete():
@@ -251,8 +270,8 @@ func update_state(round_recruits: int = 0) -> void:
 	if not _destination_id.is_empty() and complete:
 		completion_button.text = "Circle complete / Travel"
 		completion_button.tooltip_text = "Open the route to " + _destination_title + "."
-	demo_message_label.text = "The road to %s is open" % _destination_title if not _destination_id.is_empty() else "The fair's circle is complete" if fair_circle else "Bellmarket's circle is complete" if market_circle else "This is the end of the demo"
-	_demo_description.text = "Visit its separate circle and new listeners. Your progress in both towns is kept." if not _destination_id.is_empty() else "Every inscription is yours. Keep enjoying the fair or return to Bellmarket." if fair_circle else "Every inscription is yours. Keep exploring the market or return to Bramblewick." if market_circle else "Every inscription is yours. You can keep playing in this village."
+	demo_message_label.text = "The road to %s is open" % _destination_title if not _destination_id.is_empty() else "Quillmoor's circle is complete" if uni_circle else "The fair's circle is complete" if fair_circle else "Bellmarket's circle is complete" if market_circle else "This is the end of the demo"
+	_demo_description.text = "Visit its separate circle and new listeners. Your progress in both towns is kept." if not _destination_id.is_empty() else "Every inscription is yours. Keep debating at Quillmoor or return to the fair." if uni_circle else "Every inscription is yours. Keep enjoying the fair or return to Bellmarket." if fair_circle else "Every inscription is yours. Keep exploring the market or return to Bramblewick." if market_circle else "Every inscription is yours. You can keep playing in this village."
 	destination_button.visible = not _destination_id.is_empty()
 	destination_button.text = "Travel to " + _destination_title
 	if not complete:
@@ -457,6 +476,9 @@ func navigate(direction: Vector2) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if not visible or not pointer.enabled or demo_message_visible():
 		return
+	if uni_circle and _argument_card_input(event):
+		get_viewport().set_input_as_handled()
+		return
 	var direction: Vector2 = Vector2.ZERO
 	if event.is_action_pressed("ritual_nav_up"):
 		direction = Vector2.UP
@@ -470,6 +492,37 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	navigate(direction)
 	get_viewport().set_input_as_handled()
+
+
+## Keys 1-4 toggle a card; a pad's bumpers move the highlight and Y toggles it.
+## A key or button the player bound to any action keeps that action instead.
+func _argument_card_input(event: InputEvent) -> bool:
+	if not event.is_pressed() or event.is_echo() or _bound_to_action(event):
+		return false
+	if event is InputEventKey:
+		var digit: int = [KEY_1, KEY_2, KEY_3, KEY_4].find(event.physical_keycode)
+		if digit >= 0:
+			argument_cards.toggle_at(digit)
+			return true
+	elif event is InputEventJoypadButton:
+		match event.button_index:
+			JOY_BUTTON_LEFT_SHOULDER:
+				argument_cards.move_cursor(-1)
+				return true
+			JOY_BUTTON_RIGHT_SHOULDER:
+				argument_cards.move_cursor(1)
+				return true
+			JOY_BUTTON_Y:
+				argument_cards.toggle_at(argument_cards.cursor)
+				return true
+	return false
+
+
+func _bound_to_action(event: InputEvent) -> bool:
+	for action in InputMap.get_actions():
+		if not String(action).begins_with("ui_") and InputMap.event_is_action(event, action, true):
+			return true
+	return false
 
 
 func _state(id: String) -> String:
@@ -578,6 +631,11 @@ func _build_controls() -> void:
 			travel_requested.emit(_return_id)
 	)
 	return_area_button.hide()
+	argument_cards = ArgumentCards.new()
+	argument_cards.name = "ArgumentCards"
+	argument_cards.toggled.connect(func(argument: String) -> void: argument_toggled.emit(argument))
+	argument_cards.hide()
+	add_child(argument_cards)
 	_build_demo_message()
 
 
@@ -650,7 +708,10 @@ func _layout() -> void:
 	var detail_width: float = clampf(size.x * 0.245, 255.0, 330.0)
 	_detail_x = size.x - detail_width - margin
 	graph.position = Vector2(24, 184)
-	graph.size = Vector2(maxf(280.0, _detail_x - 51.0), maxf(280.0, size.y - 304.0))
+	graph.size = Vector2(maxf(280.0, _detail_x - 51.0), maxf(280.0, size.y - 304.0 - (CARD_ROW if uni_circle else 0.0)))
+	# Quillmoor's argument cards sit directly under the circle they change.
+	argument_cards.position = Vector2(margin, graph.position.y + graph.size.y + 4.0)
+	argument_cards.size = Vector2(graph.size.x - (margin - 24.0), CARD_ROW - 8.0)
 	branch_bar.position = Vector2(margin, 122)
 	branch_bar.size = Vector2(_detail_x - margin - 174, 56)
 	branch_picker.position = branch_bar.position

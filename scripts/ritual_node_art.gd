@@ -158,7 +158,28 @@ func _draw_glyph(canvas: Control, at: Vector2, branch: String, color: Color) -> 
 		"fair_persuade":
 			canvas.draw_polyline(PackedVector2Array([at + Vector2(0, -12) * scale, at + Vector2(9, 0) * scale, at + Vector2(0, 12) * scale, at + Vector2(-9, 0) * scale, at + Vector2(0, -12) * scale]), color, 1.6, true)
 			canvas.draw_line(at + Vector2(0, -6) * scale, at + Vector2(0, 6) * scale, color, 1.2, true)
-		"run", "market_run", "fair_run":
+		"uni_book":
+			# An open commonplace book.
+			canvas.draw_polyline(PackedVector2Array([at + Vector2(0, 8) * scale, at + Vector2(-12, 4) * scale, at + Vector2(-12, -9) * scale, at + Vector2(0, -5) * scale, at + Vector2(12, -9) * scale, at + Vector2(12, 4) * scale, at + Vector2(0, 8) * scale, at + Vector2(0, -5) * scale]), color, 1.5, true)
+			canvas.draw_line(at + Vector2(-9, -3) * scale, at + Vector2(-3, -1) * scale, color, 1.0, true)
+			canvas.draw_line(at + Vector2(3, -1) * scale, at + Vector2(9, -3) * scale, color, 1.0, true)
+		"uni_mastery":
+			# A laurel of two arcs around a point: mastery of one faculty.
+			canvas.draw_arc(at + Vector2(3, 0) * scale, 10 * scale, PI * 0.55, PI * 1.45, 14, color, 1.5, true)
+			canvas.draw_arc(at + Vector2(-3, 0) * scale, 10 * scale, -PI * 0.45, PI * 0.45, 14, color, 1.5, true)
+			canvas.draw_circle(at, 2.5 * scale, color)
+		"uni_assistant":
+			canvas.draw_circle(at + Vector2(0, -7) * scale, 4.0 * scale, color)
+			canvas.draw_polyline(PackedVector2Array([at + Vector2(-8, 10) * scale, at + Vector2(0, -1) * scale, at + Vector2(8, 10) * scale]), color, 1.6, true)
+			canvas.draw_line(at + Vector2(-7, -12) * scale, at + Vector2(7, -12) * scale, color, 1.4, true)
+		"uni_talk":
+			canvas.draw_line(at + Vector2(-5, -10) * scale, at + Vector2(-5, 10) * scale, color, 1.7, true)
+			canvas.draw_arc(at + Vector2(-6, 0) * scale, 9 * scale, -PI * 0.42, PI * 0.42, 18, color, 1.3, true)
+			canvas.draw_arc(at + Vector2(-6, 0) * scale, 15 * scale, -PI * 0.35, PI * 0.35, 18, color, 1.3, true)
+		"uni_persuade":
+			canvas.draw_polyline(PackedVector2Array([at + Vector2(0, -12) * scale, at + Vector2(9, 0) * scale, at + Vector2(0, 12) * scale, at + Vector2(-9, 0) * scale, at + Vector2(0, -12) * scale]), color, 1.6, true)
+			canvas.draw_line(at + Vector2(0, -6) * scale, at + Vector2(0, 6) * scale, color, 1.2, true)
+		"run", "market_run", "fair_run", "uni_run":
 			for x in [-5, 4]:
 				canvas.draw_polyline(PackedVector2Array([at + Vector2(x - 4, -10) * scale, at + Vector2(x + 3, 0) * scale, at + Vector2(x - 4, 10) * scale]), color, 1.7, true)
 		_:

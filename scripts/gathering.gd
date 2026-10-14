@@ -8,6 +8,7 @@ const LISTENER_COUNT: int = 5
 ## Floating-point slack when comparing accumulated per-frame time to a fixed interval.
 const TIME_EPSILON: float = 0.000001
 const Balance = preload("res://scripts/balance.gd")
+const ArgumentBadge = preload("res://scripts/argument_badge.gd")
 ## Ordinary villagers who share a convinced opponent's habits join the village
 ## after that opponent's victory (balance data "village.types"). Rebuttals are
 ## phrases ignored at the start of each visit; decay is conviction lost per
@@ -67,6 +68,7 @@ var deaf: bool = false
 
 class Listener extends Node2D:
 	const DonationPopup = preload("res://scripts/donation_popup.gd")
+	const Badge = preload("res://scripts/argument_badge.gd")
 	var following: bool = false
 	var coat: Color = Color("#9c695a")
 	var phase: float = 0.0
@@ -76,6 +78,8 @@ class Listener extends Node2D:
 	var role: String = ""
 	var profile_type: String = "ordinary"
 	var locked: bool = false
+	## Quillmoor academics need this argument prepared; empty for everyone else.
+	var argument: String = ""
 	## Phrases fall on deaf ears: a "..." and a glance away.
 	var deaf: bool = false
 	var performing: bool = false
@@ -122,7 +126,13 @@ class Listener extends Node2D:
 			_draw_role(bob)
 		elif not kind.is_empty():
 			_draw_kind(bob)
-		if locked and not following:
+		if not argument.is_empty():
+			# The faculty badge on the gown, shape first; dim while unprepared.
+			Badge.draw(self, Vector2(-7, -15 + bob), argument, 5.0, locked and not following)
+			if locked and not following:
+				# An unprepared academic rebuts everything: a struck-through bubble.
+				Badge.draw_rebuttal(self, Vector2(2, -76), argument)
+		elif locked and not following:
 			draw_rect(Rect2(-5, -60, 10, 9), Color("#f3ddb0"))
 			draw_arc(Vector2(0, -60), 4, PI, TAU, 10, Color("#f3ddb0"), 2, true)
 			draw_circle(Vector2(0, -56), 1.2, Color("#514b58"))
@@ -157,6 +167,8 @@ class Listener extends Node2D:
 	func _draw_role(bob: float) -> void:
 		if profile_type in ["fairgoer", "stallholder", "performer", "fan"]:
 			_draw_fair_role(bob)
+		elif profile_type in ["student", "staff", "academic", "pupil"]:
+			_draw_university_role(bob)
 		elif profile_type == "guild":
 			# A square cap, apron and tool belt identify guild tradespeople.
 			draw_rect(Rect2(-10, -41 + bob, 20, 6), Color("#466d75"))
@@ -229,6 +241,37 @@ class Listener extends Node2D:
 			_:
 				pass
 
+	## Quillmoor dress: gowns and mortarboards for academics, short gowns and
+	## scarves for students, caps for porters; a few props name the trade.
+	func _draw_university_role(bob: float) -> void:
+		match profile_type:
+			"academic":
+				draw_colored_polygon(PackedVector2Array([Vector2(-10, -23 + bob), Vector2(9, -23 + bob), Vector2(14, -3), Vector2(-13, -3)]), Color("2f2a3a"))
+				draw_line(Vector2(-3, -23 + bob), Vector2(-5, -5), coat.lightened(0.2), 3)
+				draw_line(Vector2(3, -23 + bob), Vector2(5, -5), coat.lightened(0.2), 3)
+				draw_colored_polygon(PackedVector2Array([Vector2(-12, -40 + bob), Vector2(0, -45 + bob), Vector2(12, -40 + bob), Vector2(0, -35 + bob)]), Color("26212e"))
+				draw_line(Vector2(9, -40 + bob), Vector2(11, -31 + bob), Color("d9b45a"), 1.5)
+			"pupil", "student":
+				draw_line(Vector2(-8, -22 + bob), Vector2(8, -22 + bob), Color("7a2f3a") if profile_type == "student" else Color("3c4c78"), 4)
+				draw_line(Vector2(6, -22 + bob), Vector2(7, -12 + bob), Color("7a2f3a") if profile_type == "student" else Color("3c4c78"), 3)
+				draw_rect(Rect2(9, -18, 9, 11), Color("8a6a43"))
+			"staff":
+				draw_rect(Rect2(-9, -41 + bob, 18, 6), Color("2f3b2f"))
+				draw_rect(Rect2(-11, -37 + bob, 22, 2), Color("2f3b2f"))
+		match role:
+			"Bookseller":
+				for index in range(3):
+					draw_rect(Rect2(8, -9 - index * 5, 12, 4), [Color("8a4b3a"), Color("3c5a78"), Color("6b7a3a")][index])
+			"Astronomer", "Stargazer":
+				draw_line(Vector2(10, -6), Vector2(20, -22), Color("b9a06a"), 3)
+			"Alchemist":
+				draw_circle(Vector2(14, -12), 4, Color("7fbf8a"))
+				draw_line(Vector2(14, -16), Vector2(14, -20), Color("d8e8d0"), 2)
+			"Chaplain", "Theologian":
+				draw_rect(Rect2(-2, -22 + bob, 4, 10), Color("f2e6c8"))
+			"Orator", "Debater", "Debating student":
+				draw_line(Vector2(10, -20 + bob), Vector2(17, -33 + bob), Color("eac49a"), 3)
+
 
 func _ready() -> void:
 	y_sort_enabled = true
@@ -267,6 +310,7 @@ func _ready() -> void:
 		if not listener_profiles.is_empty():
 			listener.role = String(listener_profiles[i]["role"])
 			listener.profile_type = String(listener_profiles[i]["npc_type"])
+			listener.argument = listener_argument(i)
 			listener.locked = not is_listener_eligible(i)
 		add_child(listener)
 		listeners.append(listener)
@@ -317,7 +361,8 @@ func tick_persuasion(delta: float, phrase_interval: float, conviction: float, in
 			# An objection answered: the phrase is spent but adds no conviction.
 			rebuttals_left -= 1
 			continue
-		progress += maxf(0.0, conviction)
+		# At Quillmoor a phrase also carries the faculty bonus of whoever it reaches.
+		progress += maxf(0.0, conviction) + listener_conviction_bonus(first_unconverted())
 		var next: int = first_unconverted()
 		while next >= 0 and progress + TIME_EPSILON >= listener_conviction_required(next):
 			progress = maxf(0.0, progress - listener_conviction_required(next))
@@ -450,8 +495,11 @@ func validate_profiles() -> String:
 	for profile in listener_profiles:
 		if not profile.get("role", "") is String or String(profile.get("role", "")).strip_edges().is_empty():
 			return "A market listener needs a role name."
-		if not profile.get("npc_type", "") in ["ordinary", "guild", "patron", "fairgoer", "stallholder", "performer", "fan"]:
+		if not profile.get("npc_type", "") in ["ordinary", "guild", "patron", "fairgoer", "stallholder", "performer", "fan", "student", "staff", "academic", "pupil"]:
 			return "A market listener has an unsupported audience type."
+		var argument: Variant = profile.get("argument", "")
+		if not argument is String or (not argument.is_empty() and not argument in Progression.argument_ids()):
+			return "A Quillmoor listener needs a known argument or none."
 		var threshold: Variant = profile.get("conviction_required")
 		if not (threshold is int or threshold is float) or not is_finite(float(threshold)) or float(threshold) <= 0.0:
 			return "A market listener needs a positive finite conviction threshold."
@@ -471,7 +519,25 @@ func is_listener_eligible(index: int) -> bool:
 	if index >= listener_profiles.size():
 		return false
 	var requirement: String = String(listener_profiles[index].get("requires", ""))
-	return requirement.is_empty() or (_market_progression != null and _market_progression.has_unlock(requirement))
+	if not requirement.is_empty() and (_market_progression == null or not _market_progression.has_unlock(requirement)):
+		return false
+	# The faculty rule: an academic hears only an argument prepared this round.
+	var argument: String = listener_argument(index)
+	return argument.is_empty() or (_market_progression != null and _market_progression.is_prepared(argument))
+
+
+## The argument a Quillmoor academic needs prepared; empty for everyone else.
+func listener_argument(index: int) -> String:
+	if index < 0 or index >= listener_profiles.size():
+		return ""
+	return String(listener_profiles[index].get("argument", ""))
+
+
+func listener_conviction_bonus(index: int) -> float:
+	var argument: String = listener_argument(index)
+	if argument.is_empty() or _market_progression == null:
+		return 0.0
+	return _market_progression.uni_argument_conviction([argument])
 
 
 func listener_conviction_required(index: int) -> float:
@@ -489,7 +555,9 @@ func listener_donation(index: int) -> int:
 		return 0
 	var profile: Dictionary = listener_profiles[index]
 	var amount: int = int(profile["donation"])
-	return amount if _market_progression == null else _market_progression.market_donation(String(profile["npc_type"]), amount)
+	if _market_progression == null:
+		return amount
+	return _market_progression.market_donation(String(profile["npc_type"]), amount) + _market_progression.uni_argument_donation(listener_argument(index))
 
 
 func set_nearby(value: bool) -> void:
@@ -544,7 +612,10 @@ func _draw_market_details() -> void:
 	var next: int = first_unconverted()
 	var lines: Array[String] = ["%s  %d/%d" % [group_name, recruits, listener_count]]
 	if next >= 0:
-		lines.append("%s: %.0f conviction / %d donations" % [listener_profiles[next]["role"], listener_conviction_required(next), listener_donation(next)])
+		var who: String = String(listener_profiles[next]["role"])
+		if not listener_argument(next).is_empty():
+			who += " (%s, prepared)" % ArgumentBadge.title(listener_argument(next))
+		lines.append("%s: %.0f conviction / %d donations" % [who, listener_conviction_required(next), listener_donation(next)])
 	else:
 		lines.append("Everyone approachable has joined")
 	if distraction >= 0 and next >= 0:
@@ -557,11 +628,16 @@ func _draw_market_details() -> void:
 	for index in range(listeners.size()):
 		if not is_listener_eligible(index) and not listeners[index].following:
 			var key: String = String(listener_profiles[index].get("requires", ""))
+			if not listener_argument(index).is_empty():
+				key = "argument:" + listener_argument(index)
 			var roles: Array = locked_roles.get(key, [])
 			roles.append(listener_profiles[index]["role"])
 			locked_roles[key] = roles
 	for requirement in locked_roles:
-		lines.append("%s: %s required" % [", ".join(locked_roles[requirement]), _introduction_name(requirement)])
+		if String(requirement).begins_with("argument:"):
+			lines.append("%s - needs %s (not prepared)" % [", ".join(locked_roles[requirement]), ArgumentBadge.title(String(requirement).trim_prefix("argument:"))])
+		else:
+			lines.append("%s: %s required" % [", ".join(locked_roles[requirement]), _introduction_name(requirement)])
 	var font := ThemeDB.fallback_font
 	var width: float = 0.0
 	for line in lines:
@@ -591,6 +667,8 @@ func _draw_lone_market() -> void:
 		return
 	var font := ThemeDB.fallback_font
 	var line: String = "%s required" % _introduction_name(String(listener_profiles[0].get("requires", "")))
+	if not listener_argument(0).is_empty():
+		line = "%s - needs %s (not prepared)" % [listener_profiles[0]["role"], ArgumentBadge.title(listener_argument(0))]
 	var width: float = font.get_string_size(line, HORIZONTAL_ALIGNMENT_LEFT, -1, 14).x
 	draw_style_box(_caption_style(), Rect2(-width * 0.5 - 10, -118, width + 20, 28))
 	draw_string(font, Vector2(-width * 0.5, -99), line, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("fff1d0"))

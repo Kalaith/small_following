@@ -20,6 +20,10 @@ const Fair = preload("res://scripts/fair.gd")
 const FairBoss = preload("res://scripts/fair_boss.gd")
 const FairDirector = preload("res://scripts/fair_director.gd")
 const FairHud = preload("res://scripts/fair_hud.gd")
+const University = preload("res://scripts/university.gd")
+const UniBoss = preload("res://scripts/uni_boss.gd")
+const UniHud = preload("res://scripts/uni_hud.gd")
+const ArgumentBadge = preload("res://scripts/argument_badge.gd")
 const START_POSITION := Vector2(780, 680)
 ## Gatherings, merchants, opponents' villagers and the round length are balance
 ## data in data/balance.json; Bramblewick crowds are small huddles of three or
@@ -57,6 +61,9 @@ var fair_helper: Node2D = null
 var fair_director = FairDirector.new()
 var fair_boss: Node2D = null
 var fair_hud: Control
+## Quillmoor's current boss and the HUD strip of prepared arguments.
+var uni_boss: Node2D = null
+var uni_hud: Control
 var seconds_left: float = Balance.number("round.seconds")
 var round_active: bool = true
 var round_recruits: int = 0
@@ -138,6 +145,7 @@ func _rebuild_area() -> void:
 			actor.queue_free()
 	encounter = null
 	fair_boss = null
+	uni_boss = null
 	helper = null
 	market_helper = null
 	fair_helper = null
@@ -147,11 +155,16 @@ func _rebuild_area() -> void:
 	if previous:
 		remove_child(previous)
 		previous.queue_free()
-	var world: Node2D = Village.new()
+	# Only the needed world is built; a discarded spare would leak unfreed.
+	var world: Node2D
 	if progression.active_area == "bellmarket":
 		world = Market.new()
 	elif progression.active_area == Fair.AREA_ID:
 		world = Fair.new()
+	elif progression.active_area == University.AREA_ID:
+		world = University.new()
+	else:
+		world = Village.new()
 	world.name = "Village"
 	add_child(world)
 	move_child(world, 0)
@@ -186,6 +199,17 @@ func _rebuild_area() -> void:
 			wanderers.append(wanderer)
 		scatter_wanderers()
 		fair_director.reset_round()
+	elif progression.active_area == University.AREA_ID:
+		for entry in Balance.list("university.groups"):
+			groups.append(_new_uni_group(entry))
+		_add_stage_gatherings()
+		_seed_wanderers()
+		var people: Array = Balance.list("university.wanderers.people")
+		for index in range(people.size()):
+			var wanderer := _new_uni_group({"title": Wanderers.TITLE, "people": [people[index]]}, index)
+			wanderer.show_caption = false
+			wanderers.append(wanderer)
+		scatter_wanderers()
 	else:
 		for entry in Balance.list("village.gatherings"):
 			_add_gathering(entry.title, Balance.vec(entry.at), false, int(entry.count))
@@ -247,9 +271,27 @@ func _new_fair_group(entry: Dictionary, coat_offset: int = 0) -> Node2D:
 	return gathering
 
 
+## One Quillmoor audience from balance data: students mixed with academics who
+## hear only their own faculty's argument (the eligibility rule in gathering.gd).
+func _new_uni_group(entry: Dictionary, coat_offset: int = 0) -> Node2D:
+	var gathering := Gathering.new()
+	gathering.group_name = String(entry.title)
+	gathering.position = Balance.vec(entry.at) if entry.has("at") else Vector2.ZERO
+	gathering.coat_offset = coat_offset
+	gathering.zone = String(entry.get("zone", ""))
+	gathering.listener_profiles.assign(University.profiles(entry.people))
+	gathering.configure_market(progression)
+	gathering.recruited.connect(_on_recruited)
+	gathering.phrase_spoken.connect(game_audio.on_phrase)
+	$Actors.add_child(gathering)
+	return gathering
+
+
 func area_start_position() -> Vector2:
 	if progression.active_area == Fair.AREA_ID:
 		return Fair.start_position()
+	if progression.active_area == University.AREA_ID:
+		return University.start_position()
 	return Market.START_POSITION if progression.active_area == "bellmarket" else START_POSITION
 
 
@@ -262,6 +304,9 @@ func travel_to(area_id: String, bypass_unlock: bool = false) -> bool:
 	elif area_id == Fair.AREA_ID:
 		for entry in Balance.list("fair.groups") + Balance.list("fair.fan_groups"):
 			layouts.append({"profiles": Fair.profiles(entry.people)})
+	elif area_id == University.AREA_ID:
+		for entry in Balance.list("university.groups") + Balance.list("university.follower_groups"):
+			layouts.append({"profiles": University.profiles(entry.people)})
 	if not layouts.is_empty():
 		for entry in layouts:
 			var probe := Gathering.new()
@@ -333,7 +378,7 @@ func show_title() -> void:
 	hud_layout.hide()
 	settings_button.hide()
 	title_screen.unlocked = title_screen.unlocked or progression.level_select_unlocked
-	title_screen.configure(progression.active_area, progression.is_area_unlocked("bellmarket"), progression.has_progress(), progression.is_area_unlocked(Fair.AREA_ID))
+	title_screen.configure(progression.active_area, progression.is_area_unlocked("bellmarket"), progression.has_progress(), progression.is_area_unlocked(Fair.AREA_ID), progression.is_area_unlocked(University.AREA_ID))
 	title_screen.show()
 	if not progression.last_error.is_empty():
 		title_screen.show_error(progression.last_error)
@@ -429,6 +474,9 @@ func scatter_wanderers() -> void:
 		for stage in Balance.list("fair.stages"):
 			avoid.append(Balance.vec(stage.at))
 		for boss in FairBoss.profiles():
+			avoid.append(Balance.vec(boss.at))
+	elif progression.active_area == University.AREA_ID:
+		for boss in UniBoss.profiles():
 			avoid.append(Balance.vec(boss.at))
 	for group in groups:
 		avoid.append(group.position)
@@ -724,6 +772,13 @@ func advance_round(delta: float) -> void:
 		speaking_to_opponent = in_range and (fair_boss.hears(fair_director.interest, still) or not is_instance_valid(heard_group))
 		fair_boss.drain_multiplier = progression.fair_drain_multiplier()
 		fair_boss.advance(usable_delta, speaking_to_opponent, progression.speech_interval(), progression.conviction_per_phrase(), fair_director.interest, still, player.global_position)
+	if is_instance_valid(uni_boss) and not uni_boss.defeated:
+		# A boss whose arguments are prepared comes first. One that would rebut
+		# yields to any group you can win; with none nearby it rebuts your phrases.
+		uni_boss.prepared_from(progression)
+		var boss_in_range: bool = uni_boss.arrived() and player.global_position.distance_to(uni_boss.global_position) <= speak_radius
+		speaking_to_opponent = boss_in_range and (uni_boss.prepared or not is_instance_valid(nearest_group))
+		uni_boss.advance(usable_delta, speaking_to_opponent, progression.speech_interval(), progression.conviction_per_phrase() + progression.uni_argument_conviction(uni_boss.needs()))
 	if speaking_to_opponent:
 		nearest_group = null
 	if is_instance_valid(nearest_group):
@@ -773,6 +828,19 @@ func _reset_encounter() -> void:
 		fair_boss.get_parent().remove_child(fair_boss)
 		fair_boss.queue_free()
 	fair_boss = null
+	if is_instance_valid(uni_boss):
+		uni_boss.get_parent().remove_child(uni_boss)
+		uni_boss.queue_free()
+	uni_boss = null
+	if progression.active_area == University.AREA_ID:
+		if not progression.uni_complete():
+			uni_boss = UniBoss.new()
+			uni_boss.stage = progression.uni_stage
+			uni_boss.prepared_from(progression)
+			uni_boss.convinced.connect(_on_uni_boss_convinced)
+			uni_boss.phrase_spoken.connect(game_audio.on_phrase)
+			$Actors.add_child(uni_boss)
+		return
 	if progression.active_area == Fair.AREA_ID:
 		if not progression.fair_complete():
 			fair_boss = FairBoss.new()
@@ -808,6 +876,35 @@ func _on_fair_boss_convinced(stage: int) -> void:
 		fair_boss.add_child(popup)
 
 
+func _on_uni_boss_convinced(stage: int) -> void:
+	if round_active and progression.complete_uni_boss(stage):
+		round_recruits += 1
+		var popup = DonationPopup.new()
+		popup.amount = int(UniBoss.profiles()[stage].reward)
+		popup.position = Vector2(52, -80)
+		uni_boss.add_child(popup)
+
+
+## A tapped argument card between rounds. Progression decides the loadout; the
+## groups then re-check who can hear it, and the cards and HUD redraw.
+func toggle_argument(argument: String) -> bool:
+	if round_active or progression.active_area != University.AREA_ID:
+		return false
+	var changed: bool = progression.toggle_argument(argument)
+	_refresh_faculty_rule()
+	ritual_screen.update_state(round_recruits)
+	_update_hud()
+	return changed
+
+
+func _refresh_faculty_rule() -> void:
+	for group in audiences():
+		group.configure_market(progression)
+	if is_instance_valid(uni_boss):
+		uni_boss.prepared_from(progression)
+		uni_boss.queue_redraw()
+
+
 func _on_recruited(donation: int) -> void:
 	progression.add_donation(donation, 1)
 	round_recruits += 1
@@ -831,6 +928,15 @@ func apply_upgrades() -> void:
 		_add_stage_gatherings()
 		if groups.size() != group_count:
 			scatter_wanderers()
+		_apply_helper()
+		return
+	if progression.active_area == University.AREA_ID:
+		var group_count: int = groups.size()
+		_add_stage_gatherings()
+		if groups.size() != group_count:
+			scatter_wanderers()
+		# A new slot never changes the loadout, but locks are re-read anyway.
+		_refresh_faculty_rule()
 		_apply_helper()
 		return
 	if progression.active_area == "bellmarket":
@@ -870,6 +976,13 @@ func _add_stage_gatherings() -> void:
 				groups.append(_new_fair_group(entry))
 				added_gatherings[fan_key] = true
 		return
+	if progression.active_area == University.AREA_ID:
+		for entry in Balance.list("university.follower_groups"):
+			var follower_key: String = "followers_%d" % int(entry.stage)
+			if progression.uni_stage >= int(entry.stage) and not added_gatherings.has(follower_key):
+				groups.append(_new_uni_group(entry))
+				added_gatherings[follower_key] = true
+		return
 	if progression.active_area != "bramblewick":
 		return
 	for entry in Balance.list("village.stage_gatherings"):
@@ -901,10 +1014,16 @@ func _tune_helpers() -> void:
 	if is_instance_valid(helper):
 		var market: bool = progression.active_area == "bellmarket"
 		var fair: bool = progression.active_area == Fair.AREA_ID
-		var stats: String = "market.helper.teal." if market else "fair.helper.teal." if fair else "helper."
+		var university: bool = progression.active_area == University.AREA_ID
+		var stats: String = "market.helper.teal." if market else "fair.helper.teal." if fair else "university.helper.teal." if university else "helper."
 		helper.walk_speed = Balance.number(stats + "walk_speed")
 		helper.phrase_seconds = Balance.number(stats + "phrase_seconds")
 		helper.conviction_per_phrase = Balance.number(stats + "conviction_per_phrase") + (progression.market_teal_conviction_bonus() if market else 0.0)
+		if university:
+			# Teaching Assistant ranks; the faculty rule still limits whom it can win.
+			helper.walk_speed *= 1.0 + progression.uni_helper_walk_bonus()
+			helper.phrase_seconds /= 1.0 + progression.uni_helper_speed_bonus()
+			helper.conviction_per_phrase += progression.uni_helper_conviction_bonus()
 		# At the fair the teal helper obeys the same hearing rule, with its own Interest.
 		helper.interest = progression.fair_teal_interest() if fair else -1
 	if is_instance_valid(fair_helper):
@@ -993,6 +1112,7 @@ func _build_ritual() -> void:
 	ritual_screen.configure(progression.catalog, progression)
 	_configure_destination()
 	ritual_screen.travel_requested.connect(travel_to)
+	ritual_screen.argument_toggled.connect(toggle_argument)
 	ritual_screen.purchase_requested.connect(purchase_upgrade)
 	ritual_screen.next_round_requested.connect(start_next_round)
 	ritual_screen.return_to_village_requested.connect(set_ritual_visible.bind(false))
@@ -1035,6 +1155,8 @@ func _build_hud() -> void:
 	status_rows.add_child(round_label)
 	fair_hud = FairHud.new()
 	status_rows.add_child(fair_hud)
+	uni_hud = UniHud.new()
+	status_rows.add_child(uni_hud)
 	var help_panel := _panel()
 	_village_blockers.append(help_panel)
 	hud_layout.add_child(help_panel)
@@ -1141,9 +1263,36 @@ func _fair_context() -> String:
 	return "Find someone who can hear you over the fair."
 
 
+func _uni_context() -> String:
+	if not round_active:
+		if progression.uni_complete():
+			return "Quillmoor is won!  Ritual circle or Next round."
+		return "Round complete - Tab: ritual (prepare arguments) / %s: next round" % Keys.hint("next_round")
+	if is_instance_valid(uni_boss) and not uni_boss.defeated and uni_boss.listening:
+		var boss: Dictionary = uni_boss.profile()
+		if uni_boss.rebutting:
+			var missing: PackedStringArray = []
+			for argument in uni_boss.missing:
+				missing.append(ArgumentBadge.title(String(argument)))
+			return "%s rebuts everything: prepare %s" % [boss.title, " and ".join(missing)]
+		return "Debating %s..." % boss.title
+	if is_instance_valid(nearest_group):
+		return "Speaking with %s..." % nearest_group.group_name
+	if progression.uni_loadout.is_empty():
+		return "No arguments prepared: only students and staff will listen."
+	if progression.uni_complete():
+		return "Quillmoor is won!  Enjoy the cloisters."
+	if is_instance_valid(uni_boss):
+		return "%s waits in the %s" % [uni_boss.profile().title, University.zone_title(String(uni_boss.profile().zone))]
+	return "Find someone your prepared arguments can win."
+
+
 func _update_hud() -> void:
-	area_label.text = {"bellmarket": "BELLMARKET / a gathering of fortunes", Fair.AREA_ID: "THE LANTERN FAIR / are you interesting enough?"}.get(progression.active_area, "BRAMBLEWICK / a small beginning")
+	area_label.text = {"bellmarket": "BELLMARKET / a gathering of fortunes", Fair.AREA_ID: "THE LANTERN FAIR / are you interesting enough?", University.AREA_ID: "QUILLMOOR / did you bring the right argument?"}.get(progression.active_area, "BRAMBLEWICK / a small beginning")
 	fair_hud.visible = progression.active_area == Fair.AREA_ID
+	uni_hud.visible = progression.active_area == University.AREA_ID
+	if uni_hud.visible:
+		uni_hud.show_loadout(progression.uni_loadout, progression.argument_slots())
 	ritual_button.visible = not round_active
 	next_round_button.visible = not round_active
 	stats_label.text = "%d donations / %d recruits available" % [coins, progression.available_recruits]
@@ -1151,6 +1300,8 @@ func _update_hud() -> void:
 	save_label.text = "Progress notice: see the ritual screen." if not progression.last_error.is_empty() else ""
 	if progression.active_area == Fair.AREA_ID:
 		context_label.text = _fair_context()
+	elif progression.active_area == University.AREA_ID:
+		context_label.text = _uni_context()
 	elif progression.active_area == "bellmarket" and progression.is_circle_complete():
 		context_label.text = "Bellmarket circle complete!  Keep exploring or return to Bramblewick."
 	elif progression.active_area == "bramblewick" and progression.map_complete():
