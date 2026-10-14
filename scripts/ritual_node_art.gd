@@ -131,7 +131,34 @@ func _draw_glyph(canvas: Control, at: Vector2, branch: String, color: Color) -> 
 			canvas.draw_line(at + Vector2(-10, 10) * scale, at + Vector2(10, 10) * scale, color, 1.5, true)
 		"market_patron":
 			canvas.draw_polyline(PackedVector2Array([at + Vector2(-11, -7) * scale, at + Vector2(-8, 8) * scale, at + Vector2(8, 8) * scale, at + Vector2(11, -7) * scale, at + Vector2(4, -2) * scale, at + Vector2(0, -11) * scale, at + Vector2(-4, -2) * scale, at + Vector2(-11, -7) * scale]), color, 1.5, true)
-		"run", "market_run":
+		"fair_show":
+			# A lantern: Interest made visible.
+			canvas.draw_rect(Rect2(at + Vector2(-6, -8) * scale, Vector2(12, 15) * scale), color, false, 1.5)
+			canvas.draw_line(at + Vector2(0, -12) * scale, at + Vector2(0, -8) * scale, color, 1.5, true)
+			canvas.draw_circle(at + Vector2(0, -1) * scale, 2.5 * scale, color)
+		"fair_stage":
+			canvas.draw_polyline(PackedVector2Array([at + Vector2(-12, 6) * scale, at + Vector2(-9, -2) * scale, at + Vector2(9, -2) * scale, at + Vector2(12, 6) * scale, at + Vector2(-12, 6) * scale]), color, 1.5, true)
+			canvas.draw_circle(at + Vector2(0, -8) * scale, 3.0 * scale, color)
+		"fair_captivate":
+			canvas.draw_arc(at, 10 * scale, PI * 0.15, PI * 0.85, 16, color, 1.5, true)
+			canvas.draw_arc(at, 10 * scale, PI * 1.15, PI * 1.85, 16, color, 1.5, true)
+			canvas.draw_circle(at, 3.0 * scale, color)
+		"fair_steal":
+			for index in range(4):
+				var spoke: Vector2 = Vector2.from_angle(index * PI * 0.5) * 11.0
+				canvas.draw_line(at, at + spoke * scale, color, 1.6, true)
+			canvas.draw_circle(at, 2.5 * scale, color)
+		"fair_follower":
+			canvas.draw_circle(at + Vector2(0, -7) * scale, 4.0 * scale, color)
+			canvas.draw_polyline(PackedVector2Array([at + Vector2(-8, 10) * scale, at + Vector2(0, -1) * scale, at + Vector2(8, 10) * scale]), color, 1.6, true)
+		"fair_talk":
+			canvas.draw_line(at + Vector2(-5, -10) * scale, at + Vector2(-5, 10) * scale, color, 1.7, true)
+			canvas.draw_arc(at + Vector2(-6, 0) * scale, 9 * scale, -PI * 0.42, PI * 0.42, 18, color, 1.3, true)
+			canvas.draw_arc(at + Vector2(-6, 0) * scale, 15 * scale, -PI * 0.35, PI * 0.35, 18, color, 1.3, true)
+		"fair_persuade":
+			canvas.draw_polyline(PackedVector2Array([at + Vector2(0, -12) * scale, at + Vector2(9, 0) * scale, at + Vector2(0, 12) * scale, at + Vector2(-9, 0) * scale, at + Vector2(0, -12) * scale]), color, 1.6, true)
+			canvas.draw_line(at + Vector2(0, -6) * scale, at + Vector2(0, 6) * scale, color, 1.2, true)
+		"run", "market_run", "fair_run":
 			for x in [-5, 4]:
 				canvas.draw_polyline(PackedVector2Array([at + Vector2(x - 4, -10) * scale, at + Vector2(x + 3, 0) * scale, at + Vector2(x - 4, 10) * scale]), color, 1.7, true)
 		_:

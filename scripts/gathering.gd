@@ -39,6 +39,31 @@ var is_listening: bool = false
 var is_nearby: bool = false
 var listeners: Array[Node2D] = []
 
+## Lantern Fair hearing: Interest against Distraction, a hard threshold. A
+## negative `distraction` marks an audience outside the fair, which always hears.
+## The fair director sets `current_distraction` every frame (shows, performers,
+## stolen crowds, headliners); the Barker's cut applies on top while it speaks here.
+var distraction: int = -1
+var zone: String = ""
+var current_distraction: int = 0
+var barker_cut: int = 0
+## Fraction of the current listener's threshold lost per second while no
+## counted phrase reaches them (walking away, or turning deaf mid-conversation).
+var drain_share: float = 0.0
+## Mime watchers only listen while the cultist stands completely still.
+var still_only: bool = false
+## Performer groups put on shows; converting one ends its act for the round.
+var act_show: Dictionary = {}
+var act_cancelled: bool = false
+var show_running: bool = false
+var next_show_in: float = -1.0
+## Seconds left of a stolen-audience window and its full length, for the ring.
+var stolen_left: float = 0.0
+var stolen_total: float = 1.0
+## The cultist's Interest, so captions can compare; display only.
+var viewer_interest: int = 0
+var deaf: bool = false
+
 
 class Listener extends Node2D:
 	const DonationPopup = preload("res://scripts/donation_popup.gd")
@@ -51,6 +76,9 @@ class Listener extends Node2D:
 	var role: String = ""
 	var profile_type: String = "ordinary"
 	var locked: bool = false
+	## Phrases fall on deaf ears: a "..." and a glance away.
+	var deaf: bool = false
+	var performing: bool = false
 	var reward_label: Label
 
 	func show_reward(amount: int) -> void:
@@ -81,8 +109,10 @@ class Listener extends Node2D:
 		draw_colored_polygon(PackedVector2Array([Vector2(-9, -23 + bob), Vector2(8, -23 + bob), Vector2(12, -6), Vector2(-11, -6)]), tint)
 		draw_circle(Vector2(0, -29 + bob), 9, Color("#eac49a"))
 		draw_arc(Vector2(0, -31 + bob), 9, PI, TAU, 12, Color("#75604a"), 4, true)
-		draw_circle(Vector2(-3, -29 + bob), 1.1, Color("#4e4944"))
-		draw_circle(Vector2(3, -29 + bob), 1.1, Color("#4e4944"))
+		# A deaf listener glances away toward the fun instead of at the cultist.
+		var glance: float = 2.5 if deaf and not following else 0.0
+		draw_circle(Vector2(-3 + glance, -29 + bob), 1.1, Color("#4e4944"))
+		draw_circle(Vector2(3 + glance, -29 + bob), 1.1, Color("#4e4944"))
 		if merchant:
 			draw_rect(Rect2(-12, -40 + bob, 24, 5), Color("#75562d"))
 			draw_rect(Rect2(-7, -48 + bob, 14, 10), Color("#b38c3c"))
@@ -99,6 +129,16 @@ class Listener extends Node2D:
 		if following:
 			draw_line(Vector2(-4, -45), Vector2(-1, -42), Color("#fbf1b6"), 2)
 			draw_line(Vector2(-1, -42), Vector2(5, -49), Color("#fbf1b6"), 2)
+		elif deaf:
+			draw_style_box(_bubble(), Rect2(4, -66, 26, 15))
+			for dot in range(3):
+				draw_circle(Vector2(11 + dot * 6, -58), 1.6, Color("#6a6070"))
+
+	func _bubble() -> StyleBoxFlat:
+		var style := StyleBoxFlat.new()
+		style.bg_color = Color("#f6efe0")
+		style.set_corner_radius_all(7)
+		return style
 
 	func _draw_kind(bob: float) -> void:
 		match kind:
@@ -115,7 +155,9 @@ class Listener extends Node2D:
 				draw_circle(Vector2(0, -16 + bob), 3.5, Color("f3d075"))
 
 	func _draw_role(bob: float) -> void:
-		if profile_type == "guild":
+		if profile_type in ["fairgoer", "stallholder", "performer", "fan"]:
+			_draw_fair_role(bob)
+		elif profile_type == "guild":
 			# A square cap, apron and tool belt identify guild tradespeople.
 			draw_rect(Rect2(-10, -41 + bob, 20, 6), Color("#466d75"))
 			draw_rect(Rect2(-5, -23 + bob, 10, 15), Color("#d2c39b"))
@@ -137,6 +179,55 @@ class Listener extends Node2D:
 		else:
 			draw_arc(Vector2(13, -17), 5, PI, TAU, 10, Color("#8f744e"), 2, true)
 			draw_rect(Rect2(7, -17, 12, 9), Color("#c9a771"))
+
+	## Fair costumes: performers read at a glance; a performing act bobs its props.
+	func _draw_fair_role(bob: float) -> void:
+		var lift: float = sin(phase * 4.0) * 6.0 if performing and not following else 0.0
+		match role:
+			"Clown", "Clown fan":
+				draw_circle(Vector2(0, -27 + bob), 2.6, Color("#d8423c"))
+				draw_colored_polygon(PackedVector2Array([Vector2(-7, -36 + bob), Vector2(0, -52 + bob + lift * 0.3), Vector2(7, -36 + bob)]), Color("#e9c34f") if role == "Clown" else Color("#d8423c"))
+				for x in [-8, 0, 8]:
+					draw_circle(Vector2(x, -21 + bob), 3.4, Color("#f4eee2"))
+			"Juggler":
+				for index in range(3):
+					var angle: float = phase * 3.0 + index * TAU / 3.0
+					draw_circle(Vector2(cos(angle) * 10.0, -52 + sin(angle) * 5.0 - absf(lift)), 3.0, [Color("#e05b4f"), Color("#f2c84b"), Color("#5f9bd1")][index])
+			"Acrobat":
+				draw_line(Vector2(-9, -20 + bob), Vector2(10, -10), Color("#f2c84b"), 3)
+				draw_line(Vector2(-12, -34 + bob - absf(lift)), Vector2(-16, -46 + bob - absf(lift)), Color("#eac49a"), 3)
+				draw_line(Vector2(12, -34 + bob - absf(lift)), Vector2(16, -46 + bob - absf(lift)), Color("#eac49a"), 3)
+			"Stilt-walker":
+				draw_line(Vector2(-4, 0), Vector2(-4, 14), Color("#6a5136"), 3)
+				draw_line(Vector2(4, 0), Vector2(4, 14), Color("#6a5136"), 3)
+				draw_rect(Rect2(-8, -46 + bob, 16, 7), Color("#3c3a4a"))
+				draw_rect(Rect2(-5, -56 + bob, 10, 11), Color("#3c3a4a"))
+			"Mime watcher":
+				draw_line(Vector2(-9, -24 + bob), Vector2(9, -24 + bob), Color("#2f2f36"), 2)
+				draw_line(Vector2(-9, -18 + bob), Vector2(9, -18 + bob), Color("#2f2f36"), 2)
+			"Busker's fan":
+				draw_line(Vector2(10, -20 + bob), Vector2(16, -40 + bob - absf(lift)), Color("#eac49a"), 2)
+				draw_circle(Vector2(16, -42 + bob), 2.5, Color("#f2c84b"))
+			"Pie seller", "Cider seller":
+				draw_rect(Rect2(-6, -22 + bob, 12, 15), Color("#efdeb0"))
+				draw_circle(Vector2(12, -14), 5, Color("#c98a4a") if role == "Pie seller" else Color("#c9a63a"))
+			"Ring-toss keeper", "Coconut keeper", "Lantern seller":
+				draw_rect(Rect2(-10, -40 + bob, 20, 4), Color("#6a4e7a"))
+				if role == "Lantern seller":
+					draw_line(Vector2(12, -8), Vector2(12, -30), Color("#6a5136"), 2)
+					draw_rect(Rect2(8, -38, 8, 9), Color("#f2b84b"))
+				else:
+					draw_arc(Vector2(13, -16), 5, 0, TAU, 12, Color("#c9a771"), 2, true)
+			"Child":
+				draw_circle(Vector2(8, -44 + bob), 4, Color("#e05b4f"))
+				draw_line(Vector2(8, -40 + bob), Vector2(9, -26), Color("#f4eee2"), 1)
+			"Sweetheart":
+				draw_circle(Vector2(-6, -37 + bob), 3, Color("#e98aa0"))
+			"Farmhand":
+				draw_rect(Rect2(-11, -39 + bob, 22, 4), Color("#c9a65a"))
+				draw_rect(Rect2(-6, -45 + bob, 12, 7), Color("#c9a65a"))
+			_:
+				pass
 
 
 func _ready() -> void:
@@ -193,15 +284,35 @@ func configure_village_type(type_id: String) -> void:
 	show_caption = false
 
 
-func tick_persuasion(delta: float, phrase_interval: float, conviction: float) -> void:
+## Interest a fair speaker needs here now; zero outside the fair.
+func effective_distraction() -> int:
+	return maxi(0, current_distraction - barker_cut) if distraction >= 0 else 0
+
+
+## The hard threshold: one point short is the same as ten. `extra_cut` lets the
+## Barker judge a group by the cut its own speaking would bring.
+func hears(interest: int, extra_cut: int = 0) -> bool:
+	return distraction < 0 or interest >= effective_distraction() - extra_cut
+
+
+## `interest` and `still` apply only at the fair. Deaf phrases still sound and
+## keep their rhythm, but add no conviction, bank no overflow, and the listener's
+## partial conviction drains as if the cultist had walked away.
+func tick_persuasion(delta: float, phrase_interval: float, conviction: float, interest: int = 0, still: bool = true) -> void:
 	if first_unconverted() < 0:
 		return
 	_unattended = 0.0
 	last_phrase_interval = maxf(phrase_interval, 0.05)
 	phrase_elapsed += maxf(delta, 0.0)
+	var heard: bool = hears(interest) and (still or not still_only)
+	set_deaf(not heard)
+	if not heard:
+		_drain(maxf(delta, 0.0))
 	while phrase_elapsed + TIME_EPSILON >= last_phrase_interval and first_unconverted() >= 0:
 		phrase_elapsed = maxf(0.0, phrase_elapsed - last_phrase_interval)
 		phrase_spoken.emit()
+		if not heard:
+			continue
 		if rebuttals_left > 0:
 			# An objection answered: the phrase is spent but adds no conviction.
 			rebuttals_left -= 1
@@ -210,7 +321,7 @@ func tick_persuasion(delta: float, phrase_interval: float, conviction: float) ->
 		var next: int = first_unconverted()
 		while next >= 0 and progress + TIME_EPSILON >= listener_conviction_required(next):
 			progress = maxf(0.0, progress - listener_conviction_required(next))
-			recruit_listener(next)
+			recruit_listener(next, interest)
 			next = first_unconverted()
 	if recruits == listener_count:
 		progress = 0.0
@@ -228,12 +339,55 @@ func advance_unattended(delta: float) -> void:
 	if delta <= 0.0:
 		return
 	_unattended += delta
+	set_deaf(false)
 	if decay_per_second > 0.0 and progress > 0.0:
 		progress = maxf(0.0, progress - decay_per_second * delta)
 		queue_redraw()
+	_drain(delta)
 	if _unattended >= Balance.number("village.rebuttal_reset_seconds") and rebuttals_left != rebuttals_per_visit:
 		rebuttals_left = rebuttals_per_visit
 		queue_redraw()
+
+
+## Fair listeners do not keep their place: partial conviction runs out fast.
+## Converted listeners stay converted; only progress toward the next one drains.
+func _drain(delta: float) -> void:
+	if drain_share <= 0.0 or progress <= 0.0 or delta <= 0.0:
+		return
+	var next: int = first_unconverted()
+	var rate: float = drain_share * (listener_conviction_required(next) if next >= 0 else 0.0)
+	progress = maxf(0.0, progress - rate * delta)
+	queue_redraw()
+
+
+## Conviction per second a helper's partial work loses here while it is deaf.
+func drain_rate(index: int) -> float:
+	return drain_share * listener_conviction_required(index) if drain_share > 0.0 else 0.0
+
+
+func set_deaf(value: bool) -> void:
+	if value == deaf:
+		return
+	deaf = value
+	var next: int = first_unconverted()
+	for index in range(listeners.size()):
+		listeners[index].deaf = value and index == next
+		listeners[index].queue_redraw()
+	queue_redraw()
+
+
+func set_performing(value: bool) -> void:
+	if value == show_running:
+		return
+	show_running = value
+	for listener in listeners:
+		listener.performing = value
+	queue_redraw()
+
+
+## A performer group whose every approachable member has joined.
+func act_won() -> bool:
+	return not act_show.is_empty() and listener_count > 0 and first_unconverted() < 0 and recruits > 0
 
 
 func first_unconverted() -> int:
@@ -243,8 +397,12 @@ func first_unconverted() -> int:
 	return -1
 
 
-func recruit_listener(index: int) -> bool:
+## The recruitment authority: helpers pass their own Interest (and the Barker its
+## cut) so no follower can win a listener who cannot hear them.
+func recruit_listener(index: int, interest: int = 0, extra_cut: int = 0) -> bool:
 	if index < 0 or index >= listeners.size() or listeners[index].following or not is_listener_eligible(index):
+		return false
+	if not hears(interest, extra_cut):
 		return false
 	var amount: int = listener_donation(index)
 	listeners[index].following = true
@@ -267,6 +425,11 @@ func reset_round() -> void:
 	_unattended = 0.0
 	is_listening = false
 	is_nearby = false
+	act_cancelled = false
+	stolen_left = 0.0
+	barker_cut = 0
+	set_deaf(false)
+	set_performing(false)
 	for listener in listeners:
 		listener.following = false
 		listener.clear_reward()
@@ -287,7 +450,7 @@ func validate_profiles() -> String:
 	for profile in listener_profiles:
 		if not profile.get("role", "") is String or String(profile.get("role", "")).strip_edges().is_empty():
 			return "A market listener needs a role name."
-		if not profile.get("npc_type", "") in ["ordinary", "guild", "patron"]:
+		if not profile.get("npc_type", "") in ["ordinary", "guild", "patron", "fairgoer", "stallholder", "performer", "fan"]:
 			return "A market listener has an unsupported audience type."
 		var threshold: Variant = profile.get("conviction_required")
 		if not (threshold is int or threshold is float) or not is_finite(float(threshold)) or float(threshold) <= 0.0:
@@ -342,6 +505,8 @@ func set_listening(value: bool) -> void:
 
 
 func _draw() -> void:
+	if distraction >= 0 and listener_count > 0:
+		_draw_fair_badge()
 	if not is_listening and not is_nearby:
 		return
 	if not listener_profiles.is_empty():
@@ -382,6 +547,12 @@ func _draw_market_details() -> void:
 		lines.append("%s: %.0f conviction / %d donations" % [listener_profiles[next]["role"], listener_conviction_required(next), listener_donation(next)])
 	else:
 		lines.append("Everyone approachable has joined")
+	if distraction >= 0 and next >= 0:
+		lines.append("Distraction %d (%s) - your Interest %d" % [effective_distraction(), Balance.dict("fair.zones").get(zone, zone), viewer_interest])
+		if still_only:
+			lines.append("Listens only while you stand still")
+		if rebuttals_per_visit > 0:
+			lines.append("Honks back at your first phrase each visit")
 	var locked_roles: Dictionary = {}
 	for index in range(listeners.size()):
 		if not is_listener_eligible(index) and not listeners[index].following:
@@ -395,7 +566,7 @@ func _draw_market_details() -> void:
 	var width: float = 0.0
 	for line in lines:
 		width = maxf(width, font.get_string_size(line, HORIZONTAL_ALIGNMENT_LEFT, -1, 14).x)
-	var top: float = -95.0 - float(lines.size()) * 20.0
+	var top: float = -95.0 - float(lines.size()) * 20.0 - (22.0 if distraction >= 0 else 0.0)
 	draw_style_box(_caption_style(), Rect2(-width * 0.5 - 10, top, width + 20, float(lines.size()) * 20.0 + 10))
 	for index in range(lines.size()):
 		draw_string(font, Vector2(-width * 0.5, top + 19 + index * 20), lines[index], HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("fff1d0"))
@@ -421,8 +592,51 @@ func _draw_lone_market() -> void:
 	var font := ThemeDB.fallback_font
 	var line: String = "%s required" % _introduction_name(String(listener_profiles[0].get("requires", "")))
 	var width: float = font.get_string_size(line, HORIZONTAL_ALIGNMENT_LEFT, -1, 14).x
-	draw_style_box(_caption_style(), Rect2(-width * 0.5 - 10, -98, width + 20, 28))
-	draw_string(font, Vector2(-width * 0.5, -79), line, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("fff1d0"))
+	draw_style_box(_caption_style(), Rect2(-width * 0.5 - 10, -118, width + 20, 28))
+	draw_string(font, Vector2(-width * 0.5, -99), line, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("fff1d0"))
+
+
+## Lantern pips under every fair audience: their Distraction, gold when the
+## cultist's Interest reaches it, dim red when they will not hear. Performers
+## sign their next show; a stolen crowd shows sparkles and a countdown ring.
+func _draw_fair_badge() -> void:
+	var font := ThemeDB.fallback_font
+	var lone: bool = listener_count == 1
+	# Above the heads, so stalls drawn in front never hide it.
+	var top: float = -84.0 if lone else -104.0
+	var level: int = effective_distraction()
+	var lantern: Color = Color("f2c14e") if viewer_interest >= level else Color("b4564a")
+	var suffix: String = ""
+	if not act_show.is_empty():
+		if act_cancelled:
+			suffix = "act over"
+		elif show_running:
+			suffix = "SHOW!"
+		elif next_show_in >= 0.0:
+			suffix = "show in %ds" % ceili(next_show_in)
+	var per_row: int = 10
+	var rows: int = maxi(1, ceili(float(level) / per_row))
+	var number: String = str(level)
+	var number_width: float = font.get_string_size(number, HORIZONTAL_ALIGNMENT_LEFT, -1, 12).x
+	var pip_width: float = float(mini(level, per_row)) * 7.0
+	var suffix_width: float = font.get_string_size(suffix, HORIZONTAL_ALIGNMENT_LEFT, -1, 12).x + 8.0 if not suffix.is_empty() else 0.0
+	var width: float = number_width + pip_width + suffix_width + 16.0
+	var left: float = -width * 0.5
+	var style := _caption_style()
+	style.bg_color = Color(0.17, 0.14, 0.2, 0.82)
+	draw_style_box(style, Rect2(left, top, width, 8.0 + rows * 10.0))
+	draw_string(font, Vector2(left + 6, top + 14), number, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, lantern.lightened(0.3))
+	for index in range(level):
+		draw_rect(Rect2(Vector2(left + 10 + number_width + (index % per_row) * 7.0, top + 5 + (index / per_row) * 10.0), Vector2(5, 7)), lantern)
+	if not suffix.is_empty():
+		draw_string(font, Vector2(left + 14 + number_width + pip_width, top + 14), suffix, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color("ffe9a8") if show_running else Color("e8dcc4"))
+	if stolen_left > 0.0:
+		var ring: float = 40.0 if lone else 76.0
+		draw_arc(Vector2(0, -12), ring, -PI * 0.5, -PI * 0.5 + TAU * clampf(stolen_left / maxf(stolen_total, 0.01), 0.0, 1.0), 48, Color("ffe38a"), 3.0, true)
+		for index in range(4):
+			var spark := Vector2.from_angle(float(Time.get_ticks_msec()) * 0.004 + index * TAU / 4.0) * (ring - 8.0) + Vector2(0, -12)
+			draw_line(spark + Vector2(-4, 0), spark + Vector2(4, 0), Color("fff4c4"), 1.5)
+			draw_line(spark + Vector2(0, -4), spark + Vector2(0, 4), Color("fff4c4"), 1.5)
 
 
 func _introduction_name(requirement: String) -> String:

@@ -67,6 +67,81 @@
       "count": 6,
       "people": ["Shopper", "Courier", "Porter", "Artisan", "Cook", "Patron", "Baker", "Guildmaster", "Courier", "Collector"]
     }  },
+  "fair": {
+    "start": [780, 960],
+    "interest": {"base": 4, "boss_bonus": 1},
+    "drain_share_per_second": 0.6,
+    "show_distraction": 3,
+    "performer_cut": 2,
+    "stolen": {"cut": 3, "seconds": 4.0},
+    "crowd_pull_speed": 120.0,
+    "crowd_ring": 75.0,
+    "roles": {
+      "fairgoer": {"conviction": 60.0, "donation": 15},
+      "stallholder": {"conviction": 100.0, "donation": 40},
+      "performer": {"conviction": 120.0, "donation": 55},
+      "fan": {"conviction": 100.0, "donation": 45}
+    },
+    "people": {
+      "Parent": "fairgoer", "Child": "fairgoer", "Farmhand": "fairgoer", "Sweetheart": "fairgoer",
+      "Lantern seller": "stallholder", "Pie seller": "stallholder", "Cider seller": "stallholder", "Ring-toss keeper": "stallholder", "Coconut keeper": "stallholder",
+      "Clown": "performer", "Juggler": "performer", "Acrobat": "performer", "Stilt-walker": "performer",
+      "Busker's fan": "fan", "Clown fan": "fan", "Mime watcher": "fan"
+    },
+    "zones": {
+      "gate": "Ticket Gate", "food": "Food Row", "midway": "Midway", "carousel": "Carousel",
+      "juggling": "Juggling stage", "lanes": "the lanes", "ring": "Big top ring"
+    },
+    "groups": [
+      {"title": "Ticket queue", "zone": "gate", "distraction": 3, "at": [600, 880], "people": ["Parent", "Child", "Farmhand", "Parent"]},
+      {"title": "Tired parents", "zone": "gate", "distraction": 4, "at": [965, 870], "people": ["Parent", "Child", "Sweetheart", "Lantern seller"]},
+      {"title": "Pie cart", "zone": "food", "distraction": 6, "at": [330, 830], "people": ["Pie seller", "Farmhand", "Child", "Sweetheart"]},
+      {"title": "Cider stall", "zone": "food", "distraction": 6, "at": [215, 640], "people": ["Cider seller", "Farmhand", "Parent"]},
+      {"title": "Ring toss", "zone": "midway", "distraction": 9, "at": [1165, 790], "people": ["Ring-toss keeper", "Sweetheart", "Farmhand", "Child"]},
+      {"title": "Coconut shy", "zone": "midway", "distraction": 9, "at": [1345, 640], "people": ["Coconut keeper", "Farmhand", "Parent"]},
+      {"title": "Carousel riders", "zone": "carousel", "distraction": 11, "at": [600, 300], "people": ["Sweetheart", "Child", "Parent", "Sweetheart", "Child"]},
+      {"title": "Carousel queue", "zone": "carousel", "distraction": 10, "at": [215, 445], "people": ["Parent", "Child", "Farmhand", "Sweetheart"]},
+      {"title": "Juggling crowd", "zone": "juggling", "distraction": 8, "at": [1035, 320], "people": ["Farmhand", "Sweetheart", "Child", "Parent"]},
+      {"title": "Clowns", "zone": "midway", "distraction": 9, "at": [1185, 545], "people": ["Clown", "Clown", "Clown"],
+        "show": {"start": 4.0, "seconds": 3.5, "period": 9.0, "radius": 230.0}},
+      {"title": "Jugglers", "zone": "juggling", "distraction": 8, "at": [1275, 270], "people": ["Juggler", "Juggler"],
+        "show": {"start": 2.0, "seconds": 4.0, "period": 8.0, "radius": 260.0}},
+      {"title": "Acrobats", "zone": "carousel", "distraction": 11, "at": [435, 520], "people": ["Acrobat", "Acrobat", "Acrobat"],
+        "show": {"start": 6.0, "seconds": 4.0, "period": 10.0, "radius": 240.0}}
+    ],
+    "fan_groups": [
+      {"stage": 1, "title": "Busker's crowd", "zone": "lanes", "distraction": 7, "at": [790, 700], "people": ["Busker's fan", "Busker's fan", "Busker's fan"]},
+      {"stage": 2, "title": "Clown fans", "zone": "midway", "distraction": 10, "at": [1360, 880], "people": ["Clown fan", "Clown fan", "Clown fan"], "rebuttals": 1},
+      {"stage": 3, "title": "Mime watchers", "zone": "lanes", "distraction": 12, "at": [400, 990], "people": ["Mime watcher", "Mime watcher", "Mime watcher"], "still_only": true}
+    ],
+    "wanderers": {
+      "zone": "lanes",
+      "people": ["Farmhand", "Sweetheart", "Parent", "Child"],
+      "distraction": 4,
+      "stilts": {"count": 2, "distraction": 7, "radius": 170.0, "aura": 1}
+    },
+    "stages": [
+      {"title": "Crate", "at": [470, 750], "radius": 42.0, "reach": 190.0},
+      {"title": "Bandstand", "at": [565, 455], "radius": 50.0, "reach": 200.0},
+      {"title": "Busker's spot", "at": [925, 700], "radius": 42.0, "reach": 200.0}
+    ],
+    "stage_bonus": 3,
+    "bosses": [
+      {"id": "performer", "title": "The Performer", "at": [1010, 585], "zone": "lanes", "distraction": 8, "conviction": 450.0, "drain": 60.0, "reward": 150, "coat": "c46a52",
+        "show": {"start": 1.5, "seconds": 3.0, "period": 5.5, "radius": 220.0},
+        "effect": {"stage_bonus": 1}},
+      {"id": "clown", "title": "The Head Clown", "at": [1320, 440], "zone": "midway", "distraction": 11, "conviction": 800.0, "drain": 100.0, "rebuttals": 3, "reward": 220, "coat": "d9d2c4",
+        "effect": {"zone": "midway", "distraction": -2}},
+      {"id": "mime", "title": "The Mime", "at": [600, 640], "zone": "lanes", "distraction": 13, "conviction": 1100.0, "drain": 160.0, "reward": 300, "coat": "e8e4ea", "still_only": true,
+        "effect": {"zone": "lanes", "distraction": -2}},
+      {"id": "ringmaster", "title": "The Ringmaster", "at": [780, 430], "zone": "ring", "distraction": 19, "conviction": 1800.0, "drain": 220.0, "reward": 600, "coat": "a8323c",
+        "hoops": {"radius": 82.0, "count": 5, "trigger": 26.0, "bravo_seconds": 1.5}}
+    ],
+    "helper": {
+      "teal": {"walk_speed": 150.0, "phrase_seconds": 1.0, "conviction_per_phrase": 30.0, "interest": 3},
+      "moss": {"walk_speed": 210.0, "phrase_seconds": 0.5, "conviction_per_phrase": 45.0, "interest": 6, "cut": 1}
+    }
+  },
   "targets": {
     "village_campaign_rounds": [48, 62],
     "market_entry_max_open_recruits": 9,

@@ -3,18 +3,28 @@ extends RefCounted
 ## Saves only progression: rounds always start fresh after relaunch; no offline accrual.
 
 const Balance = preload("res://scripts/balance.gd")
-const SAVE_VERSION: int = 4
+const SAVE_VERSION: int = 5
 const MAX_COUNTER: int = 1000000000
-const AREA_IDS: Array[String] = ["bramblewick", "bellmarket"]
+## Travel order. An area's earned effects carry into every later area, never back.
+const AREA_IDS: Array[String] = ["bramblewick", "bellmarket", "lantern_fair"]
+const AREA_TITLES: Dictionary = {"bramblewick": "Bramblewick", "bellmarket": "Bellmarket", "lantern_fair": "the Lantern Fair"}
+## Effect keys a circle may hold only in its own area, by prefix.
+const AREA_EFFECT_PREFIXES: Dictionary = {"bellmarket": "market_", "lantern_fair": "fair_"}
+const FAIR_BOSS_COUNT: int = 4
 ## Village nodes added after Bellmarket shipped. Saves validate earned market
 ## access without them, so a player already there is not rejected; ordinary
 ## travel still requires the whole current circle.
 const POST_MARKET_VILLAGE_IDS: Array[String] = ["beckon_1"]
-const EFFECT_KEYS: Array[String] = ["beckon_add", "encounter_conviction_add", "skeptic_conviction_add", "guard_conviction_add", "zealot_conviction_add", "priest_conviction_add", "merchant_conviction_add", "merchant_donation_add", "speech_speed_add", "conviction_add", "run_speed_add", "meadow_unlock", "east_unlock", "helper_unlock", "merchant_unlock", "encounter_unlock", "market_guild_unlock", "market_patron_unlock", "market_guild_donation_add", "market_patron_donation_add", "market_beckon_add", "market_wanderer_add", "market_helper_unlock", "market_teal_conviction_add", "market_amber_speed_add"]
-const UNLOCK_KEYS: Array[String] = ["meadow_unlock", "east_unlock", "helper_unlock", "merchant_unlock", "encounter_unlock", "market_guild_unlock", "market_patron_unlock", "market_helper_unlock"]
+const EFFECT_KEYS: Array[String] = ["beckon_add", "encounter_conviction_add", "skeptic_conviction_add", "guard_conviction_add", "zealot_conviction_add", "priest_conviction_add", "merchant_conviction_add", "merchant_donation_add", "speech_speed_add", "conviction_add", "run_speed_add", "meadow_unlock", "east_unlock", "helper_unlock", "merchant_unlock", "encounter_unlock", "market_guild_unlock", "market_patron_unlock", "market_guild_donation_add", "market_patron_donation_add", "market_beckon_add", "market_wanderer_add", "market_helper_unlock", "market_teal_conviction_add", "market_amber_speed_add", "fair_interest_add", "fair_stage_bonus_add", "fair_stage_reach_add", "fair_drain_cut_add", "fair_barker_unlock", "fair_barker_speed_add", "fair_barker_cut_add", "fair_teal_interest_add", "fair_steal_window_add", "fair_crowd_radius_add"]
+const UNLOCK_KEYS: Array[String] = ["meadow_unlock", "east_unlock", "helper_unlock", "merchant_unlock", "encounter_unlock", "market_guild_unlock", "market_patron_unlock", "market_helper_unlock", "fair_barker_unlock"]
+## Whole-number fair effects (Interest and Distraction are counted in whole lanterns).
+const WHOLE_FAIR_KEYS: Array[String] = ["fair_interest_add", "fair_stage_bonus_add", "fair_barker_cut_add", "fair_teal_interest_add"]
 
 
 var encounter_stage: int = 0
+## Fair headliners convinced so far: Performer, Head Clown, Mime, Ringmaster.
+## Their Interest bonus is derived from this count, never stored on its own.
+var fair_stage: int = 0
 var coins: int = 0
 # Recruitment events are lifetime history; assigning supporters spends only availability.
 var total_recruits: int = 0
@@ -122,8 +132,11 @@ func load_catalog(path: String = "res://data/upgrades.json") -> bool:
 			for effect in rank_effect:
 				if effect in ["merchant_donation_add", "market_guild_donation_add", "market_patron_donation_add"] and not _integer_between(rank_effect[effect], 1, 100):
 					return _fail("Donation bonuses must be whole numbers: " + entry.id)
-				if effect.begins_with("market_") and entry.area != "bellmarket":
-					return _fail("Market effects belong to Bellmarket: " + entry.id)
+				for owner in AREA_EFFECT_PREFIXES:
+					if effect.begins_with(AREA_EFFECT_PREFIXES[owner]) and entry.area != owner:
+						return _fail("Effects named %s* belong to %s: %s" % [AREA_EFFECT_PREFIXES[owner], AREA_TITLES[owner], entry.id])
+				if effect in WHOLE_FAIR_KEYS and not _integer_between(rank_effect[effect], 1, 100):
+					return _fail("Interest and Distraction effects must be whole numbers: " + entry.id)
 				if effect in UNLOCK_KEYS:
 					if entry.max_rank != 1 or rank_effect[effect] != 1 or unlocks.has(effect):
 						return _fail("Unlocks must appear once, at one rank and value 1: " + entry.id)
@@ -366,6 +379,76 @@ func market_wanderer_count() -> int:
 	return mini(Balance.integer("market.wanderers.count") + int(_sum_effect("market_wanderer_add")), people)
 
 
+## The cultist's Interest at the fair before any stage: the carried base
+## ("fair.interest.base"), Showmanship ranks and one point per convinced headliner.
+func fair_interest() -> int:
+	return Balance.integer("fair.interest.base") + int(_sum_effect("fair_interest_add")) + fair_boss_interest()
+
+
+func fair_boss_interest() -> int:
+	return Balance.integer("fair.interest.boss_bonus") * mini(fair_stage, FAIR_BOSS_COUNT)
+
+
+## Extra Interest while standing on a stage; the convinced Performer adds his own.
+func fair_stage_bonus() -> int:
+	var bonus: int = Balance.integer("fair.stage_bonus") + int(_sum_effect("fair_stage_bonus_add"))
+	for index in range(mini(fair_stage, FAIR_BOSS_COUNT)):
+		bonus += int(Balance.list("fair.bosses")[index].get("effect", {}).get("stage_bonus", 0))
+	return bonus
+
+
+func fair_stage_reach_bonus() -> float:
+	return _sum_effect("fair_stage_reach_add")
+
+
+## Multiplies every fair drain rate (Captivating); never below a fifth of it.
+func fair_drain_multiplier() -> float:
+	return maxf(0.2, 1.0 - _sum_effect("fair_drain_cut_add"))
+
+
+func fair_teal_interest() -> int:
+	return Balance.integer("fair.helper.teal.interest") + int(_sum_effect("fair_teal_interest_add"))
+
+
+func fair_barker_cut() -> int:
+	return Balance.integer("fair.helper.moss.cut") + int(_sum_effect("fair_barker_cut_add"))
+
+
+func fair_barker_speed_bonus() -> float:
+	return _sum_effect("fair_barker_speed_add")
+
+
+func fair_steal_seconds() -> float:
+	return Balance.number("fair.stolen.seconds") + _sum_effect("fair_steal_window_add")
+
+
+func fair_crowd_radius_bonus() -> float:
+	return _sum_effect("fair_crowd_radius_add")
+
+
+## Distraction a convinced headliner removes for good from one fair zone.
+func fair_zone_cut(zone: String) -> int:
+	var cut: int = 0
+	for index in range(mini(fair_stage, FAIR_BOSS_COUNT)):
+		var effect: Dictionary = Balance.list("fair.bosses")[index].get("effect", {})
+		if String(effect.get("zone", "")) == zone:
+			cut -= int(effect.get("distraction", 0))
+	return cut
+
+
+func complete_fair_boss(expected_stage: int) -> bool:
+	if active_area != "lantern_fair" or expected_stage != fair_stage or fair_stage >= FAIR_BOSS_COUNT:
+		return false
+	_add_earnings(int(Balance.list("fair.bosses")[fair_stage].reward), 1)
+	fair_stage += 1
+	save_progress()
+	return true
+
+
+func fair_complete() -> bool:
+	return fair_stage >= FAIR_BOSS_COUNT
+
+
 func has_unlock(key: String) -> bool:
 	return key in UNLOCK_KEYS and _sum_effect(key) >= 1.0
 
@@ -408,10 +491,12 @@ func _ranks_complete(definitions: Array[Dictionary], ranks: Dictionary) -> bool:
 	return true
 
 
+## Each area opens from the completed circle of the area before it.
 func is_area_unlocked(area_id: String) -> bool:
 	if not area_id in AREA_IDS or catalog_for_area(area_id).is_empty():
 		return false
-	return area_id == "bramblewick" or level_select_unlocked or is_circle_complete("bramblewick")
+	var index: int = AREA_IDS.find(area_id)
+	return index == 0 or level_select_unlocked or is_circle_complete(AREA_IDS[index - 1])
 
 
 func try_travel(area_id: String, bypass_unlock: bool = false) -> bool:
@@ -419,7 +504,8 @@ func try_travel(area_id: String, bypass_unlock: bool = false) -> bool:
 	if not area_id in AREA_IDS or catalog_for_area(area_id).is_empty():
 		return _fail("That destination is not implemented.")
 	if not bypass_unlock and not is_area_unlocked(area_id):
-		return _fail("Complete Bramblewick's ritual circle to reach Bellmarket.")
+		var previous: String = AREA_IDS[maxi(0, AREA_IDS.find(area_id) - 1)]
+		return _fail("Complete %s's ritual circle to reach %s." % [AREA_TITLES[previous], AREA_TITLES[area_id]])
 	var candidate: Dictionary = _snapshot()
 	candidate.active_area = area_id
 	candidate.level_select_unlocked = level_select_unlocked or bypass_unlock
@@ -500,7 +586,7 @@ func effect_preview(id: String) -> Dictionary:
 
 
 func has_progress() -> bool:
-	return coins > 0 or total_recruits > 0 or round_number > 1 or not purchased.is_empty() or encounter_stage > 0 or active_area != "bramblewick" or level_select_unlocked
+	return coins > 0 or total_recruits > 0 or round_number > 1 or not purchased.is_empty() or encounter_stage > 0 or fair_stage > 0 or active_area != "bramblewick" or level_select_unlocked
 
 
 ## Replaces progression with a fresh first-round village save. The old save is
@@ -511,7 +597,7 @@ func start_new_game() -> bool:
 	if save_enabled and not _write_blocked and FileAccess.file_exists(save_path):
 		if DirAccess.copy_absolute(save_path, save_path + ".previous") != OK:
 			return _fail("Cannot keep a copy of the current save, so it was not replaced.")
-	var fresh: Dictionary = {"schema_version": SAVE_VERSION, "coins": 0, "total_recruits": 0, "available_recruits": 0, "round_number": 1, "purchased": {}, "encounter_stage": 0, "active_area": "bramblewick", "level_select_unlocked": false}
+	var fresh: Dictionary = {"schema_version": SAVE_VERSION, "coins": 0, "total_recruits": 0, "available_recruits": 0, "round_number": 1, "purchased": {}, "encounter_stage": 0, "fair_stage": 0, "active_area": "bramblewick", "level_select_unlocked": false}
 	if not _write_snapshot(fresh):
 		return false
 	_apply_snapshot(fresh)
@@ -562,7 +648,7 @@ func load_progress() -> bool:
 
 
 func _snapshot() -> Dictionary:
-	return {"schema_version": SAVE_VERSION, "coins": coins, "total_recruits": total_recruits, "available_recruits": available_recruits, "round_number": round_number, "purchased": purchased.duplicate(true), "encounter_stage": encounter_stage, "active_area": active_area, "level_select_unlocked": level_select_unlocked}
+	return {"schema_version": SAVE_VERSION, "coins": coins, "total_recruits": total_recruits, "available_recruits": available_recruits, "round_number": round_number, "purchased": purchased.duplicate(true), "encounter_stage": encounter_stage, "fair_stage": fair_stage, "active_area": active_area, "level_select_unlocked": level_select_unlocked}
 
 
 func _apply_snapshot(state: Dictionary) -> void:
@@ -572,6 +658,7 @@ func _apply_snapshot(state: Dictionary) -> void:
 		catalog = catalog_for_area(active_area)
 	level_select_unlocked = bool(state.get("level_select_unlocked", false))
 	encounter_stage = int(state.get("encounter_stage", 0))
+	fair_stage = int(state.get("fair_stage", 0))
 	coins = int(state.coins)
 	total_recruits = int(state.total_recruits)
 	available_recruits = int(state.available_recruits)
@@ -584,9 +671,9 @@ func _sum_effect(key: String) -> float:
 	var total: float = 0.0
 	var definitions: Array[Dictionary] = all_catalog if not all_catalog.is_empty() else catalog
 	for entry in definitions:
-		# Bramblewick's earned benefits carry into new places. Market tuning is local,
-		# so returning never changes the measured first-map routes.
-		if entry.get("area", "bramblewick") != "bramblewick" and entry.area != active_area:
+		# Earned benefits carry forward into later places; a later circle's tuning
+		# never reaches back, so returning never changes an earlier map's routes.
+		if not _carries_here(entry):
 			continue
 		for index in range(rank(entry.id)):
 			total += float(_rank_effect(entry, index).get(key, 0.0))
@@ -601,7 +688,7 @@ func _all_effect_totals() -> Dictionary:
 		totals[key] = 0.0
 	var definitions: Array[Dictionary] = all_catalog if not all_catalog.is_empty() else catalog
 	for entry in definitions:
-		if entry.get("area", "bramblewick") != "bramblewick" and entry.area != active_area:
+		if not _carries_here(entry):
 			continue
 		for index in range(rank(entry.id)):
 			var effect: Dictionary = _rank_effect(entry, index)
@@ -609,6 +696,11 @@ func _all_effect_totals() -> Dictionary:
 				if totals.has(key):
 					totals[key] += float(effect[key])
 	return totals
+
+
+## Allocation-free: AREA_IDS is a constant array searched with find().
+func _carries_here(entry: Dictionary) -> bool:
+	return AREA_IDS.find(str(entry.get("area", "bramblewick"))) <= AREA_IDS.find(active_area)
 
 
 func _unlocked(totals: Dictionary, key: String) -> bool:
@@ -631,11 +723,16 @@ func _validated_snapshot(raw: Variant) -> Dictionary:
 		return {}
 	if not _integer_between(raw.get("encounter_stage", 0), 0, 4):
 		return {}
+	if not _integer_between(raw.get("fair_stage", 0), 0, FAIR_BOSS_COUNT if int(raw.schema_version) >= 5 else 0):
+		return {}
 	var unlock_id: String = _encounter_unlock_id()
 	if int(raw.get("encounter_stage", 0)) > 0 and (unlock_id.is_empty() or not raw.purchased.has(unlock_id)):
 		return {}
 	if int(raw.schema_version) >= 4:
 		if not raw.get("active_area") is String or not raw.active_area in AREA_IDS:
+			return {}
+		# The fair arrived with schema 5; an older save cannot already stand there.
+		if int(raw.schema_version) < 5 and raw.active_area == "lantern_fair":
 			return {}
 		if catalog_for_area(raw.active_area).is_empty() or not raw.get("level_select_unlocked") is bool:
 			return {}
@@ -643,6 +740,7 @@ func _validated_snapshot(raw: Variant) -> Dictionary:
 	# Old saves never spent recruits. Preserve all prior ranks without charging them.
 	normalized.available_recruits = int(raw.available_recruits) if int(raw.schema_version) >= 3 else int(raw.total_recruits)
 	normalized.encounter_stage = int(raw.get("encounter_stage", 0))
+	normalized.fair_stage = int(raw.get("fair_stage", 0))
 	normalized.active_area = raw.active_area if int(raw.schema_version) >= 4 else "bramblewick"
 	normalized.level_select_unlocked = raw.level_select_unlocked if int(raw.schema_version) >= 4 else false
 	normalized.schema_version = SAVE_VERSION
@@ -653,6 +751,8 @@ func _validated_snapshot(raw: Variant) -> Dictionary:
 		if definition.is_empty():
 			return {}
 		if int(raw.schema_version) < 4 and definition.get("area", "bramblewick") != "bramblewick":
+			return {}
+		if int(raw.schema_version) < 5 and definition.get("area", "bramblewick") == "lantern_fair":
 			return {}
 		if int(raw.schema_version) == 1:
 			if not raw.purchased[id] is bool or raw.purchased[id] != true:
@@ -666,11 +766,16 @@ func _validated_snapshot(raw: Variant) -> Dictionary:
 			if not raw.purchased.has(requirement):
 				return {}
 	# Neither a saved active area nor off-area purchases may bypass the normal gate.
-	var needs_market_access: bool = normalized.active_area == "bellmarket"
+	var furthest: int = AREA_IDS.find(normalized.active_area)
 	for id in normalized.purchased:
-		needs_market_access = needs_market_access or find_upgrade(id).get("area", "bramblewick") == "bellmarket"
-	if needs_market_access and not normalized.level_select_unlocked and not _ranks_complete(_market_gate_definitions(), normalized.purchased):
-		return {}
+		furthest = maxi(furthest, AREA_IDS.find(str(find_upgrade(id).get("area", "bramblewick"))))
+	if normalized.fair_stage > 0:
+		furthest = maxi(furthest, AREA_IDS.find("lantern_fair"))
+	if not normalized.level_select_unlocked:
+		if furthest >= 1 and not _ranks_complete(_market_gate_definitions(), normalized.purchased):
+			return {}
+		if furthest >= 2 and not _ranks_complete(catalog_for_area("bellmarket"), normalized.purchased):
+			return {}
 	return normalized
 
 

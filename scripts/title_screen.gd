@@ -16,6 +16,7 @@ const ACCESS_PASSWORD: String = "PLZKTKS"
 var unlocked: bool = false
 var current_area: String = "bramblewick"
 var market_available: bool = false
+var fair_available: bool = false
 ## Whether a save holds anything a new game would discard; it asks first if so.
 var has_progress: bool = false
 var continue_button: Button
@@ -27,6 +28,7 @@ var password_input: LineEdit
 var unlock_button: Button
 var level_one_button: Button
 var level_two_button: Button
+var level_three_button: Button
 var feedback_label: Label
 var _level_choices: VBoxContainer
 var _menu: VBoxContainer
@@ -44,9 +46,10 @@ func _ready() -> void:
 	_refresh()
 
 
-func configure(area_id: String, available: bool, progress: bool = false) -> void:
+func configure(area_id: String, available: bool, progress: bool = false, fair_open: bool = false) -> void:
 	current_area = area_id
 	market_available = available
+	fair_available = fair_open
 	has_progress = progress
 	if is_instance_valid(continue_button):
 		_new_game_confirm.hide()
@@ -81,7 +84,7 @@ func submit_password(value: String) -> bool:
 		return false
 	unlocked = true
 	if is_instance_valid(feedback_label):
-		feedback_label.text = "The seal is open. Choose either level."
+		feedback_label.text = "The seal is open. Choose any level."
 		feedback_label.add_theme_color_override("font_color", GOLD)
 		password_input.clear()
 		password_input.release_focus()
@@ -97,8 +100,10 @@ func show_error(message: String) -> void:
 
 func _refresh() -> void:
 	continue_button.text = "Play / Continue"
-	_journey_label.text = "Continue in " + ("Bellmarket" if current_area == "bellmarket" else "Bramblewick")
-	if market_available and current_area != "bellmarket":
+	_journey_label.text = "Continue in " + {"bellmarket": "Bellmarket", "lantern_fair": "the Lantern Fair"}.get(current_area, "Bramblewick")
+	if fair_available and current_area != "lantern_fair":
+		_journey_label.text += " · The fair is open"
+	elif market_available and current_area == "bramblewick":
 		_journey_label.text += " · Bellmarket is open"
 	# The confirmation and level list never share the menu, which keeps it on screen.
 	_level_choices.visible = unlocked and not _new_game_confirm.visible
@@ -179,13 +184,16 @@ func _build_controls() -> void:
 	level_two_button = _button("2 · Bellmarket", false)
 	level_two_button.pressed.connect(_request_level.bind("bellmarket"))
 	_level_choices.add_child(level_two_button)
-	var note: Label = _label("Your existing upgrades are kept. Each town has its own circle.", 13, MUTED)
+	level_three_button = _button("3 · The Lantern Fair", false)
+	level_three_button.pressed.connect(_request_level.bind("lantern_fair"))
+	_level_choices.add_child(level_three_button)
+	var note: Label = _label("Your existing upgrades are kept. Each place has its own circle.", 13, MUTED)
 	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_level_choices.add_child(note)
 
 
 func _request_level(area_id: String) -> void:
-	if unlocked and area_id in ["bramblewick", "bellmarket"]:
+	if unlocked and area_id in ["bramblewick", "bellmarket", "lantern_fair"]:
 		level_requested.emit(area_id)
 
 

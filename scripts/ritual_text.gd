@@ -2,7 +2,8 @@ extends RefCounted
 ## Wording for the ritual's detail panel: branch headings and effect previews.
 
 const Progression = preload("res://scripts/progression.gd")
-const BRANCH_NAMES: Dictionary = {"talk": "THE VOICE", "persuade": "THE CONVICTION", "run": "THE PILGRIM", "gather": "THE VILLAGE", "helper": "THE COMPANION", "merchant": "THE MERCHANT", "trial": "THE TRIALS", "faith": "THE FAITH", "market_run": "THE MARKET ROUTES", "market_talk": "THE MARKET VOICE", "market_persuade": "THE COMMON CAUSE", "market_guild": "THE GUILD", "market_patron": "THE PATRONS", "market_follower": "THE FOLLOWERS"}
+const Balance = preload("res://scripts/balance.gd")
+const BRANCH_NAMES: Dictionary = {"talk": "THE VOICE", "persuade": "THE CONVICTION", "run": "THE PILGRIM", "gather": "THE VILLAGE", "helper": "THE COMPANION", "merchant": "THE MERCHANT", "trial": "THE TRIALS", "faith": "THE FAITH", "market_run": "THE MARKET ROUTES", "market_talk": "THE MARKET VOICE", "market_persuade": "THE COMMON CAUSE", "market_guild": "THE GUILD", "market_patron": "THE PATRONS", "market_follower": "THE FOLLOWERS", "fair_show": "THE SHOWMANSHIP", "fair_stage": "THE STAGECRAFT", "fair_captivate": "THE CAPTIVATION", "fair_follower": "THE FAIR FOLLOWERS", "fair_steal": "THE SHOWSTOPPER", "fair_run": "THE FAIRGROUND PATHS", "fair_talk": "THE PATTER", "fair_persuade": "THE SPELLBINDING"}
 
 
 static func branch_name(branch: String) -> String:
@@ -15,6 +16,8 @@ static func effect_text(progression: Progression, by_id: Dictionary, id: String,
 	var preview: Dictionary = progression.effect_preview(id)
 	var current: Dictionary = preview.get("current", {})
 	var next: Dictionary = preview.get("next", {})
+	if branch.begins_with("fair_"):
+		return fair_effect_text(progression, by_id, id, current, complete)
 	if branch.begins_with("market_"):
 		var market_item: Dictionary = by_id[id]
 		var lines: PackedStringArray = []
@@ -61,6 +64,54 @@ static func effect_text(progression: Progression, by_id: Dictionary, id: String,
 	if complete or not next.has(stat_key):
 		return "%s\n%.2f %s" % [heading, current_value, units]
 	return "%s\n%.2f -> %.2f %s" % [heading, current_value, float(next[stat_key]), units]
+
+
+## Fair inscriptions read their current value from progression and add the
+## next rank's own effect, so the preview always matches what a purchase does.
+static func fair_effect_text(progression: Progression, by_id: Dictionary, id: String, current: Dictionary, complete: bool) -> String:
+	var item: Dictionary = by_id.get(id, {})
+	var rank: int = progression.rank(id)
+	var next_effect: Dictionary = {} if complete or rank >= int(item.get("max_rank", 1)) else item.rank_effects[rank]
+	var lines: PackedStringArray = []
+	for key in item.get("effect", {}):
+		var step: float = float(next_effect.get(key, 0.0))
+		match key:
+			"fair_interest_add":
+				lines.append(_pair("Interest at the fair", progression.fair_interest(), step, "%d"))
+			"fair_stage_bonus_add":
+				lines.append(_pair("Interest on a stage (extra)", progression.fair_stage_bonus(), step, "+%d"))
+			"fair_stage_reach_add":
+				lines.append(_pair("Stage reach bonus (px)", progression.fair_stage_reach_bonus(), step, "+%d"))
+			"fair_drain_cut_add":
+				var now: float = progression.fair_drain_multiplier() * 100.0
+				lines.append("Drain speed (%% of the fair's)\n%d%%%s" % [roundi(now), "" if step <= 0.0 else " -> %d%%" % roundi(maxf(20.0, now - step * 100.0))])
+			"fair_barker_unlock":
+				lines.append("THE BARKER\n" + ("Works the crowd beside you" if complete else "Sealed -> works the crowd"))
+			"fair_barker_speed_add":
+				var base: float = 1.0 / Balance.number("fair.helper.moss.phrase_seconds")
+				lines.append(_pair("Barker / phrases per second", base * (1.0 + progression.fair_barker_speed_bonus()), base * step, "%.2f"))
+			"fair_barker_cut_add":
+				lines.append(_pair("Barker's Distraction cut", progression.fair_barker_cut(), step, "%d"))
+			"fair_teal_interest_add":
+				lines.append(_pair("Teal helper / Interest", progression.fair_teal_interest(), step, "%d"))
+			"fair_steal_window_add":
+				lines.append(_pair("Stolen audience window (s)", progression.fair_steal_seconds(), step, "%.0f"))
+			"fair_crowd_radius_add":
+				lines.append(_pair("Show crowd reach bonus (px)", progression.fair_crowd_radius_bonus(), step, "+%d"))
+			"speech_speed_add":
+				lines.append(_pair("Phrases / second", float(current.get("speech_frequency", 0.0)), step, "%.2f"))
+			"conviction_add":
+				lines.append(_pair("Conviction / phrase", float(current.get("conviction", 0.0)), step, "%.2f"))
+			"run_speed_add":
+				lines.append(_pair("Running / base speed", float(current.get("run_multiplier", 0.0)), step, "%.2f"))
+	return "\n".join(lines)
+
+
+static func _pair(label: String, now: float, step: float, shown: String) -> String:
+	var text: String = label + "\n" + shown % now
+	if step > 0.0:
+		text += " -> " + shown % (now + step)
+	return text
 
 
 static func roman(value: int) -> String:

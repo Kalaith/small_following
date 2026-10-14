@@ -19,6 +19,10 @@ var robe := Color("528c83")
 var hood := Color("69a699")
 var sash := Color("dac5ee")
 var start_offset := START_OFFSET
+## Fair hearing: a negative `interest` means outside the fair (always heard).
+## The Barker's `distraction_cut` lowers the group it speaks to, for everyone.
+var interest: int = -1
+var distraction_cut: int = 0
 ## Other helpers; a listener one of them is walking to is never chosen twice.
 var rivals: Array[Node2D] = []
 var target_group: Node2D = null
@@ -48,6 +52,24 @@ func wear_amber() -> void:
 	hood = Color("d49a4c")
 	sash = Color("f3e2b0")
 	start_offset = Vector2(24, 24)
+
+
+## The fair's Barker, in a moss-green robe.
+func wear_moss() -> void:
+	title = "Barker"
+	robe = Color("5f7a3a")
+	hood = Color("7f9a4c")
+	sash = Color("e6e0a8")
+	start_offset = Vector2(0, 40)
+
+
+## The cut this helper would add to `group`, beyond what it already brings there.
+func extra_cut(group: Node2D) -> int:
+	return maxi(0, distraction_cut - group.barker_cut)
+
+
+func can_hear_me(group: Node2D) -> bool:
+	return interest < 0 or group.hears(interest, extra_cut(group))
 
 
 func configure_navigation(actors: Node2D) -> void:
@@ -139,11 +161,20 @@ func _advance_step(delta: float, groups: Array[Node2D]) -> void:
 		return
 	_cloth_trail = _cloth_trail.move_toward(Vector2.ZERO, remaining * 25.0)
 	phrase_elapsed += remaining
+	var heard: bool = can_hear_me(target_group)
+	if not heard:
+		# The same fast drain as the cultist's; once nothing is left, try elsewhere.
+		conviction = maxf(0.0, conviction - target_group.drain_rate(target_index) * remaining)
+		if conviction <= 0.0:
+			_clear_target()
+			return
 	if phrase_elapsed + TIME_EPSILON >= phrase_seconds:
 		phrase_elapsed = maxf(0.0, phrase_elapsed - phrase_seconds)
+		if not heard:
+			return
 		conviction += conviction_per_phrase
 		if conviction >= target_group.listener_conviction_required(target_index):
-			if target_group.recruit_listener(target_index):
+			if target_group.recruit_listener(target_index, maxi(interest, 0), extra_cut(target_group)):
 				completed_recruits += 1
 			_clear_target()
 
@@ -168,6 +199,8 @@ func _choose_target(groups: Array[Node2D]) -> void:
 		for index in range(group.listeners.size()):
 			if group.listeners[index].following or not group.is_listener_eligible(index) or _claimed(group, index):
 				continue
+			if not can_hear_me(group):
+				break
 			var destination: Vector2 = group.listeners[index].global_position + STAND_OFFSET
 			var to: Vector2i = _cell(destination)
 			if not navigation.is_in_boundsv(to) or navigation.is_point_solid(to):
@@ -220,6 +253,8 @@ func _draw() -> void:
 		var target: Vector2 = to_local(target_group.listeners[target_index].global_position)
 		draw_arc(target, 14, 0, TAU, 24, Color("e5d3f5"), 1.5, true)
 		caption = "%s / %d of %d" % [title, int(conviction), int(target_group.listener_conviction_required(target_index))]
+		if not can_hear_me(target_group):
+			caption = "%s / not heard..." % title
 		draw_line(Vector2(-13, 9), Vector2(13, 9), robe.darkened(0.25), 3)
 		draw_line(Vector2(-13, 9), Vector2(-13 + 26 * phrase_elapsed / phrase_seconds, 9), sash, 3)
 	var font := ThemeDB.fallback_font

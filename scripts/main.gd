@@ -16,6 +16,10 @@ const Village = preload("res://scripts/village.gd")
 const TitleScreen = preload("res://scripts/title_screen.gd")
 const Wanderers = preload("res://scripts/wanderers.gd")
 const Balance = preload("res://scripts/balance.gd")
+const Fair = preload("res://scripts/fair.gd")
+const FairBoss = preload("res://scripts/fair_boss.gd")
+const FairDirector = preload("res://scripts/fair_director.gd")
+const FairHud = preload("res://scripts/fair_hud.gd")
 const START_POSITION := Vector2(780, 680)
 ## Gatherings, merchants, opponents' villagers and the round length are balance
 ## data in data/balance.json; Bramblewick crowds are small huddles of three or
@@ -47,6 +51,12 @@ var encounter: Node2D = null
 var helper: Node2D = null
 ## Bellmarket's second, amber-robed helper (Market Hand).
 var market_helper: Node2D = null
+## The fair's moss-green Barker.
+var fair_helper: Node2D = null
+## The fair's round state (shows, stages, Distraction) and current headliner.
+var fair_director = FairDirector.new()
+var fair_boss: Node2D = null
+var fair_hud: Control
 var seconds_left: float = Balance.number("round.seconds")
 var round_active: bool = true
 var round_recruits: int = 0
@@ -127,15 +137,21 @@ func _rebuild_area() -> void:
 			$Actors.remove_child(actor)
 			actor.queue_free()
 	encounter = null
+	fair_boss = null
 	helper = null
 	market_helper = null
+	fair_helper = null
 	# No authored placeholder survives to _rebuild_area's second call (area
 	# travel); only a prior script-built world needs removing there.
 	var previous: Node = get_node_or_null("Village")
 	if previous:
 		remove_child(previous)
 		previous.queue_free()
-	var world: Node2D = Market.new() if progression.active_area == "bellmarket" else Village.new()
+	var world: Node2D = Village.new()
+	if progression.active_area == "bellmarket":
+		world = Market.new()
+	elif progression.active_area == Fair.AREA_ID:
+		world = Fair.new()
 	world.name = "Village"
 	add_child(world)
 	move_child(world, 0)
@@ -154,6 +170,22 @@ func _rebuild_area() -> void:
 			groups.append(gathering)
 		_seed_wanderers()
 		_sync_market_wanderers()
+	elif progression.active_area == Fair.AREA_ID:
+		for entry in Balance.list("fair.groups"):
+			groups.append(_new_fair_group(entry))
+		_add_stage_gatherings()
+		_seed_wanderers()
+		var lone: Dictionary = Balance.dict("fair.wanderers")
+		var people: Array = lone.people.duplicate()
+		for index in range(int(lone.stilts.count)):
+			people.append("Stilt-walker")
+		for index in range(people.size()):
+			var stilt: bool = String(people[index]) == "Stilt-walker"
+			var wanderer := _new_fair_group({"title": Wanderers.TITLE, "zone": lone.zone, "distraction": int(lone.stilts.distraction) if stilt else int(lone.distraction), "people": [people[index]]}, index)
+			wanderer.show_caption = false
+			wanderers.append(wanderer)
+		scatter_wanderers()
+		fair_director.reset_round()
 	else:
 		for entry in Balance.list("village.gatherings"):
 			_add_gathering(entry.title, Balance.vec(entry.at), false, int(entry.count))
@@ -195,15 +227,43 @@ func _sync_market_wanderers() -> void:
 	scatter_wanderers()
 
 
+## One fair audience from balance data: its people, Distraction, zone and any show.
+func _new_fair_group(entry: Dictionary, coat_offset: int = 0) -> Node2D:
+	var gathering := Gathering.new()
+	gathering.group_name = String(entry.title)
+	gathering.position = Balance.vec(entry.at) if entry.has("at") else Vector2.ZERO
+	gathering.coat_offset = coat_offset
+	gathering.listener_profiles.assign(Fair.profiles(entry.people))
+	gathering.distraction = int(entry.distraction)
+	gathering.zone = String(entry.zone)
+	gathering.act_show = entry.get("show", {})
+	gathering.still_only = bool(entry.get("still_only", false))
+	gathering.rebuttals_per_visit = int(entry.get("rebuttals", 0))
+	gathering.rebuttals_left = gathering.rebuttals_per_visit
+	gathering.configure_market(progression)
+	gathering.recruited.connect(_on_recruited)
+	gathering.phrase_spoken.connect(game_audio.on_phrase)
+	$Actors.add_child(gathering)
+	return gathering
+
+
 func area_start_position() -> Vector2:
+	if progression.active_area == Fair.AREA_ID:
+		return Fair.start_position()
 	return Market.START_POSITION if progression.active_area == "bellmarket" else START_POSITION
 
 
 func travel_to(area_id: String, bypass_unlock: bool = false) -> bool:
 	if round_active or not catalog_ready:
 		return false
+	var layouts: Array[Dictionary] = []
 	if area_id == "bellmarket":
-		for entry in Market.group_layout():
+		layouts = Market.group_layout()
+	elif area_id == Fair.AREA_ID:
+		for entry in Balance.list("fair.groups") + Balance.list("fair.fan_groups"):
+			layouts.append({"profiles": Fair.profiles(entry.people)})
+	if not layouts.is_empty():
+		for entry in layouts:
 			var probe := Gathering.new()
 			probe.listener_profiles.assign(entry.profiles)
 			var error: String = probe.validate_profiles()
@@ -231,11 +291,18 @@ func travel_to(area_id: String, bypass_unlock: bool = false) -> bool:
 	return true
 
 
+## Each completed circle opens the next area; every later area can return to the one before.
 func _configure_destination() -> void:
-	if progression.active_area == "bramblewick":
-		ritual_screen.configure_destination("bellmarket", "Bellmarket")
+	var index: int = Progression.AREA_IDS.find(progression.active_area)
+	if index + 1 < Progression.AREA_IDS.size() and not progression.catalog_for_area(Progression.AREA_IDS[index + 1]).is_empty():
+		var next: String = Progression.AREA_IDS[index + 1]
+		ritual_screen.configure_destination(next, Progression.AREA_TITLES[next])
 	else:
 		ritual_screen.configure_destination()
+	if index > 0:
+		ritual_screen.configure_return(Progression.AREA_IDS[index - 1], Progression.AREA_TITLES[Progression.AREA_IDS[index - 1]])
+	else:
+		ritual_screen.configure_return()
 
 
 func _build_title() -> void:
@@ -266,7 +333,7 @@ func show_title() -> void:
 	hud_layout.hide()
 	settings_button.hide()
 	title_screen.unlocked = title_screen.unlocked or progression.level_select_unlocked
-	title_screen.configure(progression.active_area, progression.is_area_unlocked("bellmarket"), progression.has_progress())
+	title_screen.configure(progression.active_area, progression.is_area_unlocked("bellmarket"), progression.has_progress(), progression.is_area_unlocked(Fair.AREA_ID))
 	title_screen.show()
 	if not progression.last_error.is_empty():
 		title_screen.show_error(progression.last_error)
@@ -358,6 +425,11 @@ func scatter_wanderers() -> void:
 	var avoid: Array[Vector2] = [area_start_position()]
 	if progression.active_area == "bramblewick":
 		avoid.append(Encounter.CENTER)
+	elif progression.active_area == Fair.AREA_ID:
+		for stage in Balance.list("fair.stages"):
+			avoid.append(Balance.vec(stage.at))
+		for boss in FairBoss.profiles():
+			avoid.append(Balance.vec(boss.at))
 	for group in groups:
 		avoid.append(group.position)
 	var spots: Array[Vector2] = Wanderers.scatter(_wanderer_rng, _village_props(), avoid, wanderers.size())
@@ -595,15 +667,29 @@ func advance_round(delta: float) -> void:
 	if title_active:
 		return
 	nearest_group = null
-	if round_active and not wanderers.is_empty():
+	var fair: bool = progression.active_area == Fair.AREA_ID
+	var all_audiences: Array[Node2D] = audiences()
+	var usable_delta: float = minf(maxf(delta, 0.0), seconds_left) if round_active else 0.0
+	var speak_radius: float = player.speaking_radius
+	var still: bool = _player_still()
+	if fair:
+		# Stage, Interest and every Distraction are current before anyone speaks.
+		fair_director.update_speaker(progression, player.global_position, player.speaking_radius)
+		speak_radius = fair_director.reach
+		fair_director.advance(usable_delta, progression, all_audiences, fair_boss, _footprints, get_node_or_null("Village"))
+		fair_hud.show_interest(fair_director.interest, fair_director.interest - progression.fair_interest(), fair_director.stage_title())
+	elif round_active and not wanderers.is_empty():
 		# Beckoning Call (Market Call in Bellmarket) draws lone wanderers in during
 		# the round's usable time only.
 		var reach: float = progression.market_beckon_reach() if progression.active_area == "bellmarket" else progression.beckon_reach()
-		Wanderers.pull(wanderers, player.global_position, reach, minf(maxf(delta, 0.0), seconds_left), _footprints)
-	var closest_distance: float = player.speaking_radius
+		Wanderers.pull(wanderers, player.global_position, reach, usable_delta, _footprints)
+	var closest_distance: float = speak_radius
 	var nearby_group: Node2D = null
-	var nearby_distance: float = player.speaking_radius + 30.0
-	var all_audiences: Array[Node2D] = audiences()
+	var nearby_distance: float = speak_radius + 30.0
+	# At the fair the nearest group that can hear you is chosen first, so a deaf
+	# crowd close by never steals speech from a quiet group in range.
+	var heard_group: Node2D = null
+	var heard_distance: float = speak_radius
 	for group in all_audiences:
 		var distance: float = player.global_position.distance_to(group.global_position)
 		if distance <= nearby_distance:
@@ -612,29 +698,44 @@ func advance_round(delta: float) -> void:
 		if distance <= closest_distance and group.first_unconverted() >= 0:
 			closest_distance = distance
 			nearest_group = group
+		if fair and distance <= heard_distance and group.first_unconverted() >= 0 and group.hears(fair_director.interest) and (still or not group.still_only):
+			heard_distance = distance
+			heard_group = group
 		group.set_listening(false)
 		group.set_nearby(false)
+	if is_instance_valid(heard_group):
+		nearest_group = heard_group
 	if is_instance_valid(nearby_group):
 		nearby_group.set_nearby(true)
 	if not round_active:
+		for group in all_audiences:
+			group.set_deaf(false)
 		game_audio.stop_speech()
 		return
-	var usable_delta: float = minf(maxf(delta, 0.0), seconds_left)
 	var speaking_to_opponent: bool = false
 	if is_instance_valid(encounter) and not encounter.defeated:
 		var speech_delta: float = encounter.advance_arrival(usable_delta)
 		speaking_to_opponent = encounter.arrived and player.global_position.distance_to(encounter.global_position) <= player.speaking_radius
 		encounter.advance_speech(speech_delta, speaking_to_opponent, progression.speech_interval(), progression.encounter_conviction(str(Encounter.profiles()[encounter.stage].id)))
+	if is_instance_valid(fair_boss) and not fair_boss.defeated:
+		# A headliner who can hear you comes first. A deaf one yields to any group
+		# that can; with no such group nearby he still gets your unheard phrases.
+		var in_range: bool = player.global_position.distance_to(fair_boss.global_position) <= speak_radius
+		speaking_to_opponent = in_range and (fair_boss.hears(fair_director.interest, still) or not is_instance_valid(heard_group))
+		fair_boss.drain_multiplier = progression.fair_drain_multiplier()
+		fair_boss.advance(usable_delta, speaking_to_opponent, progression.speech_interval(), progression.conviction_per_phrase(), fair_director.interest, still, player.global_position)
 	if speaking_to_opponent:
 		nearest_group = null
 	if is_instance_valid(nearest_group):
 		nearest_group.set_listening(true)
-		nearest_group.tick_persuasion(usable_delta, progression.speech_interval(), progression.conviction_for(nearest_group.npc_type))
+		nearest_group.tick_persuasion(usable_delta, progression.speech_interval(), progression.conviction_for(nearest_group.npc_type), fair_director.interest if fair else 0, still)
 	elif not speaking_to_opponent:
 		game_audio.stop_speech()
 	for group in all_audiences:
 		if group != nearest_group:
 			group.advance_unattended(usable_delta)
+	if fair:
+		_apply_barker_cut(all_audiences)
 	for each in helpers():
 		each.set_active(true)
 		each.advance(usable_delta, all_audiences)
@@ -650,11 +751,36 @@ func advance_round(delta: float) -> void:
 		set_ritual_visible(true)
 
 
+## The Mime (and his watchers) hear only a cultist standing completely still.
+func _player_still() -> bool:
+	return player.velocity.length_squared() < 1.0
+
+
+## The group the Barker is speaking to is less distracted for everyone there.
+func _apply_barker_cut(all_audiences: Array[Node2D]) -> void:
+	for group in all_audiences:
+		group.barker_cut = 0
+	if is_instance_valid(fair_helper) and fair_helper.speaking and is_instance_valid(fair_helper.target_group):
+		fair_helper.target_group.barker_cut = fair_helper.distraction_cut
+
+
 func _reset_encounter() -> void:
 	if is_instance_valid(encounter):
 		encounter.get_parent().remove_child(encounter)
 		encounter.queue_free()
 	encounter = null
+	if is_instance_valid(fair_boss):
+		fair_boss.get_parent().remove_child(fair_boss)
+		fair_boss.queue_free()
+	fair_boss = null
+	if progression.active_area == Fair.AREA_ID:
+		if not progression.fair_complete():
+			fair_boss = FairBoss.new()
+			fair_boss.stage = progression.fair_stage
+			fair_boss.convinced.connect(_on_fair_boss_convinced)
+			fair_boss.phrase_spoken.connect(game_audio.on_phrase)
+			$Actors.add_child(fair_boss)
+		return
 	if progression.active_area != "bramblewick" or not progression.has_unlock("encounter_unlock") or progression.map_complete():
 		return
 	encounter = Encounter.new()
@@ -671,6 +797,15 @@ func _on_encounter_convinced(stage: int) -> void:
 		popup.amount = int(Encounter.profiles()[stage].reward)
 		popup.position = Vector2(52, -80)
 		encounter.add_child(popup)
+
+
+func _on_fair_boss_convinced(stage: int) -> void:
+	if round_active and progression.complete_fair_boss(stage):
+		round_recruits += 1
+		var popup = DonationPopup.new()
+		popup.amount = int(FairBoss.profiles()[stage].reward)
+		popup.position = Vector2(52, -80)
+		fair_boss.add_child(popup)
 
 
 func _on_recruited(donation: int) -> void:
@@ -691,6 +826,13 @@ func purchase_upgrade(id: String, expected_rank: int = -1) -> bool:
 
 func apply_upgrades() -> void:
 	player.movement_speed = Balance.number("round.base_run_speed") * progression.run_multiplier()
+	if progression.active_area == Fair.AREA_ID:
+		var group_count: int = groups.size()
+		_add_stage_gatherings()
+		if groups.size() != group_count:
+			scatter_wanderers()
+		_apply_helper()
+		return
 	if progression.active_area == "bellmarket":
 		for group in groups:
 			group.configure_market(progression)
@@ -718,8 +860,16 @@ func apply_upgrades() -> void:
 	_apply_helper()
 
 
-## Adds the villagers of every opponent convinced so far; never duplicates.
+## Adds the villagers of every opponent convinced so far (at the fair, each
+## headliner's new fans); never duplicates.
 func _add_stage_gatherings() -> void:
+	if progression.active_area == Fair.AREA_ID:
+		for entry in Balance.list("fair.fan_groups"):
+			var fan_key: String = "fans_%d" % int(entry.stage)
+			if progression.fair_stage >= int(entry.stage) and not added_gatherings.has(fan_key):
+				groups.append(_new_fair_group(entry))
+				added_gatherings[fan_key] = true
+		return
 	if progression.active_area != "bramblewick":
 		return
 	for entry in Balance.list("village.stage_gatherings"):
@@ -731,9 +881,13 @@ func _add_stage_gatherings() -> void:
 
 func _apply_helper() -> void:
 	if progression.has_unlock("helper_unlock") and not is_instance_valid(helper):
-		helper = _new_helper(false)
-	if progression.has_unlock("market_helper_unlock") and not is_instance_valid(market_helper):
-		market_helper = _new_helper(true)
+		helper = _new_helper("teal")
+	# The Market Hand's upgrades are Bellmarket's own, so it stays there; the
+	# Barker works only the fair. The teal helper travels everywhere.
+	if progression.active_area == "bellmarket" and progression.has_unlock("market_helper_unlock") and not is_instance_valid(market_helper):
+		market_helper = _new_helper("amber")
+	if progression.active_area == Fair.AREA_ID and progression.has_unlock("fair_barker_unlock") and not is_instance_valid(fair_helper):
+		fair_helper = _new_helper("moss")
 	var team: Array[Node2D] = helpers()
 	for each in team:
 		each.rivals.assign(team.filter(func(other: Node2D) -> bool: return other != each))
@@ -746,20 +900,31 @@ func _apply_helper() -> void:
 func _tune_helpers() -> void:
 	if is_instance_valid(helper):
 		var market: bool = progression.active_area == "bellmarket"
-		var stats: String = "market.helper.teal." if market else "helper."
+		var fair: bool = progression.active_area == Fair.AREA_ID
+		var stats: String = "market.helper.teal." if market else "fair.helper.teal." if fair else "helper."
 		helper.walk_speed = Balance.number(stats + "walk_speed")
 		helper.phrase_seconds = Balance.number(stats + "phrase_seconds")
 		helper.conviction_per_phrase = Balance.number(stats + "conviction_per_phrase") + (progression.market_teal_conviction_bonus() if market else 0.0)
+		# At the fair the teal helper obeys the same hearing rule, with its own Interest.
+		helper.interest = progression.fair_teal_interest() if fair else -1
+	if is_instance_valid(fair_helper):
+		fair_helper.walk_speed = Balance.number("fair.helper.moss.walk_speed")
+		fair_helper.phrase_seconds = Balance.number("fair.helper.moss.phrase_seconds") / (1.0 + progression.fair_barker_speed_bonus())
+		fair_helper.conviction_per_phrase = Balance.number("fair.helper.moss.conviction_per_phrase")
+		fair_helper.interest = Balance.integer("fair.helper.moss.interest")
+		fair_helper.distraction_cut = progression.fair_barker_cut()
 	if is_instance_valid(market_helper):
 		market_helper.walk_speed = Balance.number("market.helper.amber.walk_speed")
 		market_helper.phrase_seconds = Balance.number("market.helper.amber.phrase_seconds") / (1.0 + progression.market_amber_speed_bonus())
 		market_helper.conviction_per_phrase = Balance.number("market.helper.amber.conviction_per_phrase")
 
 
-func _new_helper(market: bool) -> Node2D:
+func _new_helper(robe: String) -> Node2D:
 	var created := Helper.new()
-	if market:
+	if robe == "amber":
 		created.wear_amber()
+	elif robe == "moss":
+		created.wear_moss()
 	$Actors.add_child(created)
 	created.configure_navigation($Actors)
 	created.reset_round(area_start_position())
@@ -769,7 +934,7 @@ func _new_helper(market: bool) -> Node2D:
 ## Every helper present in this area, original first.
 func helpers() -> Array[Node2D]:
 	var result: Array[Node2D] = []
-	for each in [helper, market_helper]:
+	for each in [helper, market_helper, fair_helper]:
 		if is_instance_valid(each):
 			result.append(each)
 	return result
@@ -802,6 +967,7 @@ func _begin_round(increment: bool) -> void:
 	_add_stage_gatherings()
 	for group in audiences():
 		group.reset_round()
+	fair_director.reset_round()
 	scatter_wanderers()
 	# Every round uses the same entrance; walking in menus does not grant a head start.
 	player.clear_walk_target()
@@ -867,6 +1033,8 @@ func _build_hud() -> void:
 	round_label = _label("", 14, Color("#d9dfc2"))
 	status_rows.add_child(stats_label)
 	status_rows.add_child(round_label)
+	fair_hud = FairHud.new()
+	status_rows.add_child(fair_hud)
 	var help_panel := _panel()
 	_village_blockers.append(help_panel)
 	hud_layout.add_child(help_panel)
@@ -944,14 +1112,46 @@ func _label(value: String, font_size: int, color: Color = Color("#fff1d0")) -> L
 	return label
 
 
+func _fair_context() -> String:
+	if not round_active:
+		if progression.fair_complete():
+			return "The Lantern Fair is won!  Ritual circle or Next round."
+		return "Round complete - Tab: ritual / %s: next round" % Keys.hint("next_round")
+	if is_instance_valid(fair_boss) and not fair_boss.defeated and fair_boss.listening:
+		var boss: Dictionary = fair_boss.profile()
+		if fair_boss.deaf:
+			if fair_director.interest < fair_boss.distraction():
+				return "%s can't hear you: Distraction %d, your Interest %d" % [boss.title, fair_boss.distraction(), fair_director.interest]
+			if fair_boss.show_on:
+				return "%s is performing - wait for the act to end" % boss.title
+			if boss.has("hoops"):
+				return "Run through the lit hoop for a Bravo!"
+			return "%s only listens while you stand completely still" % boss.title
+		return "Convincing %s..." % boss.title
+	if is_instance_valid(nearest_group):
+		if nearest_group.deaf:
+			return "Deaf ears: %s Distraction %d, your Interest %d" % [nearest_group.group_name, nearest_group.effective_distraction(), fair_director.interest]
+		return "Speaking with %s..." % nearest_group.group_name
+	if fair_director.on_stage >= 0:
+		return "On the %s: +%d Interest and a longer reach" % [fair_director.stage_title(), fair_director.interest - progression.fair_interest()]
+	if progression.fair_complete():
+		return "The Lantern Fair is won!  Enjoy the fair."
+	if is_instance_valid(fair_boss):
+		return "%s waits at the fair - Distraction %d" % [fair_boss.profile().title, fair_boss.distraction()]
+	return "Find someone who can hear you over the fair."
+
+
 func _update_hud() -> void:
-	area_label.text = "BELLMARKET / a gathering of fortunes" if progression.active_area == "bellmarket" else "BRAMBLEWICK / a small beginning"
+	area_label.text = {"bellmarket": "BELLMARKET / a gathering of fortunes", Fair.AREA_ID: "THE LANTERN FAIR / are you interesting enough?"}.get(progression.active_area, "BRAMBLEWICK / a small beginning")
+	fair_hud.visible = progression.active_area == Fair.AREA_ID
 	ritual_button.visible = not round_active
 	next_round_button.visible = not round_active
 	stats_label.text = "%d donations / %d recruits available" % [coins, progression.available_recruits]
 	round_label.text = "Round %d   /   %.1fs remaining" % [round_number, seconds_left]
 	save_label.text = "Progress notice: see the ritual screen." if not progression.last_error.is_empty() else ""
-	if progression.active_area == "bellmarket" and progression.is_circle_complete():
+	if progression.active_area == Fair.AREA_ID:
+		context_label.text = _fair_context()
+	elif progression.active_area == "bellmarket" and progression.is_circle_complete():
 		context_label.text = "Bellmarket circle complete!  Keep exploring or return to Bramblewick."
 	elif progression.active_area == "bramblewick" and progression.map_complete():
 		context_label.text = "Bramblewick complete!" + ("  Choose Ritual circle or Next round." if not round_active else "  Enjoy the village.")

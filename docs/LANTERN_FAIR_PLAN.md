@@ -347,7 +347,33 @@ This branch carries no tests and agents must not add any (see
 checks above, using a password start to reach the map quickly. Earlier
 maps must play as before.
 
-## 9. Open decisions
+## 9. As built (2026-10-14)
+
+All slices are implemented: `scripts/fair.gd` (ground, props, stages,
+hoops), `fair_director.gd` (round clock, shows, crowds, stolen windows,
+Distraction), `fair_boss.gd` (the four headliners), `fair_hud.gd` (Interest
+pips), hearing and drain in `gathering.gd` and `helper.gd`, schema 5 and
+`fair_stage` in `progression.gd`, and 36 `lantern_fair` nodes in
+`upgrades.json`. Where the build differs from the text above:
+
+- **Ringmaster:** Distraction 19 = base 4 + all six Showmanship ranks + the
+  three headliners. "Missing any one leaves you short" needs the *full*
+  path, not "nearly" full.
+- **Headliners** stand at their own spots from the first round, in order;
+  no circle node unlocks them.
+- **Crowds:** groups inside a running show's radius count as watching (+3);
+  only lone fair-goers walk over on the bell. Stolen spectators stay where
+  they are until the next round's scatter rather than drifting back.
+- **The Performer** gathers a crowd (+3) but cannot be won mid-show, since
+  he is deaf while performing, so he has no steal.
+- **Drain** is a share of the current listener's threshold per second
+  (`fair.drain_share_per_second`, 0.6); headliners drain at their own
+  absolute rates. Captivating multiplies both.
+- **Opening tuning:** with the full village and market build, a first round
+  on the gate and lone fair-goers earns about 230 donations and 12 recruits
+  (measured headlessly), so the first fair rank comes in round one.
+
+## 10. Open decisions
 
 None from the user at present. Tuning (Distraction values, drain rate, the
 Bravo window) is settled in playtests.

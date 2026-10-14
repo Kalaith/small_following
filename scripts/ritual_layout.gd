@@ -7,6 +7,7 @@ const SECTOR_ANGLES: Dictionary = {"talk": -90.0, "run": 180.0, "persuade": 0.0,
 const BRANCH_TITLES: Dictionary = {"talk": "Words", "run": "Running", "persuade": "Creed", "gather": "Village", "helper": "Followers", "merchant": "Merchants", "trial": "Trials", "faith": "Faith"}
 const FAN_HALF_ANGLE: float = 15.0
 const MARKET_BRANCHES: Array[String] = ["market_run", "market_talk", "market_persuade", "market_guild", "market_patron"]
+const FAIR_TITLES: Dictionary = {"fair_show": "Showmanship", "fair_stage": "Stagecraft", "fair_captivate": "Captivating", "fair_follower": "Fair Followers", "fair_steal": "Showstopper", "fair_run": "Paths", "fair_talk": "Patter", "fair_persuade": "Spellbinding"}
 const MARKET_TITLES: Dictionary = {"market_follower": "Followers", "market_run": "Routes", "market_talk": "Voice", "market_persuade": "Creed", "market_guild": "Guild", "market_patron": "Patrons"}
 # The first three nodes retain their original petal positions. The next three
 # turn down the petal's spare side, keeping six real steps inside the same seal.
@@ -104,7 +105,7 @@ static func satellite_seals(catalog: Array) -> Array[Dictionary]:
 
 
 static func branch_title(branch: String) -> String:
-	return str(MARKET_TITLES.get(branch, BRANCH_TITLES.get(branch, branch.replace("_", " ").capitalize())))
+	return str(FAIR_TITLES.get(branch, MARKET_TITLES.get(branch, BRANCH_TITLES.get(branch, branch.replace("_", " ").capitalize()))))
 
 
 static func build(catalog: Array) -> Dictionary:

@@ -21,6 +21,9 @@ func arc(canvas: Control, center: Vector2, radius: float, color: Color, width: f
 
 
 func draw_backdrop(canvas: Control) -> void:
+	if screen.fair_circle:
+		draw_fair_seal(canvas)
+		return
 	if screen.market_circle:
 		draw_market_seal(canvas)
 		for seal in Layout.satellite_seals(screen.catalog):
@@ -71,6 +74,25 @@ func draw_market_seal(canvas: Control) -> void:
 	for index in range(60):
 		var radial := Vector2.from_angle(index * TAU / 60)
 		canvas.draw_line(_point(radial * 444), _point(radial * (455 if index % 6 == 0 else 449)), Color(Style.GOLD, 0.30 if index % 6 == 0 else 0.15), 1, true)
+
+
+func draw_fair_seal(canvas: Control) -> void:
+	# A striped tent canopy seen from above: scalloped rim, faint alternating
+	# wedges and a carousel crown. Ornament only; the nodes carry every link.
+	var center: Vector2 = _point(Vector2.ZERO)
+	var outer: float = screen.max_radius + 40.0
+	arc(canvas, center, outer, Color(Style.GOLD, 0.22), 1)
+	arc(canvas, center, outer + 13.0, Color(Style.LILAC, 0.16), 1)
+	_draw_runes(canvas, outer + 6.0)
+	for index in range(24):
+		var start: float = index * TAU / 24.0
+		var scallop_at: Vector2 = Vector2.from_angle(start + TAU / 48.0) * (outer - 9.0)
+		canvas.draw_arc(_point(scallop_at), 13.0 * screen.zoom, start + PI * 0.5 - 0.2, start + PI * 1.5 + 0.2, 12, Color(Style.VIOLET, 0.16), 1.0, true)
+		if index % 2 == 0:
+			var wedge := PackedVector2Array([center, _point(Vector2.from_angle(start) * (outer - 22.0)), _point(Vector2.from_angle(start + TAU / 24.0) * (outer - 22.0))])
+			canvas.draw_colored_polygon(wedge, Color(Style.VIOLET, 0.035))
+	for radius in [outer * 0.45, outer * 0.72]:
+		arc(canvas, center, radius, Color(Style.VIOLET, 0.09), 1.0)
 
 
 func _draw_satellite(canvas: Control, seal: Dictionary) -> void:
@@ -136,6 +158,18 @@ func draw_core(canvas: Control) -> void:
 	for index in range(20):
 		var radial: Vector2 = Vector2.from_angle(-PI * 0.5 + index * TAU / 20.0)
 		canvas.draw_line(_point(radial * (Style.CORE_RADIUS + 4.0)), _point(radial * (Style.CORE_ORNAMENT_RADIUS - (6.0 if index % 4 == 0 else 10.0))), Color(Style.LILAC, 0.80 if complete else 0.30), 1.0, true)
+	if screen.fair_circle:
+		# The fair's centre is a carousel crown: a striped cone over a ring of lights.
+		var tip: Vector2 = center + Vector2(0, -radius * 0.62)
+		for index in range(6):
+			var base_a: Vector2 = center + Vector2(-radius * 0.6 + index * radius * 0.2, radius * 0.18)
+			var base_b: Vector2 = base_a + Vector2(radius * 0.2, 0)
+			if index % 2 == 0:
+				canvas.draw_colored_polygon(PackedVector2Array([tip, base_a, base_b]), Style.GOLD if complete else Color(Style.GOLD, 0.4))
+		canvas.draw_polyline(PackedVector2Array([center + Vector2(-radius * 0.6, radius * 0.18), tip, center + Vector2(radius * 0.6, radius * 0.18)]), Style.GOLD if complete else Color(Style.GOLD, 0.5), 1.2, true)
+		for index in range(7):
+			canvas.draw_circle(center + Vector2(-radius * 0.54 + index * radius * 0.18, radius * 0.36), maxf(1.2, radius * 0.05), Style.GOLD if complete else Color(Style.GOLD, 0.45))
+		return
 	if screen.market_circle:
 		# Bellmarket's centre is a five-petalled coin, distinct from the village star.
 		for index in range(5):

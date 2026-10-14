@@ -52,17 +52,19 @@ static func is_clear(at: Vector2, props: Array[Node], avoid: Array[Vector2], pla
 ## Walks unconverted wanderers within `reach` toward `toward`, sliding along
 ## prop footprints instead of entering them. Converted wanderers, and market
 ## wanderers still awaiting an introduction, stay put.
-static func pull(wanderers: Array[Node2D], toward: Vector2, reach: float, delta: float, footprints: Array[Node]) -> void:
+## A fair show's bell uses the same walk with its own ring distance and pace.
+static func pull(wanderers: Array[Node2D], toward: Vector2, reach: float, delta: float, footprints: Array[Node], stop: float = PULL_STOP, speed: float = -1.0) -> void:
 	if reach <= 0.0 or delta <= 0.0:
 		return
+	var pace: float = speed if speed > 0.0 else Balance.number("village.wanderers.pull_speed")
 	for wanderer in wanderers:
 		if wanderer.recruits > 0 or wanderer.first_unconverted() < 0:
 			continue
 		var from: Vector2 = wanderer.global_position
 		var distance: float = from.distance_to(toward)
-		if distance > reach or distance <= PULL_STOP:
+		if distance > reach or distance <= stop:
 			continue
-		var step: Vector2 = from.direction_to(toward) * minf(Balance.number("village.wanderers.pull_speed") * delta, distance - PULL_STOP)
+		var step: Vector2 = from.direction_to(toward) * minf(pace * delta, distance - stop)
 		for candidate in [step, Vector2(step.x, 0), Vector2(0, step.y)]:
 			if not _blocked(from + candidate, footprints):
 				wanderer.global_position = from + candidate

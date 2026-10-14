@@ -76,6 +76,9 @@ var labels: Labels = Labels.new(self)
 var hovered_id: String = ""
 var core_hovered: bool = false
 var market_circle: bool = false
+var fair_circle: bool = false
+## Any circle after Bramblewick's: it offers a road back and a compact legend.
+var away_circle: bool = false
 var max_radius: float = FIRST_RING
 var catalog: Array = []
 var by_id: Dictionary = {}
@@ -103,6 +106,7 @@ var _built: bool = false
 var _displayed_rank: int = 0
 var _destination_id: String = ""
 var _destination_title: String = ""
+var _return_id: String = ""
 var _demo_description: Label
 
 
@@ -123,7 +127,10 @@ func configure(new_catalog: Array, progression: Progression) -> void:
 	dismiss_demo_message()
 	hovered_id = ""
 	catalog = new_catalog
-	market_circle = not catalog.is_empty() and str(catalog[0].get("area", "bramblewick")) == "bellmarket"
+	var area: String = str(catalog[0].get("area", "bramblewick")) if not catalog.is_empty() else "bramblewick"
+	market_circle = area == "bellmarket"
+	fair_circle = area == "lantern_fair"
+	away_circle = market_circle or fair_circle
 	_progression = progression
 	by_id.clear()
 	node_positions = Layout.build(catalog)
@@ -152,17 +159,33 @@ func configure_destination(area_id: String = "", destination_title: String = "")
 		update_state(_round_recruits)
 
 
+## The road back from a later circle; empty hides the button.
+func configure_return(area_id: String = "", area_title: String = "") -> void:
+	_return_id = area_id
+	if is_instance_valid(return_area_button):
+		return_area_button.text = "Return to " + area_title if not area_id.is_empty() else ""
+	if _built:
+		update_state(_round_recruits)
+
+
 func update_state(round_recruits: int = 0) -> void:
 	_round_recruits = round_recruits
 	if not _built:
 		return
-	_hint_label.text = "Tab: %s / %s: next round\n%s%s%s%s or D-pad: move selection / %s: inscribe\nMovement stays active." % ["market" if market_circle else "village", Keys.hint("next_round"), Keys.hint("ritual_nav_up"), Keys.hint("ritual_nav_down"), Keys.hint("ritual_nav_left"), Keys.hint("ritual_nav_right"), Keys.hint("buy_upgrade")]
+	_hint_label.text = "Tab: %s / %s: next round\n%s%s%s%s or D-pad: move selection / %s: inscribe\nMovement stays active." % ["fair" if fair_circle else "market" if market_circle else "village", Keys.hint("next_round"), Keys.hint("ritual_nav_up"), Keys.hint("ritual_nav_down"), Keys.hint("ritual_nav_left"), Keys.hint("ritual_nav_right"), Keys.hint("buy_upgrade")]
 	_demo_hint.text = "Esc: dismiss / Tab: village / %s: next round" % Keys.hint("next_round")
 	_subtitle_label.text = "ROUND COMPLETE  /  %d NEW FOLLOWERS" % _round_recruits
-	_title_label.text = "Bellmarket's circle." if market_circle else "The circle grows."
-	return_area_button.visible = market_circle
-	village_button.text = "Return to the market" if market_circle else "Return to the village"
-	if market_circle:
+	_title_label.text = "The fair's circle." if fair_circle else "Bellmarket's circle." if market_circle else "The circle grows."
+	return_area_button.visible = not _return_id.is_empty()
+	village_button.text = "Return to the fair" if fair_circle else "Return to the market" if market_circle else "Return to the village"
+	if fair_circle:
+		var headliners: Array[String] = ["Performer", "Head Clown", "Mime", "Ringmaster"]
+		_subtitle_label.text = "THE LANTERN FAIR  /  %d NEW FOLLOWERS  /  " % _round_recruits
+		if is_instance_valid(_progression) and _progression.fair_complete():
+			_subtitle_label.text += "RINGMASTER CONVINCED"
+		elif is_instance_valid(_progression):
+			_subtitle_label.text += "HEADLINERS %d/4 / Next: %s / Interest %d" % [_progression.fair_stage, headliners[_progression.fair_stage], _progression.fair_interest()]
+	elif market_circle:
 		_subtitle_label.text = "BELLMARKET  /  %d NEW FOLLOWERS  /  FIVE PATHS, YOUR CHOICE" % _round_recruits
 	elif is_instance_valid(_progression) and _progression.map_complete():
 		_subtitle_label.text = "BRAMBLEWICK COMPLETE / Priest convinced / %s: play again" % Keys.hint("next_round")
@@ -228,8 +251,8 @@ func update_state(round_recruits: int = 0) -> void:
 	if not _destination_id.is_empty() and complete:
 		completion_button.text = "Circle complete / Travel"
 		completion_button.tooltip_text = "Open the route to " + _destination_title + "."
-	demo_message_label.text = "The road to %s is open" % _destination_title if not _destination_id.is_empty() else "Bellmarket's circle is complete" if market_circle else "This is the end of the demo"
-	_demo_description.text = "Visit its separate circle and new listeners. Your progress in both towns is kept." if not _destination_id.is_empty() else "Every inscription is yours. Keep exploring the market or return to Bramblewick." if market_circle else "Every inscription is yours. You can keep playing in this village."
+	demo_message_label.text = "The road to %s is open" % _destination_title if not _destination_id.is_empty() else "The fair's circle is complete" if fair_circle else "Bellmarket's circle is complete" if market_circle else "This is the end of the demo"
+	_demo_description.text = "Visit its separate circle and new listeners. Your progress in both towns is kept." if not _destination_id.is_empty() else "Every inscription is yours. Keep enjoying the fair or return to Bellmarket." if fair_circle else "Every inscription is yours. Keep exploring the market or return to Bramblewick." if market_circle else "Every inscription is yours. You can keep playing in this village."
 	destination_button.visible = not _destination_id.is_empty()
 	destination_button.text = "Travel to " + _destination_title
 	if not complete:
@@ -550,7 +573,10 @@ func _build_controls() -> void:
 	completion_button.pressed.connect(open_demo_message)
 	return_area_button = _button("Return to Bramblewick", false)
 	return_area_button.add_theme_font_size_override("font_size", 13)
-	return_area_button.pressed.connect(func() -> void: travel_requested.emit("bramblewick"))
+	return_area_button.pressed.connect(func() -> void:
+		if not _return_id.is_empty():
+			travel_requested.emit(_return_id)
+	)
 	return_area_button.hide()
 	_build_demo_message()
 
@@ -682,7 +708,7 @@ func _layout_footer() -> void:
 		return
 	return_area_button.position = Vector2(40, size.y - 50)
 	return_area_button.size = Vector2(200, 44)
-	if market_circle:
+	if away_circle:
 		_legend_label.text = "Diamond: locked  /  Hollow: needs resources\n+: ready  /  Check: complete  ·  Drag to pan, + / - to zoom"
 		_legend_label.position.x = 258
 		_legend_label.size.x = _detail_x - 286
