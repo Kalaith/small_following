@@ -197,11 +197,30 @@ func _rose_context() -> String:
 		var group: Node2D = game.nearest_group
 		var next: int = group.first_unconverted()
 		if next >= 0:
-			return "%s: %s, %.0f conviction / %d gold" % [group.group_name, group.listener_profiles[next].role, group.listener_conviction_required(next), group.listener_donation(next)]
+			var whisper: String = "  (whispered: %d%% won)" % roundi(game.progression.rose_head_start() * 100.0) if game.rose_court.is_whispered(group, next) else ""
+			return "%s: %s, %.0f conviction / %d gold%s" % [group.group_name, group.listener_profiles[next].role, group.listener_conviction_required(next), group.listener_donation(next), whisper]
 		return "Speaking with %s..." % group.group_name
+	var waiting: String = _reserved_near()
+	if not waiting.is_empty():
+		return waiting
 	if game.progression.rose_king_won:
 		return "The King's approval is yours.  Enjoy the garden party."
 	return "Win guests in the right order: who you talk to first opens who listens next."
+
+
+## A reserved noble in the salon beside the cultist, and who can introduce them.
+func _reserved_near() -> String:
+	if not is_instance_valid(game.rose_court):
+		return ""
+	for group in game.groups:
+		if game.player.global_position.distance_to(group.global_position) > game.player.speaking_radius + 30.0:
+			continue
+		for index in range(group.listeners.size()):
+			if group.listeners[index].following or group.is_listener_eligible(index) or not bool(group.listener_profiles[index].get("reserved", false)):
+				continue
+			var by: PackedStringArray = game.rose_court.introducers(group, index)
+			return "%s waits for an introduction from %s" % [group.listener_profiles[index].role, " or ".join(by) if not by.is_empty() else "someone they trust"]
+	return ""
 
 
 func refresh() -> void:

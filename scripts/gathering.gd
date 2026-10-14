@@ -28,6 +28,8 @@ var _unattended: float = 0.0
 ## Empty profiles preserve the original homogeneous village/merchant rules.
 var listener_profiles: Array[Dictionary] = []
 var _market_progression: Progression = null
+## Rosecourt's whisper court: reserved guests, head starts and threads.
+var court: Node2D = null
 
 var group_name: String = "Neighbours"
 ## Village-type crowds and lone wanderers carry no name or hint overhead; the
@@ -250,6 +252,9 @@ func recruit_listener(index: int, interest: int = 0, extra_cut: int = 0) -> bool
 	listeners[index].show_reward(amount)
 	listeners[index].queue_redraw()
 	recruits += 1
+	if court != null:
+		# Whoever won them, the cultist or a helper, their threads whisper now.
+		court.on_converted(self, index)
 	if recruits == listener_count:
 		progress = 0.0
 		phrase_elapsed = 0.0
@@ -317,6 +322,9 @@ func is_listener_eligible(index: int) -> bool:
 	var requirement: String = String(listener_profiles[index].get("requires", ""))
 	if not requirement.is_empty() and (_market_progression == null or not _market_progression.has_unlock(requirement)):
 		return false
+	# A reserved Rosecourt noble listens only after someone they trust whispers.
+	if bool(listener_profiles[index].get("reserved", false)) and (court == null or not court.is_whispered(self, index)):
+		return false
 	# The faculty rule: an academic hears only an argument prepared this round.
 	var argument: String = listener_argument(index)
 	return argument.is_empty() or (_market_progression != null and _market_progression.is_prepared(argument))
@@ -330,6 +338,8 @@ func listener_argument(index: int) -> String:
 
 
 func listener_conviction_bonus(index: int) -> float:
+	if court != null:
+		return court.conviction_bonus(self, index)
 	var argument: String = listener_argument(index)
 	if argument.is_empty() or _market_progression == null:
 		return 0.0
@@ -341,6 +351,9 @@ func listener_conviction_required(index: int) -> float:
 		return conviction_required
 	if index < 0 or index >= listener_profiles.size():
 		return INF
+	if court != null:
+		# A whispered guest's head start: part of their threshold is already won.
+		return float(listener_profiles[index]["conviction_required"]) * court.required_share(self, index)
 	return float(listener_profiles[index]["conviction_required"])
 
 

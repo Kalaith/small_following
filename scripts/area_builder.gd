@@ -12,6 +12,7 @@ const FairBoss = preload("res://scripts/fair_boss.gd")
 const University = preload("res://scripts/university.gd")
 const UniBoss = preload("res://scripts/uni_boss.gd")
 const Rosecourt = preload("res://scripts/rosecourt.gd")
+const RoseCourt = preload("res://scripts/rose_court.gd")
 
 var game: Node2D
 
@@ -32,6 +33,7 @@ func rebuild() -> void:
 	game.encounter = null
 	game.fair_boss = null
 	game.uni_boss = null
+	game.rose_court = null
 	game.helper = null
 	game.market_helper = null
 	game.fair_helper = null
@@ -99,8 +101,16 @@ func rebuild() -> void:
 			game.wanderers.append(wanderer)
 		scatter_wanderers()
 	elif game.progression.active_area == Rosecourt.AREA_ID:
+		var salons: Dictionary = {}
 		for entry in Balance.list("rosecourt.salons"):
-			game.groups.append(_new_rose_group(entry))
+			var salon: Node2D = _new_rose_group(entry)
+			salons[String(entry.id)] = salon
+			game.groups.append(salon)
+		# The court sits on the garden's floor so its threads run under the guests.
+		game.rose_court = RoseCourt.new()
+		game.rose_court.name = "Whispers"
+		world.add_child(game.rose_court)
+		game.rose_court.bind(salons, game.progression)
 		_seed_wanderers()
 		var strollers: Array = Balance.list("rosecourt.wanderers.people")
 		for index in range(strollers.size()):

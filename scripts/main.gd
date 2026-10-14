@@ -65,6 +65,8 @@ var fair_director = FairDirector.new()
 var fair_boss: Node2D = null
 ## Quillmoor's current boss and the HUD strip of prepared arguments.
 var uni_boss: Node2D = null
+## Rosecourt's whispered introductions (threads, reserved nobles, head starts).
+var rose_court: Node2D = null
 var seconds_left: float = Balance.number("round.seconds")
 var round_active: bool = true
 var round_recruits: int = 0
@@ -600,9 +602,11 @@ func apply_upgrades() -> void:
 		_apply_helper()
 		return
 	if progression.active_area == Rosecourt.AREA_ID:
-		# Ranks change head starts and who is trusted, so locks are re-read.
+		# Ranks change head starts, threads and who is trusted, so locks are re-read.
 		for group in audiences():
 			group.configure_market(progression)
+		if is_instance_valid(rose_court):
+			rose_court.reset_round()
 		_apply_helper()
 		return
 	if progression.active_area == "bellmarket":
@@ -668,6 +672,8 @@ func _begin_round(increment: bool) -> void:
 	area.add_stage_gatherings()
 	for group in audiences():
 		group.reset_round()
+	if is_instance_valid(rose_court):
+		rose_court.reset_round()
 	fair_director.reset_round()
 	area.scatter_wanderers()
 	# Every round uses the same entrance; walking in menus does not grant a head start.
