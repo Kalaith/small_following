@@ -1,4 +1,4 @@
-# Rosecourt: the King's garden - proposal, 2026-10-14
+# Rosecourt: the King's garden - implemented, 2026-10-14
 
 ## 0. Scope and decision status
 
@@ -155,3 +155,46 @@ maps must play as before.
 
 None from the user at present. Tuning (thresholds, head-start size, the
 King's arrival trigger) is settled in playtests.
+
+## 9. As built (2026-10-14)
+
+All six slices are in. The numbers live in `data/balance.json`
+("rosecourt") and `data/upgrades.json` (`rose_*`); those files are the
+source of truth, and the figures here are a snapshot.
+
+- **Area:** `"rosecourt"` is the fifth entry in `AREA_IDS`. Save schema 7
+  adds the area and `rose_king_won`. Older builds refuse a schema 7 save as
+  newer and leave it alone. Travel opens from Quillmoor's completed circle,
+  and the title's password list shows "5 · Rosecourt".
+- **Garden:** six salons: Potting shed and Bandstand on the Lower Lawn, Orangery
+  tea, the Fountain salon, the Rose arbour and the King's circle on the
+  pavilion stair. Four servants stroll alone. Hedges, the fountain, the
+  orangery, the pavilion, the arch and the topiary all block movement.
+- **Guests:** servant 1400 conviction / 150 gold, courtier 2300 / 250,
+  noble 4200 / 500 (reserved), grandee 7000 / 900 (reserved). With the
+  carried build the first round wins about 9 guests, counting the helper.
+- **Whispers:** 14 threads, written as `salon:index` endpoints. A thread can
+  also list `wide` guests that Wide Circles reaches. The head start begins at
+  40% of the threshold and is capped at 85%. Threads lie on the floor:
+  bright where they open a noble, faint where they give only a head start,
+  faded once spent. Pulses run along a thread when it whispers.
+- **No text over guests (user, 2026-10-14):** salons and the King show only
+  their ring, bar and icons: a closed fan while reserved, a rose once
+  whispered to, rose pips for the King. The HUD's context line names the guest
+  being won, who can introduce a waiting noble, and what the King needs.
+- **The King:** he arrives once 30 rose ranks are owned. He needs all three
+  grandees won in the same round, and each grandee's whisper fills 15% of his
+  66000 conviction. He pays 8000 and stays won. Decay and rebuttals were left
+  out. In a scripted best route, 33 or more ranks win him and the 30-rank
+  arrival build reaches about 85%.
+- **Rose circle:** 36 nodes in six petals: Small Talk, Wide Circles, Court
+  Manners, Lingering Whispers, Garden Stroll and Trusted Name. Trusted Name
+  also holds the teal helper's Rosecourt upgrades (Page's Errand and Swift
+  Page). Prices total 291,450. A greedy bot completes the circle in about
+  51 rounds; the same bot takes 49 in Bellmarket.
+- **Phrase rhythm:** every gathering and boss caps speech at 20 phrases a
+  second. The carried build already passes that, so at Rosecourt only, speech
+  above the cap makes each phrase heavier. Earlier maps keep the cap
+  unchanged, which means Quillmoor's last talk ranks are still partly
+  clipped. That is an open question for the user.
+
