@@ -228,14 +228,17 @@ func _draw_caption(data: Dictionary) -> void:
 	var width: float = maxf(font.get_string_size(title, HORIZONTAL_ALIGNMENT_LEFT, -1, 18).x, font.get_string_size(detail, HORIZONTAL_ALIGNMENT_LEFT, -1, 13).x)
 	width = maxf(width, font.get_string_size(hint_text, HORIZONTAL_ALIGNMENT_LEFT, -1, 12).x) + 24
 	var top: float = -168.0 if data.has("hoops") else -150.0
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color("44354c")
-	style.set_corner_radius_all(7)
-	draw_style_box(style, Rect2(-width * 0.5, top, width, 66 if not hint_text.is_empty() else 46))
-	draw_string(font, Vector2(-width * 0.5 + 12, top + 20), title, HORIZONTAL_ALIGNMENT_LEFT, -1, 18, Color("fff0ce"))
-	draw_string(font, Vector2(-width * 0.5 + 12, top + 39), detail, HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("e8d4a9"))
-	if not hint_text.is_empty():
-		draw_string(font, Vector2(-width * 0.5 + 12, top + 58), hint_text, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color("ffd0c0") if viewer_interest < distraction() else Color("fff0ce"))
+	if not listening and not defeated:
+		_draw_name_tag(title, top + 36.0)
+	else:
+		var style := StyleBoxFlat.new()
+		style.bg_color = Color("44354c")
+		style.set_corner_radius_all(7)
+		draw_style_box(style, Rect2(-width * 0.5, top, width, 66 if not hint_text.is_empty() else 46))
+		draw_string(font, Vector2(-width * 0.5 + 12, top + 20), title, HORIZONTAL_ALIGNMENT_LEFT, -1, 18, Color("fff0ce"))
+		draw_string(font, Vector2(-width * 0.5 + 12, top + 39), detail, HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("e8d4a9"))
+		if not hint_text.is_empty():
+			draw_string(font, Vector2(-width * 0.5 + 12, top + 58), hint_text, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color("ffd0c0") if viewer_interest < distraction() else Color("fff0ce"))
 	if defeated:
 		return
 	draw_arc(Vector2.ZERO, 28, 0, TAU, 40, Color("ffd36b") if listening and not deaf else Color("e9cc8f"), 2, true)
@@ -248,3 +251,14 @@ func _draw_caption(data: Dictionary) -> void:
 		draw_style_box(bubble, Rect2(8, -82, 30, 16))
 		for dot in range(3):
 			draw_circle(Vector2(16 + dot * 7, -74), 1.8, Color("6a6070"))
+
+
+## Out of speaking range a boss shows only its name; the full card appears in range.
+func _draw_name_tag(title: String, top: float) -> void:
+	var font := ThemeDB.fallback_font
+	var width: float = font.get_string_size(title, HORIZONTAL_ALIGNMENT_LEFT, -1, 16).x + 24
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color("44354c")
+	style.set_corner_radius_all(7)
+	draw_style_box(style, Rect2(-width * 0.5, top, width, 30))
+	draw_string(font, Vector2(-width * 0.5 + 12, top + 21), title, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("fff0ce"))

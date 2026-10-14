@@ -184,6 +184,9 @@ func _draw_caption(data: Dictionary, override: String) -> void:
 			detail += " / rebuts everything"
 		elif rebuttals_left > 0:
 			detail += " / %d rebuttal%s" % [rebuttals_left, "" if rebuttals_left == 1 else "s"]
+	if override.is_empty() and not listening and not defeated:
+		_draw_name_tag(title, -132.0)
+		return
 	var hint_text: String = hint(data) if not defeated else ""
 	var width: float = maxf(font.get_string_size(title, HORIZONTAL_ALIGNMENT_LEFT, -1, 18).x, font.get_string_size(detail, HORIZONTAL_ALIGNMENT_LEFT, -1, 13).x)
 	width = maxf(width, font.get_string_size(hint_text, HORIZONTAL_ALIGNMENT_LEFT, -1, 12).x + 20.0 * needs().size()) + 24
@@ -202,3 +205,14 @@ func _draw_caption(data: Dictionary, override: String) -> void:
 		ArgumentBadge.draw(self, Vector2(x, top + 54), String(argument), 7.0, argument in missing)
 		x += 20.0
 	draw_string(font, Vector2(x, top + 58), hint_text, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color("ffd0c0") if not prepared else Color("fff0ce"))
+
+
+## Out of speaking range a boss shows only its name; the full card appears in range.
+func _draw_name_tag(title: String, top: float) -> void:
+	var font := ThemeDB.fallback_font
+	var width: float = font.get_string_size(title, HORIZONTAL_ALIGNMENT_LEFT, -1, 16).x + 24
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color("44354c")
+	style.set_corner_radius_all(7)
+	draw_style_box(style, Rect2(-width * 0.5, top, width, 30))
+	draw_string(font, Vector2(-width * 0.5 + 12, top + 21), title, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("fff0ce"))

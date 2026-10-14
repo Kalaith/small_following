@@ -22,7 +22,12 @@ class Card extends Button:
 	func _draw() -> void:
 		ArgumentBadge.draw(self, Vector2(18, size.y * 0.5), argument, 9.0, not prepared)
 		if highlighted:
-			draw_rect(Rect2(Vector2(2, 2), size - Vector2(4, 4)), Style.LILAC, false, 2.0)
+			var ring := StyleBoxFlat.new()
+			ring.draw_center = false
+			ring.border_color = Style.LILAC
+			ring.set_border_width_all(2)
+			ring.set_corner_radius_all(6)
+			draw_style_box(ring, Rect2(Vector2.ZERO, size))
 
 
 var cards: Array[Card] = []

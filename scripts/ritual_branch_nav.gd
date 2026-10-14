@@ -121,3 +121,18 @@ func update() -> void:
 		screen.node_picker.add_item("Choose a branch above to browse its nodes")
 	screen.node_picker.tooltip_text = "Browse every node in the selected branch, including locked nodes. Choosing one centers it at a readable scale."
 	screen.focus_button.disabled = screen.selected_id.is_empty()
+	fit()
+
+
+## Branch buttons show only while every label fits its button at full size;
+## otherwise the same branches are offered by the dropdown, never squeezed.
+func fit() -> void:
+	if buttons.is_empty():
+		return
+	var font: Font = ThemeDB.fallback_font
+	var needed: float = bar.get_theme_constant("separation") * (buttons.size() - 1)
+	for branch in buttons:
+		needed += font.get_string_size(buttons[branch].text, HORIZONTAL_ALIGNMENT_LEFT, -1, 12).x + 28.0
+	var fits: bool = needed <= bar.size.x
+	bar.visible = fits
+	screen.branch_picker.visible = not fits

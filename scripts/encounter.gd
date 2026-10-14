@@ -122,13 +122,16 @@ func _draw() -> void:
 		if rebuttals_left > 0:
 			detail += " / %d objections" % rebuttals_left
 	var hint_text: String = hint(profile) if arrived and not defeated else ""
-	var width: float = maxf(font.get_string_size(title, HORIZONTAL_ALIGNMENT_LEFT, -1, 18).x, font.get_string_size(detail, HORIZONTAL_ALIGNMENT_LEFT, -1, 13).x)
-	width = maxf(width, font.get_string_size(hint_text, HORIZONTAL_ALIGNMENT_LEFT, -1, 12).x) + 24
-	draw_style_box(_style(), Rect2(-width * 0.5, -150, width, 66 if not hint_text.is_empty() else 46))
-	draw_string(font, Vector2(-width * 0.5 + 12, -130), title, HORIZONTAL_ALIGNMENT_LEFT, -1, 18, Color("fff0ce"))
-	draw_string(font, Vector2(-width * 0.5 + 12, -111), detail, HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("e8d4a9"))
-	if not hint_text.is_empty():
-		draw_string(font, Vector2(-width * 0.5 + 12, -92), hint_text, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color("fff0ce"))
+	if arrived and not defeated and not listening:
+		_draw_name_tag(title, -114.0)
+	else:
+		var width: float = maxf(font.get_string_size(title, HORIZONTAL_ALIGNMENT_LEFT, -1, 18).x, font.get_string_size(detail, HORIZONTAL_ALIGNMENT_LEFT, -1, 13).x)
+		width = maxf(width, font.get_string_size(hint_text, HORIZONTAL_ALIGNMENT_LEFT, -1, 12).x) + 24
+		draw_style_box(_style(), Rect2(-width * 0.5, -150, width, 66 if not hint_text.is_empty() else 46))
+		draw_string(font, Vector2(-width * 0.5 + 12, -130), title, HORIZONTAL_ALIGNMENT_LEFT, -1, 18, Color("fff0ce"))
+		draw_string(font, Vector2(-width * 0.5 + 12, -111), detail, HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("e8d4a9"))
+		if not hint_text.is_empty():
+			draw_string(font, Vector2(-width * 0.5 + 12, -92), hint_text, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color("fff0ce"))
 	if arrived and not defeated:
 		draw_arc(Vector2.ZERO, 28, 0, TAU, 40, Color("e9cc8f"), 2, true)
 		draw_line(Vector2(-48, 17), Vector2(48, 17), Color("62634d"), 6)
@@ -141,3 +144,14 @@ func _style() -> StyleBoxFlat:
 	style.bg_color = Color("44354c")
 	style.set_corner_radius_all(7)
 	return style
+
+
+## Out of speaking range a boss shows only its name; the full card appears in range.
+func _draw_name_tag(title: String, top: float) -> void:
+	var font := ThemeDB.fallback_font
+	var width: float = font.get_string_size(title, HORIZONTAL_ALIGNMENT_LEFT, -1, 16).x + 24
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color("44354c")
+	style.set_corner_radius_all(7)
+	draw_style_box(style, Rect2(-width * 0.5, top, width, 30))
+	draw_string(font, Vector2(-width * 0.5 + 12, top + 21), title, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("fff0ce"))

@@ -62,7 +62,6 @@ var next_button: Button
 var village_button: Button
 var recenter_button: Button
 var focus_button: Button
-var overview_button: Button
 var zoom_in_button: Button
 var zoom_out_button: Button
 var branch_picker: OptionButton
@@ -109,6 +108,10 @@ var _demo_hint: Label
 var _legend_label: Label
 var _error_label: Label
 var _detail_x: float = 0.0
+## Right edge of the circle's column; its controls align here, clear of the detail panel.
+var _column_right: float = 0.0
+## The selected node's details stack here, so long descriptions push the button down.
+var _detail_box: VBoxContainer
 var _built: bool = false
 var _displayed_rank: int = 0
 var _destination_id: String = ""
@@ -182,12 +185,13 @@ func update_state(round_recruits: int = 0) -> void:
 	_round_recruits = round_recruits
 	if not _built:
 		return
-	_hint_label.text = "Tab: %s / %s: next round\n%s%s%s%s or D-pad: move selection / %s: inscribe\nMovement stays active." % ["university" if uni_circle else "fair" if fair_circle else "market" if market_circle else "village", Keys.hint("next_round"), Keys.hint("ritual_nav_up"), Keys.hint("ritual_nav_down"), Keys.hint("ritual_nav_left"), Keys.hint("ritual_nav_right"), Keys.hint("buy_upgrade")]
+	_hint_label.text = "%s%s%s%s / D-pad: select   ·   %s: inscribe" % [Keys.hint("ritual_nav_up"), Keys.hint("ritual_nav_down"), Keys.hint("ritual_nav_left"), Keys.hint("ritual_nav_right"), Keys.hint("buy_upgrade")]
 	_demo_hint.text = "Esc: dismiss / Tab: village / %s: next round" % Keys.hint("next_round")
 	_subtitle_label.text = "ROUND COMPLETE  /  %d NEW FOLLOWERS" % _round_recruits
 	_title_label.text = "Quillmoor's circle." if uni_circle else "The fair's circle." if fair_circle else "Bellmarket's circle." if market_circle else "The circle grows."
 	return_area_button.visible = not _return_id.is_empty()
-	village_button.text = "Return to the university" if uni_circle else "Return to the fair" if fair_circle else "Return to the market" if market_circle else "Return to the village"
+	village_button.text = ("Return to the university" if uni_circle else "Return to the fair" if fair_circle else "Return to the market" if market_circle else "Return to the village") + "  ·  Tab"
+	next_button.text = "Begin next round  ·  " + Keys.hint("next_round")
 	argument_cards.visible = uni_circle
 	if uni_circle and is_instance_valid(_progression):
 		argument_cards.refresh(_progression)
@@ -207,10 +211,10 @@ func update_state(round_recruits: int = 0) -> void:
 	elif market_circle:
 		_subtitle_label.text = "BELLMARKET  /  %d NEW FOLLOWERS  /  FIVE PATHS, YOUR CHOICE" % _round_recruits
 	elif is_instance_valid(_progression) and _progression.map_complete():
-		_subtitle_label.text = "BRAMBLEWICK COMPLETE / Priest convinced / %s: play again" % Keys.hint("next_round")
+		_subtitle_label.text = "BRAMBLEWICK COMPLETE  /  PRIEST CONVINCED"
 	elif is_instance_valid(_progression) and _progression.has_unlock("encounter_unlock"):
 		var opponents: Array[String] = ["Skeptic", "Town Guard", "Zealot", "Priest"]
-		_subtitle_label.text = "TOWN DEBATE %d/4 / Next: %s / %s: next round" % [_progression.encounter_stage, opponents[_progression.encounter_stage], Keys.hint("next_round")]
+		_subtitle_label.text = "TOWN DEBATE %d/4  /  Next: %s" % [_progression.encounter_stage, opponents[_progression.encounter_stage]]
 		if _progression.encounter_stage > 0:
 			_subtitle_label.text += " / Town resistance: prices +%d%%" % roundi((_progression.resistance_price_multiplier() - 1.0) * 100.0)
 	var coins: int = _progression.coins if is_instance_valid(_progression) else 0
@@ -219,6 +223,7 @@ func update_state(round_recruits: int = 0) -> void:
 	_lifetime_label.text = "%d lifetime recruits" % (_progression.total_recruits if is_instance_valid(_progression) else 0)
 	var save_error: String = _progression.last_error if is_instance_valid(_progression) else ""
 	_error_label.text = "NOTICE: " + save_error if not save_error.is_empty() else ""
+	_error_label.visible = not save_error.is_empty()
 	_error_label.tooltip_text = save_error
 	var item: Dictionary = by_id.get(selected_id, {})
 	_branch_label.visible = not item.is_empty()
@@ -234,7 +239,7 @@ func update_state(round_recruits: int = 0) -> void:
 	var branch_name: String = RitualText.branch_name(branch)
 	_branch_label.text = "%s  /  TIER %s" % [branch_name, RitualText.roman(int(item.get("ring", 1)))]
 	_node_title.text = str(item.get("title", "Choose an inscription"))
-	_rank_label.text = "RANK %d / %d  %s" % [_displayed_rank, rank_limit, "- COMPLETE" if state == "purchased" else ""]
+	_rank_label.text = "RANK %d / %d%s" % [_displayed_rank, rank_limit, "  -  COMPLETE" if state == "purchased" else ""]
 	_effect_label.text = RitualText.effect_text(_progression, by_id, selected_id, branch, state == "purchased")
 	_node_description.text = str(item.get("description", "Select a sigil in the circle to study its effect."))
 	if not str(item.get("support_description", "")).is_empty():
@@ -562,24 +567,33 @@ func _build_controls() -> void:
 	_coins_label = _label("0  donations", 23, LILAC)
 	_recruits_label = _label("0  recruits available", 20, LILAC)
 	_lifetime_label = _label("0 lifetime recruits", 12, MUTED)
-	_branch_label = _label("THE VOICE  /  RING I", 12, VIOLET)
-	_node_title = _label("Choose an inscription", 26, WHITE)
+	_detail_box = VBoxContainer.new()
+	_detail_box.add_theme_constant_override("separation", 6)
+	add_child(_detail_box)
+	_branch_label = _label("THE VOICE  /  RING I", 12, VIOLET, _detail_box)
+	_node_title = _label("Choose an inscription", 26, WHITE, _detail_box)
 	_node_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_rank_label = _label("RANK 0 / 1", 13, VIOLET)
-	_effect_label = _label("", 18, WHITE)
-	_node_description = _label("", 14, LILAC)
+	_rank_label = _label("RANK 0 / 1", 13, VIOLET, _detail_box)
+	_detail_gap(8)
+	_effect_label = _label("", 18, WHITE, _detail_box)
+	_effect_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_node_description = _label("", 14, LILAC, _detail_box)
 	_node_description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_status_label = _label("", 14, MUTED)
+	_detail_gap(8)
+	_status_label = _label("", 14, MUTED, _detail_box)
 	_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_hint_label = _label("", 12, MUTED)
-	_legend_label = _label("Diamond: locked   /   Hollow: needs resources   /   +: ready   /   Check: complete\nTap a node · Drag to explore · + / - or scroll to zoom", 11, MUTED)
-	_error_label = _label("", 11, LILAC)
+	_detail_gap(4)
+	purchase_button = _button("Inscribe", true, _detail_box)
+	purchase_button.custom_minimum_size.y = 56
+	purchase_button.pressed.connect(_purchase_selected)
+	_error_label = _label("", 11, LILAC, _detail_box)
 	_error_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_error_label.max_lines_visible = 3
 	_error_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	_error_label.mouse_filter = Control.MOUSE_FILTER_PASS
-	purchase_button = _button("Inscribe", true)
-	purchase_button.pressed.connect(_purchase_selected)
+	_hint_label = _label("", 12, MUTED)
+	_legend_label = _label("", 11, MUTED)
+	_legend_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	next_button = _button("Begin next round", true)
 	next_button.pressed.connect(func() -> void: next_round_requested.emit())
 	village_button = _button("Return to the village", false)
@@ -588,11 +602,6 @@ func _build_controls() -> void:
 	recenter_button.pressed.connect(reset_view)
 	focus_button = _button("Focus selected", false)
 	focus_button.pressed.connect(func() -> void: focus_node(selected_id))
-	overview_button = _button("Overview", false)
-	overview_button.pressed.connect(func() -> void:
-		reset_view()
-		clear_selection()
-	)
 	zoom_out_button = _button("-", false)
 	zoom_out_button.tooltip_text = "Zoom out"
 	zoom_out_button.pressed.connect(func() -> void: zoom_at(graph.get_global_rect().get_center(), 1.0 / 1.25))
@@ -610,6 +619,7 @@ func _build_controls() -> void:
 		if index >= 0 and index < branch_nav.order.size():
 			focus_branch(branch_nav.order[index])
 	)
+	Widgets.style_picker(branch_picker)
 	add_child(branch_picker)
 	node_picker = OptionButton.new()
 	node_picker.action_mode = BaseButton.ACTION_MODE_BUTTON_RELEASE
@@ -620,6 +630,7 @@ func _build_controls() -> void:
 		if index >= 0 and index < branch_nav.browse_ids.size():
 			focus_node(branch_nav.browse_ids[index])
 	)
+	Widgets.style_picker(node_picker)
 	add_child(node_picker)
 	completion_button = _button("Inner circle / Earn every rank", false)
 	completion_button.add_theme_font_size_override("font_size", 12)
@@ -686,6 +697,13 @@ func _build_demo_message() -> void:
 	_demo_overlay.hide()
 
 
+func _detail_gap(height: float) -> void:
+	var gap := Control.new()
+	gap.custom_minimum_size.y = height
+	gap.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_detail_box.add_child(gap)
+
+
 func _centered_label(parent: Node, value: String, font_size: int, color: Color) -> Label:
 	var label: Label = _label(value, font_size, color, parent)
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -707,58 +725,44 @@ func _layout() -> void:
 	var margin: float = 40.0
 	var detail_width: float = clampf(size.x * 0.245, 255.0, 330.0)
 	_detail_x = size.x - detail_width - margin
+	_column_right = _detail_x - 48.0
 	graph.position = Vector2(24, 184)
-	graph.size = Vector2(maxf(280.0, _detail_x - 51.0), maxf(280.0, size.y - 304.0 - (CARD_ROW if uni_circle else 0.0)))
+	graph.size = Vector2(maxf(280.0, _column_right - 24.0), maxf(280.0, size.y - 304.0 - (CARD_ROW if uni_circle else 0.0)))
 	# Quillmoor's argument cards sit directly under the circle they change.
 	argument_cards.position = Vector2(margin, graph.position.y + graph.size.y + 4.0)
-	argument_cards.size = Vector2(graph.size.x - (margin - 24.0), CARD_ROW - 8.0)
+	argument_cards.size = Vector2(_column_right - margin, CARD_ROW - 8.0)
+	zoom_in_button.position = Vector2(_column_right - 52, 122)
+	zoom_in_button.size = Vector2(52, 52)
+	zoom_out_button.position = Vector2(_column_right - 112, 122)
+	zoom_out_button.size = Vector2(52, 52)
 	branch_bar.position = Vector2(margin, 122)
-	branch_bar.size = Vector2(_detail_x - margin - 174, 56)
+	branch_bar.size = Vector2(_column_right - 124 - margin, 52)
 	branch_picker.position = branch_bar.position
-	branch_picker.size = Vector2(minf(430, branch_bar.size.x), 56)
-	zoom_out_button.position = Vector2(_detail_x - 154, 122)
-	zoom_out_button.size = Vector2(56, 56)
-	zoom_in_button.position = Vector2(_detail_x - 90, 122)
-	zoom_in_button.size = Vector2(56, 56)
-	node_picker.position = Vector2(margin, size.y - 111)
-	node_picker.size = Vector2(minf(440, _detail_x - margin - 275), 56)
-	completion_button.position = Vector2(_detail_x - 253, size.y - 111)
-	completion_button.size = Vector2(226, 56)
+	branch_picker.size = Vector2(minf(430, branch_bar.size.x), 52)
+	completion_button.position = Vector2(_column_right - 226, size.y - 112)
+	completion_button.size = Vector2(226, 52)
+	node_picker.position = Vector2(margin, size.y - 112)
+	node_picker.size = Vector2(minf(440, completion_button.position.x - 12 - margin), 52)
 	_title_label.position = Vector2(margin, 43)
 	_subtitle_label.position = Vector2(margin + 2.0, 23)
+	recenter_button.position = Vector2(_column_right - 100, 52)
+	recenter_button.size = Vector2(100, 46)
+	focus_button.position = Vector2(_column_right - 248, 52)
+	focus_button.size = Vector2(140, 46)
 	_coins_label.position = Vector2(_detail_x, 41)
 	_recruits_label.position = Vector2(_detail_x, 69)
-	_lifetime_label.position = Vector2(_detail_x, 101)
-	_branch_label.position = Vector2(_detail_x, 153)
-	_node_title.position = Vector2(_detail_x, 182)
-	_node_title.size = Vector2(detail_width, 55)
-	_rank_label.position = Vector2(_detail_x, 243)
-	_rank_label.size = Vector2(detail_width, 23)
-	_effect_label.position = Vector2(_detail_x, 276)
-	_effect_label.size = Vector2(detail_width, 56)
-	_node_description.position = Vector2(_detail_x, 336)
-	_node_description.size = Vector2(detail_width, 103)
-	_status_label.position = Vector2(_detail_x, 449)
-	_status_label.size = Vector2(detail_width, 57)
-	purchase_button.position = Vector2(_detail_x, 514)
-	purchase_button.size = Vector2(detail_width, 56)
-	_error_label.position = Vector2(_detail_x, 577)
-	_error_label.size = Vector2(detail_width, 39)
-	next_button.position = Vector2(_detail_x, size.y - 183)
+	_lifetime_label.position = Vector2(_detail_x, 98)
+	next_button.position = Vector2(_detail_x, size.y - 170)
 	next_button.size = Vector2(detail_width, 50)
-	village_button.position = Vector2(_detail_x, size.y - 124)
+	village_button.position = Vector2(_detail_x, size.y - 112)
 	village_button.size = Vector2(detail_width, 50)
-	_hint_label.position = Vector2(_detail_x, size.y - 65)
-	_hint_label.size = Vector2(detail_width, 43)
-	_legend_label.position = Vector2(margin, size.y - 49)
-	_legend_label.size = Vector2(_detail_x - margin - 22, 38)
+	_hint_label.position = Vector2(_detail_x, size.y - 50)
+	_hint_label.size = Vector2(detail_width, 36)
+	_hint_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_detail_box.position = Vector2(_detail_x, 150)
+	_detail_box.size = Vector2(detail_width, 0)
 	_layout_footer()
-	recenter_button.position = Vector2(_detail_x - 118, 56)
-	recenter_button.size = Vector2(91, 56)
-	focus_button.position = Vector2(_detail_x - 265, 56)
-	focus_button.size = Vector2(138, 56)
-	overview_button.position = Vector2(_detail_x - 366, 56)
-	overview_button.size = Vector2(92, 56)
+	branch_nav.fit()
 	if not _view_adjusted:
 		reset_view()
 	queue_redraw()
@@ -768,15 +772,10 @@ func _layout_footer() -> void:
 	if not is_instance_valid(return_area_button):
 		return
 	return_area_button.position = Vector2(40, size.y - 50)
-	return_area_button.size = Vector2(200, 44)
-	if away_circle:
-		_legend_label.text = "Diamond: locked  /  Hollow: needs resources\n+: ready  /  Check: complete  ·  Drag to pan, + / - to zoom"
-		_legend_label.position.x = 258
-		_legend_label.size.x = _detail_x - 286
-	else:
-		_legend_label.text = "Diamond: locked   /   Hollow: needs resources   /   +: ready   /   Check: complete\nTap a node · Drag to explore · + / - or scroll to zoom"
-		_legend_label.position.x = 40
-		_legend_label.size.x = _detail_x - 62
+	return_area_button.size = Vector2(200, 36)
+	_legend_label.text = "Diamond: locked   /   Hollow: needs resources   /   +: ready   /   Check: complete"
+	_legend_label.position = Vector2(256 if away_circle else 40, size.y - 50)
+	_legend_label.size = Vector2(_column_right - _legend_label.position.x, 36)
 	var message_height: float = 390 if not _destination_id.is_empty() else 332
 	_demo_panel.custom_minimum_size = Vector2(minf(600, size.x - 80), message_height)
 
@@ -814,14 +813,11 @@ func _notification(what: int) -> void:
 func _draw() -> void:
 	draw_rect(Rect2(Vector2.ZERO, size), INK)
 	draw_rect(Rect2(Vector2(_detail_x - 24, 118), Vector2(size.x - _detail_x + 24, size.y - 118)), PANEL)
-	draw_line(Vector2(40, 110), Vector2(size.x - 40, 110), Color("372344"), 1.0)
+	draw_line(Vector2(40, 110), Vector2(_column_right, 110), Color("372344"), 1.0)
 	draw_line(Vector2(_detail_x - 24, 135), Vector2(_detail_x - 24, size.y - 32), Color("483059"), 1.0)
-	if is_instance_valid(_error_label) and _error_label.text.is_empty():
-		draw_line(Vector2(_detail_x, 586), Vector2(size.x - 40, 586), Color("483059"), 1.0)
-	# Small title ornament, deliberately separate from the interactive constellation.
-	for offset in range(3):
-		var x: float = _detail_x - 81.0 + offset * 14.0
-		draw_colored_polygon(PackedVector2Array([Vector2(x, 49), Vector2(x + 3, 54), Vector2(x, 59), Vector2(x - 3, 54)]), VIOLET)
+	# Separates the selected inscription from the round controls below it.
+	if is_instance_valid(next_button):
+		draw_line(Vector2(_detail_x, next_button.position.y - 16), Vector2(size.x - 40, next_button.position.y - 16), Color("483059"), 1.0)
 
 
 func graph_point(world: Vector2) -> Vector2:

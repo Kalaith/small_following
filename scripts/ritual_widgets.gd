@@ -35,6 +35,37 @@ static func button(parent: Node, value: String, primary: bool) -> Button:
 			style.border_color = Color("3a2b4b")
 		style.set_border_width_all(1)
 		style.set_corner_radius_all(4)
+		style.content_margin_left = 10
+		style.content_margin_right = 10
 		button.add_theme_stylebox_override(state, style)
 	parent.add_child(button)
 	return button
+
+
+## Branch and node dropdowns share the secondary button frame instead of the engine's.
+static func style_picker(picker: OptionButton) -> void:
+	picker.add_theme_color_override("font_color", Style.WHITE)
+	picker.add_theme_color_override("font_hover_color", Style.WHITE)
+	picker.add_theme_color_override("font_disabled_color", Style.MUTED)
+	for state in ["normal", "hover", "pressed", "disabled"]:
+		var style := StyleBoxFlat.new()
+		style.bg_color = Color("2a1d3b") if state == "hover" else Color("20162f")
+		style.border_color = Style.LILAC if state == "hover" else Color("3a2b4b") if state == "disabled" else Color("49305f")
+		style.set_border_width_all(1)
+		style.set_corner_radius_all(4)
+		style.content_margin_left = 12
+		style.content_margin_right = 12
+		picker.add_theme_stylebox_override(state, style)
+	var popup := picker.get_popup()
+	var panel := StyleBoxFlat.new()
+	panel.bg_color = Style.PANEL
+	panel.border_color = Color("49305f")
+	panel.set_border_width_all(1)
+	panel.set_corner_radius_all(4)
+	panel.content_margin_left = 6
+	panel.content_margin_right = 6
+	panel.content_margin_top = 6
+	panel.content_margin_bottom = 6
+	popup.add_theme_stylebox_override("panel", panel)
+	popup.add_theme_color_override("font_color", Style.LILAC)
+	popup.add_theme_color_override("font_hover_color", Style.WHITE)

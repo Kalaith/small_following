@@ -16,6 +16,18 @@ signal reset_pad_requested
 const Keys = preload("res://scripts/key_bindings.gd")
 const Pad = preload("res://scripts/pad_bindings.gd")
 const GameAudio = preload("res://scripts/game_audio.gd")
+const FOCUS_RING := Color("d7b9ff")
+
+
+## The corner settings button: three drawn bars instead of a caption, so it fits
+## a small square beside any HUD.
+class MenuButtonIcon extends Button:
+	func _draw() -> void:
+		var bar := Vector2(size.x * 0.42, 2.5)
+		var colour := Color("f1e5ff")
+		for row in range(3):
+			var centre := size * 0.5 + Vector2(0, (row - 1) * 7.0)
+			draw_rect(Rect2(centre - bar * 0.5, bar), colour)
 
 var sliders: Dictionary = {}
 var percentages: Dictionary = {}
@@ -64,16 +76,25 @@ func _ready() -> void:
 	var body := VBoxContainer.new()
 	body.add_theme_constant_override("separation", 16)
 	panel.add_child(body)
-	body.add_child(_label("SMALL FOLLOWING", 13, Color("b89dce")))
 	body.add_child(_label("Settings", 32))
 	tabs = TabContainer.new()
 	tabs.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	tabs.get_tab_bar().focus_mode = Control.FOCUS_NONE
-	for state in ["tab_selected", "tab_unselected", "tab_disabled"]:
-		var tab_style: StyleBox = tabs.get_theme_stylebox(state).duplicate()
-		tab_style.content_margin_top = 17
-		tab_style.content_margin_bottom = 17
+	var tab_page := StyleBoxEmpty.new()
+	tab_page.content_margin_top = 14
+	tabs.add_theme_stylebox_override("panel", tab_page)
+	for state in ["tab_selected", "tab_unselected", "tab_hovered"]:
+		var tab_style := _box(Color("443052") if state == "tab_selected" else Color("2a1f37") if state == "tab_hovered" else Color("1b1426"), Color("906dac") if state == "tab_selected" else Color("4b3660"), 6)
+		tab_style.corner_radius_bottom_left = 0
+		tab_style.corner_radius_bottom_right = 0
+		tab_style.content_margin_left = 18
+		tab_style.content_margin_right = 18
+		tab_style.content_margin_top = 12
+		tab_style.content_margin_bottom = 12
 		tabs.add_theme_stylebox_override(state, tab_style)
+	tabs.add_theme_color_override("font_selected_color", Color("f1e5ff"))
+	tabs.add_theme_color_override("font_unselected_color", Color("bdaece"))
+	tabs.add_theme_color_override("font_hovered_color", Color("f1e5ff"))
 	tabs.tab_changed.connect(func(_index: int) -> void:
 		cancel_capture()
 		focus_first.call_deferred())
@@ -104,6 +125,7 @@ func _ready() -> void:
 		slider.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		slider.custom_minimum_size = Vector2(140, 56)
 		slider.focus_mode = Control.FOCUS_ALL
+		slider.add_theme_stylebox_override("focus", _focus_box(6))
 		slider.value_changed.connect(func(value: float) -> void: volume_changed.emit(entry[0], value / 100.0))
 		row.add_child(slider)
 		var percent := _label("100%", 16, Color("d7b9ff"))
@@ -137,12 +159,9 @@ func _ready() -> void:
 	close_button.focus_mode = Control.FOCUS_ALL
 	close_button.pressed.connect(func() -> void: close_requested.emit())
 	for state in ["normal", "hover", "pressed"]:
-		var style := StyleBoxFlat.new()
-		style.bg_color = Color("654580") if state == "hover" else Color("443052")
-		style.border_color = Color("906dac")
-		style.set_border_width_all(1)
-		style.set_corner_radius_all(6)
-		close_button.add_theme_stylebox_override(state, style)
+		close_button.add_theme_stylebox_override(state, _box(Color("654580") if state == "hover" else Color("443052"), Color("906dac"), 6))
+	close_button.add_theme_stylebox_override("focus", _focus_box(6))
+	close_button.add_theme_font_size_override("font_size", 16)
 	var actions := HBoxContainer.new()
 	actions.add_theme_constant_override("separation", 12)
 	body.add_child(actions)
@@ -153,12 +172,16 @@ func _ready() -> void:
 	title_button.custom_minimum_size = Vector2(130, 56)
 	title_button.focus_mode = Control.FOCUS_ALL
 	title_button.pressed.connect(func() -> void: title_requested.emit())
+	_style_secondary(title_button)
+	title_button.add_theme_font_size_override("font_size", 16)
 	actions.add_child(title_button)
 	exit_button = Button.new()
 	exit_button.text = "Exit Game"
 	exit_button.custom_minimum_size = Vector2(140, 56)
 	exit_button.focus_mode = Control.FOCUS_ALL
 	exit_button.pressed.connect(func() -> void: exit_requested.emit())
+	_style_secondary(exit_button)
+	exit_button.add_theme_font_size_override("font_size", 16)
 	# A browser owns its tab's lifetime; SceneTree.quit cannot close it.
 	exit_button.disabled = OS.has_feature("web")
 	exit_button.tooltip_text = "Close the browser tab to exit." if exit_button.disabled else "Save preferences and close Small Following."
@@ -220,9 +243,9 @@ func refresh(audio: GameAudio, fullscreen: bool, message: String, reduce_motion:
 	mute_button.text = "Mute all sound   ·   " + Keys.hint("toggle_audio")
 	speech_button.text = "Mute nonsense speech   ·   " + Keys.hint("toggle_voice")
 	fullscreen_button.text = "Fullscreen   ·   " + Keys.hint("toggle_fullscreen")
+	# Saving is automatic; main passes only a failure that needs the player's attention.
 	notice.text = message
-	# Reserve space so feedback does not shift the controls during a drag.
-	notice.custom_minimum_size.y = 34
+	notice.visible = not message.is_empty()
 
 
 func _build_key_mapping() -> void:
@@ -291,9 +314,8 @@ func _build_key_mapping() -> void:
 	var fixed := _label("Esc: settings / cancel choice   ·   Tab: village / ritual\nThese navigation keys stay fixed. Analog stick movement stays available.", 14, Color("bdaece"))
 	fixed.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	page.add_child(fixed)
-	binding_message = _label("Choose a binding to change it.", 14, Color("e1cf9b"))
+	binding_message = _label("", 14, Color("e1cf9b"))
 	binding_message.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	binding_message.custom_minimum_size.y = 40
 	page.add_child(binding_message)
 	var actions := HBoxContainer.new()
 	page.add_child(actions)
@@ -319,16 +341,43 @@ func _key_button(title: String) -> Button:
 	button.focus_mode = Control.FOCUS_ALL
 	button.custom_minimum_size.y = 48
 	button.add_theme_font_size_override("font_size", 15)
-	for state in ["normal", "hover", "pressed"]:
-		var style := StyleBoxFlat.new()
-		style.bg_color = Color("654580") if state == "hover" else Color("35273f")
-		style.border_color = Color("76548e")
-		style.set_border_width_all(1)
-		style.set_corner_radius_all(4)
-		style.content_margin_left = 8
-		style.content_margin_right = 8
-		button.add_theme_stylebox_override(state, style)
+	_style_secondary(button)
 	return button
+
+
+func _style_secondary(button: Button) -> void:
+	button.add_theme_font_size_override("font_size", 15)
+	button.add_theme_color_override("font_color", Color("f1e5ff"))
+	button.add_theme_color_override("font_disabled_color", Color("8a7b9c"))
+	for state in ["normal", "hover", "pressed", "disabled"]:
+		var style := _box(Color("654580") if state == "hover" else Color("2b2036") if state == "disabled" else Color("35273f"), Color("4b3660") if state == "disabled" else Color("76548e"), 6)
+		style.content_margin_left = 12
+		style.content_margin_right = 12
+		button.add_theme_stylebox_override(state, style)
+	button.add_theme_stylebox_override("focus", _focus_box(6))
+
+
+func _box(fill: Color, border: Color, radius: int) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = fill
+	style.border_color = border
+	style.set_border_width_all(1)
+	style.set_corner_radius_all(radius)
+	return style
+
+
+## Keyboard and gamepad focus: a rounded lilac ring drawn over the control.
+func _focus_box(radius: int) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.draw_center = false
+	style.border_color = FOCUS_RING
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(radius)
+	style.expand_margin_left = 2
+	style.expand_margin_right = 2
+	style.expand_margin_top = 2
+	style.expand_margin_bottom = 2
+	return style
 
 
 func refresh_bindings(mapping: Dictionary) -> void:
@@ -370,7 +419,7 @@ func cancel_capture() -> void:
 	capture_action = ""
 	if is_instance_valid(cancel_button):
 		cancel_button.hide()
-		binding_message.text = "Choose a binding to change it."
+		binding_message.text = ""
 		refresh_bindings(current_bindings)
 		refresh_pad(current_pad)
 
@@ -407,6 +456,7 @@ func _toggle(title: String) -> CheckButton:
 	button.focus_mode = Control.FOCUS_ALL
 	button.custom_minimum_size.y = 56
 	button.add_theme_font_size_override("font_size", 17)
+	button.add_theme_stylebox_override("focus", _focus_box(8))
 	return button
 
 

@@ -33,6 +33,8 @@ var level_three_button: Button
 var level_four_button: Button
 var feedback_label: Label
 var _level_choices: VBoxContainer
+## The password prompt and its row; both go once the seal is open.
+var _password_section: Array[Control] = []
 var _menu: VBoxContainer
 var _heading: Label
 var _subtitle: Label
@@ -44,6 +46,8 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	_build_controls()
 	resized.connect(_layout)
+	# Wrapped text settles its height a frame late; re-centre the menu when it does.
+	_menu.minimum_size_changed.connect(_layout, CONNECT_DEFERRED)
 	_layout()
 	_refresh()
 
@@ -89,6 +93,7 @@ func submit_password(value: String) -> bool:
 	if is_instance_valid(feedback_label):
 		feedback_label.text = "The seal is open. Choose any level."
 		feedback_label.add_theme_color_override("font_color", GOLD)
+		feedback_label.show()
 		password_input.clear()
 		password_input.release_focus()
 		_refresh()
@@ -99,6 +104,7 @@ func show_error(message: String) -> void:
 	if is_instance_valid(feedback_label):
 		feedback_label.text = message
 		feedback_label.add_theme_color_override("font_color", Color("f0b7c4"))
+		feedback_label.visible = not message.is_empty()
 
 
 func _refresh() -> void:
@@ -112,6 +118,9 @@ func _refresh() -> void:
 		_journey_label.text += " · Bellmarket is open"
 	# The confirmation and level list never share the menu, which keeps it on screen.
 	_level_choices.visible = unlocked and not _new_game_confirm.visible
+	for control in _password_section:
+		control.visible = not unlocked
+	feedback_label.visible = not feedback_label.text.is_empty()
 	_layout()
 
 
@@ -158,10 +167,12 @@ func _build_controls() -> void:
 	var spacer := Control.new()
 	spacer.custom_minimum_size.y = 10
 	_menu.add_child(spacer)
-	_menu.add_child(_label("Have a password? Open the travel seal.", 15, MUTED))
+	var password_prompt: Label = _label("Have a password? Open the travel seal.", 15, MUTED)
+	_menu.add_child(password_prompt)
 	var password_row := HBoxContainer.new()
 	password_row.add_theme_constant_override("separation", 10)
 	_menu.add_child(password_row)
+	_password_section.assign([spacer, password_prompt, password_row])
 	password_input = LineEdit.new()
 	password_input.placeholder_text = "Password"
 	password_input.secret = true
@@ -177,27 +188,33 @@ func _build_controls() -> void:
 	password_row.add_child(unlock_button)
 	feedback_label = _label("", 14, MUTED)
 	feedback_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	feedback_label.custom_minimum_size.y = 40
+	feedback_label.hide()
 	_menu.add_child(feedback_label)
 	_level_choices = VBoxContainer.new()
 	_level_choices.add_theme_constant_override("separation", 10)
 	_menu.add_child(_level_choices)
 	_level_choices.add_child(_label("CHOOSE YOUR LEVEL", 13, GOLD))
-	level_one_button = _button("1 · Bramblewick", false)
-	level_one_button.pressed.connect(_request_level.bind("bramblewick"))
-	_level_choices.add_child(level_one_button)
-	level_two_button = _button("2 · Bellmarket", false)
-	level_two_button.pressed.connect(_request_level.bind("bellmarket"))
-	_level_choices.add_child(level_two_button)
-	level_three_button = _button("3 · The Lantern Fair", false)
-	level_three_button.pressed.connect(_request_level.bind("lantern_fair"))
-	_level_choices.add_child(level_three_button)
-	level_four_button = _button("4 · Quillmoor University", false)
-	level_four_button.pressed.connect(_request_level.bind("university"))
-	_level_choices.add_child(level_four_button)
+	var level_grid := GridContainer.new()
+	level_grid.columns = 2
+	level_grid.add_theme_constant_override("h_separation", 10)
+	level_grid.add_theme_constant_override("v_separation", 10)
+	_level_choices.add_child(level_grid)
+	level_one_button = _level_button(level_grid, "1 · Bramblewick", "bramblewick")
+	level_two_button = _level_button(level_grid, "2 · Bellmarket", "bellmarket")
+	level_three_button = _level_button(level_grid, "3 · Lantern Fair", "lantern_fair")
+	level_four_button = _level_button(level_grid, "4 · Quillmoor", "university")
 	var note: Label = _label("Your existing upgrades are kept. Each place has its own circle.", 13, MUTED)
 	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_level_choices.add_child(note)
+
+
+func _level_button(grid: GridContainer, caption: String, area_id: String) -> Button:
+	var button: Button = _button(caption, false)
+	button.add_theme_font_size_override("font_size", 17)
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	button.pressed.connect(_request_level.bind(area_id))
+	grid.add_child(button)
+	return button
 
 
 func _request_level(area_id: String) -> void:
@@ -238,19 +255,21 @@ func _layout() -> void:
 	if not is_instance_valid(_menu):
 		return
 	var menu_width: float = minf(410, size.x * 0.36)
-	_menu.position = Vector2(size.x * 0.62, 100 if unlocked or _new_game_confirm.visible else 174)
 	_menu.size = Vector2(menu_width, 0)
-	_heading.position = Vector2(32, 110)
+	# Centred beside the divider, whichever sections are showing.
+	var menu_height: float = _menu.get_combined_minimum_size().y
+	_menu.position = Vector2(size.x * 0.62, maxf(32.0, (size.y - menu_height) * 0.5))
+	_heading.position = Vector2(32, 72)
 	_heading.size = Vector2(size.x * 0.55, 200)
-	_subtitle.position = Vector2(32, 320)
+	_subtitle.position = Vector2(32, 290)
 	_subtitle.size = Vector2(size.x * 0.55, 36)
 	queue_redraw()
 
 
 func _draw() -> void:
 	draw_rect(Rect2(Vector2.ZERO, size), INK)
-	var at := Vector2(size.x * 0.30, size.y * 0.69)
-	var radius: float = minf(size.x * 0.18, size.y * 0.23)
+	var at := Vector2(size.x * 0.30, size.y * 0.71)
+	var radius: float = minf(size.x * 0.18, size.y * 0.21)
 	for index in range(3):
 		draw_arc(at, radius + index * 13, 0, TAU, 100, Color(LILAC, 0.09 + index * 0.025), 1, true)
 	for index in range(40):

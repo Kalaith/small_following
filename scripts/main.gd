@@ -25,6 +25,11 @@ const UniBoss = preload("res://scripts/uni_boss.gd")
 const UniHud = preload("res://scripts/uni_hud.gd")
 const ArgumentBadge = preload("res://scripts/argument_badge.gd")
 const START_POSITION := Vector2(780, 680)
+## Village HUD frame: screen margin, gap between cards and the corner settings button.
+const HUD_MARGIN: float = 26.0
+const HUD_GAP: float = 10.0
+const HUD_BUTTON_WIDTH: float = 214.0
+const SETTINGS_SIZE: float = 48.0
 ## Gatherings, merchants, opponents' villagers and the round length are balance
 ## data in data/balance.json; Bramblewick crowds are small huddles of three or
 ## four. Indices of the opening three are stable for tests/tools.
@@ -82,6 +87,7 @@ var round_number: int:
 var stats_label: Label
 var round_label: Label
 var context_label: Label
+var walk_hint_label: Label
 var save_label: Label
 var hud_layout: Control
 var ritual_screen: Control
@@ -612,10 +618,7 @@ func _save_settings() -> void:
 
 
 func _refresh_settings() -> void:
-	var message: String = settings.last_error
-	if message.is_empty():
-		message = "Saving preferences..." if not settings_timer.is_stopped() else "Preferences saved automatically."
-	settings_screen.refresh(game_audio, is_fullscreen(), message, settings.values.reduce_motion)
+	settings_screen.refresh(game_audio, is_fullscreen(), settings.last_error, settings.values.reduce_motion)
 	settings_screen.refresh_bindings(settings.key_bindings)
 	settings_screen.refresh_pad(settings.pad_bindings)
 
@@ -643,15 +646,17 @@ func _build_settings() -> void:
 	canvas.name = "Settings"
 	canvas.layer = 10
 	add_child(canvas)
-	settings_button = Button.new()
-	settings_button.text = "Settings  ·  Esc"
+	# A small corner button: the village HUD and the ritual screen both keep this
+	# square free, so it never covers their text.
+	settings_button = SettingsScreen.MenuButtonIcon.new()
+	settings_button.tooltip_text = "Settings (Esc)"
 	settings_button.focus_mode = Control.FOCUS_NONE
 	canvas.add_child(settings_button)
 	settings_button.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
-	settings_button.offset_left = -176
-	settings_button.offset_right = -26
-	settings_button.offset_top = 98
-	settings_button.offset_bottom = 154
+	settings_button.offset_left = -HUD_MARGIN - SETTINGS_SIZE
+	settings_button.offset_right = -HUD_MARGIN
+	settings_button.offset_top = HUD_MARGIN
+	settings_button.offset_bottom = HUD_MARGIN + SETTINGS_SIZE
 	settings_button.pressed.connect(set_settings_visible.bind(true))
 	settings_screen = SettingsScreen.new()
 	canvas.add_child(settings_screen)
@@ -1127,30 +1132,23 @@ func _build_hud() -> void:
 	hud_layout.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	hud_layout.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	canvas.add_child(hud_layout)
-	var heading := VBoxContainer.new()
-	_village_blockers.append(heading)
-	heading.position = Vector2(26, 20)
-	hud_layout.add_child(heading)
-	var title := _label("Small Following", 29, Color("#fff3d5"))
-	title.add_theme_color_override("font_shadow_color", Color("#3f513d"))
-	title.add_theme_constant_override("shadow_offset_x", 2)
-	title.add_theme_constant_override("shadow_offset_y", 2)
-	heading.add_child(title)
-	area_label = _label("", 13, Color("#f5ebd0"))
-	heading.add_child(area_label)
+	# One status card in the top-right corner, left of the settings button; the
+	# top-left stays clear for the map's own signs.
 	var status := _panel()
 	_village_blockers.append(status)
 	hud_layout.add_child(status)
 	status.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
 	status.grow_horizontal = Control.GROW_DIRECTION_BEGIN
-	status.offset_left = -390
-	status.offset_right = -26
-	status.offset_top = 22
-	status.custom_minimum_size = Vector2(364, 62)
+	status.offset_left = -HUD_MARGIN - SETTINGS_SIZE - HUD_GAP
+	status.offset_right = status.offset_left
+	status.offset_top = HUD_MARGIN
 	var status_rows := VBoxContainer.new()
+	status_rows.add_theme_constant_override("separation", 2)
 	status.add_child(status_rows)
+	area_label = _label("", 12, Color("#c9d6b4"))
 	stats_label = _label("", 19)
 	round_label = _label("", 14, Color("#d9dfc2"))
+	status_rows.add_child(area_label)
 	status_rows.add_child(stats_label)
 	status_rows.add_child(round_label)
 	fair_hud = FairHud.new()
@@ -1161,41 +1159,52 @@ func _build_hud() -> void:
 	_village_blockers.append(help_panel)
 	hud_layout.add_child(help_panel)
 	help_panel.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
-	help_panel.offset_left = 26
-	help_panel.offset_top = -92
-	help_panel.offset_bottom = -26
-	help_panel.custom_minimum_size = Vector2(575, 66)
+	help_panel.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	help_panel.offset_left = HUD_MARGIN
+	help_panel.offset_top = -HUD_MARGIN
+	help_panel.offset_bottom = -HUD_MARGIN
 	var help_rows := VBoxContainer.new()
+	help_rows.add_theme_constant_override("separation", 2)
 	help_panel.add_child(help_rows)
 	context_label = _label("", 17)
 	help_rows.add_child(context_label)
-	help_rows.add_child(_label("Tap / click to walk; tap yourself to stop. Keys / stick also work.", 13, Color("#d9dfc2")))
-	ritual_button = _village_button("Ritual circle", -422, -226)
-	ritual_button.pressed.connect(set_ritual_visible.bind(true))
-	next_round_button = _village_button("Next round", -214, -26)
-	next_round_button.pressed.connect(start_next_round)
+	# Shown only until the first recruit; after that the player knows how to walk.
+	walk_hint_label = _label("Tap / click to walk; tap yourself to stop. Keys / stick also work.", 13, Color("#d9dfc2"))
+	help_rows.add_child(walk_hint_label)
 	save_label = _label("", 13, Color("#ffe4a1"))
-	canvas.add_child(save_label)
-	save_label.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
-	save_label.offset_left = -590
-	save_label.offset_right = -26
-	save_label.offset_top = -28
-	save_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	save_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_village_blockers.append(save_label)
+	help_rows.add_child(save_label)
+	next_round_button = _village_button(true)
+	next_round_button.offset_right = -HUD_MARGIN
+	next_round_button.pressed.connect(start_next_round)
+	ritual_button = _village_button(false)
+	ritual_button.offset_right = -HUD_MARGIN - HUD_BUTTON_WIDTH - HUD_GAP
+	ritual_button.pressed.connect(set_ritual_visible.bind(true))
+	for button in [next_round_button, ritual_button]:
+		button.offset_left = button.offset_right - HUD_BUTTON_WIDTH
 
 
-func _village_button(caption: String, left: float, right: float) -> Button:
+func _village_button(primary: bool) -> Button:
 	var button := Button.new()
-	button.text = caption
 	button.focus_mode = Control.FOCUS_NONE
-	button.add_theme_font_size_override("font_size", 19)
+	button.add_theme_font_size_override("font_size", 17)
+	button.add_theme_color_override("font_color", Color("#fff1d0"))
+	button.add_theme_color_override("font_hover_color", Color("#ffffff"))
+	for state in ["normal", "hover", "pressed"]:
+		var style := StyleBoxFlat.new()
+		style.bg_color = Color(0.31, 0.22, 0.42, 0.96) if primary else Color(0.19, 0.26, 0.21, 0.94)
+		style.border_color = Color("#c6a6ea") if primary else Color("#8fa483")
+		if state == "hover":
+			style.bg_color = style.bg_color.lightened(0.12)
+			style.border_color = Color("#fff1d0")
+		elif state == "pressed":
+			style.bg_color = style.bg_color.darkened(0.15)
+		style.set_border_width_all(1)
+		style.set_corner_radius_all(12)
+		button.add_theme_stylebox_override(state, style)
 	hud_layout.add_child(button)
 	button.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
-	button.offset_left = left
-	button.offset_right = right
-	button.offset_top = -94
-	button.offset_bottom = -30
+	button.offset_top = -HUD_MARGIN - 56
+	button.offset_bottom = -HUD_MARGIN
 	_village_blockers.append(button)
 	return button
 
@@ -1237,8 +1246,8 @@ func _label(value: String, font_size: int, color: Color = Color("#fff1d0")) -> L
 func _fair_context() -> String:
 	if not round_active:
 		if progression.fair_complete():
-			return "The Lantern Fair is won!  Ritual circle or Next round."
-		return "Round complete - Tab: ritual / %s: next round" % Keys.hint("next_round")
+			return "The Lantern Fair is won!"
+		return "Round complete."
 	if is_instance_valid(fair_boss) and not fair_boss.defeated and fair_boss.listening:
 		var boss: Dictionary = fair_boss.profile()
 		if fair_boss.deaf:
@@ -1266,8 +1275,8 @@ func _fair_context() -> String:
 func _uni_context() -> String:
 	if not round_active:
 		if progression.uni_complete():
-			return "Quillmoor is won!  Ritual circle or Next round."
-		return "Round complete - Tab: ritual (prepare arguments) / %s: next round" % Keys.hint("next_round")
+			return "Quillmoor is won!"
+		return "Round complete. Prepare arguments in the ritual circle."
 	if is_instance_valid(uni_boss) and not uni_boss.defeated and uni_boss.listening:
 		var boss: Dictionary = uni_boss.profile()
 		if uni_boss.rebutting:
@@ -1288,16 +1297,20 @@ func _uni_context() -> String:
 
 
 func _update_hud() -> void:
-	area_label.text = {"bellmarket": "BELLMARKET / a gathering of fortunes", Fair.AREA_ID: "THE LANTERN FAIR / are you interesting enough?", University.AREA_ID: "QUILLMOOR / did you bring the right argument?"}.get(progression.active_area, "BRAMBLEWICK / a small beginning")
+	area_label.text = {"bellmarket": "BELLMARKET", Fair.AREA_ID: "THE LANTERN FAIR", University.AREA_ID: "QUILLMOOR"}.get(progression.active_area, "BRAMBLEWICK")
 	fair_hud.visible = progression.active_area == Fair.AREA_ID
 	uni_hud.visible = progression.active_area == University.AREA_ID
 	if uni_hud.visible:
 		uni_hud.show_loadout(progression.uni_loadout, progression.argument_slots())
 	ritual_button.visible = not round_active
 	next_round_button.visible = not round_active
+	ritual_button.text = "Ritual circle  ·  Tab"
+	next_round_button.text = "Next round  ·  %s" % Keys.hint("next_round")
 	stats_label.text = "%d donations / %d recruits available" % [coins, progression.available_recruits]
-	round_label.text = "Round %d   /   %.1fs remaining" % [round_number, seconds_left]
+	round_label.text = "Round %d   ·   %.1fs left" % [round_number, seconds_left]
+	walk_hint_label.visible = progression.total_recruits == 0
 	save_label.text = "Progress notice: see the ritual screen." if not progression.last_error.is_empty() else ""
+	save_label.visible = not save_label.text.is_empty()
 	if progression.active_area == Fair.AREA_ID:
 		context_label.text = _fair_context()
 	elif progression.active_area == University.AREA_ID:
@@ -1305,9 +1318,9 @@ func _update_hud() -> void:
 	elif progression.active_area == "bellmarket" and progression.is_circle_complete():
 		context_label.text = "Bellmarket circle complete!  Keep exploring or return to Bramblewick."
 	elif progression.active_area == "bramblewick" and progression.map_complete():
-		context_label.text = "Bramblewick complete!" + ("  Choose Ritual circle or Next round." if not round_active else "  Enjoy the village.")
+		context_label.text = "Bramblewick complete!" + ("" if not round_active else "  Enjoy the village.")
 	elif not round_active:
-		context_label.text = "Round complete - Tab: ritual / %s: next round" % Keys.hint("next_round")
+		context_label.text = "Round complete."
 	elif is_instance_valid(encounter) and not encounter.defeated:
 		context_label.text = "Convince %s in the town center" % Encounter.profiles()[encounter.stage].title
 	elif is_instance_valid(nearest_group):
