@@ -1,71 +1,72 @@
 # Small Following commercial readiness
 
-Reviewed 2026-10-17 from the project source and release configuration. This is a
-static review: no fresh exports, runtime session, storefront review, or player
-playtest was completed.
+Reviewed 2026-10-17 from source and release configuration. This is a static
+review; no fresh export, runtime session, storefront review, or player playtest
+was completed.
+
+## Confirmed release direction
+
+- Complete story through the hilltop abbey and the Pope encounters.
+- Steam release at $5. Base currency is not yet specified.
+- Owner confirms all bundled audio, icon/art, and toolkit assets are cleared for
+  commercial use.
 
 ## Assessment
 
-- The project has Web and Windows export presets, five implemented areas, saved
-  progression and preferences, and settings for sound, movement, keyboard and
-  gamepad input. Purchases write before charging.
-- The current story is a five-area demo. The roadmap names the hilltop abbey and
-  the Pope as the next and final map, but that map has no plan or implementation.
-  The end-of-demo wording remains in the game. This is not ready to be described
-  as a complete campaign until the release scope is settled.
-- A source review cannot establish that either export loads, saves, or feels
-  good on target devices. The release scripts and available ignored build output
-  were not exercised or treated as current release evidence.
-- No asset credits or license register was found in tracked project files. Asset
-  ownership and permitted commercial use need to be recorded before sale.
+- The project currently implements five areas and exports Web and Windows. The
+  roadmap leaves the sixth and final area unplanned; the story and campaign are
+  incomplete for the confirmed release direction.
+- Progression and preferences have separate saves, and purchases persist before
+  spending. Those systems still need release-build and recovery verification.
+- The Steam listing, final Windows build, and supported OS/device list were not
+  reviewed in this pass.
 
 ## Agent work
 
-### Release blockers
+### Complete the campaign
 
-- [ ] Confirm the intended edition with the owner: release the five-area demo,
-  or complete the campaign through the abbey and Pope. If it is the full game,
-  draft the abbey plan under `docs/` using the shared rules in
-  `docs/MAP_ROADMAP.md`, then implement its map, progression, ending, save
-  migration, and title/level selection. Keep any unapproved mechanic provisional.
-- [ ] Fix Rosecourt's completed-circle message after the King is won. The
-  completion copy currently still tells the player to win his approval. Show a
-  clear demo ending for a demo release, or the next destination/final ending for
-  a complete campaign.
-- [ ] Resolve the speech-rate cap question in `docs/MAP_ROADMAP.md`: Quillmoor's
-  later talking ranks can be clipped at 20 phrases per second, while Rosecourt
-  converts excess rate into stronger phrases. Make the rule intentional and
-  update the balance data and player-facing previews consistently.
-- [ ] Inventory every shipped asset and embedded third-party component, record
-  its source, creator, license, and required notice, then add the applicable
-  credits/notices to the project. Do not guess rights for entries with missing
-  provenance; return those to the owner for confirmation.
+- [ ] Draft the abbey plan in `docs/` using `docs/MAP_ROADMAP.md`: one distinct
+  mechanic, an opening that works with the carried build, local progression,
+  and the Pope as the final encounter. Treat any new mechanic as a proposal
+  until accepted; make the King's approval open the audience with the Pope.
+- [ ] Implement the abbey as area six: world and audiences, balance data, a
+  bounded local upgrade circle, boss/encounter progression, travel gate, and
+  save migration from schema 7. Preserve older saves and current area data.
+- [ ] Add the Pope encounters and a clear final campaign ending. Update title
+  level selection, progression catalogs and access validation for the abbey;
+  show the final ending only after the Pope is defeated.
+- [ ] Make Rosecourt's completion copy reflect the King's state: before victory,
+  direct the player to win his approval; after victory, point to the abbey.
+  Remove any remaining demo-ending copy from the full-game path.
+- [ ] Resolve the 20-phrase-per-second speech cap question in
+  `docs/MAP_ROADMAP.md`. Quillmoor's later talking ranks can be clipped while
+  Rosecourt turns excess rate into stronger phrases. Make the rule consistent
+  across maps and update balance data and previews.
 
-### Release preparation
+### Prepare the Steam release
 
-- [ ] Replace the prototype wording in `project.godot` and the generic
-  `publish.json` description with copy that matches the approved edition. Add a
-  release version and make the Web and Windows artifacts identify that version.
-- [ ] Decide whether the title-screen travel password is an intentional player
-  feature for the commercial edition. If it is review access, document that
-  purpose and ensure it does not grant unintended persistent progression.
-- [ ] Build Web and Windows candidates from the same commit with the pinned
-  Godot 4.2.2 standard editor. Launch both and manually check a fresh save,
-  return play, purchases, save recovery, keyboard/gamepad navigation, touch
-  movement in Web, window resizing, and the final completion flow. Record build
-  hashes and target/browser versions; do not publish as part of this work.
-- [ ] Review the public storefront materials against the approved edition:
-  screenshots, trailer, content description, supported platforms, accessibility
-  notes, support contact, price, and refund terms. The storefront page was not
-  reviewed in this pass.
+- [ ] Replace the prototype project description with copy for the complete
+  campaign. Add Steam-specific build metadata alongside the existing WebHatchery
+  and itch settings; do not break those existing targets.
+- [ ] Create a reproducible, version-labeled Windows Steam build/package and
+  document the SteamPipe inputs an owner must supply. Keep uploads and store
+  changes separate from local build preparation.
+- [ ] Check shipped third-party license terms and include any required notices.
+  The owner has confirmed commercial clearance for the bundled assets.
+- [ ] Build and launch a release candidate from one commit. Manually check the
+  campaign from a fresh save through the Pope ending, return play, purchases,
+  save recovery, keyboard/gamepad navigation, window resizing, and Steam launch
+  behavior. Record build hashes and OS/Steam client versions; do not publish.
+- [ ] Prepare Steam store copy and a review checklist for screenshots, trailer,
+  content description, supported platforms, accessibility notes, support
+  contact, and the $5 price.
 
-## Owner decisions needed
+## Release metadata still needed
 
-- Is the commercial product the existing five-area demo or a complete story
-  through the abbey and Pope?
-- Which price, version, release date, supported browser/device list, and support
-  contact should the storefront and build metadata use?
-- Are all bundled audio, icon/art, and toolkit assets cleared for commercial use?
+- Version label and release date.
+- Base currency for the $5 price.
+- Supported Steam operating systems beyond the current Windows export.
+- Support contact.
 
-Project constraint: keep the game free of automated test suites and test
-fixtures. Follow `AGENTS.md` for parse/import and visual/runtime verification.
+Project constraint: do not add automated test suites or fixtures. Follow
+`AGENTS.md` for parse/import and visual/runtime verification.
