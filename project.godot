@@ -8,6 +8,9 @@ config/features=PackedStringArray("4.2", "GL Compatibility")
 config/description="A small, directly controlled cultist in a growing village. Movement and round prototype."
 config/icon="res://assets/icon.svg"
 
+[promotion]
+background_capture_safe=true
+
 [display]
 window/size/viewport_width=1280
 window/size/viewport_height=800

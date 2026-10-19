@@ -35,9 +35,9 @@
   "encounters": {
     "walk_speed": 220.0,
     "opponents": [
-      {"id": "skeptic", "title": "Skeptic", "conviction": 42.0, "rebuttals": 0, "decay": 0.0, "reward": 30, "coat": "728b98"},
-      {"id": "guard", "title": "Town Guard", "conviction": 72.0, "rebuttals": 2, "decay": 0.0, "reward": 45, "coat": "607590"},
-      {"id": "zealot", "title": "Zealot", "conviction": 108.0, "rebuttals": 0, "decay": 6.0, "reward": 60, "coat": "bb7454"},
+      {"id": "skeptic", "title": "Skeptic", "conviction": 46.0, "rebuttals": 0, "decay": 0.0, "reward": 30, "coat": "728b98"},
+      {"id": "guard", "title": "Town Guard", "conviction": 79.0, "rebuttals": 2, "decay": 0.0, "reward": 45, "coat": "607590"},
+      {"id": "zealot", "title": "Zealot", "conviction": 119.0, "rebuttals": 0, "decay": 6.0, "reward": 60, "coat": "bb7454"},
       {"id": "priest", "title": "Priest of Bramblewick", "conviction": 300.0, "rebuttals": 3, "decay": 9.0, "reward": 120, "coat": "e4d3a3"}
     ]
   },
