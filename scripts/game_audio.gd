@@ -23,7 +23,7 @@ const MIN_VOICE_SECONDS: float = 0.65
 var music := AudioStreamPlayer.new()
 var footsteps := AudioStreamPlayer.new()
 var voice := AudioStreamPlayer.new()
-# Godot 4.2's headless Dummy driver retains unconsumed playback instances.
+# Godot's headless Dummy driver retains unconsumed playback instances.
 # Keep cue scheduling testable there without creating playback voices.
 var output_enabled: bool = not Display.is_headless()
 var muted: bool = false
