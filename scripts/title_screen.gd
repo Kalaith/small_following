@@ -6,6 +6,8 @@ signal level_requested(area_id: String)
 signal settings_requested
 signal new_game_requested
 
+const TitleBackdrop = preload("res://scripts/title_backdrop.gd")
+
 const INK := Color("110d1c")
 const LILAC := Color("d7b9ff")
 const WHITE := Color("f1e5ff")
@@ -46,6 +48,7 @@ var _journey_label: Label
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_STOP
+	TitleBackdrop.mount(self, true)
 	_build_controls()
 	resized.connect(_layout)
 	# Wrapped text settles its height a frame late; re-centre the menu when it does.
@@ -114,13 +117,13 @@ func _refresh() -> void:
 	continue_button.text = "Play / Continue"
 	_journey_label.text = "Continue in " + {"bellmarket": "Bellmarket", "lantern_fair": "the Lantern Fair", "university": "Quillmoor", "rosecourt": "Rosecourt"}.get(current_area, "Bramblewick")
 	if rosecourt_available and current_area != "rosecourt":
-		_journey_label.text += " · Rosecourt is open"
+		_journey_label.text += " Â· Rosecourt is open"
 	elif university_available and current_area != "university":
-		_journey_label.text += " · Quillmoor is open"
+		_journey_label.text += " Â· Quillmoor is open"
 	elif fair_available and current_area != "lantern_fair":
-		_journey_label.text += " · The fair is open"
+		_journey_label.text += " Â· The fair is open"
 	elif market_available and current_area == "bramblewick":
-		_journey_label.text += " · Bellmarket is open"
+		_journey_label.text += " Â· Bellmarket is open"
 	# The confirmation and level list never share the menu, which keeps it on screen.
 	_level_choices.visible = unlocked and not _new_game_confirm.visible
 	for control in _password_section:
@@ -132,6 +135,8 @@ func _refresh() -> void:
 func _build_controls() -> void:
 	_heading = _label("Small\nFollowing", 78, WHITE)
 	_heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_heading.add_theme_constant_override("outline_size", 10)
+	_heading.add_theme_color_override("font_outline_color", INK)
 	add_child(_heading)
 	_subtitle = _label("A little voice. A growing circle.", 20, LILAC)
 	_subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -204,11 +209,11 @@ func _build_controls() -> void:
 	level_grid.add_theme_constant_override("h_separation", 10)
 	level_grid.add_theme_constant_override("v_separation", 10)
 	_level_choices.add_child(level_grid)
-	level_one_button = _level_button(level_grid, "1 · Bramblewick", "bramblewick")
-	level_two_button = _level_button(level_grid, "2 · Bellmarket", "bellmarket")
-	level_three_button = _level_button(level_grid, "3 · Lantern Fair", "lantern_fair")
-	level_four_button = _level_button(level_grid, "4 · Quillmoor", "university")
-	level_five_button = _level_button(level_grid, "5 · Rosecourt", "rosecourt")
+	level_one_button = _level_button(level_grid, "1 Â· Bramblewick", "bramblewick")
+	level_two_button = _level_button(level_grid, "2 Â· Bellmarket", "bellmarket")
+	level_three_button = _level_button(level_grid, "3 Â· Lantern Fair", "lantern_fair")
+	level_four_button = _level_button(level_grid, "4 Â· Quillmoor", "university")
+	level_five_button = _level_button(level_grid, "5 Â· Rosecourt", "rosecourt")
 	var note: Label = _label("Your existing upgrades are kept. Each place has its own circle.", 13, MUTED)
 	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_level_choices.add_child(note)
@@ -270,45 +275,3 @@ func _layout() -> void:
 	_subtitle.position = Vector2(32, 290)
 	_subtitle.size = Vector2(size.x * 0.55, 36)
 	queue_redraw()
-
-
-func _draw() -> void:
-	draw_rect(Rect2(Vector2.ZERO, size), INK)
-	var at := Vector2(size.x * 0.30, size.y * 0.71)
-	var radius: float = minf(size.x * 0.18, size.y * 0.21)
-	for index in range(3):
-		draw_arc(at, radius + index * 13, 0, TAU, 100, Color(LILAC, 0.09 + index * 0.025), 1, true)
-	for index in range(40):
-		var radial := Vector2.from_angle(index * TAU / 40.0)
-		draw_line(at + radial * (radius + 32), at + radial * (radius + 37 + (6 if index % 5 == 0 else 0)), Color(GOLD, 0.24), 1, true)
-	var constellation := PackedVector2Array()
-	for index in range(6):
-		constellation.append(at + Vector2.from_angle(-PI / 2 + index * TAU / 5) * radius)
-	draw_polyline(constellation, Color(LILAC, 0.17), 1.2, true)
-	for index in range(5):
-		var point: Vector2 = constellation[index]
-		draw_circle(point, 6, Color("52346d"))
-		draw_arc(point, 9, 0, TAU, 24, Color(LILAC, 0.50), 1.2, true)
-	# Original procedural portrait: broad soft robe, little hood, warm eyes.
-	draw_set_transform(at + Vector2(0, 36), 0, Vector2.ONE * radius / 150.0)
-	_draw_ellipse_shadow()
-	draw_colored_polygon(PackedVector2Array([Vector2(-42, -54), Vector2(34, -54), Vector2(62, 61), Vector2(19, 69), Vector2(-9, 61), Vector2(-53, 67), Vector2(-69, 56)]), Color("65418b"))
-	draw_colored_polygon(PackedVector2Array([Vector2(-2, -57), Vector2(36, -40), Vector2(57, 59), Vector2(22, 64)]), Color("8254a5"))
-	draw_colored_polygon(PackedVector2Array([Vector2(-44, -59), Vector2(-34, -108), Vector2(3, -147), Vector2(41, -99), Vector2(48, -52), Vector2(2, -31)]), Color("9466b9"))
-	draw_colored_polygon(PackedVector2Array([Vector2(-28, -71), Vector2(-20, -103), Vector2(3, -122), Vector2(26, -95), Vector2(30, -65), Vector2(3, -52)]), Color("24162e"))
-	draw_circle(Vector2(-8, -84), 3.6, GOLD)
-	draw_circle(Vector2(14, -84), 3.6, GOLD)
-	draw_line(Vector2(-25, -39), Vector2(-39, 46), Color("b384ce"), 2, true)
-	draw_circle(Vector2(7, -30), 5, GOLD)
-	draw_set_transform(Vector2.ZERO)
-	draw_line(Vector2(size.x * 0.585, 116), Vector2(size.x * 0.585, size.y - 110), Color(LILAC, 0.15), 1, true)
-	var font: Font = ThemeDB.fallback_font
-	draw_string(font, Vector2(42, size.y - 35), "WALK  ·  SPEAK  ·  GATHER  ·  GROW", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, MUTED)
-
-
-func _draw_ellipse_shadow() -> void:
-	var points := PackedVector2Array()
-	for index in range(40):
-		var radial := Vector2.from_angle(index * TAU / 40.0)
-		points.append(Vector2(radial.x * 82, 67 + radial.y * 15))
-	draw_colored_polygon(points, Color("08060e"))

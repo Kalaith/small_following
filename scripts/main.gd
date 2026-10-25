@@ -683,4 +683,3 @@ func village_tap_available(at: Vector2) -> bool:
 	if hud_layout.blocks(at):
 		return false
 	return get_viewport().get_visible_rect().has_point(at)
-
