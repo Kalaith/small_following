@@ -15,6 +15,9 @@ var walk_speed: float = Balance.number("helper.walk_speed")
 var phrase_seconds: float = Balance.number("helper.phrase_seconds")
 var conviction_per_phrase: float = Balance.number("helper.conviction_per_phrase")
 var title: String = "Helper"
+## A short line about who they are; shown when the cultist stands beside them.
+var story: String = ""
+var role: String = ""
 var robe := Color("528c83")
 var hood := Color("69a699")
 var sash := Color("dac5ee")

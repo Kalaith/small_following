@@ -294,6 +294,22 @@ func refresh() -> void:
 		context_label.text = "Speaking with %s..." % game.nearest_group.group_name
 	else:
 		context_label.text = "Walk around props; stand near a gathering to speak."
+	var story: String = _helper_story()
+	if not story.is_empty() and not is_instance_valid(game.nearest_group):
+		context_label.text = story
+
+
+## A helper beside the cultist introduces themselves when nothing else needs saying.
+func _helper_story() -> String:
+	if not game.round_active or is_instance_valid(game.nearest_group):
+		return ""
+	for boss in [game.pope, game.rose_king, game.uni_boss, game.fair_boss]:
+		if is_instance_valid(boss) and boss.listening:
+			return ""
+	for each in game.helpers():
+		if each.story != "" and each.global_position.distance_to(game.player.global_position) <= 80.0:
+			return "%s, %s: %s" % [each.title, each.role, each.story]
+	return ""
 
 
 ## True when a visible card or button covers the point.

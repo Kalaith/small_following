@@ -135,6 +135,10 @@ func _hire(robe: String) -> Node2D:
 		created.wear_amber()
 	elif robe == "moss":
 		created.wear_moss()
+	var lore: Dictionary = Balance.dict("helper_lore")[robe]
+	created.title = String(lore.name)
+	created.role = String(lore.role)
+	created.story = String(lore.story)
 	game.actors().add_child(created)
 	created.configure_navigation(game.actors(), game.world_size)
 	created.reset_round(game.area_start_position())

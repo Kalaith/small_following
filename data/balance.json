@@ -253,6 +253,13 @@
       "purple": {"walk_speed": 150.0, "phrase_seconds": 1.0, "conviction_per_phrase": 250.0}
     }
   },
+  "helper_lore": {
+    "teal": {"name": "Tamsin", "role": "the first neighbour", "story": "Stopped at the Bramblewick well to hear the cultist out and never quite left. Still wears the well rope as a bracelet."},
+    "amber": {"name": "Marigold", "role": "the Market Hand", "story": "A Bellmarket porter who counts every coin twice. Says the cult is the only honest scale in town."},
+    "moss": {"name": "Barnaby", "role": "the Barker", "story": "Called the Lantern Fair's rides for years, until the Ringmaster's megaphone drowned them out. Has opinions about megaphones."},
+    "white": {"name": "Wynn", "role": "the Assistant", "story": "Quillmoor's most overqualified teaching assistant. Marks essays in their sleep and has never once been thanked."},
+    "purple": {"name": "Pip", "role": "the Page", "story": "Knows every back stair in Rosecourt and which footman owes whom a favour. Carries the cultist's name to all of them."}
+  },
   "abbey": {
     "start": [1120, 1430],
     "round_seconds": 30.0,
