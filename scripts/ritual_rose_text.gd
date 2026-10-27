@@ -10,7 +10,7 @@ static func effect_text(progression: RefCounted, by_id: Dictionary, id: String, 
 	var rank: int = progression.rank(id)
 	var next_effect: Dictionary = {} if complete or rank >= int(item.get("max_rank", 1)) else item.rank_effects[rank]
 	var lines: PackedStringArray = []
-	var teal: String = "rosecourt.helper.teal."
+	var teal: String = "rosecourt.helper.purple."
 	for key in item.get("effect", {}):
 		var step: float = float(next_effect.get(key, 0.0))
 		match key:
@@ -33,10 +33,10 @@ static func effect_text(progression: RefCounted, by_id: Dictionary, id: String, 
 			"rose_noble_donation_add":
 				lines.append(_pair("Extra gold / noble", progression.effect_total(key), step, "+%.0f"))
 			"rose_helper_conviction_add":
-				lines.append(_pair("Teal helper / conviction per phrase", Balance.number(teal + "conviction_per_phrase") + progression.rose_helper_conviction_bonus(), step, "%.0f"))
+				lines.append(_pair("Page / conviction per phrase", Balance.number(teal + "conviction_per_phrase") + progression.rose_helper_conviction_bonus(), step, "%.0f"))
 			"rose_helper_walk_add":
 				var walk: float = Balance.number(teal + "walk_speed")
-				lines.append(_pair("Teal helper / walking (px/s)", walk * (1.0 + progression.rose_helper_walk_bonus()), walk * step, "%.0f"))
+				lines.append(_pair("Page / walking (px/s)", walk * (1.0 + progression.rose_helper_walk_bonus()), walk * step, "%.0f"))
 	return "\n".join(lines)
 
 

@@ -42,6 +42,8 @@ func rebuild() -> void:
 	game.helper = null
 	game.market_helper = null
 	game.fair_helper = null
+	game.uni_helper = null
+	game.rose_helper = null
 	# No authored placeholder survives to rebuild's second call (area
 	# travel); only a prior script-built world needs removing there.
 	var previous: Node = game.get_node_or_null("Village")

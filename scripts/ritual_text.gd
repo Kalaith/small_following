@@ -122,7 +122,7 @@ static func uni_effect_text(progression: Progression, by_id: Dictionary, id: Str
 	var rank: int = progression.rank(id)
 	var next_effect: Dictionary = {} if complete or rank >= int(item.get("max_rank", 1)) else item.rank_effects[rank]
 	var lines: PackedStringArray = []
-	var teal: String = "university.helper.teal."
+	var teal: String = "university.helper.white."
 	for key in item.get("effect", {}):
 		var step: float = float(next_effect.get(key, 0.0))
 		match key:
@@ -131,13 +131,13 @@ static func uni_effect_text(progression: Progression, by_id: Dictionary, id: Str
 			"uni_academic_conviction_add":
 				lines.append(_pair("Faculty bonus / phrase", progression.effect_total(key), step, "+%.0f"))
 			"uni_ta_conviction_add":
-				lines.append(_pair("Teal helper / conviction per phrase", Balance.number(teal + "conviction_per_phrase") + progression.uni_helper_conviction_bonus(), step, "%.0f"))
+				lines.append(_pair("Assistant / conviction per phrase", Balance.number(teal + "conviction_per_phrase") + progression.uni_helper_conviction_bonus(), step, "%.0f"))
 			"uni_ta_walk_add":
 				var walk: float = Balance.number(teal + "walk_speed")
-				lines.append(_pair("Teal helper / walking (px/s)", walk * (1.0 + progression.uni_helper_walk_bonus()), walk * step, "%.0f"))
+				lines.append(_pair("Assistant / walking (px/s)", walk * (1.0 + progression.uni_helper_walk_bonus()), walk * step, "%.0f"))
 			"uni_ta_speed_add":
 				var base: float = 1.0 / Balance.number(teal + "phrase_seconds")
-				lines.append(_pair("Teal helper / phrases per second", base * (1.0 + progression.uni_helper_speed_bonus()), base * step, "%.2f"))
+				lines.append(_pair("Assistant / phrases per second", base * (1.0 + progression.uni_helper_speed_bonus()), base * step, "%.2f"))
 			"speech_speed_add":
 				lines.append(_pair("Phrases / second", float(current.get("speech_frequency", 0.0)), step, "%.2f"))
 			"conviction_add":

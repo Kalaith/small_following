@@ -54,6 +54,24 @@ func wear_amber() -> void:
 	start_offset = Vector2(24, 24)
 
 
+## Quillmoor's Assistant, in a white robe.
+func wear_white() -> void:
+	title = "Assistant"
+	robe = Color("e9e6ee")
+	hood = Color("f6f4f8")
+	sash = Color("8a7fb0")
+	start_offset = Vector2(-48, 24)
+
+
+## Rosecourt's Page, in a royal purple robe.
+func wear_purple() -> void:
+	title = "Page"
+	robe = Color("5a2a8c")
+	hood = Color("7a4ab0")
+	sash = Color("e0c06a")
+	start_offset = Vector2(48, 24)
+
+
 ## The fair's Barker, in a moss-green robe.
 func wear_moss() -> void:
 	title = "Barker"

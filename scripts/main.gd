@@ -64,6 +64,9 @@ var helper: Node2D = null
 var market_helper: Node2D = null
 ## The fair's moss-green Barker.
 var fair_helper: Node2D = null
+## Quillmoor's white Assistant and Rosecourt's royal purple Page.
+var uni_helper: Node2D = null
+var rose_helper: Node2D = null
 ## The fair's round state (shows, stages, Distraction) and current headliner.
 var fair_director = FairDirector.new()
 var fair_boss: Node2D = null
