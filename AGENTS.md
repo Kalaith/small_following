@@ -86,7 +86,7 @@ This section is identical in the AGENTS.md of every WebHatchery Godot project. C
 
 ### Commits
 
-- Commit early and often: after every complete, working step (a system, a fix, a data pass), not at the end of a milestone. Commits do not wait on checks (see Verification).
+- **ALWAYS commit every feature slice and every bug fix the moment it works. This is mandatory, not optional.** One slice or fix per commit. Never batch several slices together, never leave finished work sitting uncommitted, and never end a turn with a feature or fix that is not committed. Commits do not wait on checks (see Verification).
 - Commit **all pending project changes**, including modified, added and deleted files you did not make yourself. Do not leave user changes or another agent's changes uncommitted because you did not touch them: review and preserve their contents, include them in the validation, and finish with a clean working tree.
 - Existing ignore rules still apply to generated files, local tooling and credentials. Never force-add ignored files or commit secrets.
 - Do not push or publish unless the user asks.

@@ -2,6 +2,8 @@ extends CharacterBody2D
 ## Directly controlled placeholder cultist. Round state never gates movement.
 signal moved(distance: float, delta: float)
 
+const _Balance = preload("res://addons/hatchery/core/balance.gd")
+
 @export var movement_speed: float = 180.0
 @export var world_bounds: Rect2 = Rect2(55.0, 55.0, 1450.0, 990.0)
 @export var speaking_radius: float = preload("res://addons/hatchery/core/balance.gd").number("round.speaking_radius")
@@ -13,6 +15,11 @@ var reduce_motion: bool = false
 var _flutter_amount: float = 0.0
 var _cloth_time: float = 0.0
 var _look_direction: Vector2 = Vector2.DOWN
+## Unlocked by the Fairground Dash; a short burst on a cooldown.
+var dash_enabled: bool = false
+var _dash_left: float = 0.0
+var _dash_cooldown_left: float = 0.0
+var _dash_direction: Vector2 = Vector2.ZERO
 var has_walk_target: bool = false
 var walk_target: Vector2 = Vector2.ZERO
 var _blocked_seconds: float = 0.0
@@ -33,6 +40,15 @@ func _physics_process(delta: float) -> void:
 		else:
 			# Shorten the final step instead of oscillating across the destination.
 			input_direction = remaining / maxf(movement_speed * delta, remaining.length())
+	_dash_cooldown_left = maxf(_dash_cooldown_left - delta, 0.0)
+	if dash_enabled and _dash_left <= 0.0 and _dash_cooldown_left <= 0.0 and Input.is_action_just_pressed("dash"):
+		_dash_direction = input_direction if not input_direction.is_zero_approx() else _look_direction
+		_dash_left = _Balance.number("round.dash_seconds")
+		_dash_cooldown_left = _Balance.number("round.dash_cooldown")
+		clear_walk_target()
+	if _dash_left > 0.0:
+		_dash_left -= delta
+		input_direction = _dash_direction
 	var before: Vector2 = global_position
 	step_motion(input_direction, delta)
 	if has_walk_target:
@@ -63,7 +79,7 @@ func clear_walk_target() -> void:
 func step_motion(direction: Vector2, delta: float) -> void:
 	var previous_position: Vector2 = position
 	var move_direction: Vector2 = direction.limit_length(1.0)
-	velocity = move_direction * movement_speed
+	velocity = move_direction * movement_speed * (_Balance.number("round.dash_multiplier") if _dash_left > 0.0 else 1.0)
 	move_and_slide()
 	position.x = clampf(position.x, world_bounds.position.x, world_bounds.end.x)
 	position.y = clampf(position.y, world_bounds.position.y, world_bounds.end.y)

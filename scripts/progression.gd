@@ -258,8 +258,14 @@ func conviction_per_phrase() -> float:
 	return 1.0 + _sum_effect("conviction_add")
 
 
+## Walking speed tops out with Bellmarket's last stride; later maps add the dash instead.
 func run_multiplier() -> float:
-	return 1.0 + _sum_effect("run_speed_add")
+	return minf(1.0 + _sum_effect("run_speed_add"), Balance.number("round.max_run_multiplier"))
+
+
+## The dash key arrives with the first Fairground Dash.
+func dash_unlocked() -> bool:
+	return rank("fair_run_1") > 0
 
 
 ## World pixels within which lone wanderers walk toward the cultist; zero without Beckoning Call.
@@ -577,11 +583,31 @@ func try_travel(area_id: String, bypass_unlock: bool = false) -> bool:
 	var candidate: Dictionary = save_file.snapshot()
 	candidate.active_area = area_id
 	candidate.level_select_unlocked = level_select_unlocked or bypass_unlock
+	if bypass_unlock:
+		_grant_earlier_circles(candidate, AREA_IDS.find(area_id))
 	# Main prepares the destination before requesting this durable transition.
 	if not save_file.write(candidate):
 		return false
 	save_file.apply(candidate)
 	return true
+
+
+## Jumping ahead by password assumes every earlier circle is finished: all its
+## ranks bought and its opponents won. Only ever raises what the save holds.
+func _grant_earlier_circles(candidate: Dictionary, target_index: int) -> void:
+	for index in range(target_index):
+		var earlier: String = AREA_IDS[index]
+		for entry in catalog_for_area(earlier):
+			candidate.purchased[entry.id] = maxi(int(candidate.purchased.get(entry.id, 0)), int(entry.get("max_rank", 1)))
+		match earlier:
+			"bramblewick":
+				candidate.encounter_stage = 4
+			"lantern_fair":
+				candidate.fair_stage = FAIR_BOSS_COUNT
+			UNI_AREA:
+				candidate.uni_stage = UNI_BOSS_COUNT
+			ROSE_AREA:
+				candidate.rose_king_won = true
 
 
 func merchant_donation() -> int:
@@ -611,7 +637,7 @@ func effect_preview(id: String) -> Dictionary:
 	var current: Dictionary = {
 		"speech_frequency": 1.0 + float(totals.speech_speed_add),
 		"conviction": base_conviction,
-		"run_multiplier": 1.0 + float(totals.run_speed_add),
+		"run_multiplier": minf(1.0 + float(totals.run_speed_add), Balance.number("round.max_run_multiplier")),
 		"gatherings": Balance.list("village.gatherings").size() + int(_unlocked(totals, "meadow_unlock")) + int(_unlocked(totals, "east_unlock")),
 		"merchant_unlock": int(_unlocked(totals, "merchant_unlock")),
 		"merchant_conviction_add": base_conviction + float(totals.merchant_conviction_add),
@@ -639,7 +665,7 @@ func effect_preview(id: String) -> Dictionary:
 	var effect: Dictionary = _rank_effect(upgrade, rank(id))
 	result.next.speech_frequency += float(effect.get("speech_speed_add", 0.0))
 	result.next.conviction += float(effect.get("conviction_add", 0.0))
-	result.next.run_multiplier += float(effect.get("run_speed_add", 0.0))
+	result.next.run_multiplier = minf(result.next.run_multiplier + float(effect.get("run_speed_add", 0.0)), Balance.number("round.max_run_multiplier"))
 	result.next.gatherings += int(effect.get("meadow_unlock", 0)) + int(effect.get("east_unlock", 0))
 	for key in ["merchant_unlock", "merchant_conviction_add", "merchant_donation_add", "encounter_unlock", "encounter_conviction_add", "skeptic_conviction_add", "guard_conviction_add", "zealot_conviction_add", "priest_conviction_add"]:
 		result.next[key] += float(effect.get(key, 0.0))

@@ -2,6 +2,10 @@
   "round": {
     "seconds": 11.0,
     "base_run_speed": 180.0,
+    "max_run_multiplier": 3.8,
+    "dash_multiplier": 3.0,
+    "dash_seconds": 0.18,
+    "dash_cooldown": 1.5,
     "speaking_radius": 105.0
   },
   "village": {
@@ -264,10 +268,10 @@
     "start": [1120, 1430],
     "round_seconds": 30.0,
     "roles": {
-      "pilgrim": {"conviction": 2200.0, "donation": 350, "plea": 100.0},
-      "brother": {"conviction": 3600.0, "donation": 550, "plea": 180.0},
-      "elder": {"conviction": 6500.0, "donation": 1000, "plea": 360.0},
-      "cardinal": {"conviction": 11000.0, "donation": 1800, "plea": 800.0}
+      "pilgrim": {"conviction": 22000.0, "donation": 350, "plea": 100.0},
+      "brother": {"conviction": 36000.0, "donation": 550, "plea": 180.0},
+      "elder": {"conviction": 65000.0, "donation": 1000, "plea": 360.0},
+      "cardinal": {"conviction": 110000.0, "donation": 1800, "plea": 800.0}
     },
     "people": {"Pilgrim": "pilgrim", "Penitent": "pilgrim", "Mendicant": "pilgrim", "Monk": "brother", "Nun": "brother", "Novice": "brother", "Scribe": "brother", "Herbalist": "brother", "Cellarer": "brother", "Prior": "elder", "Abbess": "elder", "Canon": "elder", "Cardinal": "cardinal"},
     "zones": {"gate": "Pilgrim Gate", "cloister": "Cloister", "garden": "Herb Garden", "terrace": "Abbey Terrace"},

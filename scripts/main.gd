@@ -557,6 +557,7 @@ func purchase_upgrade(id: String, expected_rank: int = -1) -> bool:
 
 func apply_upgrades() -> void:
 	player.movement_speed = Balance.number("round.base_run_speed") * progression.run_multiplier()
+	player.dash_enabled = progression.dash_unlocked()
 	if progression.active_area == Fair.AREA_ID:
 		var group_count: int = groups.size()
 		area.add_stage_gatherings()
