@@ -2,8 +2,8 @@ extends Node2D
 ## One visible, nonblocking recruiter. Main supplies only active-round time.
 ## A conservative grid uses the actual prop footprints, not decorative artwork.
 const Balance = preload("res://addons/hatchery/core/balance.gd")
-const CELL: float = 24.0
-const BODY_RADIUS: float = 7.0
+const NavGrid = preload("res://scripts/nav_grid.gd")
+const CELL: float = NavGrid.CELL
 const START_OFFSET := Vector2(-24, 24)
 const STAND_OFFSET := Vector2(0, 28)
 const MAX_STEP: float = 1.0 / 60.0
@@ -72,38 +72,8 @@ func can_hear_me(group: Node2D) -> bool:
 	return interest < 0 or group.hears(interest, extra_cut(group))
 
 
-## The grid keeps at least two cells clear of every edge of the map.
 func configure_navigation(actors: Node2D, world_size: Vector2) -> void:
-	navigation.region = Rect2i(Vector2i(2, 2), Vector2i((world_size / CELL).floor()) - Vector2i(4, 4))
-	navigation.cell_size = Vector2(CELL, CELL)
-	navigation.offset = Vector2(CELL * 0.5, CELL * 0.5)
-	navigation.diagonal_mode = AStarGrid2D.DIAGONAL_MODE_ONLY_IF_NO_OBSTACLES
-	navigation.update()
-	# Obstacle shapes state their contract through the "helper_obstacle_shape"
-	# group rather than a coincidental node name village.gd and market.gd must
-	# both happen to use; the player's own shape is never in that group.
-	var footprints: Array[Node] = []
-	for shape_node in actors.find_children("*", "CollisionShape2D", true, false):
-		if shape_node.is_in_group("helper_obstacle_shape"):
-			footprints.append(shape_node)
-	# Inflate by a cell half-diagonal as well as the helper radius, so edges
-	# between free cell centers cannot cut across a thin prop footprint.
-	var clearance: float = CELL * 0.707107 + BODY_RADIUS
-	for y in range(navigation.region.position.y, navigation.region.end.y):
-		for x in range(navigation.region.position.x, navigation.region.end.x):
-			var cell := Vector2i(x, y)
-			var at: Vector2 = navigation.get_point_position(cell)
-			for footprint in footprints:
-				var shape: Shape2D = footprint.shape
-				var local: Vector2 = at - footprint.global_position
-				var blocked: bool = false
-				if shape is CircleShape2D:
-					blocked = local.length() <= shape.radius + clearance
-				elif shape is RectangleShape2D:
-					blocked = Rect2(-shape.size * 0.5, shape.size).grow(clearance).has_point(local)
-				if blocked:
-					navigation.set_point_solid(cell)
-					break
+	navigation = NavGrid.build(actors, world_size)
 
 
 func reset_round(at: Vector2) -> void:
