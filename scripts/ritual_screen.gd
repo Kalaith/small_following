@@ -84,6 +84,7 @@ var market_circle: bool = false
 var fair_circle: bool = false
 var uni_circle: bool = false
 var rose_circle: bool = false
+var abbey_circle: bool = false
 ## The area whose circle is shown; its wording comes from ritual_area_text.gd.
 var circle_area: String = "bramblewick"
 var argument_cards: ArgumentCards
@@ -146,8 +147,9 @@ func configure(new_catalog: Array, progression: Progression) -> void:
 	fair_circle = area == "lantern_fair"
 	uni_circle = area == "university"
 	rose_circle = area == "rosecourt"
+	abbey_circle = area == "abbey"
 	circle_area = area
-	away_circle = market_circle or fair_circle or uni_circle or rose_circle
+	away_circle = market_circle or fair_circle or uni_circle or rose_circle or abbey_circle
 	_progression = progression
 	by_id.clear()
 	node_positions = Layout.build(catalog)
@@ -268,8 +270,9 @@ func update_state(round_recruits: int = 0) -> void:
 	if not _destination_id.is_empty() and complete:
 		completion_button.text = "Circle complete / Travel"
 		completion_button.tooltip_text = "Open the route to " + _destination_title + "."
-	demo_message_label.text = "The road to %s is open" % _destination_title if not _destination_id.is_empty() else AreaText.words(circle_area, "complete")
-	_demo_description.text = "Visit its separate circle and new listeners. Your progress in both towns is kept." if not _destination_id.is_empty() else AreaText.words(circle_area, "after")
+	var completion_words: Dictionary = AreaText.completion(circle_area, _progression, _destination_title if not _destination_id.is_empty() else "")
+	demo_message_label.text = completion_words.title
+	_demo_description.text = completion_words.body
 	destination_button.visible = not _destination_id.is_empty()
 	destination_button.text = "Travel to " + _destination_title
 	if not complete:

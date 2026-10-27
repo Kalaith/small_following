@@ -200,7 +200,35 @@ func _draw_glyph(canvas: Control, at: Vector2, branch: String, color: Color) -> 
 			# A closed fan: the reserved noble who already knows your name.
 			canvas.draw_polyline(PackedVector2Array([at + Vector2(-2, 10) * scale, at + Vector2(-6, -11) * scale, at + Vector2(6, -11) * scale, at + Vector2(2, 10) * scale, at + Vector2(-2, 10) * scale]), color, 1.5, true)
 			canvas.draw_line(at + Vector2(0, 10) * scale, at + Vector2(0, -11) * scale, color, 1.0, true)
-		"run", "market_run", "fair_run", "uni_run", "rose_run":
+		"abbey_talk":
+			# A held note: a bell's curve with a sounding line.
+			canvas.draw_arc(at + Vector2(0, -2) * scale, 9 * scale, PI, TAU, 14, color, 1.6, true)
+			canvas.draw_line(at + Vector2(-9, -2) * scale, at + Vector2(-11, 8) * scale, color, 1.6, true)
+			canvas.draw_line(at + Vector2(9, -2) * scale, at + Vector2(11, 8) * scale, color, 1.6, true)
+			canvas.draw_line(at + Vector2(-11, 8) * scale, at + Vector2(11, 8) * scale, color, 1.6, true)
+			canvas.draw_circle(at + Vector2(0, 12) * scale, 2.0 * scale, color)
+		"abbey_persuade":
+			# A cross within a diamond: resolve.
+			canvas.draw_polyline(PackedVector2Array([at + Vector2(0, -12) * scale, at + Vector2(9, 0) * scale, at + Vector2(0, 12) * scale, at + Vector2(-9, 0) * scale, at + Vector2(0, -12) * scale]), color, 1.6, true)
+			canvas.draw_line(at + Vector2(0, -7) * scale, at + Vector2(0, 7) * scale, color, 1.4, true)
+			canvas.draw_line(at + Vector2(-4, -2) * scale, at + Vector2(4, -2) * scale, color, 1.4, true)
+		"abbey_plea":
+			# Raised hands before a small figure on a seat.
+			canvas.draw_line(at + Vector2(-7, 10) * scale, at + Vector2(-9, -6) * scale, color, 1.6, true)
+			canvas.draw_line(at + Vector2(7, 10) * scale, at + Vector2(9, -6) * scale, color, 1.6, true)
+			canvas.draw_circle(at + Vector2(0, -3) * scale, 3.5 * scale, color)
+			canvas.draw_line(at + Vector2(-4, 10) * scale, at + Vector2(4, 10) * scale, color, 1.6, true)
+		"abbey_follower":
+			# A small company: three figures abreast.
+			for x in [-9, 0, 9]:
+				canvas.draw_circle(at + Vector2(x, -6) * scale, 2.6 * scale, color)
+				canvas.draw_polyline(PackedVector2Array([at + Vector2(x - 4, 9) * scale, at + Vector2(x, 0) * scale, at + Vector2(x + 4, 9) * scale]), color, 1.4, true)
+		"abbey_alms":
+			# A box with a slot and a falling coin.
+			canvas.draw_rect(Rect2(at + Vector2(-9, 0) * scale, Vector2(18, 10) * scale), color, false, 1.6)
+			canvas.draw_line(at + Vector2(-4, 4) * scale, at + Vector2(4, 4) * scale, color, 1.4, true)
+			canvas.draw_circle(at + Vector2(0, -8) * scale, 3.0 * scale, color)
+		"run", "market_run", "fair_run", "uni_run", "rose_run", "abbey_run":
 			for x in [-5, 4]:
 				canvas.draw_polyline(PackedVector2Array([at + Vector2(x - 4, -10) * scale, at + Vector2(x + 3, 0) * scale, at + Vector2(x - 4, 10) * scale]), color, 1.7, true)
 		_:

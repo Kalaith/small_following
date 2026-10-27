@@ -15,6 +15,9 @@ const ROSE_BRANCHES: Array[String] = ["rose_talk", "rose_wide", "rose_persuade",
 ## One petal's six steps in its own frame (its axis along +x): out along one
 ## edge, round the tip and back along the other, so each petal reads as a rose petal.
 const ROSE_PETAL: Array[Vector2] = [Vector2(150, -30), Vector2(240, -54), Vector2(332, -48), Vector2(394, 0), Vector2(332, 48), Vector2(240, 54)]
+const ABBEY_TITLES: Dictionary = {"abbey_talk": "Plainsong", "abbey_plea": "Advocates", "abbey_persuade": "Holy Resolve", "abbey_follower": "The Company", "abbey_run": "Pilgrim's Road", "abbey_alms": "Alms Box"}
+## The abbey's six petals share the rose window's geometry.
+const ABBEY_BRANCHES: Array[String] = ["abbey_talk", "abbey_plea", "abbey_persuade", "abbey_follower", "abbey_run", "abbey_alms"]
 const MARKET_TITLES: Dictionary = {"market_follower": "Followers", "market_run": "Routes", "market_talk": "Voice", "market_persuade": "Creed", "market_guild": "Guild", "market_patron": "Patrons"}
 # The first three nodes retain their original petal positions. The next three
 # turn down the petal's spare side, keeping six real steps inside the same seal.
@@ -125,7 +128,7 @@ static func satellite_seals(catalog: Array) -> Array[Dictionary]:
 
 
 static func branch_title(branch: String) -> String:
-	return str(ROSE_TITLES.get(branch, UNI_TITLES.get(branch, FAIR_TITLES.get(branch, MARKET_TITLES.get(branch, BRANCH_TITLES.get(branch, branch.replace("_", " ").capitalize()))))))
+	return str(ABBEY_TITLES.get(branch, ROSE_TITLES.get(branch, UNI_TITLES.get(branch, FAIR_TITLES.get(branch, MARKET_TITLES.get(branch, BRANCH_TITLES.get(branch, branch.replace("_", " ").capitalize())))))))
 
 
 static func build(catalog: Array) -> Dictionary:
@@ -182,6 +185,12 @@ static func build(catalog: Array) -> Dictionary:
 			if branch in ROSE_BRANCHES and step >= 0 and step < ROSE_PETAL.size():
 				var axis: float = deg_to_rad(-90.0 + ROSE_BRANCHES.find(branch) * 60.0)
 				positions[id] = ROSE_PETAL[step].rotated(axis)
+		elif id.begins_with("abbey_"):
+			var abbey_branch: String = id.substr(0, id.rfind("_"))
+			var abbey_step: int = int(id.substr(id.rfind("_") + 1)) - 1
+			if abbey_branch in ABBEY_BRANCHES and abbey_step >= 0 and abbey_step < ROSE_PETAL.size():
+				var abbey_axis: float = deg_to_rad(-90.0 + ABBEY_BRANCHES.find(abbey_branch) * 60.0)
+				positions[id] = ROSE_PETAL[abbey_step].rotated(abbey_axis)
 		else:
 			for branch_index in range(MARKET_BRANCHES.size()):
 				for tier in range(1, MARKET_TIER_ANGLES.size() + 1):

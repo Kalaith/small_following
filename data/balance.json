@@ -249,6 +249,36 @@
     "wanderers": {"people": ["Footman", "Maid", "Gardener", "Musician"]},
     "helper": {"teal": {"walk_speed": 150.0, "phrase_seconds": 1.0, "conviction_per_phrase": 250.0}}
   },
+  "abbey": {
+    "start": [1120, 1430],
+    "round_seconds": 30.0,
+    "roles": {
+      "pilgrim": {"conviction": 2200.0, "donation": 350, "plea": 100.0},
+      "brother": {"conviction": 3600.0, "donation": 550, "plea": 180.0},
+      "elder": {"conviction": 6500.0, "donation": 1000, "plea": 360.0},
+      "cardinal": {"conviction": 11000.0, "donation": 1800, "plea": 800.0}
+    },
+    "people": {"Pilgrim": "pilgrim", "Penitent": "pilgrim", "Mendicant": "pilgrim", "Monk": "brother", "Nun": "brother", "Novice": "brother", "Scribe": "brother", "Herbalist": "brother", "Cellarer": "brother", "Prior": "elder", "Abbess": "elder", "Canon": "elder", "Cardinal": "cardinal"},
+    "zones": {"gate": "Pilgrim Gate", "cloister": "Cloister", "garden": "Herb Garden", "terrace": "Abbey Terrace"},
+    "groups": [
+      {"title": "Pilgrim camp", "zone": "gate", "at": [545, 1333], "people": ["Pilgrim", "Penitent", "Pilgrim", "Mendicant"]},
+      {"title": "Almonry queue", "zone": "gate", "at": [1695, 1333], "people": ["Mendicant", "Pilgrim", "Novice", "Cellarer"]},
+      {"title": "Scriptorium", "zone": "cloister", "at": [575, 922], "people": ["Scribe", "Monk", "Novice", "Scribe"]},
+      {"title": "Cloister walk", "zone": "cloister", "at": [818, 709], "people": ["Monk", "Nun", "Prior", "Novice"]},
+      {"title": "Herb garden", "zone": "garden", "at": [1522, 908], "people": ["Herbalist", "Nun", "Penitent", "Monk"]},
+      {"title": "Chapter house", "zone": "terrace", "at": [590, 470], "people": ["Prior", "Abbess", "Canon", "Monk"]},
+      {"title": "Cardinals' conclave", "zone": "terrace", "at": [1650, 470], "people": ["Cardinal", "Cardinal", "Cardinal", "Canon"]}
+    ],
+    "wanderers": {"people": ["Pilgrim", "Penitent", "Pilgrim", "Mendicant", "Pilgrim", "Novice"]},
+    "procession": {"walk_speed": 190.0, "rows": {"y": 365, "gap": 45, "step": 72, "counts": [9, 10, 11, 12]}},
+    "pope": {"at": [1120, 300], "conviction": 700000.0, "open_pleaders": 22, "reward": 30000, "coat": "f2eee6"},
+    "fellowship": {"branches": ["helper", "market_follower", "fair_follower", "uni_assistant", "abbey_follower"], "ids": ["rose_trusted_2", "rose_trusted_4", "rose_trusted_5"]},
+    "helper": {
+      "teal": {"walk_speed": 170.0, "phrase_seconds": 1.0, "conviction_per_phrase": 150.0},
+      "amber": {"walk_speed": 240.0, "phrase_seconds": 1.0, "conviction_per_phrase": 120.0},
+      "moss": {"walk_speed": 220.0, "phrase_seconds": 0.5, "conviction_per_phrase": 120.0}
+    }
+  },
   "targets": {
     "village_campaign_rounds": [48, 62],
     "market_entry_max_open_recruits": 9,

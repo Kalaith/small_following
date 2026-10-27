@@ -21,7 +21,7 @@ func arc(canvas: Control, center: Vector2, radius: float, color: Color, width: f
 
 
 func draw_backdrop(canvas: Control) -> void:
-	if screen.rose_circle:
+	if screen.rose_circle or screen.abbey_circle:
 		draw_rose_seal(canvas)
 		return
 	if screen.uni_circle:
@@ -214,6 +214,15 @@ func draw_core(canvas: Control) -> void:
 	for index in range(20):
 		var radial: Vector2 = Vector2.from_angle(-PI * 0.5 + index * TAU / 20.0)
 		canvas.draw_line(_point(radial * (Style.CORE_RADIUS + 4.0)), _point(radial * (Style.CORE_ORNAMENT_RADIUS - (6.0 if index % 4 == 0 else 10.0))), Color(Style.LILAC, 0.80 if complete else 0.30), 1.0, true)
+	if screen.abbey_circle:
+		# The abbey's centre is crossed keys under a small cross.
+		var keys: Color = Style.GOLD if complete else Color(Style.GOLD, 0.5)
+		for side in [-1.0, 1.0]:
+			canvas.draw_line(center + Vector2(side * radius * 0.5, -radius * 0.34), center + Vector2(-side * radius * 0.4, radius * 0.5), keys, 1.4, true)
+			canvas.draw_arc(center + Vector2(side * radius * 0.5, -radius * 0.44), radius * 0.14, 0, TAU, 16, keys, 1.2, true)
+		canvas.draw_line(center + Vector2(0, -radius * 0.78), center + Vector2(0, -radius * 0.5), keys, 1.4, true)
+		canvas.draw_line(center + Vector2(-radius * 0.1, -radius * 0.7), center + Vector2(radius * 0.1, -radius * 0.7), keys, 1.4, true)
+		return
 	if screen.rose_circle:
 		# Rosecourt's centre is a five-petalled rose under a small crown.
 		var ink: Color = Style.GOLD if complete else Color(Style.GOLD, 0.5)

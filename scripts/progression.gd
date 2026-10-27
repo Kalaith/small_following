@@ -7,22 +7,23 @@ const ProgressionSave = preload("res://scripts/progression_save.gd")
 const JsonIO = preload("res://addons/hatchery/core/json_io.gd")
 const DataRules = preload("res://addons/hatchery/core/data_rules.gd")
 const ProgressionCatalog = preload("res://scripts/progression_catalog.gd")
-const SAVE_VERSION: int = 7
+const SAVE_VERSION: int = 8
 const MAX_COUNTER: int = 1000000000
 ## Travel order. An area's earned effects carry into every later area, never back.
-const AREA_IDS: Array[String] = ["bramblewick", "bellmarket", "lantern_fair", "university", "rosecourt"]
-const AREA_TITLES: Dictionary = {"bramblewick": "Bramblewick", "bellmarket": "Bellmarket", "lantern_fair": "the Lantern Fair", "university": "Quillmoor", "rosecourt": "Rosecourt"}
+const AREA_IDS: Array[String] = ["bramblewick", "bellmarket", "lantern_fair", "university", "rosecourt", "abbey"]
+const AREA_TITLES: Dictionary = {"bramblewick": "Bramblewick", "bellmarket": "Bellmarket", "lantern_fair": "the Lantern Fair", "university": "Quillmoor", "rosecourt": "Rosecourt", "abbey": "the Hilltop Abbey"}
 ## Effect keys a circle may hold only in its own area, by prefix.
-const AREA_EFFECT_PREFIXES: Dictionary = {"bellmarket": "market_", "lantern_fair": "fair_", "university": "uni_", "rosecourt": "rose_"}
+const AREA_EFFECT_PREFIXES: Dictionary = {"bellmarket": "market_", "lantern_fair": "fair_", "university": "uni_", "rosecourt": "rose_", "abbey": "abbey_"}
 const FAIR_BOSS_COUNT: int = 4
 const UNI_AREA: String = "university"
 const UNI_BOSS_COUNT: int = 4
 const ROSE_AREA: String = "rosecourt"
+const ABBEY_AREA: String = "abbey"
 ## Village nodes added after Bellmarket shipped. Saves validate earned market
 ## access without them, so a player already there is not rejected; ordinary
 ## travel still requires the whole current circle.
 const POST_MARKET_VILLAGE_IDS: Array[String] = ["beckon_1"]
-const EFFECT_KEYS: Array[String] = ["beckon_add", "encounter_conviction_add", "skeptic_conviction_add", "guard_conviction_add", "zealot_conviction_add", "priest_conviction_add", "merchant_conviction_add", "merchant_donation_add", "speech_speed_add", "conviction_add", "run_speed_add", "meadow_unlock", "east_unlock", "helper_unlock", "merchant_unlock", "encounter_unlock", "market_guild_unlock", "market_patron_unlock", "market_guild_donation_add", "market_patron_donation_add", "market_beckon_add", "market_wanderer_add", "market_helper_unlock", "market_teal_conviction_add", "market_amber_speed_add", "fair_interest_add", "fair_stage_bonus_add", "fair_stage_reach_add", "fair_drain_cut_add", "fair_barker_unlock", "fair_barker_speed_add", "fair_barker_cut_add", "fair_teal_interest_add", "fair_steal_window_add", "fair_crowd_radius_add", "uni_slot_add", "uni_academic_conviction_add", "uni_proof_conviction_add", "uni_evidence_conviction_add", "uni_scripture_conviction_add", "uni_eloquence_conviction_add", "uni_proof_donation_add", "uni_evidence_donation_add", "uni_scripture_donation_add", "uni_eloquence_donation_add", "uni_ta_conviction_add", "uni_ta_walk_add", "uni_ta_speed_add", "rose_head_start_add", "rose_noble_donation_add", "rose_reach_add", "rose_whisper_conviction_add", "rose_trusted_add", "rose_helper_conviction_add", "rose_helper_walk_add"]
+const EFFECT_KEYS: Array[String] = ["beckon_add", "encounter_conviction_add", "skeptic_conviction_add", "guard_conviction_add", "zealot_conviction_add", "priest_conviction_add", "merchant_conviction_add", "merchant_donation_add", "speech_speed_add", "conviction_add", "run_speed_add", "meadow_unlock", "east_unlock", "helper_unlock", "merchant_unlock", "encounter_unlock", "market_guild_unlock", "market_patron_unlock", "market_guild_donation_add", "market_patron_donation_add", "market_beckon_add", "market_wanderer_add", "market_helper_unlock", "market_teal_conviction_add", "market_amber_speed_add", "fair_interest_add", "fair_stage_bonus_add", "fair_stage_reach_add", "fair_drain_cut_add", "fair_barker_unlock", "fair_barker_speed_add", "fair_barker_cut_add", "fair_teal_interest_add", "fair_steal_window_add", "fair_crowd_radius_add", "uni_slot_add", "uni_academic_conviction_add", "uni_proof_conviction_add", "uni_evidence_conviction_add", "uni_scripture_conviction_add", "uni_eloquence_conviction_add", "uni_proof_donation_add", "uni_evidence_donation_add", "uni_scripture_donation_add", "uni_eloquence_donation_add", "uni_ta_conviction_add", "uni_ta_walk_add", "uni_ta_speed_add", "rose_head_start_add", "rose_noble_donation_add", "rose_reach_add", "rose_whisper_conviction_add", "rose_trusted_add", "rose_helper_conviction_add", "rose_helper_walk_add", "abbey_plea_add", "abbey_plea_walk_add", "abbey_heed_add", "abbey_helper_power_add", "abbey_helper_speed_add", "abbey_helper_walk_add", "abbey_donation_add"]
 const UNLOCK_KEYS: Array[String] = ["meadow_unlock", "east_unlock", "helper_unlock", "merchant_unlock", "encounter_unlock", "market_guild_unlock", "market_patron_unlock", "market_helper_unlock", "fair_barker_unlock"]
 ## Whole-number fair effects (Interest and Distraction are counted in whole lanterns).
 const WHOLE_FAIR_KEYS: Array[String] = ["fair_interest_add", "fair_stage_bonus_add", "fair_barker_cut_add", "fair_teal_interest_add"]
@@ -30,6 +31,8 @@ const WHOLE_FAIR_KEYS: Array[String] = ["fair_interest_add", "fair_stage_bonus_a
 const WHOLE_UNI_KEYS: Array[String] = ["uni_slot_add", "uni_proof_donation_add", "uni_evidence_donation_add", "uni_scripture_donation_add", "uni_eloquence_donation_add"]
 ## Whole-number Rosecourt effects: threads, trusted nobles and gold.
 const WHOLE_ROSE_KEYS: Array[String] = ["rose_reach_add", "rose_trusted_add", "rose_noble_donation_add"]
+## Whole-number abbey effects: advocates the Pope needs and gold.
+const WHOLE_ABBEY_KEYS: Array[String] = ["abbey_heed_add", "abbey_donation_add"]
 
 
 var encounter_stage: int = 0
@@ -43,6 +46,8 @@ var uni_stage: int = 0
 var uni_loadout: Array[String] = []
 ## The King of Rosecourt has given his approval; a lasting victory, like the Priest's.
 var rose_king_won: bool = false
+## The Pope has heard the cultist; the campaign is won. A lasting victory.
+var abbey_pope_won: bool = false
 var coins: int = 0
 # Recruitment events are lifetime history; assigning supporters spends only availability.
 var total_recruits: int = 0
@@ -494,6 +499,16 @@ func complete_rose_king() -> bool:
 	return true
 
 
+## The Pope's reward once, then a lasting victory: the campaign's end.
+func complete_pope() -> bool:
+	if active_area != ABBEY_AREA or abbey_pope_won:
+		return false
+	_add_earnings(Balance.integer("abbey.pope.reward"), 1)
+	abbey_pope_won = true
+	save_progress()
+	return true
+
+
 func rose_helper_conviction_bonus() -> float:
 	return _sum_effect("rose_helper_conviction_add")
 
@@ -578,6 +593,8 @@ func market_donation(npc_type: String, base_amount: int) -> int:
 		return base_amount + int(_sum_effect("market_" + npc_type + "_donation_add"))
 	if npc_type in ["noble", "grandee"]:
 		return base_amount + int(_sum_effect("rose_noble_donation_add"))
+	if npc_type in ["brother", "elder", "cardinal"]:
+		return base_amount + int(_sum_effect("abbey_donation_add"))
 	return base_amount
 
 
@@ -656,7 +673,7 @@ func load_progress() -> bool:
 
 
 func has_progress() -> bool:
-	return coins > 0 or total_recruits > 0 or round_number > 1 or not purchased.is_empty() or encounter_stage > 0 or fair_stage > 0 or uni_stage > 0 or rose_king_won or active_area != "bramblewick" or level_select_unlocked
+	return coins > 0 or total_recruits > 0 or round_number > 1 or not purchased.is_empty() or encounter_stage > 0 or fair_stage > 0 or uni_stage > 0 or rose_king_won or abbey_pope_won or active_area != "bramblewick" or level_select_unlocked
 
 
 ## Called every frame for speech and conviction, so this stays allocation-free.

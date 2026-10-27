@@ -1,8 +1,8 @@
 # Map roadmap
 
 The order of maps and the one new mechanic each one teaches. Bramblewick,
-Bellmarket, the Lantern Fair, Quillmoor and Rosecourt are implemented. The abbey is
-next and not yet planned. The plans for the implemented maps were retired
+Bellmarket, the Lantern Fair, Quillmoor, Rosecourt and the abbey are implemented;
+the abbey is the final map. The plans for the implemented maps were retired
 once built (they remain in Git history); `data/balance.json` and
 `data/upgrades.json` are the source of truth for their numbers.
 
@@ -13,7 +13,7 @@ once built (they remain in Git history); `data/balance.json` and
 | 3 | The Lantern Fair | Interest against Distraction: a hard threshold with many ways over it, fast drain, stolen audiences; the moss-green Barker | The Ringmaster | Implemented |
 | 4 | Quillmoor University | Prepared arguments: academics only hear their own faculty's argument | The Rector | Implemented |
 | 5 | Rosecourt (the King's garden) | Whispered introductions: who you win first opens who listens next | The King | Implemented |
-| 6 | The hilltop abbey (final map) | Not yet planned | The Pope | - |
+| 6 | The hilltop abbey (final map) | The procession: everyone won walks to the Pope and pleads for you, and he is moved only by those advocates | The Pope | Implemented |
 
 Each map asks a different question:
 
@@ -21,9 +21,17 @@ Each map asks a different question:
 - **The fair:** are you interesting enough?
 - **Quillmoor:** did you bring the right argument?
 - **Rosecourt:** who have you already talked to today?
+- **The abbey:** who will stand beside you?
 
 Story thread: winning the King gives the cultist his approval to go before
-the Pope. It is story only and carries no stat or unlock.
+the Pope. Beyond the story it has one effect: the Pope takes his seat only for
+a pilgrim who has it, and who has mastered every follower inscription (the
+helper, Market Hand, Barker, Teaching Assistant and Page nodes, and the abbey's
+own Company). The Pope's ears stay closed until enough of the won stand before
+him, and only they move him until then, so no cultist reaches him alone. His
+conviction, the advocates he needs and every plea are in `data/balance.json`
+("abbey"). A full abbey circle is needed to win; the abbey's round is 30 seconds.
+Winning him shows the campaign's ending.
 
 Shared rules for every new map:
 

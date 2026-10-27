@@ -10,8 +10,8 @@ const TIME_EPSILON: float = 0.000001
 const Balance = preload("res://addons/hatchery/core/balance.gd")
 const ArgumentBadge = preload("res://scripts/argument_badge.gd")
 const Listener = preload("res://scripts/listener.gd")
-## Rosecourt guests; their salons carry no text over their heads.
-const COURT_TYPES: Array[String] = ["servant", "courtier", "noble", "grandee"]
+## Rosecourt and abbey guests; their huddles carry no text over their heads.
+const COURT_TYPES: Array[String] = ["servant", "courtier", "noble", "grandee", "pilgrim", "brother", "elder", "cardinal"]
 ## Ordinary villagers who share a convinced opponent's habits join the village
 ## after that opponent's victory (balance data "village.types"). Rebuttals are
 ## phrases ignored at the start of each visit; decay is conviction lost per
@@ -30,6 +30,10 @@ var listener_profiles: Array[Dictionary] = []
 var _market_progression: Progression = null
 ## Rosecourt's whisper court: reserved guests, head starts and threads.
 var court: Node2D = null
+## The abbey's procession: every guest won walks to the Pope and pleads.
+var procession: Node2D = null
+## Speech beyond twenty phrases a second counts as heavier phrases (Rosecourt, the abbey).
+var burst_speech: bool = false
 
 var group_name: String = "Neighbours"
 ## Village-type crowds and lone wanderers carry no name or hint overhead; the
@@ -152,7 +156,7 @@ func tick_persuasion(delta: float, phrase_interval: float, conviction: float, in
 	last_phrase_interval = maxf(phrase_interval, 0.05)
 	# The rhythm never passes twenty phrases a second. At Rosecourt speech beyond
 	# it still counts: each phrase carries the conviction of the ones it stands for.
-	var burst: float = last_phrase_interval / phrase_interval if court != null and phrase_interval > 0.0 else 1.0
+	var burst: float = last_phrase_interval / phrase_interval if burst_speech and phrase_interval > 0.0 else 1.0
 	phrase_elapsed += maxf(delta, 0.0)
 	var heard: bool = hears(interest) and (still or not still_only)
 	set_deaf(not heard)
@@ -263,6 +267,8 @@ func recruit_listener(index: int, interest: int = 0, extra_cut: int = 0) -> bool
 	if court != null:
 		# Whoever won them, the cultist or a helper, their threads whisper now.
 		court.on_converted(self, index)
+	if procession != null:
+		procession.on_converted(self, index)
 	if recruits == listener_count:
 		progress = 0.0
 		phrase_elapsed = 0.0
@@ -286,6 +292,7 @@ func reset_round() -> void:
 	set_performing(false)
 	for listener in listeners:
 		listener.following = false
+		listener.departed = false
 		listener.clear_reward()
 	queue_redraw()
 
@@ -304,7 +311,7 @@ func validate_profiles() -> String:
 	for profile in listener_profiles:
 		if not profile.get("role", "") is String or String(profile.get("role", "")).strip_edges().is_empty():
 			return "A market listener needs a role name."
-		if not profile.get("npc_type", "") in ["ordinary", "guild", "patron", "fairgoer", "stallholder", "performer", "fan", "student", "staff", "academic", "pupil", "servant", "courtier", "noble", "grandee"]:
+		if not profile.get("npc_type", "") in ["ordinary", "guild", "patron", "fairgoer", "stallholder", "performer", "fan", "student", "staff", "academic", "pupil", "servant", "courtier", "noble", "grandee", "pilgrim", "brother", "elder", "cardinal"]:
 			return "A market listener has an unsupported audience type."
 		var argument: Variant = profile.get("argument", "")
 		if not argument is String or (not argument.is_empty() and not argument in Progression.argument_ids()):

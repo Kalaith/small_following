@@ -7,6 +7,8 @@ const Balance = preload("res://addons/hatchery/core/balance.gd")
 const Fair = preload("res://scripts/fair.gd")
 const University = preload("res://scripts/university.gd")
 const Rosecourt = preload("res://scripts/rosecourt.gd")
+const Abbey = preload("res://scripts/abbey.gd")
+const AbbeyRules = preload("res://scripts/abbey_rules.gd")
 
 var game: Node2D
 
@@ -20,10 +22,12 @@ func apply() -> void:
 	if progression.has_unlock("helper_unlock") and not is_instance_valid(game.helper):
 		game.helper = _hire("teal")
 	# The Market Hand's upgrades are Bellmarket's own, so it stays there; the
-	# Barker works only the fair. The teal helper travels everywhere.
-	if progression.active_area == "bellmarket" and progression.has_unlock("market_helper_unlock") and not is_instance_valid(game.market_helper):
+	# Barker works only the fair. The teal helper travels everywhere, and at
+	# the abbey every follower comes to the Pope's aid.
+	var abbey: bool = progression.active_area == Abbey.AREA_ID
+	if (progression.active_area == "bellmarket" or abbey) and progression.has_unlock("market_helper_unlock") and not is_instance_valid(game.market_helper):
 		game.market_helper = _hire("amber")
-	if progression.active_area == Fair.AREA_ID and progression.has_unlock("fair_barker_unlock") and not is_instance_valid(game.fair_helper):
+	if (progression.active_area == Fair.AREA_ID or abbey) and progression.has_unlock("fair_barker_unlock") and not is_instance_valid(game.fair_helper):
 		game.fair_helper = _hire("moss")
 	var team: Array[Node2D] = members()
 	for each in team:
@@ -36,6 +40,9 @@ func apply() -> void:
 ## Followers upgrades: teal gains conviction per phrase, amber speaks faster.
 func _tune() -> void:
 	var progression = game.progression
+	if progression.active_area == Abbey.AREA_ID:
+		_tune_abbey()
+		return
 	var helper: Node2D = game.helper
 	if is_instance_valid(helper):
 		var market: bool = progression.active_area == "bellmarket"
@@ -69,6 +76,34 @@ func _tune() -> void:
 		market_helper.walk_speed = Balance.number("market.helper.amber.walk_speed")
 		market_helper.phrase_seconds = Balance.number("market.helper.amber.phrase_seconds") / (1.0 + progression.market_amber_speed_bonus())
 		market_helper.conviction_per_phrase = Balance.number("market.helper.amber.conviction_per_phrase")
+
+
+## At the abbey every follower is at full strength together: each helper's
+## earlier inscriptions plus the abbey's own Company, so the team is stronger
+## than the cultist alone.
+func _tune_abbey() -> void:
+	var progression = game.progression
+	var power: float = AbbeyRules.helper_power(progression)
+	var speed: float = AbbeyRules.helper_speed(progression)
+	var walk: float = AbbeyRules.helper_walk(progression)
+	var teal: Node2D = game.helper
+	if is_instance_valid(teal):
+		teal.walk_speed = Balance.number("abbey.helper.teal.walk_speed") * (walk + progression.uni_helper_walk_bonus() + progression.rose_helper_walk_bonus())
+		teal.phrase_seconds = Balance.number("abbey.helper.teal.phrase_seconds") / ((1.0 + progression.uni_helper_speed_bonus()) * speed)
+		teal.conviction_per_phrase = (Balance.number("abbey.helper.teal.conviction_per_phrase") + progression.market_teal_conviction_bonus() + progression.uni_helper_conviction_bonus() + progression.rose_helper_conviction_bonus()) * power
+		teal.interest = -1
+	var amber: Node2D = game.market_helper
+	if is_instance_valid(amber):
+		amber.walk_speed = Balance.number("abbey.helper.amber.walk_speed") * walk
+		amber.phrase_seconds = Balance.number("abbey.helper.amber.phrase_seconds") / ((1.0 + progression.market_amber_speed_bonus()) * speed)
+		amber.conviction_per_phrase = Balance.number("abbey.helper.amber.conviction_per_phrase") * power
+	var moss: Node2D = game.fair_helper
+	if is_instance_valid(moss):
+		moss.walk_speed = Balance.number("abbey.helper.moss.walk_speed") * walk
+		moss.phrase_seconds = Balance.number("abbey.helper.moss.phrase_seconds") / ((1.0 + progression.fair_barker_speed_bonus()) * speed)
+		moss.conviction_per_phrase = Balance.number("abbey.helper.moss.conviction_per_phrase") * power
+		moss.interest = -1
+		moss.distraction_cut = 0
 
 
 func _hire(robe: String) -> Node2D:

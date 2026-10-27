@@ -13,6 +13,8 @@ const University = preload("res://scripts/university.gd")
 const UniBoss = preload("res://scripts/uni_boss.gd")
 const Rosecourt = preload("res://scripts/rosecourt.gd")
 const RoseCourt = preload("res://scripts/rose_court.gd")
+const Abbey = preload("res://scripts/abbey.gd")
+const AbbeyProcession = preload("res://scripts/abbey_procession.gd")
 
 var game: Node2D
 
@@ -35,6 +37,8 @@ func rebuild() -> void:
 	game.uni_boss = null
 	game.rose_court = null
 	game.rose_king = null
+	game.pope = null
+	game.abbey_procession = null
 	game.helper = null
 	game.market_helper = null
 	game.fair_helper = null
@@ -54,6 +58,8 @@ func rebuild() -> void:
 		world = University.new()
 	elif game.progression.active_area == Rosecourt.AREA_ID:
 		world = Rosecourt.new()
+	elif game.progression.active_area == Abbey.AREA_ID:
+		world = Abbey.new()
 	else:
 		world = Village.new()
 	world.name = "Village"
@@ -117,6 +123,21 @@ func rebuild() -> void:
 		var strollers: Array = Balance.list("rosecourt.wanderers.people")
 		for index in range(strollers.size()):
 			var wanderer := _new_rose_group({"title": Wanderers.TITLE, "people": [strollers[index]]}, index)
+			wanderer.show_caption = false
+			game.wanderers.append(wanderer)
+		scatter_wanderers()
+	elif game.progression.active_area == Abbey.AREA_ID:
+		# The procession needs the props' footprints, and every guest needs the procession.
+		game.abbey_procession = AbbeyProcession.new()
+		game.abbey_procession.name = "Procession"
+		world.add_child(game.abbey_procession)
+		game.abbey_procession.bind(game.progression, game.actors(), world.WORLD_SIZE)
+		for entry in Balance.list("abbey.groups"):
+			game.groups.append(_new_abbey_group(entry))
+		_seed_wanderers()
+		var pilgrims: Array = Balance.list("abbey.wanderers.people")
+		for index in range(pilgrims.size()):
+			var wanderer := _new_abbey_group({"title": Wanderers.TITLE, "people": [pilgrims[index]]}, index)
 			wanderer.show_caption = false
 			game.wanderers.append(wanderer)
 		scatter_wanderers()
@@ -204,9 +225,30 @@ func _new_rose_group(entry: Dictionary, coat_offset: int = 0) -> Node2D:
 	gathering.position = Balance.vec(entry.at) if entry.has("at") else Vector2.ZERO
 	gathering.coat_offset = coat_offset
 	gathering.spread = Rosecourt.HUDDLE
+	gathering.burst_speech = true
 	gathering.zone = String(entry.get("zone", ""))
 	gathering.listener_profiles.assign(Rosecourt.profiles(entry.people))
 	# No text over the garden's guests: rings, bars and icons only; the HUD explains.
+	gathering.show_caption = false
+	gathering.configure_market(game.progression)
+	gathering.recruited.connect(game._on_recruited)
+	gathering.phrase_spoken.connect(game.game_audio.on_phrase)
+	game.actors().add_child(gathering)
+	return gathering
+
+
+## One abbey huddle from balance data; whoever is won leaves for the Pope.
+func _new_abbey_group(entry: Dictionary, coat_offset: int = 0) -> Node2D:
+	var gathering := Gathering.new()
+	gathering.group_name = String(entry.title)
+	gathering.position = Balance.vec(entry.at) if entry.has("at") else Vector2.ZERO
+	gathering.coat_offset = coat_offset
+	gathering.spread = Abbey.HUDDLE
+	gathering.burst_speech = true
+	gathering.zone = String(entry.get("zone", ""))
+	gathering.listener_profiles.assign(Abbey.profiles(entry.people))
+	gathering.procession = game.abbey_procession
+	# No text over the abbey's people: rings, bars and icons only; the HUD explains.
 	gathering.show_caption = false
 	gathering.configure_market(game.progression)
 	gathering.recruited.connect(game._on_recruited)
@@ -254,6 +296,10 @@ func scatter_wanderers() -> void:
 	elif game.progression.active_area == University.AREA_ID:
 		for boss in UniBoss.profiles():
 			avoid.append(Balance.vec(boss.at))
+	elif game.progression.active_area == Abbey.AREA_ID:
+		# Keep the floor where the won plead clear of lone pilgrims.
+		avoid.append(Balance.vec(Balance.value("abbey.pope.at")))
+		avoid.append_array([Vector2(1120, 430), Vector2(880, 430), Vector2(1360, 430)])
 	for group in game.groups:
 		avoid.append(group.position)
 	var spots: Array[Vector2] = Wanderers.scatter(game._wanderer_rng, _village_props(), avoid, game.wanderers.size(), Wanderers.area_for(game.world_size))

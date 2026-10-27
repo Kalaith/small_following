@@ -13,9 +13,9 @@ was completed.
 
 ## Assessment
 
-- The project currently implements five areas and exports Web and Windows. The
-  roadmap leaves the sixth and final area unplanned; the story and campaign are
-  incomplete for the confirmed release direction.
+- The project implements all six areas, ending with the hilltop abbey and the
+  Pope, and exports Web and Windows. The abbey has not been played by a person
+  yet, only by a bot and by screenshots.
 - Progression and preferences have separate saves, and purchases persist before
   spending. Those systems still need release-build and recovery verification.
 - The Steam listing, final Windows build, and supported OS/device list were not
@@ -25,19 +25,20 @@ was completed.
 
 ### Complete the campaign
 
-- [ ] Draft the abbey plan in `docs/` using `docs/MAP_ROADMAP.md`: one distinct
-  mechanic, an opening that works with the carried build, local progression,
-  and the Pope as the final encounter. Treat any new mechanic as a proposal
-  until accepted; make the King's approval open the audience with the Pope.
-- [ ] Implement the abbey as area six: world and audiences, balance data, a
-  bounded local upgrade circle, boss/encounter progression, travel gate, and
-  save migration from schema 7. Preserve older saves and current area data.
-- [ ] Add the Pope encounters and a clear final campaign ending. Update title
-  level selection, progression catalogs and access validation for the abbey;
-  show the final ending only after the Pope is defeated.
-- [ ] Make Rosecourt's completion copy reflect the King's state: before victory,
-  direct the player to win his approval; after victory, point to the abbey.
-  Remove any remaining demo-ending copy from the full-game path.
+- [x] Draft the abbey plan: the procession (everyone won walks to the Pope and
+  pleads), built and recorded in `docs/MAP_ROADMAP.md`.
+- [x] Implement the abbey as area six: world and audiences, balance data, a
+  36-node local circle, the Pope, travel gate, and save schema 8 (schema 7 saves
+  load unchanged).
+- [x] Add the Pope and the final campaign ending; title level selection,
+  catalogs and access validation know the abbey; the ending shows only after the
+  Pope is won.
+- [x] Rosecourt's completion copy reflects the King's state. The old demo-ending
+  copy is gone from Bramblewick's circle.
+- [ ] Play the abbey by hand and retune `abbey.pope.conviction`, the plea
+  strengths and the helper stats. A bot with a full circle wins at about 24 of 30
+  seconds; a circle without its last tier falls short (95%); followers alone
+  reach about a third.
 - [ ] Resolve the 20-phrase-per-second speech cap question in
   `docs/MAP_ROADMAP.md`. Quillmoor's later talking ranks can be clipped while
   Rosecourt turns excess rate into stronger phrases. Make the rule consistent

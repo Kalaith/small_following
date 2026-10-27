@@ -8,6 +8,8 @@ const FairHud = preload("res://scripts/fair_hud.gd")
 const University = preload("res://scripts/university.gd")
 const UniHud = preload("res://scripts/uni_hud.gd")
 const Rosecourt = preload("res://scripts/rosecourt.gd")
+const Abbey = preload("res://scripts/abbey.gd")
+const AbbeyRules = preload("res://scripts/abbey_rules.gd")
 const Balance = preload("res://addons/hatchery/core/balance.gd")
 const ArgumentBadge = preload("res://scripts/argument_badge.gd")
 ## Village HUD frame: screen margin, gap between cards and the corner settings button.
@@ -216,6 +218,32 @@ func _rose_context() -> String:
 	return "Win guests in the right order: who you talk to first opens who listens next."
 
 
+func _abbey_context() -> String:
+	var progression = game.progression
+	var pope: Node2D = game.pope
+	if not game.round_active:
+		if progression.abbey_pope_won:
+			return "The Pope has heard you. The campaign is won."
+		var counts: Vector2i = AbbeyRules.fellowship(progression)
+		return "Round complete. Followers mastered: %d/%d." % [counts.x, counts.y]
+	if is_instance_valid(pope) and pope.listening:
+		if pope.reserved():
+			return "The Pope's ears are closed: only %d of %d advocates stand before him" % [pope.standing(), pope.needed()]
+		return "Pleading with the Pope... %d%%" % floori(100.0 * pope.progress / pope.conviction())
+	if is_instance_valid(game.nearest_group):
+		# The abbey's people carry no text, so the one being won is named here.
+		var group: Node2D = game.nearest_group
+		var next: int = group.first_unconverted()
+		if next >= 0:
+			return "%s: %s, %.0f conviction / %d gold - then they plead for you" % [group.group_name, group.listener_profiles[next].role, group.listener_conviction_required(next), group.listener_donation(next)]
+		return "Speaking with %s..." % group.group_name
+	if progression.abbey_pope_won:
+		return "The Pope has heard you.  Enjoy the abbey."
+	if is_instance_valid(pope) and pope.present:
+		return "The Pope: %d%% moved   ·   %d of %d advocates stand before him" % [floori(100.0 * pope.progress / pope.conviction()), pope.standing(), pope.needed()]
+	return AbbeyRules.throne_reason(progression) + "." if is_instance_valid(pope) else ""
+
+
 ## A reserved noble in the salon beside the cultist, and who can introduce them.
 func _reserved_near() -> String:
 	if not is_instance_valid(game.rose_court):
@@ -232,7 +260,7 @@ func _reserved_near() -> String:
 
 
 func refresh() -> void:
-	area_label.text = {"bellmarket": "BELLMARKET", Fair.AREA_ID: "THE LANTERN FAIR", University.AREA_ID: "QUILLMOOR", Rosecourt.AREA_ID: "ROSECOURT"}.get(game.progression.active_area, "BRAMBLEWICK")
+	area_label.text = {"bellmarket": "BELLMARKET", Fair.AREA_ID: "THE LANTERN FAIR", University.AREA_ID: "QUILLMOOR", Rosecourt.AREA_ID: "ROSECOURT", Abbey.AREA_ID: "THE HILLTOP ABBEY"}.get(game.progression.active_area, "BRAMBLEWICK")
 	fair_hud.visible = game.progression.active_area == Fair.AREA_ID
 	uni_hud.visible = game.progression.active_area == University.AREA_ID
 	if uni_hud.visible:
@@ -252,6 +280,8 @@ func refresh() -> void:
 		context_label.text = _uni_context()
 	elif game.progression.active_area == Rosecourt.AREA_ID:
 		context_label.text = _rose_context()
+	elif game.progression.active_area == Abbey.AREA_ID:
+		context_label.text = _abbey_context()
 	elif game.progression.active_area == "bellmarket" and game.progression.is_circle_complete():
 		context_label.text = "Bellmarket circle complete!  Keep exploring or return to Bramblewick."
 	elif game.progression.active_area == "bramblewick" and game.progression.map_complete():

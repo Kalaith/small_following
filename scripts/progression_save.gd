@@ -48,7 +48,7 @@ func start_new_game() -> bool:
 	progression.last_error = ""
 	if not file().writes_blocked and not _file.keep_previous():
 		return progression._fail("Cannot keep a copy of the current save, so it was not replaced.")
-	var fresh: Dictionary = {"schema_version": progression.SAVE_VERSION, "coins": 0, "total_recruits": 0, "available_recruits": 0, "round_number": 1, "purchased": {}, "encounter_stage": 0, "fair_stage": 0, "uni_stage": 0, "uni_loadout": [], "rose_king_won": false, "active_area": "bramblewick", "level_select_unlocked": false}
+	var fresh: Dictionary = {"schema_version": progression.SAVE_VERSION, "coins": 0, "total_recruits": 0, "available_recruits": 0, "round_number": 1, "purchased": {}, "encounter_stage": 0, "fair_stage": 0, "uni_stage": 0, "uni_loadout": [], "rose_king_won": false, "abbey_pope_won": false, "active_area": "bramblewick", "level_select_unlocked": false}
 	if not write(fresh):
 		return false
 	apply(fresh)
@@ -75,7 +75,7 @@ func load_file() -> bool:
 
 
 func snapshot() -> Dictionary:
-	return {"schema_version": progression.SAVE_VERSION, "coins": progression.coins, "total_recruits": progression.total_recruits, "available_recruits": progression.available_recruits, "round_number": progression.round_number, "purchased": progression.purchased.duplicate(true), "encounter_stage": progression.encounter_stage, "fair_stage": progression.fair_stage, "uni_stage": progression.uni_stage, "uni_loadout": progression.uni_loadout.duplicate(), "rose_king_won": progression.rose_king_won, "active_area": progression.active_area, "level_select_unlocked": progression.level_select_unlocked}
+	return {"schema_version": progression.SAVE_VERSION, "coins": progression.coins, "total_recruits": progression.total_recruits, "available_recruits": progression.available_recruits, "round_number": progression.round_number, "purchased": progression.purchased.duplicate(true), "encounter_stage": progression.encounter_stage, "fair_stage": progression.fair_stage, "uni_stage": progression.uni_stage, "uni_loadout": progression.uni_loadout.duplicate(), "rose_king_won": progression.rose_king_won, "abbey_pope_won": progression.abbey_pope_won, "active_area": progression.active_area, "level_select_unlocked": progression.level_select_unlocked}
 
 
 func apply(state: Dictionary) -> void:
@@ -89,6 +89,7 @@ func apply(state: Dictionary) -> void:
 	progression.uni_stage = int(state.get("uni_stage", 0))
 	progression.uni_loadout.assign(state.get("uni_loadout", []))
 	progression.rose_king_won = bool(state.get("rose_king_won", false))
+	progression.abbey_pope_won = bool(state.get("abbey_pope_won", false))
 	progression.coins = int(state.coins)
 	progression.total_recruits = int(state.total_recruits)
 	progression.available_recruits = int(state.available_recruits)
@@ -115,6 +116,9 @@ func validated(raw: Variant) -> Dictionary:
 	# The King arrived with schema 7; his approval is a plain flag.
 	if not raw.get("rose_king_won", false) is bool or (int(raw.schema_version) < 7 and raw.get("rose_king_won", false)):
 		return {}
+	# The Pope arrived with schema 8; his approval is a plain flag too.
+	if not raw.get("abbey_pope_won", false) is bool or (int(raw.schema_version) < 8 and raw.get("abbey_pope_won", false)):
+		return {}
 	var unlock_id: String = progression._encounter_unlock_id()
 	if int(raw.get("encounter_stage", 0)) > 0 and (unlock_id.is_empty() or not raw.purchased.has(unlock_id)):
 		return {}
@@ -130,6 +134,9 @@ func validated(raw: Variant) -> Dictionary:
 		# Rosecourt arrived with schema 7.
 		if int(raw.schema_version) < 7 and raw.active_area == progression.ROSE_AREA:
 			return {}
+		# The abbey arrived with schema 8.
+		if int(raw.schema_version) < 8 and raw.active_area == progression.ABBEY_AREA:
+			return {}
 		if progression.catalog_for_area(raw.active_area).is_empty() or not raw.get("level_select_unlocked") is bool:
 			return {}
 	var normalized: Dictionary = raw.duplicate(true)
@@ -139,6 +146,7 @@ func validated(raw: Variant) -> Dictionary:
 	normalized.fair_stage = int(raw.get("fair_stage", 0))
 	normalized.uni_stage = int(raw.get("uni_stage", 0))
 	normalized.rose_king_won = bool(raw.get("rose_king_won", false))
+	normalized.abbey_pope_won = bool(raw.get("abbey_pope_won", false))
 	normalized.active_area = raw.active_area if int(raw.schema_version) >= 4 else "bramblewick"
 	normalized.level_select_unlocked = raw.level_select_unlocked if int(raw.schema_version) >= 4 else false
 	normalized.schema_version = progression.SAVE_VERSION
@@ -155,6 +163,8 @@ func validated(raw: Variant) -> Dictionary:
 		if int(raw.schema_version) < 6 and definition.get("area", "bramblewick") == progression.UNI_AREA:
 			return {}
 		if int(raw.schema_version) < 7 and definition.get("area", "bramblewick") == progression.ROSE_AREA:
+			return {}
+		if int(raw.schema_version) < 8 and definition.get("area", "bramblewick") == progression.ABBEY_AREA:
 			return {}
 		if int(raw.schema_version) == 1:
 			if not raw.purchased[id] is bool or raw.purchased[id] != true:
@@ -177,6 +187,8 @@ func validated(raw: Variant) -> Dictionary:
 		furthest = maxi(furthest, progression.AREA_IDS.find(progression.UNI_AREA))
 	if normalized.rose_king_won:
 		furthest = maxi(furthest, progression.AREA_IDS.find(progression.ROSE_AREA))
+	if normalized.abbey_pope_won:
+		furthest = maxi(furthest, progression.AREA_IDS.find(progression.ABBEY_AREA))
 	if not normalized.level_select_unlocked:
 		if furthest >= 1 and not progression._ranks_complete(_market_gate_definitions(), normalized.purchased):
 			return {}
@@ -185,6 +197,8 @@ func validated(raw: Variant) -> Dictionary:
 		if furthest >= 3 and not progression._ranks_complete(progression.catalog_for_area("lantern_fair"), normalized.purchased):
 			return {}
 		if furthest >= 4 and not progression._ranks_complete(progression.catalog_for_area(progression.UNI_AREA), normalized.purchased):
+			return {}
+		if furthest >= 5 and not progression._ranks_complete(progression.catalog_for_area(progression.ROSE_AREA), normalized.purchased):
 			return {}
 	# The loadout is trimmed, never a reason to reject a save: unknown or repeated
 	# arguments are dropped, then any beyond the owned slots.

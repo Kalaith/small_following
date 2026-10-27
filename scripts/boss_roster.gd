@@ -11,6 +11,9 @@ const RoseKing = preload("res://scripts/rose_king.gd")
 const Fair = preload("res://scripts/fair.gd")
 const University = preload("res://scripts/university.gd")
 const Rosecourt = preload("res://scripts/rosecourt.gd")
+const Pope = preload("res://scripts/pope.gd")
+const Abbey = preload("res://scripts/abbey.gd")
+const AbbeyRules = preload("res://scripts/abbey_rules.gd")
 
 var game: Node2D
 
@@ -20,13 +23,23 @@ func _init(owner_game: Node2D) -> void:
 
 
 func reset() -> void:
-	for key in ["encounter", "fair_boss", "uni_boss", "rose_king"]:
+	for key in ["encounter", "fair_boss", "uni_boss", "rose_king", "pope"]:
 		var boss: Node2D = game.get(key)
 		if is_instance_valid(boss):
 			boss.get_parent().remove_child(boss)
 			boss.queue_free()
 		game.set(key, null)
 	var progression = game.progression
+	if progression.active_area == Abbey.AREA_ID:
+		var pope := Pope.new()
+		pope.present = AbbeyRules.pope_present(progression)
+		pope.defeated = progression.abbey_pope_won
+		pope.procession = game.abbey_procession
+		pope.convinced.connect(_on_pope_convinced)
+		pope.phrase_spoken.connect(game.game_audio.on_phrase)
+		game.actors().add_child(pope)
+		game.pope = pope
+		return
 	if progression.active_area == Rosecourt.AREA_ID:
 		var king := RoseKing.new()
 		king.present = progression.rose_king_present()
@@ -95,3 +108,10 @@ func _on_uni_boss_convinced(stage: int) -> void:
 func _on_king_convinced() -> void:
 	if game.round_active and game.progression.complete_rose_king():
 		_reward(game.rose_king, int(RoseKing.rules().reward))
+
+
+## The campaign's end: the Pope's reward once, the round closes and the ending plays.
+func _on_pope_convinced() -> void:
+	if game.round_active and game.progression.complete_pope():
+		_reward(game.pope, int(Pope.rules().reward))
+		game.finish_campaign()

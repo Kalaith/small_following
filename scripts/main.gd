@@ -17,6 +17,9 @@ const FairDirector = preload("res://scripts/fair_director.gd")
 const University = preload("res://scripts/university.gd")
 const UniBoss = preload("res://scripts/uni_boss.gd")
 const Rosecourt = preload("res://scripts/rosecourt.gd")
+const Abbey = preload("res://scripts/abbey.gd")
+const AbbeyRules = preload("res://scripts/abbey_rules.gd")
+const EndingScreen = preload("res://scripts/ending_screen.gd")
 const VillageHud = preload("res://scripts/village_hud.gd")
 const AreaBuilder = preload("res://scripts/area_builder.gd")
 const HelperCrew = preload("res://scripts/helper_crew.gd")
@@ -70,6 +73,10 @@ var uni_boss: Node2D = null
 var rose_court: Node2D = null
 ## The King of Rosecourt, on his throne once he has arrived.
 var rose_king: Node2D = null
+## The abbey's procession of won followers, and the Pope on his cathedra.
+var abbey_procession: Node2D = null
+var pope: Node2D = null
+var ending_screen: Control
 ## The current map's size, from its world script's WORLD_SIZE; bounds the
 ## camera, the player, the helpers' grid and the wanderers.
 var world_size := Vector2(1560, 1100)
@@ -123,6 +130,7 @@ func _ready() -> void:
 	area.rebuild()
 	_build_hud()
 	_build_ritual()
+	_build_ending()
 	settings_wiring.build()
 	_build_title()
 	village_input = preload("res://scripts/village_input.gd").new()
@@ -146,6 +154,8 @@ func area_start_position() -> Vector2:
 		return University.start_position()
 	if progression.active_area == Rosecourt.AREA_ID:
 		return Rosecourt.start_position()
+	if progression.active_area == Abbey.AREA_ID:
+		return Abbey.start_position()
 	return Market.START_POSITION if progression.active_area == "bellmarket" else START_POSITION
 
 
@@ -164,6 +174,9 @@ func travel_to(area_id: String, bypass_unlock: bool = false) -> bool:
 	elif area_id == Rosecourt.AREA_ID:
 		for entry in Balance.list("rosecourt.salons"):
 			layouts.append({"profiles": Rosecourt.profiles(entry.people)})
+	elif area_id == Abbey.AREA_ID:
+		for entry in Balance.list("abbey.groups"):
+			layouts.append({"profiles": Abbey.profiles(entry.people)})
 	if not layouts.is_empty():
 		for entry in layouts:
 			var probe := Gathering.new()
@@ -180,7 +193,7 @@ func travel_to(area_id: String, bypass_unlock: bool = false) -> bool:
 		_update_hud()
 		return false
 	area.rebuild()
-	seconds_left = Balance.number("round.seconds")
+	seconds_left = round_seconds()
 	round_recruits = 0
 	apply_upgrades()
 	_reset_encounter()
@@ -235,7 +248,7 @@ func show_title() -> void:
 	hud_layout.hide()
 	settings_button.hide()
 	title_screen.unlocked = title_screen.unlocked or progression.level_select_unlocked
-	title_screen.configure(progression.active_area, progression.is_area_unlocked("bellmarket"), progression.has_progress(), progression.is_area_unlocked(Fair.AREA_ID), progression.is_area_unlocked(University.AREA_ID), progression.is_area_unlocked(Rosecourt.AREA_ID))
+	title_screen.configure(progression.active_area, progression.is_area_unlocked("bellmarket"), progression.has_progress(), progression.is_area_unlocked(Fair.AREA_ID), progression.is_area_unlocked(University.AREA_ID), progression.is_area_unlocked(Rosecourt.AREA_ID), progression.is_area_unlocked(Abbey.AREA_ID))
 	title_screen.show()
 	if not progression.last_error.is_empty():
 		title_screen.show_error(progression.last_error)
@@ -453,6 +466,12 @@ func advance_round(delta: float) -> void:
 		var king_in_range: bool = player.global_position.distance_to(rose_king.global_position) <= speak_radius
 		speaking_to_opponent = king_in_range and (not rose_king.reserved() or not is_instance_valid(nearest_group))
 		rose_king.advance(usable_delta, speaking_to_opponent, progression.speech_interval(), progression.conviction_per_phrase())
+	if is_instance_valid(pope) and pope.present and not pope.defeated:
+		# A closed-eared Pope yields to any guest you can win; with none nearby he
+		# still takes your phrases, and ignores them until his advocates gather.
+		var pope_in_range: bool = player.global_position.distance_to(pope.global_position) <= speak_radius
+		speaking_to_opponent = pope_in_range and (not pope.reserved() or not is_instance_valid(nearest_group))
+		pope.advance(usable_delta, speaking_to_opponent, progression.speech_interval(), progression.conviction_per_phrase())
 	if speaking_to_opponent:
 		nearest_group = null
 	if is_instance_valid(nearest_group):
@@ -551,6 +570,11 @@ func apply_upgrades() -> void:
 		_refresh_faculty_rule()
 		_apply_helper()
 		return
+	if progression.active_area == Abbey.AREA_ID:
+		if is_instance_valid(abbey_procession):
+			abbey_procession.refresh()
+		_apply_helper()
+		return
 	if progression.active_area == Rosecourt.AREA_ID:
 		# Ranks change head starts, threads and who is trusted, so locks are re-read.
 		for group in audiences():
@@ -614,7 +638,7 @@ func _begin_round(increment: bool) -> void:
 	if increment:
 		progression.round_number += 1
 	progression.save_progress()
-	seconds_left = Balance.number("round.seconds")
+	seconds_left = round_seconds()
 	round_recruits = 0
 	nearest_group = null
 	round_active = true
@@ -624,6 +648,8 @@ func _begin_round(increment: bool) -> void:
 		group.reset_round()
 	if is_instance_valid(rose_court):
 		rose_court.reset_round()
+	if is_instance_valid(abbey_procession):
+		abbey_procession.reset_round()
 	fair_director.reset_round()
 	area.scatter_wanderers()
 	# Every round uses the same entrance; walking in menus does not grant a head start.
@@ -637,6 +663,29 @@ func _begin_round(increment: bool) -> void:
 	player.get_node("Camera2D").reset_smoothing()
 	set_ritual_visible(false)
 	_update_hud()
+
+
+## Seconds in a round: the abbey's is longer, so a procession can gather.
+func round_seconds() -> float:
+	if progression.active_area == Abbey.AREA_ID:
+		return Balance.number("abbey.round_seconds")
+	return Balance.number("round.seconds")
+
+
+## The Pope has heard the cultist: the round closes and the ending plays.
+func finish_campaign() -> void:
+	seconds_left = 0.0
+	ending_screen.open(progression.round_number, progression.total_recruits, progression.coins)
+
+
+func _build_ending() -> void:
+	var canvas := CanvasLayer.new()
+	canvas.name = "Ending"
+	canvas.layer = 9
+	add_child(canvas)
+	ending_screen = EndingScreen.new()
+	canvas.add_child(ending_screen)
+	ending_screen.hide()
 
 
 func _build_ritual() -> void:

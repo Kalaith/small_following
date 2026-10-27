@@ -19,6 +19,10 @@ var argument: String = ""
 var deaf: bool = false
 ## A Rosecourt guest someone they trust has whispered to this round.
 var whispered: bool = false
+## An abbey follower on the way to, or standing before, the Pope: hands raised.
+var pleading: bool = false
+## Won at the abbey and already on the road to the Pope: only the gift popup stays.
+var departed: bool = false
 var performing: bool = false
 var reward_label: Label
 
@@ -40,6 +44,8 @@ func _process(delta: float) -> void:
 	queue_redraw()
 
 func _draw() -> void:
+	if departed:
+		return
 	draw_set_transform(Vector2(0, 0), 0, Vector2(1, 0.4))
 	draw_circle(Vector2.ZERO, 12, Color(0.22, 0.27, 0.2, 0.17))
 	draw_set_transform(Vector2.ZERO)
@@ -77,7 +83,9 @@ func _draw() -> void:
 		draw_circle(Vector2(0, -56), 1.2, Color("#514b58"))
 	if whispered and not following:
 		_draw_whisper_rose()
-	if following:
+	if pleading:
+		_draw_plea(bob)
+	elif following:
 		draw_line(Vector2(-4, -45), Vector2(-1, -42), Color("#fbf1b6"), 2)
 		draw_line(Vector2(-1, -42), Vector2(5, -49), Color("#fbf1b6"), 2)
 	elif deaf:
@@ -112,6 +120,8 @@ func _draw_role(bob: float) -> void:
 		_draw_university_role(bob)
 	elif profile_type in ["servant", "courtier", "noble", "grandee"]:
 		_draw_court_role(bob)
+	elif profile_type in ["pilgrim", "brother", "elder", "cardinal"]:
+		_draw_clergy_role(bob)
 	elif profile_type == "guild":
 		# A square cap, apron and tool belt identify guild tradespeople.
 		draw_rect(Rect2(-10, -41 + bob, 20, 6), Color("#466d75"))
@@ -273,3 +283,51 @@ func _draw_whisper_rose() -> void:
 	draw_circle(Vector2(-12, -52), 4.5, Color("c2486a"))
 	draw_circle(Vector2(-12, -52), 2.0, Color("f0a0b4"))
 	draw_line(Vector2(-12, -47), Vector2(-12, -41), Color("5f8a4a"), 1.5)
+
+
+## Abbey dress: pilgrims in broad hats with staffs, brothers and sisters in
+## cowls and wimples, elders in mitres, cardinals in scarlet.
+func _draw_clergy_role(bob: float) -> void:
+	match profile_type:
+		"pilgrim":
+			draw_rect(Rect2(-14, -39 + bob, 28, 4), Color("#6b5236"))
+			draw_rect(Rect2(-7, -46 + bob, 14, 8), Color("#7d6240"))
+			draw_line(Vector2(14, 0), Vector2(14, -42), Color("#7a6448"), 2)
+			draw_circle(Vector2(-6, -18), 3, Color("#f2e6c8"))
+		"brother":
+			draw_colored_polygon(PackedVector2Array([Vector2(-10, -34 + bob), Vector2(0, -42 + bob), Vector2(10, -34 + bob), Vector2(8, -22 + bob), Vector2(-8, -22 + bob)]), Color("#6b5640"))
+			draw_line(Vector2(-8, -10), Vector2(9, -10), Color("#d9c9a0"), 2)
+		"elder":
+			draw_colored_polygon(PackedVector2Array([Vector2(-8, -38 + bob), Vector2(-6, -56 + bob), Vector2(0, -50 + bob), Vector2(6, -56 + bob), Vector2(8, -38 + bob)]), Color("#f2eee6"))
+			draw_line(Vector2(0, -56 + bob), Vector2(0, -40 + bob), Color("#c9a24f"), 2)
+			draw_line(Vector2(15, 0), Vector2(15, -44), Color("#c9a24f"), 2)
+			draw_arc(Vector2(15, -48), 4, PI * 0.4, PI * 2.2, 8, Color("#c9a24f"), 2, true)
+		"cardinal":
+			draw_colored_polygon(PackedVector2Array([Vector2(-11, -24 + bob), Vector2(10, -24 + bob), Vector2(14, -4), Vector2(-13, -4)]), Color("#a8283a"))
+			draw_circle(Vector2(0, -38 + bob), 5, Color("#a8283a"))
+			draw_rect(Rect2(-6, -24 + bob, 12, 3), Color("#f4f0e8"))
+	match role:
+		"Nun", "Abbess":
+			draw_rect(Rect2(-10, -40 + bob, 20, 7), Color("#f4f0e8"))
+		"Scribe":
+			draw_rect(Rect2(8, -20, 12, 9), Color("#f4efe0"))
+			draw_line(Vector2(8, -20), Vector2(18, -30), Color("#e8e2d2"), 2)
+		"Herbalist":
+			draw_circle(Vector2(13, -13), 5, Color("#5f8a4a"))
+			draw_circle(Vector2(14, -17), 2, Color("#e98aa0"))
+		"Cellarer":
+			draw_rect(Rect2(7, -20, 12, 14), Color("#8a6a43"))
+			draw_line(Vector2(7, -13), Vector2(19, -13), Color("#5a4630"), 2)
+		"Penitent":
+			draw_line(Vector2(-6, -24 + bob), Vector2(6, -4), Color("#8a6a43"), 2)
+		"Mendicant":
+			draw_arc(Vector2(13, -14), 5, 0, PI, 8, Color("#8f744e"), 3, true)
+
+
+## Hands raised in a plea, and a few marks of speech.
+func _draw_plea(bob: float) -> void:
+	var lift: float = sin(phase * 2.0) * 2.0
+	draw_line(Vector2(-9, -20 + bob), Vector2(-14, -38 + bob - lift), Color("#eac49a"), 3)
+	draw_line(Vector2(9, -20 + bob), Vector2(14, -38 + bob + lift), Color("#eac49a"), 3)
+	for mark in range(2):
+		draw_arc(Vector2(0, -34 + bob), 13 + mark * 6, -PI * 0.75, -PI * 0.25, 8, Color("#fbf1b6", 0.7 - mark * 0.25), 1.5, true)
