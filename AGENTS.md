@@ -1,109 +1,79 @@
 # Small Following project guidance
 
-This project contains only the game itself: `project.godot`, `scenes/`, `scripts/`, `data/`, `assets/` and the export presets. Tests and most documentation were deliberately removed. The exception is `docs/MAP_ROADMAP.md`: the order of maps, the mechanic each one teaches and the shared rules every new map follows. Read it before planning or building a map. A new map's plan may live in `docs/` while it is being built; delete it once the map is in. The shared standards at the end of this file apply as well as everything here.
+The project holds only the game: `project.godot`, `scenes/`, `scripts/`, `data/`, `assets/`, export presets. Tests and most docs were removed on purpose. Exception: `docs/MAP_ROADMAP.md` (map order, each map's mechanic, shared rules for new maps) — read it before planning or building a map. A new map's plan may live in `docs/` while being built; delete it once the map is in.
 
 ## Product invariants
 
-- The player is the little robed cultist and can always move directly, including between rounds and while the ritual screen is open. Tab must let the player return to the visible village between rounds.
-- The village occupies most of the screen during active rounds. Keep its persistent HUD small and interactions contextual. The ritual upgrade screen is a separate, intentionally large intermission.
-- Robe cloth visibly trails movement and settles at rest.
-- The upgrade screen is a purple occult circle whose visible nodes and connections form its geometry. Do not replace it with a fixed rectangular skill-card menu.
-- Keep talking frequency, conviction per phrase and running speed mechanically distinct. Preserve conviction overflow so upgrades improve cumulative recruitment.
-- The upgrade catalog stays bounded to implemented effects. Do not add fake purchasable nodes.
+- The player (the little robed cultist) can always move directly, including between rounds and with the ritual screen open; Tab returns to the visible village between rounds.
+- The village fills most of the screen in rounds: small persistent HUD, contextual interactions. The ritual upgrade screen is a separate, deliberately large intermission.
+- Robe cloth trails movement and settles at rest.
+- The upgrade screen is a purple occult circle whose nodes and connections form its geometry; never a rectangular skill-card menu.
+- Talking frequency, conviction per phrase and running speed stay mechanically distinct. Keep conviction overflow so upgrades improve cumulative recruitment.
 
 ## Project engineering
 
 - **Compatibility** renderer.
-- The shared WebHatchery Godot toolkit (`../godot_toolkit`) is linked in as `res://addons/hatchery/` by `..\godot_toolkit\tools\Link-Toolkit.ps1 -ProjectDir .` (a junction, ignored by Git). It is plain preloaded GDScript, not an editor plugin. Small Following uses its balance facade (`core/balance.gd`), JSON and data-rule helpers, key and pad bindings, the settings store, `JsonSave` for the progression file, the pointer tap behind tap-to-walk, display and audio-level helpers, and the placeholder shapes. The game keeps its policy in `scripts/` (`settings_store.gd`: settings and rebindable actions; `progression_save.gd`: the save schema, validation and migration; `village_input.gd`: where a tap may walk) and keeps its own settings screen and ritual styling. Change toolkit code in `../godot_toolkit` under its own AGENTS.md.
-- Use feet origins and Y sorting for 2D actors/props. World collision is layer 2; player is layer 1.
-- Keep movement independent of earning, rounds, upgrade UI and automation.
-- Balance numbers live in `data/balance.json`; upgrade definitions live in `data/upgrades.json` with stable IDs and supported effect types. Keep purchase validation in the progression owner, never only in button state.
-- Purchases must not deduct currency if saving fails.
-
-## Project checks
-
-- This project has **no automated checks**. Do not write new tests, test scripts, fixtures or runners, and do not reintroduce the deleted ones.
-- Verify changes with the parse/import check and by running the game (`Run.ps1`) and inspecting its output.
-
-## Commit voice
-
-Commit lines describe what changed as it is felt in the village and the ritual. Use `refactor` for structural changes.
-
-```
-Quillmoor University opens: bring the right argument (fourth map)
-```
+- The shared toolkit `../godot_toolkit` is linked as `res://addons/hatchery/` via `..\godot_toolkit\tools\Link-Toolkit.ps1 -ProjectDir .` (a Git-ignored junction; plain preloaded GDScript, not a plugin). Used: `core/balance.gd`, JSON/data-rule helpers, key/pad bindings, settings store, `JsonSave` (progression), tap-to-walk pointer, display/audio helpers, placeholder shapes. Game policy stays in `scripts/` (`settings_store.gd`: settings, rebindable actions; `progression_save.gd`: save schema, validation, migration; `village_input.gd`: where a tap may walk), plus the settings screen and ritual styling. Change toolkit code in `../godot_toolkit` under its own AGENTS.md.
+- Feet origins and Y sorting for 2D actors/props. World collision is layer 2; player is layer 1.
+- Movement is independent of earning, rounds, upgrade UI and automation.
+- Balance in `data/balance.json`; upgrades in `data/upgrades.json` with stable ids and supported effect types. Purchase validation lives in the progression owner, never only in button state. A purchase never deducts currency if saving fails.
+- **No automated checks**: write no tests, scripts, fixtures or runners, and don't restore deleted ones. Verify with the parse/import check and by running the game (`Run.ps1`).
 
 ## Publishing
 
-Publishing (`publish.ps1`, `publish-itch.ps1`) requires separate authorisation. `.\publish.ps1 -BuildOnly` (export only, no deploy) is fine for verification.
+`publish.ps1` and `publish-itch.ps1` need separate authorisation; `.\publish.ps1 -BuildOnly` (export only) is fine for verification.
 
-- `publish.ps1` and `publish-itch.ps1` are the shared templates from `../godot_toolkit/templates/`; the work lives in `../godot_toolkit/publishing/Publisher.ps1` (override the location with `-ToolkitDir`), which also supplies the Apache `web.htaccess`. A `tools/publishing/web.htaccess` here would override it.
-- Exports need the **standard (non-mono)** Godot 4.7.2 console editor, matching the installed export templates: pass `-GodotExe`, set `GODOT_EXE`, or install it at `C:\Program Files\Godot`. `Run.ps1` uses the same editor for playing.
+- They are the shared templates from `../godot_toolkit/templates/`; the work is in `../godot_toolkit/publishing/Publisher.ps1` (override: `-ToolkitDir`), which supplies the Apache `web.htaccess` (`tools/publishing/web.htaccess` here overrides it).
+- Exports need the **standard (non-mono)** Godot 4.7.2 console editor matching the installed templates: pass `-GodotExe`, set `GODOT_EXE`, or install at `C:\Program Files\Godot`. `Run.ps1` uses it too.
 
 ## Shared WebHatchery Godot standards
 
-This section is identical in the AGENTS.md of every WebHatchery Godot project. Change it in all of them together; project-specific rules go in the sections above.
+Identical in every WebHatchery Godot project's AGENTS.md; change all together. Project-specific rules go above.
 
 ### Working
 
-- Work only inside this project unless the user explicitly broadens the task. Preserve any user changes.
-- Do not install or upgrade Godot, export templates, tools, plugins or GDExtensions without approval. Prefer built-in engine features.
-- Do not overwrite original art.
+- Stay inside this project unless the user broadens the task; preserve user changes; never overwrite original art.
+- No installing/upgrading Godot, export templates, tools, plugins or GDExtensions without approval; prefer built-in features.
 
 ### Code
 
-- Godot **4.7.2** GDScript. The renderer is set per project (see above).
-- Static typing everywhere: variables, parameters and return types.
-- Load dependencies with `const X = preload("res://...")`.
-- Tabs, LF, UTF-8, final newline (`.editorconfig`).
-- Split scripts by responsibility before they grow. Size limits are below.
-- Simulation and rules code never touches the scene tree, `Time`, `OS` or the global `randi()`/`randf()`. All randomness comes from an owned `RandomNumberGenerator`, so the same seed gives the same result. Presentation reads that state and sends commands; it never changes it any other way.
-- Balance numbers and catalogs live in JSON under `data/` with stable ids (and `schema_version` where a catalog has one), validated at startup. Missing or mistyped data fails fast: report it, never silently default in code.
-- Keep every catalog (upgrades, parts, miracles, blocks and so on) bounded to implemented effects. Do not add entries the code does not support.
-- Persistent state lives under `user://` with schema validation, staged writes and backup recovery. A failed save must never lose progress or spend anything.
+- Godot **4.7.2** GDScript, statically typed everywhere (variables, parameters, returns). `const X = preload("res://...")`. Tabs, LF, UTF-8, final newline.
+- Simulation/rules code never touches the scene tree, `Time`, `OS` or global `randi()`/`randf()`; randomness comes from an owned `RandomNumberGenerator` (same seed, same result). Presentation reads state and sends commands, nothing else.
+- Balance and catalogs (upgrades, parts, miracles, blocks, ...) live in JSON under `data/` with stable ids (and `schema_version` where present), validated at startup, holding only implemented effects. Missing or mistyped data fails fast and is reported; never default silently in code.
+- Persistent state lives under `user://` with schema validation, staged writes and backup recovery. A failed save never loses progress or spends anything.
 
 ### Verification
 
-- Do not create a `tests/` directory, test frameworks or test addons. Automated checks, where a project has them, are headless scripts in `tools/`, kept out of the exported game.
-- Checks do not gate commits. Run the full set (the project's checks, if any, and a parse/import check with `--headless --editor --quit`) when a major feature or milestone is finished, and fix what they find before calling it done.
-- Headless checks do not verify visuals, audio, input or feel. Verify anything visual by running the game (`Run.ps1`) and looking at it.
-- Say plainly what was and was not checked.
+- No `tests/` directory, frameworks or addons. Any automated checks are headless scripts in `tools/`, kept out of the export.
+- Checks don't gate commits. At a major feature or milestone, run all checks (plus `--headless --editor --quit`) and fix findings.
+- Headless checks can't verify visuals, audio, input or feel: run the game and look. State plainly what was and wasn't checked.
 
 ### Verification images
 
-- There is one folder for verification images: `docs/verification/`, flat. It holds a `.gdignore` (so does `docs/`); keep both. Reference art goes in `docs/reference/` or `docs/art/`, never here.
-- Take screenshots through the toolkit's capture runner (`testing/capture_runner.gd`) or `testing/capture_paths.gd` (`CapturePaths.file(label)`). Do not pass an output directory or write captures anywhere else (`builds/`, `exports/`, OS temp, `user://`).
-- Names are stable `<label>.png`: no subfolders, timestamps, run or revision suffixes, size suffixes, `-final`/`-fix` variants or backup copies. A new capture of the same screen or state overwrites its file; add a label only for a genuinely new screen or state.
-- Capture at one window size and one UI scale per game, and look at the image before saying a visual change works.
+- Only `docs/verification/` (flat; keep its `.gdignore` and `docs/`'s). Reference art: `docs/reference/` or `docs/art/`.
+- Capture via the toolkit's `testing/capture_runner.gd` or `testing/capture_paths.gd` (`CapturePaths.file(label)`); never pass an output directory or write elsewhere (`builds/`, `exports/`, OS temp, `user://`).
+- Stable names `<label>.png`: no subfolders, timestamps, run/revision/size suffixes, `-final`/`-fix` variants or backups. Recapturing a screen or state overwrites; new labels only for genuinely new ones.
+- One window size and UI scale per game. Look at the image before saying a visual change works.
 
 ### Size limits (hard rule)
 
-- **No function may exceed 400 lines.**
-- **No file may exceed 800 lines**: scripts, scenes, data, docs and text catalogs. Check with `git ls-files -co --exclude-standard | grep -E '\.(gd|tscn|json|md)$' | xargs wc -l | sort -n | tail`.
-- When a change would push a function or file past its limit, or one is already over, **bring it below the limit in the same change**. Split a long function into well-named helpers; shrink a file by moving a cohesive responsibility (HUD, settings wiring, area building, save validation, layout, a catalog section and so on) into its own file and having the original delegate to or load it.
-- **Never shrink a function or file by deleting blank lines, joining statements, removing comments, minifying or packing several entries onto one line.** Blank lines between functions and the existing comment density stay as they are. Line count comes down by moving content, not by squeezing it.
-- Keep public members that other scripts use working, either in place or through a delegating function.
+- **Functions ≤ 400 lines; files ≤ 800 lines** (scripts, scenes, data, docs, catalogs). Check: `git ls-files -co --exclude-standard | grep -E '\.(gd|tscn|json|md)$' | xargs wc -l | sort -n | tail`.
+- Split scripts by responsibility before they grow. A change that would cross a limit, or touches something already over, brings it under in the same change: split functions into named helpers; move a cohesive responsibility (HUD, settings wiring, area building, save validation, layout, a catalog section, ...) into its own file the original delegates to or loads. Keep public members other scripts use working.
+- **Never shrink by deleting blank lines, joining statements, removing comments, minifying or packing entries onto one line.** Move content; don't squeeze it.
 
 ### Commits
 
-- **ALWAYS commit every feature slice and every bug fix the moment it works. This is mandatory, not optional.** One slice or fix per commit. Never batch several slices together, never leave finished work sitting uncommitted, and never end a turn with a feature or fix that is not committed. Commits do not wait on checks (see Verification).
-- Commit **all pending project changes**, including modified, added and deleted files you did not make yourself. Do not leave user changes or another agent's changes uncommitted because you did not touch them: review and preserve their contents, include them in the validation, and finish with a clean working tree.
-- Existing ignore rules still apply to generated files, local tooling and credentials. Never force-add ignored files or commit secrets.
-- **Before your final reply, every turn that touched files:** run `git status --short`. If it prints anything, commit it, then run it again and confirm it prints nothing. A reply that ends with a dirty tree is unfinished; the closing summary must state that the tree is clean.
-- Do not wait to be asked to commit, and do not offer to commit instead of doing it. A user's later request ("also tweak X") is a new slice: commit it too before replying.
-- Do not push or publish unless the user asks.
+- **ALWAYS commit each feature slice and bug fix the moment it works. Mandatory.** One slice per commit; never batch, never leave finished work uncommitted, never end a turn with an uncommitted feature or fix. Don't wait to be asked or offer instead of doing it; a later request ("also tweak X") is a new slice.
+- Commit **all pending changes**, including modified, added and deleted files you didn't make: review and preserve them, include them in validation, finish with a clean tree.
+- **Before the final reply of any turn that touched files:** run `git status --short`; if it prints anything, commit and rerun until empty. A dirty tree means unfinished; the closing summary says the tree is clean.
+- Ignore rules still apply; never force-add ignored files or commit secrets. Don't push or publish unless asked.
 
-Message style: one line describing what changed **as it is felt by the player** (for the toolkit, by the games that use it), then a short plain tag in parentheses saying what it is technically.
+Message: one present-tense line, no trailing period, under ~100 characters before the tag, saying what changed **as the player feels it** (the toolkit: as its games feel it; this game: in the village and ritual), then a plain lowercase tag in parentheses for what it technically is (the system touched, `docs`, `refactor` for structural changes, or a milestone id such as `M25`). Fixes and refactors are still described by effect. Add a body only when the reason isn't obvious.
 
 ```
-Neris raises a ward whenever she is struck (spirit trait)
-A prayer at the tree now feeds the god's Favour (shrine favour)
 The Lantern Fair opens: be more interesting than the fair (third map)
-Every game's saves now survive a torn write (json save)
+Quillmoor University opens: bring the right argument (fourth map)
+Builders no longer wall themselves into the cottage they are raising (site reservation fix)
+No script over 800 lines: split main and the ritual screen (refactor)
 Scribes set down the covenant: design and building plan (docs)
 ```
-
-- Present tense, no trailing period, under ~100 characters before the tag where possible.
-- Fixes and refactors are still described by their effect: `Builders no longer wall themselves into the cottage they are raising (site reservation fix)`, `No script over 800 lines: split main and the ritual screen (refactor)`.
-- Tags are lowercase and plain: the system touched, `docs`, `refactor`, or a milestone id such as `M25`.
-- Add a body only when the reason is not obvious from the line.
