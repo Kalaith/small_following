@@ -49,7 +49,7 @@ static func effect_text(progression: Progression, by_id: Dictionary, id: String,
 		var key: String = str(item.effect.keys()[0])
 		if not current.has(key):
 			return ""
-		var labels: Dictionary = {"merchant_unlock": "MERCHANT PAIR", "merchant_conviction_add": "MERCHANT CONVICTION", "merchant_donation_add": "GOLD PER MERCHANT", "encounter_unlock": "TOWN DEBATE", "encounter_conviction_add": "ALL OPPONENTS / CONVICTION", "skeptic_conviction_add": "SKEPTIC / CONVICTION", "guard_conviction_add": "GUARD / CONVICTION", "zealot_conviction_add": "ZEALOT / CONVICTION", "priest_conviction_add": "PRIEST / CONVICTION"}
+		var labels: Dictionary = {"merchant_unlock": "MERCHANT PAIR", "merchant_conviction_add": "MERCHANT CONVICTION", "merchant_donation_add": "GOLD PER MERCHANT", "encounter_unlock": "TOWN DEBATE", "opponent_follower_conviction_add": "OPPONENTS' FOLLOWERS / CONVICTION", "skeptic_conviction_add": "SKEPTIC / CONVICTION", "guard_conviction_add": "GUARD / CONVICTION", "zealot_conviction_add": "ZEALOT / CONVICTION", "priest_conviction_add": "PRIEST / CONVICTION"}
 		var label: String = str(labels.get(key, key.replace("_", " ").capitalize()))
 		return "%s\n%.1f%s" % [label, current[key], "" if complete or not next.has(key) else " -> %.1f" % next[key]]
 	if by_id.has(id) and by_id[id].get("effect", {}).has("beckon_add") and current.has("beckon_reach"):
@@ -64,6 +64,12 @@ static func effect_text(progression: Progression, by_id: Dictionary, id: String,
 		return ""
 	var current_value: float = float(current[stat_key])
 	if branch == "helper":
+		var helper_effect: Dictionary = by_id[id].get("effect", {})
+		var helper_key: String = "village_helper_conviction" if helper_effect.has("village_helper_conviction_add") else "village_helper_phrases" if helper_effect.has("village_helper_speed_add") else ""
+		if not helper_key.is_empty():
+			var helper_label: String = "HELPER / CONVICTION PER PHRASE" if helper_key == "village_helper_conviction" else "HELPER / PHRASES PER SECOND"
+			return "%s
+%.2f%s" % [helper_label, current[helper_key], "" if complete or not next.has(helper_key) else " -> %.2f" % next[helper_key]]
 		return "ONE LISTENER AT A TIME\n1 helper / 150 px per second" if complete else "HELPERS\n0 -> 1 / one listener at a time"
 	if branch == "gather":
 		if complete or not next.has(stat_key):

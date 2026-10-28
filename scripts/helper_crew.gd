@@ -57,8 +57,9 @@ func _tune() -> void:
 		var rosecourt: bool = progression.active_area == Rosecourt.AREA_ID
 		var stats: String = "market.helper.teal." if market else "fair.helper.teal." if fair else "university.helper.teal." if university else "rosecourt.helper.teal." if rosecourt else "helper."
 		helper.walk_speed = Balance.number(stats + "walk_speed")
-		helper.phrase_seconds = Balance.number(stats + "phrase_seconds")
-		helper.conviction_per_phrase = Balance.number(stats + "conviction_per_phrase") + (progression.market_teal_conviction_bonus() if market else 0.0)
+		var village: bool = stats == "helper."
+		helper.phrase_seconds = Balance.number(stats + "phrase_seconds") / (1.0 + (progression.village_helper_speed_bonus() if village else 0.0))
+		helper.conviction_per_phrase = Balance.number(stats + "conviction_per_phrase") + (progression.market_teal_conviction_bonus() if market else progression.village_helper_conviction_bonus() if village else 0.0)
 		# At the fair the teal helper obeys the same hearing rule, with its own Interest.
 		helper.interest = progression.fair_teal_interest() if fair else -1
 	# The Assistant's Teaching Assistant ranks; the faculty rule still limits whom it can win.

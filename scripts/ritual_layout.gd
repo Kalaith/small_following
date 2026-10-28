@@ -61,6 +61,8 @@ const VILLAGE_POSITIONS: Dictionary = {
 	"meadow_1": Vector2(220, 350),
 	"east_1": Vector2(320, 430),
 	"helper_1": Vector2(-265, 385),
+	"helper_2": Vector2(-330, 455),
+	"helper_3": Vector2(-200, 455),
 }
 
 # Bellmarket's wanderer nodes sit in the gaps beside their parent petals.
@@ -123,7 +125,7 @@ static func satellite_seals(catalog: Array) -> Array[Dictionary]:
 		# Bellmarket's Followers sit in their own small seal below the market circle.
 		result.append({"center": Vector2(0, 552), "radius": 84.0, "motif": "petals"})
 	if ids.has("helper_1"):
-		result.append({"center": Vector2(-265, 385), "radius": 66.0, "motif": "petals"})
+		result.append({"center": Vector2(-265, 430), "radius": 92.0, "motif": "petals"})
 	return result
 
 

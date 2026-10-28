@@ -23,7 +23,9 @@ const ABBEY_AREA: String = "abbey"
 ## access without them, so a player already there is not rejected; ordinary
 ## travel still requires the whole current circle.
 const POST_MARKET_VILLAGE_IDS: Array[String] = ["beckon_1"]
-const EFFECT_KEYS: Array[String] = ["beckon_add", "encounter_conviction_add", "skeptic_conviction_add", "guard_conviction_add", "zealot_conviction_add", "priest_conviction_add", "merchant_conviction_add", "merchant_donation_add", "speech_speed_add", "conviction_add", "run_speed_add", "meadow_unlock", "east_unlock", "helper_unlock", "merchant_unlock", "encounter_unlock", "market_guild_unlock", "market_patron_unlock", "market_guild_donation_add", "market_patron_donation_add", "market_beckon_add", "market_wanderer_add", "market_helper_unlock", "market_teal_conviction_add", "market_amber_speed_add", "fair_interest_add", "fair_stage_bonus_add", "fair_stage_reach_add", "fair_drain_cut_add", "fair_barker_unlock", "fair_barker_speed_add", "fair_barker_cut_add", "fair_teal_interest_add", "fair_steal_window_add", "fair_crowd_radius_add", "uni_slot_add", "uni_academic_conviction_add", "uni_proof_conviction_add", "uni_evidence_conviction_add", "uni_scripture_conviction_add", "uni_eloquence_conviction_add", "uni_proof_donation_add", "uni_evidence_donation_add", "uni_scripture_donation_add", "uni_eloquence_donation_add", "uni_ta_conviction_add", "uni_ta_walk_add", "uni_ta_speed_add", "rose_head_start_add", "rose_noble_donation_add", "rose_reach_add", "rose_whisper_conviction_add", "rose_trusted_add", "rose_helper_conviction_add", "rose_helper_walk_add", "abbey_plea_add", "abbey_plea_walk_add", "abbey_heed_add", "abbey_helper_power_add", "abbey_helper_speed_add", "abbey_helper_walk_add", "abbey_donation_add"]
+const EFFECT_KEYS: Array[String] = ["beckon_add", "opponent_follower_conviction_add", "village_helper_conviction_add", "village_helper_speed_add", "skeptic_conviction_add", "guard_conviction_add", "zealot_conviction_add", "priest_conviction_add", "merchant_conviction_add", "merchant_donation_add", "speech_speed_add", "conviction_add", "run_speed_add", "meadow_unlock", "east_unlock", "helper_unlock", "merchant_unlock", "encounter_unlock", "market_guild_unlock", "market_patron_unlock", "market_guild_donation_add", "market_patron_donation_add", "market_beckon_add", "market_wanderer_add", "market_helper_unlock", "market_teal_conviction_add", "market_amber_speed_add", "fair_interest_add", "fair_stage_bonus_add", "fair_stage_reach_add", "fair_drain_cut_add", "fair_barker_unlock", "fair_barker_speed_add", "fair_barker_cut_add", "fair_teal_interest_add", "fair_steal_window_add", "fair_crowd_radius_add", "uni_slot_add", "uni_academic_conviction_add", "uni_proof_conviction_add", "uni_evidence_conviction_add", "uni_scripture_conviction_add", "uni_eloquence_conviction_add", "uni_proof_donation_add", "uni_evidence_donation_add", "uni_scripture_donation_add", "uni_eloquence_donation_add", "uni_ta_conviction_add", "uni_ta_walk_add", "uni_ta_speed_add", "rose_head_start_add", "rose_noble_donation_add", "rose_reach_add", "rose_whisper_conviction_add", "rose_trusted_add", "rose_helper_conviction_add", "rose_helper_walk_add", "abbey_plea_add", "abbey_plea_walk_add", "abbey_heed_add", "abbey_helper_power_add", "abbey_helper_speed_add", "abbey_helper_walk_add", "abbey_donation_add"]
+## The villagers who follow the Skeptic, Guard and Zealot once each is convinced.
+const OPPONENT_FOLLOWER_TYPES: Array[String] = ["doubter", "watch", "devotee"]
 const UNLOCK_KEYS: Array[String] = ["meadow_unlock", "east_unlock", "helper_unlock", "merchant_unlock", "encounter_unlock", "market_guild_unlock", "market_patron_unlock", "market_helper_unlock", "fair_barker_unlock"]
 ## Whole-number fair effects (Interest and Distraction are counted in whole lanterns).
 const WHOLE_FAIR_KEYS: Array[String] = ["fair_interest_add", "fair_stage_bonus_add", "fair_barker_cut_add", "fair_teal_interest_add"]
@@ -278,6 +280,16 @@ func market_beckon_reach() -> float:
 	return Balance.number("village.wanderers.beckon_pixels_per_point") * _sum_effect("market_beckon_add")
 
 
+## Bramblewick's helper, tuned by its own Followers upgrades.
+func village_helper_conviction_bonus() -> float:
+	return _sum_effect("village_helper_conviction_add")
+
+
+## Extra phrases per second, as a share of base, for Bramblewick's helper.
+func village_helper_speed_bonus() -> float:
+	return _sum_effect("village_helper_speed_add")
+
+
 ## Extra conviction per phrase for the teal helper in Bellmarket (Seasoned Helper).
 func market_teal_conviction_bonus() -> float:
 	return _sum_effect("market_teal_conviction_add")
@@ -528,11 +540,15 @@ func has_unlock(key: String) -> bool:
 
 
 func conviction_for(npc_type: String) -> float:
-	return conviction_per_phrase() + (_sum_effect("merchant_conviction_add") if npc_type == "merchant" else 0.0)
+	if npc_type == "merchant":
+		return conviction_per_phrase() + _sum_effect("merchant_conviction_add")
+	if npc_type in OPPONENT_FOLLOWER_TYPES:
+		return conviction_per_phrase() + _sum_effect("opponent_follower_conviction_add")
+	return conviction_per_phrase()
 
 
 func encounter_conviction(kind: String) -> float:
-	return conviction_per_phrase() + _sum_effect("encounter_conviction_add") + _sum_effect(kind + "_conviction_add")
+	return conviction_per_phrase() + _sum_effect(kind + "_conviction_add")
 
 
 func complete_encounter(expected_stage: int) -> bool:
@@ -633,7 +649,6 @@ func effect_preview(id: String) -> Dictionary:
 	# questions, but asking each separately swept every rank thirty times here.
 	var totals: Dictionary = _all_effect_totals()
 	var base_conviction: float = 1.0 + float(totals.conviction_add)
-	var opponent_bonus: float = float(totals.encounter_conviction_add)
 	var current: Dictionary = {
 		"speech_frequency": 1.0 + float(totals.speech_speed_add),
 		"conviction": base_conviction,
@@ -649,11 +664,13 @@ func effect_preview(id: String) -> Dictionary:
 		"market_helper_unlock": int(_unlocked(totals, "market_helper_unlock")),
 		"market_teal_conviction": Balance.number("market.helper.teal.conviction_per_phrase") + float(totals.market_teal_conviction_add),
 		"market_amber_phrases": (1.0 + float(totals.market_amber_speed_add)) / Balance.number("market.helper.amber.phrase_seconds"),
+		"village_helper_conviction": Balance.number("helper.conviction_per_phrase") + float(totals.village_helper_conviction_add),
+		"village_helper_phrases": (1.0 + float(totals.village_helper_speed_add)) / Balance.number("helper.phrase_seconds"),
+		"opponent_follower_conviction_add": base_conviction + float(totals.opponent_follower_conviction_add),
 	}
 	current.encounter_unlock = int(_unlocked(totals, "encounter_unlock"))
-	current.encounter_conviction_add = base_conviction + opponent_bonus
 	for kind in ["skeptic", "guard", "zealot", "priest"]:
-		current[kind + "_conviction_add"] = base_conviction + opponent_bonus + float(totals[kind + "_conviction_add"])
+		current[kind + "_conviction_add"] = base_conviction + float(totals[kind + "_conviction_add"])
 	for kind in ["guild", "patron"]:
 		current["market_" + kind + "_unlock"] = int(_unlocked(totals, "market_" + kind + "_unlock"))
 		current["market_" + kind + "_donation_add"] = float(totals["market_" + kind + "_donation_add"])
@@ -667,7 +684,7 @@ func effect_preview(id: String) -> Dictionary:
 	result.next.conviction += float(effect.get("conviction_add", 0.0))
 	result.next.run_multiplier = minf(result.next.run_multiplier + float(effect.get("run_speed_add", 0.0)), Balance.number("round.max_run_multiplier"))
 	result.next.gatherings += int(effect.get("meadow_unlock", 0)) + int(effect.get("east_unlock", 0))
-	for key in ["merchant_unlock", "merchant_conviction_add", "merchant_donation_add", "encounter_unlock", "encounter_conviction_add", "skeptic_conviction_add", "guard_conviction_add", "zealot_conviction_add", "priest_conviction_add"]:
+	for key in ["merchant_unlock", "merchant_conviction_add", "merchant_donation_add", "encounter_unlock", "opponent_follower_conviction_add", "skeptic_conviction_add", "guard_conviction_add", "zealot_conviction_add", "priest_conviction_add"]:
 		result.next[key] += float(effect.get(key, 0.0))
 	for kind in ["guild", "patron"]:
 		for suffix in ["_unlock", "_donation_add"]:
@@ -679,6 +696,8 @@ func effect_preview(id: String) -> Dictionary:
 	result.next.market_wanderers += int(effect.get("market_wanderer_add", 0))
 	result.next.market_helper_unlock += int(effect.get("market_helper_unlock", 0))
 	result.next.market_teal_conviction += float(effect.get("market_teal_conviction_add", 0.0))
+	result.next.village_helper_conviction += float(effect.get("village_helper_conviction_add", 0.0))
+	result.next.village_helper_phrases += float(effect.get("village_helper_speed_add", 0.0)) / Balance.number("helper.phrase_seconds")
 	result.next.market_amber_phrases += float(effect.get("market_amber_speed_add", 0.0)) / Balance.number("market.helper.amber.phrase_seconds")
 	return result
 
