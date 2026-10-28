@@ -19,6 +19,10 @@ The project holds only the game: `project.godot`, `scenes/`, `scripts/`, `data/`
 - Balance in `data/balance.json`; upgrades in `data/upgrades.json` with stable ids and supported effect types. Purchase validation lives in the progression owner, never only in button state. A purchase never deducts currency if saving fails.
 - **No automated checks**: write no tests, scripts, fixtures or runners, and don't restore deleted ones. Verify with the parse/import check and by running the game (`Run.ps1`).
 
+## Commit voice
+
+In this game, describe changes as felt in the village and the ritual, e.g. `Quillmoor University opens: bring the right argument (fourth map)`.
+
 ## Publishing
 
 `publish.ps1` and `publish-itch.ps1` need separate authorisation; `.\publish.ps1 -BuildOnly` (export only) is fine for verification.
@@ -68,12 +72,13 @@ Identical in every WebHatchery Godot project's AGENTS.md; change all together. P
 - **Before the final reply of any turn that touched files:** run `git status --short`; if it prints anything, commit and rerun until empty. A dirty tree means unfinished; the closing summary says the tree is clean.
 - Ignore rules still apply; never force-add ignored files or commit secrets. Don't push or publish unless asked.
 
-Message: one present-tense line, no trailing period, under ~100 characters before the tag, saying what changed **as the player feels it** (the toolkit: as its games feel it; this game: in the village and ritual), then a plain lowercase tag in parentheses for what it technically is (the system touched, `docs`, `refactor` for structural changes, or a milestone id such as `M25`). Fixes and refactors are still described by effect. Add a body only when the reason isn't obvious.
+Message: one present-tense line, no trailing period, under ~100 characters before the tag, saying what changed **as the player feels it** (for the toolkit, as the games using it feel it), then a plain lowercase tag in parentheses for what it technically is (the system touched, `docs`, `refactor` for structural changes, or a milestone id such as `M25`). Fixes and refactors are still described by effect. Add a body only when the reason isn't obvious.
 
 ```
 The Lantern Fair opens: be more interesting than the fair (third map)
-Quillmoor University opens: bring the right argument (fourth map)
+A prayer at the tree now feeds the god's Favour (shrine favour)
 Builders no longer wall themselves into the cottage they are raising (site reservation fix)
 No script over 800 lines: split main and the ritual screen (refactor)
+Every game's saves now survive a torn write (json save)
 Scribes set down the covenant: design and building plan (docs)
 ```
