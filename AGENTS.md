@@ -89,6 +89,8 @@ This section is identical in the AGENTS.md of every WebHatchery Godot project. C
 - **ALWAYS commit every feature slice and every bug fix the moment it works. This is mandatory, not optional.** One slice or fix per commit. Never batch several slices together, never leave finished work sitting uncommitted, and never end a turn with a feature or fix that is not committed. Commits do not wait on checks (see Verification).
 - Commit **all pending project changes**, including modified, added and deleted files you did not make yourself. Do not leave user changes or another agent's changes uncommitted because you did not touch them: review and preserve their contents, include them in the validation, and finish with a clean working tree.
 - Existing ignore rules still apply to generated files, local tooling and credentials. Never force-add ignored files or commit secrets.
+- **Before your final reply, every turn that touched files:** run `git status --short`. If it prints anything, commit it, then run it again and confirm it prints nothing. A reply that ends with a dirty tree is unfinished; the closing summary must state that the tree is clean.
+- Do not wait to be asked to commit, and do not offer to commit instead of doing it. A user's later request ("also tweak X") is a new slice: commit it too before replying.
 - Do not push or publish unless the user asks.
 
 Message style: one line describing what changed **as it is felt by the player** (for the toolkit, by the games that use it), then a short plain tag in parentheses saying what it is technically.
